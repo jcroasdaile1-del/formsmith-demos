@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Grooming Salon — Client &amp; Pet Manager (Sample)</title>
+    <style>
+      :root {
+        --bg: #f4f6f8;
+        --card: #ffffff;
+        --text: #1b2331;
+        --muted: #5a6477;
+        --line: #dce1e8;
+        --brand: #3b82c4;
+        --brand-dark: #2a5f94;
+        --brand-light: #ebf3fb;
+        --ok: #2d7a3a;
+        --warn: #8a5a00;
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        padding: 24px;
+        background: var(--bg);
+        color: var(--text);
+        font-family: Arial, Helvetica, sans-serif;
+      }
+
+      .wrap {
+        max-width: 980px;
+        margin: 0 auto;
+      }
+
+      .card {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 18px;
+        margin-bottom: 14px;
+      }
+
+      h1 {
+        margin: 0 0 4px;
+        font-size: 22px;
+        color: var(--brand-dark);
+      }
+
+      .sub {
+        margin: 0;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .helper {
+        margin-top: 10px;
+        background: var(--brand-light);
+        border: 1px solid #c2d9f0;
+        color: var(--brand-dark);
+        padding: 10px 12px;
+        border-radius: 8px;
+        font-size: 13px;
+      }
+
+      .lookup {
+        display: grid;
+        grid-template-columns: 1fr auto auto auto;
+        gap: 8px;
+        align-items: end;
+      }
+
+      .lookup > .field { margin-bottom: 0; }
+      .lookup > button { margin-bottom: 6px; }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      .grid3 {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      .field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        margin-bottom: 6px;
+      }
+
+      label {
+        font-size: 13px;
+        color: var(--muted);
+      }
+
+      input, select, textarea, button { font: inherit; }
+
+      input, select, textarea {
+        width: 100%;
+        padding: 12px 14px;
+        border: 2px solid #b4bcc8;
+        border-radius: 8px;
+        background: #fff;
+      }
+
+      textarea {
+        min-height: 88px;
+        resize: vertical;
+      }
+
+      .section-title {
+        margin: 16px 0 10px;
+        font-size: 16px;
+        color: var(--brand-dark);
+        border-bottom: 2px solid var(--brand-light);
+        padding-bottom: 6px;
+      }
+
+      .actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      button {
+        border: 0;
+        border-radius: 8px;
+        padding: 10px 14px;
+        cursor: pointer;
+        color: #fff;
+        background: var(--brand);
+        font-weight: bold;
+      }
+
+      button:hover { background: var(--brand-dark); }
+      button.secondary { background: #6b7585; }
+      button.secondary:hover { background: #545d6a; }
+
+      #status { margin-top: 10px; font-size: 14px; }
+      #status.ok { color: var(--ok); }
+      #status.warn { color: var(--warn); }
+
+      @media (max-width: 800px) {
+        .grid, .grid3, .lookup { grid-template-columns: 1fr; }
+      }
+
+      /* History modal */
+      .modal-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.45);
+        z-index: 1000;
+        justify-content: center;
+        align-items: center;
+      }
+      .modal-overlay.open { display: flex; }
+      .modal {
+        background: #fff;
+        border-radius: 14px;
+        width: 94%;
+        max-width: 640px;
+        max-height: 80vh;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 8px 30px rgba(0,0,0,0.25);
+      }
+      .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 20px;
+        border-bottom: 1px solid var(--line);
+      }
+      .modal-header h2 { margin: 0; font-size: 18px; }
+      .modal-close {
+        background: none;
+        border: 0;
+        font-size: 22px;
+        color: var(--muted);
+        cursor: pointer;
+        padding: 4px 8px;
+        line-height: 1;
+      }
+      .modal-close:hover { color: var(--text); background: none; }
+      .modal-body {
+        padding: 16px 20px;
+        overflow-y: auto;
+        flex: 1;
+      }
+      .history-empty {
+        text-align: center;
+        color: var(--muted);
+        padding: 30px 0;
+        font-size: 14px;
+      }
+      .history-entry {
+        border-left: 3px solid var(--brand);
+        padding: 10px 14px;
+        margin-bottom: 12px;
+        background: var(--brand-light);
+        border-radius: 0 8px 8px 0;
+      }
+      .history-entry:last-child { margin-bottom: 0; }
+      .history-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 6px;
+      }
+      .history-date {
+        font-weight: bold;
+        font-size: 13px;
+        color: var(--text);
+      }
+      .history-badge {
+        background: var(--brand);
+        color: #fff;
+        font-size: 11px;
+        padding: 2px 8px;
+        border-radius: 10px;
+      }
+      .history-changes {
+        font-size: 13px;
+        color: var(--muted);
+        line-height: 1.55;
+      }
+      .history-changes .change-item { padding: 2px 0; }
+      .history-changes .field-name { font-weight: 600; color: var(--text); }
+      .history-changes .arrow { color: var(--brand); margin: 0 4px; }
+
+      /* Sample banner */
+      .sample-banner {
+        background: #fff3cd;
+        border: 1px solid #ffc107;
+        border-radius: 8px;
+        padding: 12px 16px;
+        margin-bottom: 14px;
+        font-size: 13px;
+        color: #664d03;
+        text-align: center;
+      }
+      .sample-banner strong { color: #5a4304; }
+
+      .built-by {
+        text-align: center;
+        margin-top: 10px;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .built-by a { color: var(--brand); text-decoration: none; }
+      .built-by a:hover { text-decoration: underline; }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+
+      <div class="sample-banner">
+        <strong>INTERACTIVE SAMPLE</strong> — This is a demo of a custom grooming salon management app. Every field, section, and dropdown can be customized to match your exact workflow.<br>
+        The finished version connects to your Google Sheet and saves every record automatically.
+      </div>
+
+      <!-- Header card -->
+      <div class="card">
+        <h1>🐾 Grooming Salon — Client &amp; Pet Manager</h1>
+        <p class="sub">Custom web app that saves directly to your Google Sheet. Look up any client, update their info, and track every visit.</p>
+        <div class="helper">Tip: Enter a Client ID and click "Load Client" to pull up an existing record. Click "View History" to see all past changes for that client.</div>
+      </div>
+
+      <!-- Lookup bar -->
+      <div class="card">
+        <div class="lookup">
+          <div class="field">
+            <label for="lookupClientId">Client ID (lookup)</label>
+            <input id="lookupClientId" type="text" placeholder="Example: CL-1042" onkeydown="if(event.key==='Enter'){event.preventDefault();lookupClient();}" />
+          </div>
+          <button type="button" onclick="lookupClient()">Load Client</button>
+          <button type="button" class="secondary" onclick="clearForm()">Clear Form</button>
+          <button type="button" class="secondary" onclick="viewHistory()">View History</button>
+        </div>
+      </div>
+
+      <!-- Main form -->
+      <form id="groomForm" class="card">
+
+        <!-- Section 1: Client Info -->
+        <h2 class="section-title">1) Client Information</h2>
+        <div class="grid3">
+          <div class="field"><label>Client ID</label><input name="clientId" type="text" value="CL-1042" /></div>
+          <div class="field"><label>First Name</label><input name="ownerFirstName" type="text" value="Sarah" /></div>
+          <div class="field"><label>Last Name</label><input name="ownerLastName" type="text" value="Jennings" /></div>
+        </div>
+        <div class="grid3">
+          <div class="field"><label>Phone Number</label><input name="phone" type="tel" value="(414) 555-8821" /></div>
+          <div class="field"><label>Email</label><input name="email" type="email" value="sarah.jennings@email.com" /></div>
+          <div class="field">
+            <label>Preferred Contact</label>
+            <select name="preferredContact">
+              <option value="">Select</option>
+              <option>Phone Call</option>
+              <option selected>Text</option>
+              <option>Email</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid">
+          <div class="field"><label>Address</label><input name="address" type="text" value="2847 N Oakland Ave, Milwaukee WI 53211" /></div>
+          <div class="field">
+            <label>How Did They Find Us?</label>
+            <select name="referralSource">
+              <option value="">Select</option>
+              <option>Walk-in</option>
+              <option selected>Google Search</option>
+              <option>Facebook</option>
+              <option>Instagram</option>
+              <option>Referral from Client</option>
+              <option>Flyer / Print</option>
+              <option>Other</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Section 2: Pet Details -->
+        <h2 class="section-title">2) Pet Details</h2>
+        <div class="grid3">
+          <div class="field"><label>Pet Name</label><input name="petName" type="text" value="Biscuit" /></div>
+          <div class="field">
+            <label>Species</label>
+            <select name="species">
+              <option value="">Select</option>
+              <option selected>Dog</option>
+              <option>Cat</option>
+            </select>
+          </div>
+          <div class="field"><label>Breed</label><input name="breed" type="text" value="Golden Retriever" /></div>
+        </div>
+        <div class="grid3">
+          <div class="field">
+            <label>Size</label>
+            <select name="size">
+              <option value="">Select</option>
+              <option>Small (Under 20 lbs)</option>
+              <option>Medium (20–50 lbs)</option>
+              <option selected>Large (50–90 lbs)</option>
+              <option>X-Large (90+ lbs)</option>
+            </select>
+          </div>
+          <div class="field"><label>Weight (lbs)</label><input name="weight" type="text" value="72" /></div>
+          <div class="field"><label>Date of Birth / Age</label><input name="petDob" type="text" value="03/15/2021" /></div>
+        </div>
+        <div class="grid3">
+          <div class="field">
+            <label>Spayed / Neutered</label>
+            <select name="spayedNeutered">
+              <option value="">Select</option>
+              <option selected>Yes</option>
+              <option>No</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Temperament</label>
+            <select name="temperament">
+              <option value="">Select</option>
+              <option selected>Friendly</option>
+              <option>Nervous / Anxious</option>
+              <option>Aggressive — Muzzle Required</option>
+              <option>Shy / Timid</option>
+              <option>Excitable / Jumpy</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Vaccination Status</label>
+            <select name="vaccinationStatus">
+              <option value="">Select</option>
+              <option selected>Up to Date</option>
+              <option>Expired — Needs Update</option>
+              <option>Unverified</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid">
+          <div class="field"><label>Known Allergies / Skin Conditions</label><input name="allergies" type="text" value="Sensitive around ears — use hypoallergenic shampoo" /></div>
+          <div class="field"><label>Vet Name / Clinic</label><input name="vetInfo" type="text" value="Bayshore Animal Hospital — Dr. Patel" /></div>
+        </div>
+
+        <!-- Section 3: Grooming Preferences -->
+        <h2 class="section-title">3) Grooming Preferences</h2>
+        <div class="grid3">
+          <div class="field">
+            <label>Coat Type</label>
+            <select name="coatType">
+              <option value="">Select</option>
+              <option>Short / Smooth</option>
+              <option selected>Long / Flowing</option>
+              <option>Double Coat</option>
+              <option>Curly / Poodle-Type</option>
+              <option>Wire / Rough</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Preferred Cut Style</label>
+            <select name="cutStyle">
+              <option value="">Select</option>
+              <option>Breed Standard</option>
+              <option selected>Puppy Cut (even all over)</option>
+              <option>Teddy Bear</option>
+              <option>Lion Cut</option>
+              <option>Sanitary Trim Only</option>
+              <option>Owner Will Describe</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Preferred Shampoo</label>
+            <select name="shampoo">
+              <option value="">Select</option>
+              <option>Standard</option>
+              <option selected>Hypoallergenic</option>
+              <option>Oatmeal / Soothing</option>
+              <option>Flea &amp; Tick</option>
+              <option>De-shedding</option>
+              <option>Whitening</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid3">
+          <div class="field">
+            <label>Nail Trim</label>
+            <select name="nailTrim">
+              <option value="">Select</option>
+              <option selected>Yes — Standard Clip</option>
+              <option>Yes — Dremel / Grind</option>
+              <option>No</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Ear Cleaning</label>
+            <select name="earCleaning">
+              <option value="">Select</option>
+              <option selected>Yes</option>
+              <option>No</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Teeth Brushing</label>
+            <select name="teethBrushing">
+              <option value="">Select</option>
+              <option>Yes</option>
+              <option selected>No</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid">
+          <div class="field">
+            <label>Add-Ons</label>
+            <select name="addOns">
+              <option value="">None</option>
+              <option selected>Blueberry Facial</option>
+              <option>De-shedding Treatment</option>
+              <option>Pawdicure (nail polish)</option>
+              <option>Bandana / Bow</option>
+              <option>Cologne Spritz</option>
+            </select>
+          </div>
+          <div class="field"><label>Special Grooming Notes</label><input name="groomingNotes" type="text" value="Trim around paws carefully — ticklish on back feet" /></div>
+        </div>
+
+        <!-- Section 4: Appointment & Scheduling -->
+        <h2 class="section-title">4) Appointment &amp; Scheduling</h2>
+        <div class="grid3">
+          <div class="field"><label>Last Visit Date</label><input name="lastVisit" type="date" value="2026-02-08" /></div>
+          <div class="field"><label>Next Appointment</label><input name="nextAppointment" type="date" value="2026-04-05" /></div>
+          <div class="field">
+            <label>Visit Frequency</label>
+            <select name="visitFrequency">
+              <option value="">Select</option>
+              <option>Every 4 weeks</option>
+              <option selected>Every 6 weeks</option>
+              <option>Every 8 weeks</option>
+              <option>As needed</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid3">
+          <div class="field">
+            <label>Preferred Day</label>
+            <select name="preferredDay">
+              <option value="">No Preference</option>
+              <option>Monday</option>
+              <option>Tuesday</option>
+              <option>Wednesday</option>
+              <option>Thursday</option>
+              <option>Friday</option>
+              <option selected>Saturday</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Preferred Time</label>
+            <select name="preferredTime">
+              <option value="">No Preference</option>
+              <option selected>Morning (8am–11am)</option>
+              <option>Midday (11am–1pm)</option>
+              <option>Afternoon (1pm–4pm)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Drop-Off or Wait?</label>
+            <select name="dropOff">
+              <option value="">Select</option>
+              <option selected>Drop-Off</option>
+              <option>Wait in Lobby</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid">
+          <div class="field">
+            <label>Appointment Status</label>
+            <select name="appointmentStatus" onchange="colorStatus(this)">
+              <option value="">Select</option>
+              <option selected value="Confirmed">Confirmed</option>
+              <option value="Pending">Pending</option>
+              <option value="No Show">No Show</option>
+              <option value="Cancelled">Cancelled</option>
+              <option value="Completed">Completed</option>
+            </select>
+          </div>
+          <div class="field"><label>Internal Notes</label><textarea name="internalNotes">Biscuit does great when you talk to him during the bath. Needs extra drying time — thick coat. Mom usually arrives 10 min early for pickup.</textarea></div>
+        </div>
+
+        <div class="actions">
+          <button type="button" onclick="demoSave()">Save / Update Client</button>
+        </div>
+        <div id="status"></div>
+      </form>
+
+      <div class="built-by">
+        Built by <strong>Formsmith</strong> — Custom forms &amp; web apps built for your workflow<br>
+        <a href="https://www.etsy.com/shop/FormsmithCustomForms">www.etsy.com/shop/FormsmithCustomForms</a> · formsmithcustomforms@gmail.com
+      </div>
+
+      <!-- History modal -->
+      <div id="historyOverlay" class="modal-overlay" onclick="if(event.target===this)closeHistory()">
+        <div class="modal">
+          <div class="modal-header">
+            <h2 id="historyTitle">Change History — Biscuit (CL-1042)</h2>
+            <button class="modal-close" onclick="closeHistory()">&times;</button>
+          </div>
+          <div class="modal-body" id="historyBody">
+            <div class="history-entry">
+              <div class="history-meta">
+                <span class="history-date">Mar 8, 2026 — 2:14 PM</span>
+                <span class="history-badge">3 fields</span>
+              </div>
+              <div class="history-changes">
+                <div class="change-item"><span class="field-name">Last Visit Date:</span> 01/04/2026 <span class="arrow">→</span> 02/08/2026</div>
+                <div class="change-item"><span class="field-name">Next Appointment:</span> 02/08/2026 <span class="arrow">→</span> 04/05/2026</div>
+                <div class="change-item"><span class="field-name">Weight:</span> 70 <span class="arrow">→</span> 72</div>
+              </div>
+            </div>
+            <div class="history-entry">
+              <div class="history-meta">
+                <span class="history-date">Jan 4, 2026 — 10:32 AM</span>
+                <span class="history-badge">2 fields</span>
+              </div>
+              <div class="history-changes">
+                <div class="change-item"><span class="field-name">Shampoo:</span> Standard <span class="arrow">→</span> Hypoallergenic</div>
+                <div class="change-item"><span class="field-name">Allergies:</span> None <span class="arrow">→</span> Sensitive around ears — use hypoallergenic shampoo</div>
+              </div>
+            </div>
+            <div class="history-entry">
+              <div class="history-meta">
+                <span class="history-date">Nov 22, 2025 — 9:47 AM</span>
+                <span class="history-badge">1 field</span>
+              </div>
+              <div class="history-changes">
+                <div class="change-item"><span class="field-name">Temperament:</span> Nervous / Anxious <span class="arrow">→</span> Friendly</div>
+              </div>
+            </div>
+            <div class="history-entry">
+              <div class="history-meta">
+                <span class="history-date">Oct 12, 2025 — 11:20 AM</span>
+                <span class="history-badge">New Record</span>
+              </div>
+              <div class="history-changes">
+                <div class="change-item">Initial record created for Biscuit — Sarah Jennings</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      function lookupClient() {
+        var id = document.getElementById('lookupClientId').value.trim();
+        if (!id) { setStatus('Enter a Client ID first.', 'warn'); return; }
+        setStatus('\u2713 Client loaded — CL-1042: Sarah Jennings / Biscuit (Golden Retriever)', 'ok');
+      }
+
+      function clearForm() {
+        document.getElementById('groomForm').reset();
+        document.getElementById('lookupClientId').value = '';
+        setStatus('Form cleared.', 'ok');
+      }
+
+      function demoSave() {
+        setStatus('\u2713 Record saved to Google Sheets — Biscuit (CL-1042) updated successfully.', 'ok');
+      }
+
+      function viewHistory() {
+        document.getElementById('historyOverlay').classList.add('open');
+      }
+
+      function closeHistory() {
+        document.getElementById('historyOverlay').classList.remove('open');
+      }
+
+      function setStatus(message, tone) {
+        var el = document.getElementById('status');
+        el.className = tone || '';
+        el.textContent = message;
+      }
+
+      function colorStatus(el) {
+        var colors = { 'Confirmed': '#d4edda', 'Pending': '#fef3cd', 'No Show': '#f8d0d0', 'Cancelled': '#f8d0d0', 'Completed': '#d1ecf1' };
+        el.style.backgroundColor = colors[el.value] || '#fff';
+      }
+
+      // Auto-color on load
+      var statusSelect = document.querySelector('[name="appointmentStatus"]');
+      if (statusSelect) colorStatus(statusSelect);
+    </script>
+  </body>
+</html>
