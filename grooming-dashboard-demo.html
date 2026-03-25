@@ -1,0 +1,1360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Grooming Salon — Client Manager + Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --primary: #2563eb;
+    --primary-light: #dbeafe;
+    --primary-dark: #1e40af;
+    --accent: #10b981;
+    --accent-light: #d1fae5;
+    --warning: #f59e0b;
+    --warning-light: #fef3c7;
+    --danger: #ef4444;
+    --danger-light: #fee2e2;
+    --purple: #8b5cf6;
+    --purple-light: #ede9fe;
+    --bg: #f1f5f9;
+    --card: #ffffff;
+    --text: #1e293b;
+    --text-light: #64748b;
+    --border: #e2e8f0;
+    --radius: 12px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06);
+    --shadow-lg: 0 4px 12px rgba(0,0,0,0.1);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+  }
+
+  /* ── Header ── */
+  .app-header {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    color: white;
+    padding: 0;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  }
+  .header-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 24px 8px;
+  }
+  .header-top h1 {
+    font-size: 1.35rem;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+  }
+  .header-top .subtitle {
+    font-size: 0.8rem;
+    opacity: 0.8;
+    margin-top: 2px;
+  }
+  .header-badge {
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.25);
+    border-radius: 20px;
+    padding: 4px 14px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+
+  /* ── Tabs ── */
+  .tab-bar {
+    display: flex;
+    gap: 0;
+    padding: 0 24px;
+  }
+  .tab-btn {
+    background: none;
+    border: none;
+    color: rgba(255,255,255,0.65);
+    font-size: 0.9rem;
+    font-weight: 600;
+    padding: 10px 20px;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s;
+  }
+  .tab-btn:hover {
+    color: rgba(255,255,255,0.9);
+  }
+  .tab-btn.active {
+    color: white;
+    border-bottom-color: white;
+  }
+
+  /* ── Tab Content ── */
+  .tab-content {
+    display: none;
+    padding: 24px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  .tab-content.active { display: block; }
+
+  /* ── Sample Banner ── */
+  .sample-banner {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    border: 1px solid #f59e0b;
+    border-radius: var(--radius);
+    padding: 12px 20px;
+    margin-bottom: 20px;
+    font-size: 0.85rem;
+    color: #92400e;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .sample-banner strong { color: #78350f; }
+
+  /* ══════════════════════════════════════════
+     DASHBOARD TAB
+     ══════════════════════════════════════════ */
+
+  /* ── KPI Cards ── */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .kpi-card {
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 20px;
+    box-shadow: var(--shadow);
+    border-left: 4px solid var(--primary);
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .kpi-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+  }
+  .kpi-card.green { border-left-color: var(--accent); }
+  .kpi-card.yellow { border-left-color: var(--warning); }
+  .kpi-card.red { border-left-color: var(--danger); }
+  .kpi-card.purple { border-left-color: var(--purple); }
+  .kpi-label {
+    font-size: 0.8rem;
+    color: var(--text-light);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  .kpi-value {
+    font-size: 1.8rem;
+    font-weight: 800;
+    letter-spacing: -1px;
+    line-height: 1.1;
+  }
+  .kpi-card.green .kpi-value { color: #059669; }
+  .kpi-card.yellow .kpi-value { color: #d97706; }
+  .kpi-card.red .kpi-value { color: #dc2626; }
+  .kpi-card.purple .kpi-value { color: #7c3aed; }
+  .kpi-sub {
+    font-size: 0.78rem;
+    color: var(--text-light);
+    margin-top: 4px;
+  }
+  .kpi-trend {
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-top: 6px;
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+  }
+  .kpi-trend.up { background: var(--accent-light); color: #059669; }
+  .kpi-trend.down { background: var(--danger-light); color: #dc2626; }
+
+  /* ── Dashboard Cards ── */
+  .dash-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 24px;
+  }
+  @media (max-width: 800px) {
+    .dash-grid { grid-template-columns: 1fr; }
+  }
+  .dash-card {
+    background: var(--card);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+  .dash-card-header {
+    padding: 16px 20px 12px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .dash-card-header h3 {
+    font-size: 0.95rem;
+    font-weight: 700;
+  }
+  .dash-card-header .filter-btn {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 4px 12px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    color: var(--text-light);
+    font-weight: 600;
+  }
+  .dash-card-header .filter-btn:hover { background: var(--primary-light); color: var(--primary); }
+  .dash-card-body { padding: 16px 20px 20px; }
+  .dash-card.full-width { grid-column: 1 / -1; }
+
+  /* ── Chart containers ── */
+  .chart-wrap {
+    position: relative;
+    height: 250px;
+    width: 100%;
+  }
+  .chart-wrap-sm {
+    position: relative;
+    height: 200px;
+    width: 100%;
+  }
+
+  /* ── Mini Tables ── */
+  .mini-table { width: 100%; border-collapse: collapse; }
+  .mini-table th {
+    text-align: left;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-light);
+    padding: 8px 10px;
+    border-bottom: 2px solid var(--border);
+    font-weight: 700;
+  }
+  .mini-table td {
+    padding: 10px 10px;
+    font-size: 0.85rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .mini-table tr:last-child td { border-bottom: none; }
+  .mini-table tr:hover { background: #f8fafc; }
+
+  .status-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 6px;
+  }
+  .status-dot.green { background: var(--accent); }
+  .status-dot.yellow { background: var(--warning); }
+  .status-dot.red { background: var(--danger); }
+  .status-dot.blue { background: var(--primary); }
+
+  .badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 10px;
+    font-size: 0.72rem;
+    font-weight: 700;
+  }
+  .badge-green { background: var(--accent-light); color: #059669; }
+  .badge-yellow { background: var(--warning-light); color: #b45309; }
+  .badge-red { background: var(--danger-light); color: #dc2626; }
+  .badge-blue { background: var(--primary-light); color: var(--primary); }
+
+  /* ── Alerts ── */
+  .alert-list { list-style: none; }
+  .alert-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.85rem;
+  }
+  .alert-item:last-child { border-bottom: none; }
+  .alert-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  .alert-icon.warn { background: var(--warning-light); }
+  .alert-icon.crit { background: var(--danger-light); }
+  .alert-icon.info { background: var(--primary-light); }
+
+  /* ══════════════════════════════════════════
+     FORM TAB
+     ══════════════════════════════════════════ */
+
+  /* ── Lookup Bar ── */
+  .lookup-bar {
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    box-shadow: var(--shadow);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  .lookup-bar label {
+    font-weight: 700;
+    font-size: 0.85rem;
+    white-space: nowrap;
+  }
+  .lookup-bar select, .lookup-bar input[type="text"] {
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 0.85rem;
+    background: var(--bg);
+    min-width: 200px;
+  }
+  .btn {
+    padding: 8px 18px;
+    border-radius: 8px;
+    border: none;
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .btn-primary { background: var(--primary); color: white; }
+  .btn-primary:hover { background: var(--primary-dark); }
+  .btn-success { background: var(--accent); color: white; }
+  .btn-success:hover { background: #059669; }
+  .btn-outline {
+    background: white;
+    color: var(--text-light);
+    border: 1px solid var(--border);
+  }
+  .btn-outline:hover { background: var(--bg); color: var(--text); }
+  .btn-purple { background: var(--purple); color: white; }
+  .btn-purple:hover { background: #7c3aed; }
+  .lookup-spacer { flex: 1; }
+
+  /* ── Form Sections ── */
+  .form-section {
+    background: var(--card);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    margin-bottom: 16px;
+    overflow: hidden;
+  }
+  .section-header {
+    padding: 14px 20px;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    user-select: none;
+  }
+  .section-header:hover { background: #e8edf3; }
+  .section-header .chevron {
+    transition: transform 0.2s;
+    font-size: 0.8rem;
+    color: var(--text-light);
+  }
+  .section-header.collapsed .chevron { transform: rotate(-90deg); }
+  .section-body { padding: 20px; }
+  .section-body.hidden { display: none; }
+
+  .field-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 14px;
+  }
+  .field-group { display: flex; flex-direction: column; gap: 4px; }
+  .field-group.full-width { grid-column: 1 / -1; }
+  .field-group label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-light);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+  .field-group input,
+  .field-group select,
+  .field-group textarea {
+    padding: 9px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 0.88rem;
+    font-family: inherit;
+    background: white;
+    transition: border-color 0.15s;
+  }
+  .field-group input:focus,
+  .field-group select:focus,
+  .field-group textarea:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+  }
+  .field-group textarea { resize: vertical; min-height: 70px; }
+
+  /* ── Submit Bar ── */
+  .submit-bar {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 16px 0;
+  }
+
+  /* ── Toast ── */
+  .toast {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    background: #1e293b;
+    color: white;
+    padding: 14px 24px;
+    border-radius: 10px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+    z-index: 9999;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.3s;
+    pointer-events: none;
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* ── History Modal ── */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 500;
+    justify-content: center;
+    align-items: center;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal-box {
+    background: white;
+    border-radius: var(--radius);
+    width: 90%;
+    max-width: 620px;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.25);
+  }
+  .modal-header {
+    padding: 18px 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .modal-header h3 { font-size: 1rem; }
+  .modal-close {
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+    color: var(--text-light);
+    padding: 4px 8px;
+  }
+  .modal-body { padding: 20px 24px; }
+  .history-entry {
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .history-entry:last-child { border-bottom: none; }
+  .history-date {
+    font-size: 0.75rem;
+    color: var(--text-light);
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  .history-change {
+    font-size: 0.85rem;
+    display: flex;
+    gap: 6px;
+  }
+  .history-field { font-weight: 700; }
+  .history-old { color: var(--danger); text-decoration: line-through; }
+  .history-new { color: var(--accent); font-weight: 600; }
+
+  /* ── Footer ── */
+  .app-footer {
+    text-align: center;
+    padding: 24px;
+    color: var(--text-light);
+    font-size: 0.8rem;
+    border-top: 1px solid var(--border);
+    margin-top: 20px;
+  }
+  .app-footer a {
+    color: var(--primary);
+    text-decoration: none;
+    font-weight: 600;
+  }
+  .app-footer a:hover { text-decoration: underline; }
+
+  /* ── Date filter bar ── */
+  .date-filter {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  .date-filter .filter-pill {
+    padding: 6px 16px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: white;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    color: var(--text-light);
+    transition: all 0.15s;
+  }
+  .date-filter .filter-pill:hover { background: var(--primary-light); color: var(--primary); border-color: var(--primary); }
+  .date-filter .filter-pill.active { background: var(--primary); color: white; border-color: var(--primary); }
+</style>
+</head>
+<body>
+
+<!-- ═══════ HEADER + TABS ═══════ -->
+<header class="app-header">
+  <div class="header-top">
+    <div>
+      <h1>🐾 Grooming Salon — Client & Pet Manager</h1>
+      <div class="subtitle">Powered by Google Sheets</div>
+    </div>
+    <span class="header-badge">INTERACTIVE DEMO</span>
+  </div>
+  <nav class="tab-bar">
+    <button class="tab-btn active" onclick="switchTab('dashboard')">📊 Dashboard</button>
+    <button class="tab-btn" onclick="switchTab('form')">📝 Client Form</button>
+  </nav>
+</header>
+
+<!-- ═══════ DASHBOARD TAB ═══════ -->
+<div id="tab-dashboard" class="tab-content active">
+
+  <div class="sample-banner">
+    <strong>⚡ Interactive Demo</strong> — This dashboard pulls from sample data in the spreadsheet. In your real app, these numbers update automatically as you add or edit records.
+  </div>
+
+  <!-- Date Range Filter -->
+  <div class="date-filter">
+    <button class="filter-pill active" onclick="setDateRange(this, 'month')">This Month</button>
+    <button class="filter-pill" onclick="setDateRange(this, 'quarter')">This Quarter</button>
+    <button class="filter-pill" onclick="setDateRange(this, 'year')">This Year</button>
+    <button class="filter-pill" onclick="setDateRange(this, 'all')">All Time</button>
+  </div>
+
+  <!-- KPI Cards -->
+  <div class="kpi-grid">
+    <div class="kpi-card green">
+      <div class="kpi-label">Appointments This Month</div>
+      <div class="kpi-value" id="kpi-appts">47</div>
+      <div class="kpi-sub">vs. 41 last month</div>
+      <span class="kpi-trend up">↑ 14.6%</span>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Revenue This Month</div>
+      <div class="kpi-value">$3,285</div>
+      <div class="kpi-sub">Sum of Service Total column</div>
+      <span class="kpi-trend up">↑ 8.2%</span>
+    </div>
+    <div class="kpi-card purple">
+      <div class="kpi-label">Total Active Clients</div>
+      <div class="kpi-value">124</div>
+      <div class="kpi-sub">9 new this month</div>
+    </div>
+    <div class="kpi-card yellow">
+      <div class="kpi-label">Upcoming (7 Days)</div>
+      <div class="kpi-value">12</div>
+      <div class="kpi-sub">3 unconfirmed</div>
+    </div>
+    <div class="kpi-card red">
+      <div class="kpi-label">Expired Vaccinations</div>
+      <div class="kpi-value">6</div>
+      <div class="kpi-sub">Owners need notification</div>
+    </div>
+  </div>
+
+  <!-- Charts Row -->
+  <div class="dash-grid">
+
+    <!-- Revenue Chart -->
+    <div class="dash-card">
+      <div class="dash-card-header">
+        <h3>📈 Monthly Revenue</h3>
+        <button class="filter-btn" onclick="toggleRevenueView(this)">By Month</button>
+      </div>
+      <div class="dash-card-body">
+        <div class="chart-wrap"><canvas id="revenueChart"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Services Chart -->
+    <div class="dash-card">
+      <div class="dash-card-header">
+        <h3>🛁 Services Breakdown</h3>
+        <button class="filter-btn">This Month</button>
+      </div>
+      <div class="dash-card-body">
+        <div class="chart-wrap"><canvas id="servicesChart"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Upcoming Appointments -->
+    <div class="dash-card">
+      <div class="dash-card-header">
+        <h3>📅 Upcoming Appointments</h3>
+        <button class="filter-btn">Next 7 Days</button>
+      </div>
+      <div class="dash-card-body">
+        <table class="mini-table">
+          <thead>
+            <tr><th>Date</th><th>Client</th><th>Pet</th><th>Service</th><th>Status</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Mar 25</td><td>Sarah J.</td><td>Biscuit</td><td>Full Groom</td>
+              <td><span class="badge badge-green">Confirmed</span></td>
+            </tr>
+            <tr>
+              <td>Mar 25</td><td>Marcus T.</td><td>Luna</td><td>Bath & Brush</td>
+              <td><span class="badge badge-green">Confirmed</span></td>
+            </tr>
+            <tr>
+              <td>Mar 26</td><td>Diane W.</td><td>Cooper</td><td>Full Groom</td>
+              <td><span class="badge badge-yellow">Pending</span></td>
+            </tr>
+            <tr>
+              <td>Mar 26</td><td>Rachel M.</td><td>Mochi</td><td>Nail Trim + Teeth</td>
+              <td><span class="badge badge-green">Confirmed</span></td>
+            </tr>
+            <tr>
+              <td>Mar 27</td><td>Kevin P.</td><td>Bear</td><td>Full Groom</td>
+              <td><span class="badge badge-yellow">Pending</span></td>
+            </tr>
+            <tr>
+              <td>Mar 27</td><td>Lisa H.</td><td>Daisy</td><td>Bath & Brush</td>
+              <td><span class="badge badge-green">Confirmed</span></td>
+            </tr>
+            <tr>
+              <td>Mar 28</td><td>Tommy A.</td><td>Rex</td><td>De-shed Treatment</td>
+              <td><span class="badge badge-yellow">Pending</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Alerts / Action Items -->
+    <div class="dash-card">
+      <div class="dash-card-header">
+        <h3>⚠️ Alerts & Action Items</h3>
+      </div>
+      <div class="dash-card-body">
+        <ul class="alert-list">
+          <li class="alert-item">
+            <div class="alert-icon crit">🔴</div>
+            <div><strong>6 pets have expired vaccinations.</strong><br><span style="color:var(--text-light);font-size:0.8rem">Biscuit, Cooper, Mochi, Bear, Ziggy, Pepper — notify owners before next appointment.</span></div>
+          </li>
+          <li class="alert-item">
+            <div class="alert-icon warn">🟡</div>
+            <div><strong>3 appointments unconfirmed.</strong><br><span style="color:var(--text-light);font-size:0.8rem">Diane W. (Mar 26), Kevin P. (Mar 27), Tommy A. (Mar 28) — follow up today.</span></div>
+          </li>
+          <li class="alert-item">
+            <div class="alert-icon info">🔵</div>
+            <div><strong>14 clients haven't booked in 60+ days.</strong><br><span style="color:var(--text-light);font-size:0.8rem">Consider sending a reminder or promo offer.</span></div>
+          </li>
+          <li class="alert-item">
+            <div class="alert-icon info">🔵</div>
+            <div><strong>5 clients due for rebooking.</strong><br><span style="color:var(--text-light);font-size:0.8rem">Last visit 4+ weeks ago with frequency set to "Every 4 weeks" — send booking reminder.</span></div>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Top Clients -->
+    <div class="dash-card full-width">
+      <div class="dash-card-header">
+        <h3>🏆 Top Clients by Visit Count (All Time)</h3>
+        <button class="filter-btn">All Time</button>
+      </div>
+      <div class="dash-card-body">
+        <table class="mini-table">
+          <thead>
+            <tr><th>#</th><th>Client</th><th>Pet(s)</th><th>Visits</th><th>Total Spent</th><th>Last Visit</th><th>Preferred Service</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>1</td><td>Sarah Jennings</td><td>Biscuit</td><td>28</td><td>$1,960</td><td>Mar 18, 2026</td><td>Full Groom</td></tr>
+            <tr><td>2</td><td>Marcus Torres</td><td>Luna, Stella</td><td>24</td><td>$1,680</td><td>Mar 20, 2026</td><td>Bath & Brush</td></tr>
+            <tr><td>3</td><td>Lisa Huang</td><td>Daisy</td><td>22</td><td>$1,540</td><td>Mar 15, 2026</td><td>Full Groom</td></tr>
+            <tr><td>4</td><td>Rachel Miller</td><td>Mochi</td><td>19</td><td>$855</td><td>Mar 12, 2026</td><td>Nail Trim + Teeth</td></tr>
+            <tr><td>5</td><td>Kevin Park</td><td>Bear</td><td>17</td><td>$1,190</td><td>Mar 8, 2026</td><td>Full Groom + De-shed</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Breed Distribution -->
+    <div class="dash-card">
+      <div class="dash-card-header">
+        <h3>🐕 Client Pets by Breed</h3>
+      </div>
+      <div class="dash-card-body">
+        <div class="chart-wrap-sm"><canvas id="breedChart"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Appointments by Day -->
+    <div class="dash-card">
+      <div class="dash-card-header">
+        <h3>📊 Appointments by Day of Week</h3>
+      </div>
+      <div class="dash-card-body">
+        <div class="chart-wrap-sm"><canvas id="dayChart"></canvas></div>
+      </div>
+    </div>
+
+  </div><!-- /dash-grid -->
+
+</div><!-- /tab-dashboard -->
+
+
+<!-- ═══════ FORM TAB ═══════ -->
+<div id="tab-form" class="tab-content">
+
+  <div class="sample-banner">
+    <strong>⚡ Interactive Demo</strong> — Try loading a client, editing fields, and saving. The View History button shows automatic change tracking. In your real app, every field saves to your Google Sheet.
+  </div>
+
+  <!-- Lookup Bar -->
+  <div class="lookup-bar">
+    <label>🔎 Lookup Client:</label>
+    <select id="clientSelect" onchange="loadClient()">
+      <option value="">— Select —</option>
+      <option value="biscuit">CLT-001 — Biscuit (Sarah Jennings)</option>
+      <option value="luna">CLT-002 — Luna (Marcus Torres)</option>
+      <option value="cooper">CLT-003 — Cooper (Diane Walsh)</option>
+      <option value="mochi">CLT-004 — Mochi (Rachel Miller)</option>
+    </select>
+    <button class="btn btn-primary" onclick="loadClient()">Load</button>
+    <button class="btn btn-outline" onclick="clearForm()">Clear</button>
+    <span class="lookup-spacer"></span>
+    <button class="btn btn-purple" onclick="showHistory()">📜 View History</button>
+  </div>
+
+  <!-- Section 1: Client Info -->
+  <div class="form-section">
+    <div class="section-header" onclick="toggleSection(this)">
+      👤 Client Information <span class="chevron">▼</span>
+    </div>
+    <div class="section-body">
+      <div class="field-grid">
+        <div class="field-group">
+          <label>Client ID</label>
+          <input type="text" id="f-clientId" readonly style="background:#f1f5f9">
+        </div>
+        <div class="field-group">
+          <label>First Name</label>
+          <input type="text" id="f-firstName">
+        </div>
+        <div class="field-group">
+          <label>Last Name</label>
+          <input type="text" id="f-lastName">
+        </div>
+        <div class="field-group">
+          <label>Phone</label>
+          <input type="tel" id="f-phone">
+        </div>
+        <div class="field-group">
+          <label>Email</label>
+          <input type="email" id="f-email">
+        </div>
+        <div class="field-group">
+          <label>Preferred Contact</label>
+          <select id="f-prefContact">
+            <option>Phone — Call</option>
+            <option>Phone — Text</option>
+            <option>Email</option>
+          </select>
+        </div>
+        <div class="field-group full-width">
+          <label>Address</label>
+          <input type="text" id="f-address">
+        </div>
+        <div class="field-group">
+          <label>Referral Source</label>
+          <select id="f-referral">
+            <option>Google Search</option>
+            <option>Facebook</option>
+            <option>Instagram</option>
+            <option>Word of Mouth</option>
+            <option>Walk-in</option>
+            <option>Yelp</option>
+            <option>Other</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 2: Pet Details -->
+  <div class="form-section">
+    <div class="section-header" onclick="toggleSection(this)">
+      🐾 Pet Details <span class="chevron">▼</span>
+    </div>
+    <div class="section-body">
+      <div class="field-grid">
+        <div class="field-group">
+          <label>Pet Name</label>
+          <input type="text" id="f-petName">
+        </div>
+        <div class="field-group">
+          <label>Species</label>
+          <select id="f-species"><option>Dog</option><option>Cat</option></select>
+        </div>
+        <div class="field-group">
+          <label>Breed</label>
+          <input type="text" id="f-breed">
+        </div>
+        <div class="field-group">
+          <label>Size</label>
+          <select id="f-size"><option>Small (0–25 lbs)</option><option>Medium (26–50 lbs)</option><option>Large (51–90 lbs)</option><option>Extra Large (90+ lbs)</option></select>
+        </div>
+        <div class="field-group">
+          <label>Weight (lbs)</label>
+          <input type="number" id="f-weight">
+        </div>
+        <div class="field-group">
+          <label>Date of Birth</label>
+          <input type="date" id="f-dob">
+        </div>
+        <div class="field-group">
+          <label>Temperament</label>
+          <select id="f-temperament"><option>Calm</option><option>Friendly</option><option>Anxious</option><option>Aggressive</option><option>Energetic</option></select>
+        </div>
+        <div class="field-group">
+          <label>Vaccination Status</label>
+          <select id="f-vaccStatus">
+            <option>Current</option>
+            <option>Expired</option>
+            <option>Unknown</option>
+          </select>
+        </div>
+        <div class="field-group full-width">
+          <label>Allergies / Medical Notes</label>
+          <textarea id="f-allergies" rows="2"></textarea>
+        </div>
+        <div class="field-group">
+          <label>Vet Name</label>
+          <input type="text" id="f-vet">
+        </div>
+        <div class="field-group">
+          <label>Vet Phone</label>
+          <input type="tel" id="f-vetPhone">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 3: Grooming Preferences -->
+  <div class="form-section">
+    <div class="section-header" onclick="toggleSection(this)">
+      ✂️ Grooming Preferences <span class="chevron">▼</span>
+    </div>
+    <div class="section-body">
+      <div class="field-grid">
+        <div class="field-group">
+          <label>Coat Type</label>
+          <select id="f-coat"><option>Short</option><option>Medium</option><option>Long</option><option>Double Coat</option><option>Curly</option><option>Wire/Rough</option></select>
+        </div>
+        <div class="field-group">
+          <label>Cut Style</label>
+          <select id="f-cut"><option>Breed Standard</option><option>Puppy Cut</option><option>Teddy Bear</option><option>Lion Cut</option><option>Shave Down</option><option>Custom — See Notes</option></select>
+        </div>
+        <div class="field-group">
+          <label>Shampoo Preference</label>
+          <select id="f-shampoo"><option>Standard</option><option>Hypoallergenic</option><option>Oatmeal</option><option>Medicated</option><option>De-shedding</option></select>
+        </div>
+        <div class="field-group">
+          <label>Nail Trim</label>
+          <select id="f-nails"><option>Yes</option><option>No</option><option>Grind Only</option></select>
+        </div>
+        <div class="field-group">
+          <label>Ear Cleaning</label>
+          <select id="f-ears"><option>Yes</option><option>No</option></select>
+        </div>
+        <div class="field-group">
+          <label>Teeth Brushing</label>
+          <select id="f-teeth"><option>Yes</option><option>No</option></select>
+        </div>
+        <div class="field-group full-width">
+          <label>Add-ons / Special Requests</label>
+          <textarea id="f-addons" rows="2"></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 4: Appointment & Scheduling -->
+  <div class="form-section">
+    <div class="section-header" onclick="toggleSection(this)">
+      📅 Appointment & Scheduling <span class="chevron">▼</span>
+    </div>
+    <div class="section-body">
+      <div class="field-grid">
+        <div class="field-group">
+          <label>Last Visit</label>
+          <input type="date" id="f-lastVisit">
+        </div>
+        <div class="field-group">
+          <label>Next Appointment</label>
+          <input type="date" id="f-nextAppt">
+        </div>
+        <div class="field-group">
+          <label>Frequency</label>
+          <select id="f-frequency"><option>Every 4 weeks</option><option>Every 6 weeks</option><option>Every 8 weeks</option><option>As needed</option></select>
+        </div>
+        <div class="field-group">
+          <label>Preferred Day</label>
+          <select id="f-prefDay"><option>Monday</option><option>Tuesday</option><option>Wednesday</option><option>Thursday</option><option>Friday</option><option>Saturday</option><option>No Preference</option></select>
+        </div>
+        <div class="field-group">
+          <label>Preferred Time</label>
+          <select id="f-prefTime"><option>Morning (8–11 AM)</option><option>Midday (11 AM–1 PM)</option><option>Afternoon (1–4 PM)</option><option>No Preference</option></select>
+        </div>
+        <div class="field-group">
+          <label>Drop-off Preference</label>
+          <select id="f-dropoff"><option>Wait During Service</option><option>Drop Off & Pick Up</option><option>Curbside</option></select>
+        </div>
+        <div class="field-group">
+          <label>Appointment Status</label>
+          <select id="f-status">
+            <option>Confirmed</option>
+            <option>Pending</option>
+            <option>Completed</option>
+            <option>No Show</option>
+            <option>Cancelled</option>
+          </select>
+        </div>
+        <div class="field-group">
+          <label>Service Total ($)</label>
+          <input type="number" id="f-serviceTotal" min="0" step="0.01" placeholder="e.g. 75.00">
+        </div>
+        <div class="field-group full-width">
+          <label>Internal Notes</label>
+          <textarea id="f-notes" rows="2"></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Submit -->
+  <div class="submit-bar">
+    <button class="btn btn-outline" onclick="clearForm()">Clear Form</button>
+    <button class="btn btn-success" onclick="saveRecord()">💾 Save Record</button>
+  </div>
+
+</div><!-- /tab-form -->
+
+
+<!-- ═══════ FOOTER ═══════ -->
+<footer class="app-footer">
+  Built by <strong>Formsmith</strong> · <a href="https://www.etsy.com/shop/FormsmithCustomForms" target="_blank">Etsy Shop</a> · <a href="mailto:formsmithcustomforms@gmail.com">formsmithcustomforms@gmail.com</a>
+  <br>Every field, tab, chart, and dashboard card is 100% customized to your business.
+</footer>
+
+<!-- ═══════ TOAST ═══════ -->
+<div class="toast" id="toast"></div>
+
+<!-- ═══════ HISTORY MODAL ═══════ -->
+<div class="modal-overlay" id="historyModal" onclick="if(event.target===this)closeHistory()">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3>📜 Change History — <span id="historyName">Biscuit</span></h3>
+      <button class="modal-close" onclick="closeHistory()">&times;</button>
+    </div>
+    <div class="modal-body" id="historyBody"></div>
+  </div>
+</div>
+
+<script>
+// ═══════ TAB SWITCHING ═══════
+function switchTab(tab) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  document.querySelector(`.tab-btn[onclick="switchTab('${tab}')"]`).classList.add('active');
+}
+
+// ═══════ SECTION COLLAPSE ═══════
+function toggleSection(header) {
+  header.classList.toggle('collapsed');
+  const body = header.nextElementSibling;
+  body.classList.toggle('hidden');
+}
+
+// ═══════ TOAST ═══════
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ═══════ CLIENT DATA ═══════
+const clients = {
+  biscuit: {
+    clientId: 'CLT-001', firstName: 'Sarah', lastName: 'Jennings',
+    phone: '(414) 555-0147', email: 'sarah.jennings@email.com', prefContact: 'Phone — Text',
+    address: '2847 N Oakland Ave, Milwaukee, WI 53211', referral: 'Google Search',
+    petName: 'Biscuit', species: 'Dog', breed: 'Golden Retriever',
+    size: 'Large (51–90 lbs)', weight: '72', dob: '2022-06-15',
+    temperament: 'Friendly', vaccStatus: 'Current',
+    allergies: 'Sensitive skin — use hypoallergenic shampoo only',
+    vet: 'Dr. Ramirez — Lakeside Vet', vetPhone: '(414) 555-0200',
+    coat: 'Long', cut: 'Breed Standard', shampoo: 'Hypoallergenic',
+    nails: 'Yes', ears: 'Yes', teeth: 'Yes',
+    addons: 'Blueberry facial scrub, extra brushing on tail feathering',
+    lastVisit: '2026-03-18', nextAppt: '2026-04-15', frequency: 'Every 4 weeks',
+    prefDay: 'Tuesday', prefTime: 'Morning (8–11 AM)', dropoff: 'Drop Off & Pick Up',
+    status: 'Confirmed', serviceTotal: '85.00', notes: 'VIP client — always on time. Biscuit loves treats after bath.'
+  },
+  luna: {
+    clientId: 'CLT-002', firstName: 'Marcus', lastName: 'Torres',
+    phone: '(414) 555-0293', email: 'marcus.t@email.com', prefContact: 'Phone — Call',
+    address: '1520 E Brady St, Milwaukee, WI 53202', referral: 'Word of Mouth',
+    petName: 'Luna', species: 'Dog', breed: 'Shih Tzu',
+    size: 'Small (0–25 lbs)', weight: '14', dob: '2023-01-10',
+    temperament: 'Calm', vaccStatus: 'Current',
+    allergies: 'None',
+    vet: 'Dr. Patel — Bay View Animal Hospital', vetPhone: '(414) 555-0315',
+    coat: 'Long', cut: 'Teddy Bear', shampoo: 'Standard',
+    nails: 'Yes', ears: 'Yes', teeth: 'No',
+    addons: 'Bow on ears please, paw balm',
+    lastVisit: '2026-03-20', nextAppt: '2026-04-17', frequency: 'Every 4 weeks',
+    prefDay: 'Thursday', prefTime: 'Midday (11 AM–1 PM)', dropoff: 'Wait During Service',
+    status: 'Confirmed', serviceTotal: '55.00', notes: 'Also has a second dog Stella — sometimes booked same day.'
+  },
+  cooper: {
+    clientId: 'CLT-003', firstName: 'Diane', lastName: 'Walsh',
+    phone: '(414) 555-0481', email: 'diane.walsh@email.com', prefContact: 'Email',
+    address: '3310 S Kinnickinnic Ave, Milwaukee, WI 53207', referral: 'Facebook',
+    petName: 'Cooper', species: 'Dog', breed: 'Australian Shepherd',
+    size: 'Medium (26–50 lbs)', weight: '48', dob: '2021-09-03',
+    temperament: 'Energetic', vaccStatus: 'Expired',
+    allergies: 'Mild food allergies — no chicken-scented products',
+    vet: 'Dr. Kim — Greenfield Vet Clinic', vetPhone: '(414) 555-0422',
+    coat: 'Double Coat', cut: 'Breed Standard', shampoo: 'De-shedding',
+    nails: 'Grind Only', ears: 'Yes', teeth: 'Yes',
+    addons: 'De-shedding treatment (heavy shedder), bandana after groom',
+    lastVisit: '2026-03-05', nextAppt: '2026-04-02', frequency: 'Every 4 weeks',
+    prefDay: 'Wednesday', prefTime: 'Morning (8–11 AM)', dropoff: 'Drop Off & Pick Up',
+    status: 'Pending', serviceTotal: '95.00', notes: 'Cooper can be jumpy during nail grinding — go slow. Vaccination expired 3/1 — remind owner.'
+  },
+  mochi: {
+    clientId: 'CLT-004', firstName: 'Rachel', lastName: 'Miller',
+    phone: '(414) 555-0567', email: 'rachel.m@email.com', prefContact: 'Phone — Text',
+    address: '750 N Water St, Milwaukee, WI 53202', referral: 'Instagram',
+    petName: 'Mochi', species: 'Dog', breed: 'Pomeranian',
+    size: 'Small (0–25 lbs)', weight: '8', dob: '2024-03-22',
+    temperament: 'Anxious', vaccStatus: 'Current',
+    allergies: 'None known — watch for skin irritation with new products',
+    vet: 'Dr. Ramirez — Lakeside Vet', vetPhone: '(414) 555-0200',
+    coat: 'Long', cut: 'Teddy Bear', shampoo: 'Oatmeal',
+    nails: 'Yes', ears: 'No', teeth: 'Yes',
+    addons: 'Gentle handling — gets nervous. Paw pad trim.',
+    lastVisit: '2026-03-12', nextAppt: '2026-04-09', frequency: 'Every 4 weeks',
+    prefDay: 'Saturday', prefTime: 'Afternoon (1–4 PM)', dropoff: 'Wait During Service',
+    status: 'Confirmed', serviceTotal: '45.00', notes: 'Mochi does best in quiet environment — avoid scheduling with large dogs if possible.'
+  }
+};
+
+// ═══════ LOAD / CLEAR / SAVE ═══════
+function setField(id, val) {
+  const el = document.getElementById('f-' + id);
+  if (!el) return;
+  if (el.tagName === 'SELECT') {
+    for (let i = 0; i < el.options.length; i++) {
+      if (el.options[i].text === val || el.options[i].value === val) { el.selectedIndex = i; break; }
+    }
+  } else {
+    el.value = val || '';
+  }
+}
+
+function loadClient() {
+  const key = document.getElementById('clientSelect').value;
+  if (!key) return;
+  const c = clients[key];
+  if (!c) return;
+  Object.keys(c).forEach(k => setField(k, c[k]));
+  showToast('✅ Loaded: ' + c.petName + ' (' + c.firstName + ' ' + c.lastName + ')');
+}
+
+function clearForm() {
+  document.querySelectorAll('#tab-form input, #tab-form select, #tab-form textarea').forEach(el => {
+    if (el.id === 'clientSelect') { el.selectedIndex = 0; return; }
+    if (el.tagName === 'SELECT') { el.selectedIndex = 0; }
+    else { el.value = ''; }
+  });
+  showToast('🧹 Form cleared');
+}
+
+function saveRecord() {
+  const name = document.getElementById('f-petName').value;
+  if (!name) { showToast('⚠️ No record loaded — load a client first'); return; }
+  showToast('💾 Saved: ' + name + ' → Google Sheet updated');
+}
+
+// ═══════ HISTORY MODAL ═══════
+const historyData = {
+  biscuit: [
+    { date: 'Mar 18, 2026 — 10:32 AM', user: 'You', changes: [
+      { field: 'Last Visit', old: 'Feb 18, 2026', new: 'Mar 18, 2026' },
+      { field: 'Next Appointment', old: 'Mar 18, 2026', new: 'Apr 15, 2026' },
+      { field: 'Add-ons', old: 'Blueberry facial scrub', new: 'Blueberry facial scrub, extra brushing on tail feathering' }
+    ]},
+    { date: 'Feb 18, 2026 — 9:15 AM', user: 'You', changes: [
+      { field: 'Weight', old: '70', new: '72' },
+      { field: 'Shampoo', old: 'Oatmeal', new: 'Hypoallergenic' },
+      { field: 'Notes', old: 'VIP client.', new: 'VIP client — always on time. Biscuit loves treats after bath.' }
+    ]},
+    { date: 'Jan 20, 2026 — 11:04 AM', user: 'You', changes: [
+      { field: 'Vaccination Status', old: 'Expired', new: 'Current' },
+      { field: 'Preferred Day', old: 'Monday', new: 'Tuesday' }
+    ]},
+    { date: 'Dec 15, 2025 — 2:41 PM', user: 'You', changes: [
+      { field: 'Record Created', old: '—', new: 'CLT-001' }
+    ]}
+  ],
+  luna: [
+    { date: 'Mar 20, 2026 — 12:10 PM', user: 'You', changes: [
+      { field: 'Last Visit', old: 'Feb 20, 2026', new: 'Mar 20, 2026' },
+      { field: 'Cut Style', old: 'Puppy Cut', new: 'Teddy Bear' }
+    ]},
+    { date: 'Jan 15, 2026 — 10:30 AM', user: 'You', changes: [
+      { field: 'Record Created', old: '—', new: 'CLT-002' }
+    ]}
+  ],
+  cooper: [
+    { date: 'Mar 5, 2026 — 9:20 AM', user: 'You', changes: [
+      { field: 'Vaccination Status', old: 'Current', new: 'Expired' },
+      { field: 'Notes', old: 'Cooper can be jumpy during nail grinding.', new: 'Cooper can be jumpy during nail grinding — go slow. Vaccination expired 3/1 — remind owner.' }
+    ]},
+    { date: 'Feb 1, 2026 — 8:45 AM', user: 'You', changes: [
+      { field: 'Record Created', old: '—', new: 'CLT-003' }
+    ]}
+  ],
+  mochi: [
+    { date: 'Mar 12, 2026 — 3:15 PM', user: 'You', changes: [
+      { field: 'Temperament', old: 'Calm', new: 'Anxious' },
+      { field: 'Shampoo', old: 'Standard', new: 'Oatmeal' },
+      { field: 'Notes', old: '', new: 'Mochi does best in quiet environment — avoid scheduling with large dogs if possible.' }
+    ]},
+    { date: 'Feb 22, 2026 — 1:00 PM', user: 'You', changes: [
+      { field: 'Record Created', old: '—', new: 'CLT-004' }
+    ]}
+  ]
+};
+
+function showHistory() {
+  const key = document.getElementById('clientSelect').value;
+  if (!key) { showToast('⚠️ Select a client first'); return; }
+  const pet = clients[key].petName;
+  document.getElementById('historyName').textContent = pet;
+  const entries = historyData[key] || [];
+  let html = '';
+  entries.forEach(e => {
+    html += '<div class="history-entry">';
+    html += '<div class="history-date">' + e.date + ' · by ' + e.user + '</div>';
+    e.changes.forEach(c => {
+      html += '<div class="history-change">';
+      html += '<span class="history-field">' + c.field + ':</span> ';
+      if (c.old !== '—') html += '<span class="history-old">' + c.old + '</span> → ';
+      html += '<span class="history-new">' + c.new + '</span>';
+      html += '</div>';
+    });
+    html += '</div>';
+  });
+  document.getElementById('historyBody').innerHTML = html;
+  document.getElementById('historyModal').classList.add('show');
+}
+
+function closeHistory() {
+  document.getElementById('historyModal').classList.remove('show');
+}
+
+// ═══════ DATE RANGE FILTER (visual demo) ═══════
+const kpiSets = {
+  month:   { appts: '47',  rev: '$3,285',  clients: '124', upcoming: '12', vacc: '6', trend: '↑ 14.6%', revTrend: '↑ 8.2%', sub: 'vs. 41 last month', revSub: 'Avg ticket: $69.89', newC: '9 new this month' },
+  quarter: { appts: '138', rev: '$9,522',  clients: '124', upcoming: '12', vacc: '6', trend: '↑ 11.2%', revTrend: '↑ 6.7%', sub: 'vs. 124 last quarter', revSub: 'Avg ticket: $69.00', newC: '22 new this quarter' },
+  year:    { appts: '487', rev: '$33,890', clients: '124', upcoming: '12', vacc: '6', trend: '↑ 18.5%', revTrend: '↑ 12.1%', sub: 'vs. 411 last year', revSub: 'Avg ticket: $69.59', newC: '47 new this year' },
+  all:     { appts: '1,204', rev: '$82,476', clients: '124', upcoming: '12', vacc: '6', trend: '', revTrend: '', sub: 'since Oct 2023', revSub: 'Avg ticket: $68.50', newC: 'Opened Oct 2023' }
+};
+
+function setDateRange(btn, range) {
+  document.querySelectorAll('.filter-pill').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const d = kpiSets[range];
+  const cards = document.querySelectorAll('.kpi-card');
+  cards[0].querySelector('.kpi-value').textContent = d.appts;
+  cards[0].querySelector('.kpi-sub').textContent = d.sub;
+  const trend0 = cards[0].querySelector('.kpi-trend');
+  trend0.textContent = d.trend; trend0.style.display = d.trend ? '' : 'none';
+  cards[1].querySelector('.kpi-value').textContent = d.rev;
+  cards[1].querySelector('.kpi-sub').textContent = d.revSub;
+  const trend1 = cards[1].querySelector('.kpi-trend');
+  trend1.textContent = d.revTrend; trend1.style.display = d.revTrend ? '' : 'none';
+  cards[2].querySelector('.kpi-sub').textContent = d.newC;
+}
+
+// ═══════ CHARTS ═══════
+function initCharts() {
+  // Revenue Bar Chart
+  new Chart(document.getElementById('revenueChart'), {
+    type: 'bar',
+    data: {
+      labels: ['Oct','Nov','Dec','Jan','Feb','Mar'],
+      datasets: [{
+        label: 'Revenue',
+        data: [2180, 2540, 2890, 2750, 3035, 3285],
+        backgroundColor: ['#dbeafe','#dbeafe','#dbeafe','#dbeafe','#dbeafe','#2563eb'],
+        borderRadius: 6,
+        borderSkipped: false
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => '$' + ctx.parsed.y.toLocaleString() } }
+      },
+      scales: {
+        y: { beginAtZero: true, ticks: { callback: v => '$' + v.toLocaleString() }, grid: { color: '#f1f5f9' } },
+        x: { grid: { display: false } }
+      }
+    }
+  });
+
+  // Services Doughnut
+  new Chart(document.getElementById('servicesChart'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Full Groom', 'Bath & Brush', 'Nail Trim', 'De-shed Treatment', 'Teeth Cleaning', 'Puppy First Groom'],
+      datasets: [{
+        data: [22, 11, 6, 4, 3, 1],
+        backgroundColor: ['#2563eb','#10b981','#f59e0b','#8b5cf6','#ef4444','#06b6d4'],
+        borderWidth: 0,
+        hoverOffset: 6
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'right', labels: { boxWidth: 12, padding: 12, font: { size: 12 } } }
+      },
+      cutout: '60%'
+    }
+  });
+
+  // Breed Horizontal Bar
+  new Chart(document.getElementById('breedChart'), {
+    type: 'bar',
+    data: {
+      labels: ['Golden Retriever','Shih Tzu','Poodle Mix','Labrador','Aussie Shepherd','Pomeranian','French Bulldog','Other'],
+      datasets: [{
+        data: [18, 15, 14, 12, 10, 9, 8, 38],
+        backgroundColor: '#8b5cf6',
+        borderRadius: 4,
+        borderSkipped: false
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { beginAtZero: true, grid: { color: '#f1f5f9' } },
+        y: { grid: { display: false }, ticks: { font: { size: 11 } } }
+      }
+    }
+  });
+
+  // Day of Week Bar
+  new Chart(document.getElementById('dayChart'), {
+    type: 'bar',
+    data: {
+      labels: ['Mon','Tue','Wed','Thu','Fri','Sat'],
+      datasets: [{
+        data: [6, 9, 7, 8, 7, 10],
+        backgroundColor: '#10b981',
+        borderRadius: 6,
+        borderSkipped: false
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { beginAtZero: true, ticks: { stepSize: 2 }, grid: { color: '#f1f5f9' } },
+        x: { grid: { display: false } }
+      }
+    }
+  });
+}
+
+// ═══════ REVENUE TOGGLE ═══════
+let revenueByWeek = false;
+function toggleRevenueView(btn) {
+  revenueByWeek = !revenueByWeek;
+  btn.textContent = revenueByWeek ? 'By Week' : 'By Month';
+  showToast('📊 Toggled view — in real app, chart data reloads from sheet');
+}
+
+// Init
+document.addEventListener('DOMContentLoaded', initCharts);
+</script>
+
+</body>
+</html>
