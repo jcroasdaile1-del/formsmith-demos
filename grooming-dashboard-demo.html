@@ -577,6 +577,19 @@
     text-transform: none;
     letter-spacing: normal;
   }
+  /* Edge-aware: prevent tooltip from overflowing right side */
+  .field-group:last-child [data-help]::after,
+  .submit-bar [data-help]::after {
+    left: auto;
+    right: 0;
+    transform: none;
+  }
+  .field-group:last-child [data-help]::before,
+  .submit-bar [data-help]::before {
+    left: auto;
+    right: 12px;
+    transform: none;
+  }
   [data-help]::before {
     content: '';
     position: absolute;
@@ -612,6 +625,61 @@
     cursor: help;
     vertical-align: middle;
     flex-shrink: 0;
+  }
+
+  /* ── Currently editing indicator ── */
+  .editing-indicator {
+    background: linear-gradient(135deg, var(--primary-light), #eff6ff);
+    border: 1px solid var(--primary);
+    border-radius: var(--radius);
+    padding: 10px 16px;
+    margin-bottom: 12px;
+    font-size: 0.85rem;
+    color: var(--primary-dark);
+    display: none;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+  }
+  .editing-indicator.show { display: flex; }
+  .editing-indicator .edit-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--primary);
+    animation: pulse-dot 1.5s ease-in-out infinite;
+  }
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+  .editing-indicator .unsaved-badge {
+    background: var(--warning-light);
+    color: #92400e;
+    font-size: 0.72rem;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 700;
+    margin-left: auto;
+    display: none;
+  }
+  .editing-indicator .unsaved-badge.show { display: inline-block; }
+
+  /* ── Section fill indicator ── */
+  .section-fill-badge {
+    font-size: 0.7rem;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 700;
+    margin-right: 8px;
+  }
+  .section-fill-badge.filled {
+    background: var(--accent-light);
+    color: #059669;
+  }
+  .section-fill-badge.empty {
+    background: var(--bg);
+    color: var(--text-light);
   }
 
   /* ── Backup bar ── */
@@ -853,6 +921,13 @@
 
   <div class="sample-banner">
     <strong>⚡ Interactive Demo</strong> — Try loading a client, editing fields, and saving. The View History button shows automatic change tracking. In your real app, every field saves to your Google Sheet.
+  </div>
+
+  <!-- Currently Editing Indicator -->
+  <div class="editing-indicator" id="editingIndicator">
+    <span class="edit-dot"></span>
+    <span id="editingLabel">Editing: —</span>
+    <span class="unsaved-badge" id="unsavedBadge">UNSAVED CHANGES</span>
   </div>
 
   <!-- Backup Bar -->
@@ -1221,28 +1296,79 @@ function setField(id, val) {
   }
 }
 
+let formDirty = false;
+let currentClientKey = null;
+
 function loadClient() {
   const key = document.getElementById('clientSelect').value;
   if (!key) return;
+  if (formDirty && !confirm('You have unsaved changes. Load a different client anyway?')) return;
   const c = clients[key];
   if (!c) return;
+  currentClientKey = key;
   Object.keys(c).forEach(k => setField(k, c[k]));
+  formDirty = false;
+  updateEditingIndicator(c.petName + ' — ' + c.firstName + ' ' + c.lastName);
+  updateSectionBadges();
   showToast('✅ Loaded: ' + c.petName + ' (' + c.firstName + ' ' + c.lastName + ')');
 }
 
+function updateEditingIndicator(label) {
+  const el = document.getElementById('editingIndicator');
+  const lbl = document.getElementById('editingLabel');
+  if (label) {
+    lbl.textContent = 'Editing: ' + label;
+    el.classList.add('show');
+  } else {
+    el.classList.remove('show');
+  }
+  document.getElementById('unsavedBadge').classList.remove('show');
+}
+
+function markDirty() {
+  if (!currentClientKey) return;
+  formDirty = true;
+  document.getElementById('unsavedBadge').classList.add('show');
+}
+
+// Listen for any form changes to mark dirty
+document.addEventListener('DOMContentLoaded', function() {
+  document.getElementById('tab-form').addEventListener('input', markDirty);
+  document.getElementById('tab-form').addEventListener('change', markDirty);
+});
+
 function clearForm() {
+  if (formDirty && !confirm('You have unsaved changes. Clear the form anyway?')) return;
   document.querySelectorAll('#tab-form input, #tab-form select, #tab-form textarea').forEach(el => {
     if (el.id === 'clientSelect') { el.selectedIndex = 0; return; }
     if (el.tagName === 'SELECT') { el.selectedIndex = 0; }
     else { el.value = ''; }
   });
+  formDirty = false;
+  currentClientKey = null;
+  updateEditingIndicator(null);
+  updateSectionBadges();
   showToast('🧹 Form cleared');
 }
 
 function saveRecord() {
   const name = document.getElementById('f-petName').value;
-  if (!name) { showToast('⚠️ No record loaded — load a client first'); return; }
-  showToast('💾 Saved: ' + name + ' → Google Sheet updated');
+  const firstName = document.getElementById('f-firstName').value;
+  const lastName = document.getElementById('f-lastName').value;
+  if (!name && !firstName) {
+    showToast('⚠️ Fill in at least a pet name or client name to save');
+    return;
+  }
+  // Count filled fields
+  let filled = 0;
+  document.querySelectorAll('#tab-form .form-section input, #tab-form .form-section select, #tab-form .form-section textarea').forEach(el => {
+    if (el.value && el.value.trim()) filled++;
+  });
+  formDirty = false;
+  document.getElementById('unsavedBadge').classList.remove('show');
+  const label = name ? name : firstName + ' ' + lastName;
+  showToast('💾 Saved: ' + label + ' (' + filled + ' fields) → Google Sheet updated');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 // ═══════ HISTORY MODAL ═══════
@@ -1322,6 +1448,11 @@ function showHistory() {
 function closeHistory() {
   document.getElementById('historyModal').classList.remove('show');
 }
+
+// Close modal on Escape key
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closeHistory();
+});
 
 // ═══════ DATE RANGE FILTER (visual demo) ═══════
 const kpiSets = {
@@ -1456,6 +1587,42 @@ function toggleRevenueView(btn) {
   btn.textContent = revenueByWeek ? 'By Week' : 'By Month';
   showToast('📊 Toggled view — in real app, chart data reloads from sheet');
 }
+
+// ═══════ SECTION FILL BADGES ═══════
+function updateSectionBadges() {
+  document.querySelectorAll('#tab-form .form-section').forEach(section => {
+    const fields = section.querySelectorAll('input, select, textarea');
+    let filled = 0, total = 0;
+    fields.forEach(f => {
+      if (f.type === 'hidden' || f.id === 'clientSelect') return;
+      total++;
+      if (f.value && f.value.trim()) filled++;
+    });
+    let badge = section.querySelector('.section-fill-badge');
+    const header = section.querySelector('.section-header');
+    if (!badge) {
+      badge = document.createElement('span');
+      badge.className = 'section-fill-badge';
+      header.insertBefore(badge, header.querySelector('.chevron'));
+    }
+    if (filled > 0) {
+      badge.textContent = filled + '/' + total + ' filled';
+      badge.className = 'section-fill-badge filled';
+    } else {
+      badge.textContent = 'empty';
+      badge.className = 'section-fill-badge empty';
+    }
+  });
+}
+
+// ═══════ TAB SWITCH WARNING ═══════
+const origSwitchTab = switchTab;
+window.switchTab = function(tab) {
+  if (formDirty && tab !== 'form') {
+    if (!confirm('You have unsaved changes on the form. Switch tabs anyway?')) return;
+  }
+  origSwitchTab(tab);
+};
 
 // ═══════ DATA BACKUP / EXPORT ═══════
 function exportBackup(format) {
