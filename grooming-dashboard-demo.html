@@ -547,6 +547,98 @@
   }
   .date-filter .filter-pill:hover { background: var(--primary-light); color: var(--primary); border-color: var(--primary); }
   .date-filter .filter-pill.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+  /* ── Tooltip Help System ── */
+  [data-help] {
+    position: relative;
+  }
+  [data-help]::after {
+    content: attr(data-help);
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1e293b;
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 500;
+    line-height: 1.4;
+    padding: 8px 12px;
+    border-radius: 8px;
+    white-space: normal;
+    width: max-content;
+    max-width: 260px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s, visibility 0.2s;
+    z-index: 200;
+    pointer-events: none;
+    text-transform: none;
+    letter-spacing: normal;
+  }
+  [data-help]::before {
+    content: '';
+    position: absolute;
+    bottom: calc(100% + 2px);
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: #1e293b;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s, visibility 0.2s;
+    z-index: 200;
+    pointer-events: none;
+  }
+  [data-help]:hover::after,
+  [data-help]:hover::before {
+    opacity: 1;
+    visibility: visible;
+  }
+  /* Help icon indicator */
+  .help-icon {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--primary-light);
+    color: var(--primary);
+    font-size: 0.65rem;
+    font-weight: 800;
+    text-align: center;
+    line-height: 16px;
+    margin-left: 4px;
+    cursor: help;
+    vertical-align: middle;
+    flex-shrink: 0;
+  }
+
+  /* ── Backup bar ── */
+  .backup-bar {
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 14px 20px;
+    box-shadow: var(--shadow);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    border-left: 4px solid var(--accent);
+  }
+  .backup-bar .backup-label {
+    font-weight: 700;
+    font-size: 0.85rem;
+    flex: 1;
+  }
+  .backup-bar .backup-label small {
+    display: block;
+    font-weight: 400;
+    font-size: 0.78rem;
+    color: var(--text-light);
+    margin-top: 2px;
+  }
 </style>
 </head>
 <body>
@@ -575,37 +667,37 @@
 
   <!-- Date Range Filter -->
   <div class="date-filter">
-    <button class="filter-pill active" onclick="setDateRange(this, 'month')">This Month</button>
-    <button class="filter-pill" onclick="setDateRange(this, 'quarter')">This Quarter</button>
-    <button class="filter-pill" onclick="setDateRange(this, 'year')">This Year</button>
-    <button class="filter-pill" onclick="setDateRange(this, 'all')">All Time</button>
+    <button class="filter-pill active" onclick="setDateRange(this, 'month')" data-help="Show data for the current calendar month only.">This Month</button>
+    <button class="filter-pill" onclick="setDateRange(this, 'quarter')" data-help="Show data for the current quarter (3-month period).">This Quarter</button>
+    <button class="filter-pill" onclick="setDateRange(this, 'year')" data-help="Show data for the current calendar year.">This Year</button>
+    <button class="filter-pill" onclick="setDateRange(this, 'all')" data-help="Show all data since the business started tracking.">All Time</button>
   </div>
 
   <!-- KPI Cards -->
   <div class="kpi-grid">
-    <div class="kpi-card green">
-      <div class="kpi-label">Appointments This Month</div>
+    <div class="kpi-card green" data-help="Total grooming appointments completed in the selected time range. Pulled from the Appointment Status column.">
+      <div class="kpi-label" id="kpi-appts-label">Appointments This Month</div>
       <div class="kpi-value" id="kpi-appts">47</div>
       <div class="kpi-sub">vs. 41 last month</div>
       <span class="kpi-trend up">↑ 14.6%</span>
     </div>
-    <div class="kpi-card">
-      <div class="kpi-label">Revenue This Month</div>
+    <div class="kpi-card" data-help="Total revenue from the Service Total ($) field, summed for the selected date range.">
+      <div class="kpi-label" id="kpi-rev-label">Revenue This Month</div>
       <div class="kpi-value">$3,285</div>
       <div class="kpi-sub">Sum of Service Total column</div>
       <span class="kpi-trend up">↑ 8.2%</span>
     </div>
-    <div class="kpi-card purple">
+    <div class="kpi-card purple" data-help="Clients with at least one appointment in the last 12 months. New clients are first-time visitors in the selected period.">
       <div class="kpi-label">Total Active Clients</div>
       <div class="kpi-value">124</div>
       <div class="kpi-sub">9 new this month</div>
     </div>
-    <div class="kpi-card yellow">
+    <div class="kpi-card yellow" data-help="Appointments scheduled within the next 7 days. Unconfirmed ones appear in the Alerts panel below.">
       <div class="kpi-label">Upcoming (7 Days)</div>
       <div class="kpi-value">12</div>
       <div class="kpi-sub">3 unconfirmed</div>
     </div>
-    <div class="kpi-card red">
+    <div class="kpi-card red" data-help="Pets whose vaccination date has passed. These need owner notification before their next appointment.">
       <div class="kpi-label">Expired Vaccinations</div>
       <div class="kpi-value">6</div>
       <div class="kpi-sub">Owners need notification</div>
@@ -618,7 +710,7 @@
     <!-- Revenue Chart -->
     <div class="dash-card">
       <div class="dash-card-header">
-        <h3>📈 Monthly Revenue</h3>
+        <h3 data-help="Bar chart showing total revenue per month from the Service Total ($) field.">📈 Monthly Revenue</h3>
         <button class="filter-btn" onclick="toggleRevenueView(this)">By Month</button>
       </div>
       <div class="dash-card-body">
@@ -629,7 +721,7 @@
     <!-- Services Chart -->
     <div class="dash-card">
       <div class="dash-card-header">
-        <h3>🛁 Services Breakdown</h3>
+        <h3 data-help="Breakdown of appointment types for the period. Data comes from the service selected during booking.">🛁 Services Breakdown</h3>
         <button class="filter-btn">This Month</button>
       </div>
       <div class="dash-card-body">
@@ -640,7 +732,7 @@
     <!-- Upcoming Appointments -->
     <div class="dash-card">
       <div class="dash-card-header">
-        <h3>📅 Upcoming Appointments</h3>
+        <h3 data-help="Appointments scheduled in the next 7 days. Status shows whether the client has confirmed.">📅 Upcoming Appointments</h3>
         <button class="filter-btn">Next 7 Days</button>
       </div>
       <div class="dash-card-body">
@@ -685,7 +777,7 @@
     <!-- Alerts / Action Items -->
     <div class="dash-card">
       <div class="dash-card-header">
-        <h3>⚠️ Alerts & Action Items</h3>
+        <h3 data-help="Automatic flags for items needing your attention — expired vaccinations, unconfirmed bookings, and clients due for rebooking.">⚠️ Alerts & Action Items</h3>
       </div>
       <div class="dash-card-body">
         <ul class="alert-list">
@@ -712,7 +804,7 @@
     <!-- Top Clients -->
     <div class="dash-card full-width">
       <div class="dash-card-header">
-        <h3>🏆 Top Clients by Visit Count (All Time)</h3>
+        <h3 data-help="Your most frequent clients ranked by total visits. Helps identify VIPs and loyalty candidates.">🏆 Top Clients by Visit Count (All Time)</h3>
         <button class="filter-btn">All Time</button>
       </div>
       <div class="dash-card-body">
@@ -763,20 +855,30 @@
     <strong>⚡ Interactive Demo</strong> — Try loading a client, editing fields, and saving. The View History button shows automatic change tracking. In your real app, every field saves to your Google Sheet.
   </div>
 
+  <!-- Backup Bar -->
+  <div class="backup-bar">
+    <div class="backup-label">
+      💾 Data Backup
+      <small>Download a copy of all client records so you never lose your data.</small>
+    </div>
+    <button class="btn btn-success" onclick="exportBackup('csv')" data-help="Download all client records as a CSV file you can open in Excel or Google Sheets.">📥 Export CSV</button>
+    <button class="btn btn-outline" onclick="exportBackup('json')" data-help="Download all client records as a JSON file — useful for full data backups.">📦 Export JSON</button>
+  </div>
+
   <!-- Lookup Bar -->
   <div class="lookup-bar">
     <label>🔎 Lookup Client:</label>
-    <select id="clientSelect" onchange="loadClient()">
+    <select id="clientSelect" onchange="loadClient()" data-help="Choose an existing client to load their full record into the form below.">
       <option value="">— Select —</option>
       <option value="biscuit">CLT-001 — Biscuit (Sarah Jennings)</option>
       <option value="luna">CLT-002 — Luna (Marcus Torres)</option>
       <option value="cooper">CLT-003 — Cooper (Diane Walsh)</option>
       <option value="mochi">CLT-004 — Mochi (Rachel Miller)</option>
     </select>
-    <button class="btn btn-primary" onclick="loadClient()">Load</button>
-    <button class="btn btn-outline" onclick="clearForm()">Clear</button>
+    <button class="btn btn-primary" onclick="loadClient()" data-help="Load the selected client's data into all form fields below.">Load</button>
+    <button class="btn btn-outline" onclick="clearForm()" data-help="Reset all form fields to blank. Does not delete any saved data.">Clear</button>
     <span class="lookup-spacer"></span>
-    <button class="btn btn-purple" onclick="showHistory()">📜 View History</button>
+    <button class="btn btn-purple" onclick="showHistory()" data-help="View every change ever made to this client's record — who changed what and when.">📜 View History</button>
   </div>
 
   <!-- Section 1: Client Info -->
@@ -787,11 +889,11 @@
     <div class="section-body">
       <div class="field-grid">
         <div class="field-group">
-          <label>Client ID</label>
+          <label>Client ID <span class="help-icon" data-help="Auto-generated unique identifier for this client. Cannot be changed.">?</span></label>
           <input type="text" id="f-clientId" readonly style="background:#f1f5f9">
         </div>
         <div class="field-group">
-          <label>First Name</label>
+          <label>First Name <span class="help-icon" data-help="Client's first name — used in appointment confirmations and reminders.">?</span></label>
           <input type="text" id="f-firstName">
         </div>
         <div class="field-group">
@@ -807,7 +909,7 @@
           <input type="email" id="f-email">
         </div>
         <div class="field-group">
-          <label>Preferred Contact</label>
+          <label>Preferred Contact <span class="help-icon" data-help="How the client prefers to be reached for appointment reminders and follow-ups.">?</span></label>
           <select id="f-prefContact">
             <option>Phone — Call</option>
             <option>Phone — Text</option>
@@ -819,7 +921,7 @@
           <input type="text" id="f-address">
         </div>
         <div class="field-group">
-          <label>Referral Source</label>
+          <label>Referral Source <span class="help-icon" data-help="How this client found your business. Helps you track which marketing channels are working.">?</span></label>
           <select id="f-referral">
             <option>Google Search</option>
             <option>Facebook</option>
@@ -866,11 +968,11 @@
           <input type="date" id="f-dob">
         </div>
         <div class="field-group">
-          <label>Temperament</label>
+          <label>Temperament <span class="help-icon" data-help="Pet's general behavior during grooming. Helps groomers prepare and schedule appropriately.">?</span></label>
           <select id="f-temperament"><option>Calm</option><option>Friendly</option><option>Anxious</option><option>Aggressive</option><option>Energetic</option></select>
         </div>
         <div class="field-group">
-          <label>Vaccination Status</label>
+          <label>Vaccination Status <span class="help-icon" data-help="Must be 'Current' before grooming. Expired records trigger an alert on the dashboard.">?</span></label>
           <select id="f-vaccStatus">
             <option>Current</option>
             <option>Expired</option>
@@ -948,7 +1050,7 @@
           <input type="date" id="f-nextAppt">
         </div>
         <div class="field-group">
-          <label>Frequency</label>
+          <label>Frequency <span class="help-icon" data-help="How often this pet should be groomed. Used to trigger 'due for rebooking' alerts on the dashboard.">?</span></label>
           <select id="f-frequency"><option>Every 4 weeks</option><option>Every 6 weeks</option><option>Every 8 weeks</option><option>As needed</option></select>
         </div>
         <div class="field-group">
@@ -974,7 +1076,7 @@
           </select>
         </div>
         <div class="field-group">
-          <label>Service Total ($)</label>
+          <label>Service Total ($) <span class="help-icon" data-help="The total amount charged for this visit. This value feeds the Revenue KPI and revenue chart on the dashboard.">?</span></label>
           <input type="number" id="f-serviceTotal" min="0" step="0.01" placeholder="e.g. 75.00">
         </div>
         <div class="field-group full-width">
@@ -987,8 +1089,8 @@
 
   <!-- Submit -->
   <div class="submit-bar">
-    <button class="btn btn-outline" onclick="clearForm()">Clear Form</button>
-    <button class="btn btn-success" onclick="saveRecord()">💾 Save Record</button>
+    <button class="btn btn-outline" onclick="clearForm()" data-help="Reset all form fields to blank. Does not delete any saved data.">Clear Form</button>
+    <button class="btn btn-success" onclick="saveRecord()" data-help="Save this record to your Google Sheet. If the client already exists, their row is updated — no duplicates.">💾 Save Record</button>
   </div>
 
 </div><!-- /tab-form -->
@@ -1223,10 +1325,10 @@ function closeHistory() {
 
 // ═══════ DATE RANGE FILTER (visual demo) ═══════
 const kpiSets = {
-  month:   { appts: '47',  rev: '$3,285',  clients: '124', upcoming: '12', vacc: '6', trend: '↑ 14.6%', revTrend: '↑ 8.2%', sub: 'vs. 41 last month', revSub: 'Avg ticket: $69.89', newC: '9 new this month' },
-  quarter: { appts: '138', rev: '$9,522',  clients: '124', upcoming: '12', vacc: '6', trend: '↑ 11.2%', revTrend: '↑ 6.7%', sub: 'vs. 124 last quarter', revSub: 'Avg ticket: $69.00', newC: '22 new this quarter' },
-  year:    { appts: '487', rev: '$33,890', clients: '124', upcoming: '12', vacc: '6', trend: '↑ 18.5%', revTrend: '↑ 12.1%', sub: 'vs. 411 last year', revSub: 'Avg ticket: $69.59', newC: '47 new this year' },
-  all:     { appts: '1,204', rev: '$82,476', clients: '124', upcoming: '12', vacc: '6', trend: '', revTrend: '', sub: 'since Oct 2023', revSub: 'Avg ticket: $68.50', newC: 'Opened Oct 2023' }
+  month:   { appts: '47',  rev: '$3,285',  clients: '124', upcoming: '12', vacc: '6', trend: '↑ 14.6%', revTrend: '↑ 8.2%', sub: 'vs. 41 last month', revSub: 'Avg ticket: $69.89', newC: '9 new this month', apptLabel: 'Appointments This Month', revLabel: 'Revenue This Month' },
+  quarter: { appts: '138', rev: '$9,522',  clients: '124', upcoming: '12', vacc: '6', trend: '↑ 11.2%', revTrend: '↑ 6.7%', sub: 'vs. 124 last quarter', revSub: 'Avg ticket: $69.00', newC: '22 new this quarter', apptLabel: 'Appointments This Quarter', revLabel: 'Revenue This Quarter' },
+  year:    { appts: '487', rev: '$33,890', clients: '124', upcoming: '12', vacc: '6', trend: '↑ 18.5%', revTrend: '↑ 12.1%', sub: 'vs. 411 last year', revSub: 'Avg ticket: $69.59', newC: '47 new this year', apptLabel: 'Appointments This Year', revLabel: 'Revenue This Year' },
+  all:     { appts: '1,204', rev: '$82,476', clients: '124', upcoming: '12', vacc: '6', trend: '', revTrend: '', sub: 'since Oct 2023', revSub: 'Avg ticket: $68.50', newC: 'Opened Oct 2023', apptLabel: 'Appointments — All Time', revLabel: 'Revenue — All Time' }
 };
 
 function setDateRange(btn, range) {
@@ -1234,6 +1336,9 @@ function setDateRange(btn, range) {
   btn.classList.add('active');
   const d = kpiSets[range];
   const cards = document.querySelectorAll('.kpi-card');
+  // Update KPI headings to reflect selected range
+  document.getElementById('kpi-appts-label').textContent = d.apptLabel;
+  document.getElementById('kpi-rev-label').textContent = d.revLabel;
   cards[0].querySelector('.kpi-value').textContent = d.appts;
   cards[0].querySelector('.kpi-sub').textContent = d.sub;
   const trend0 = cards[0].querySelector('.kpi-trend');
@@ -1350,6 +1455,48 @@ function toggleRevenueView(btn) {
   revenueByWeek = !revenueByWeek;
   btn.textContent = revenueByWeek ? 'By Week' : 'By Month';
   showToast('📊 Toggled view — in real app, chart data reloads from sheet');
+}
+
+// ═══════ DATA BACKUP / EXPORT ═══════
+function exportBackup(format) {
+  const allClients = Object.values(clients);
+  if (format === 'csv') {
+    const headers = Object.keys(allClients[0]);
+    const csvRows = [headers.join(',')];
+    allClients.forEach(c => {
+      const row = headers.map(h => {
+        let val = (c[h] || '').toString();
+        // Escape commas and quotes in CSV values
+        if (val.includes(',') || val.includes('"') || val.includes('\n')) {
+          val = '"' + val.replace(/"/g, '""') + '"';
+        }
+        return val;
+      });
+      csvRows.push(row.join(','));
+    });
+    const blob = new Blob([csvRows.join('\n')], { type: 'text/csv' });
+    downloadBlob(blob, 'grooming-clients-backup-' + todayStamp() + '.csv');
+    showToast('📥 CSV backup downloaded — ' + allClients.length + ' records');
+  } else {
+    const blob = new Blob([JSON.stringify(allClients, null, 2)], { type: 'application/json' });
+    downloadBlob(blob, 'grooming-clients-backup-' + todayStamp() + '.json');
+    showToast('📦 JSON backup downloaded — ' + allClients.length + ' records');
+  }
+}
+
+function downloadBlob(blob, filename) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(a.href);
+}
+
+function todayStamp() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
 }
 
 // Init
