@@ -569,6 +569,27 @@
   .import-wizard-modal .preview-table-wrap {
     max-height: 300px;
   }
+
+  /* Clickable rows */
+  .mini-table tbody tr.clickable-row,
+  .data-table tbody tr.clickable-row {
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .mini-table tbody tr.clickable-row:hover,
+  .data-table tbody tr.clickable-row:hover {
+    background: var(--primary-light);
+  }
+  .client-link {
+    color: var(--primary);
+    cursor: pointer;
+    text-decoration: none;
+    border-bottom: 1px dashed var(--primary);
+  }
+  .client-link:hover {
+    color: #1d4ed8;
+    border-bottom-style: solid;
+  }
 </style>
 </head>
 <body>
@@ -2001,7 +2022,9 @@ function renderUpcoming(data) {
     else if (diff <= 7) { badgeClass = 'badge-green'; badgeText = 'This Week'; }
     else { badgeClass = 'badge-blue'; badgeText = 'Upcoming'; }
     const dateStr = formatShortDate(new Date(d.nextAppt));
-    html += '<tr><td>' + dateStr + '</td><td>' + escapeHtml(d.clientName || '—') + '</td>' +
+    const cidx = findClientIndex(d.clientName, d.petName);
+    const rowClick = cidx >= 0 ? ' class="clickable-row" onclick="goToClient(' + cidx + ')" title="Click to open in Client Form"' : '';
+    html += '<tr' + rowClick + '><td>' + dateStr + '</td><td>' + escapeHtml(d.clientName || '—') + '</td>' +
       '<td>' + escapeHtml(d.petName || '—') + '</td><td>' + escapeHtml(d.service || '—') + '</td>' +
       '<td><span class="badge ' + badgeClass + '">' + badgeText + '</span></td></tr>';
   });
@@ -2016,34 +2039,46 @@ function renderAlerts(data) {
   // Expired vaccinations
   const expiredPets = data.filter(d => normalizeVax(d.vaxStatus) === 'Expired');
   if (expiredPets.length > 0) {
-    const names = expiredPets.map(d => d.petName || 'Unknown').slice(0, 5).join(', ');
+    const nameLinks = expiredPets.slice(0, 5).map(d => {
+      const ci = findClientIndex(d.clientName, d.petName);
+      const name = d.petName || 'Unknown';
+      return ci >= 0 ? '<a class="client-link" onclick="goToClient(' + ci + ')">' + escapeHtml(name) + '</a>' : escapeHtml(name);
+    }).join(', ');
     const extra = expiredPets.length > 5 ? ' +' + (expiredPets.length - 5) + ' more' : '';
     alerts.push({
       icon: '🔴', cls: 'crit',
       title: expiredPets.length + ' pet' + (expiredPets.length > 1 ? 's have' : ' has') + ' expired vaccinations',
-      text: names + extra + ' — notify owners before next appointment.'
+      html: nameLinks + extra + ' — notify owners before next appointment.'
     });
   }
 
   // Inactive clients
   const inactive = data.filter(d => normalizeStatus(d.status) === 'inactive');
   if (inactive.length > 0) {
-    const names = inactive.map(d => d.clientName || 'Unknown').slice(0, 4).join(', ');
+    const nameLinks = inactive.slice(0, 4).map(d => {
+      const ci = findClientIndex(d.clientName, d.petName);
+      const name = d.clientName || 'Unknown';
+      return ci >= 0 ? '<a class="client-link" onclick="goToClient(' + ci + ')">' + escapeHtml(name) + '</a>' : escapeHtml(name);
+    }).join(', ');
     alerts.push({
       icon: '🟡', cls: 'warn',
       title: inactive.length + ' inactive client' + (inactive.length > 1 ? 's' : ''),
-      text: names + ' — follow up to reschedule.'
+      html: nameLinks + ' — follow up to reschedule.'
     });
   }
 
   // Overdue appointments
   const overdue = data.filter(d => d.nextAppt && new Date(d.nextAppt) < today);
   if (overdue.length > 0) {
-    const names = overdue.map(d => (d.petName || 'Unknown') + ' (' + d.clientName + ')').slice(0, 3).join(', ');
+    const nameLinks = overdue.slice(0, 3).map(d => {
+      const ci = findClientIndex(d.clientName, d.petName);
+      const label = (d.petName || 'Unknown') + ' (' + (d.clientName || '') + ')';
+      return ci >= 0 ? '<a class="client-link" onclick="goToClient(' + ci + ')">' + escapeHtml(label) + '</a>' : escapeHtml(label);
+    }).join(', ');
     alerts.push({
       icon: '🟡', cls: 'warn',
       title: overdue.length + ' overdue appointment' + (overdue.length > 1 ? 's' : ''),
-      text: names + ' — contact to reschedule.'
+      html: nameLinks + ' — contact to reschedule.'
     });
   }
 
@@ -2060,10 +2095,15 @@ function renderAlerts(data) {
   // New clients
   const newClients = data.filter(d => normalizeStatus(d.status) === 'new');
   if (newClients.length > 0) {
+    const nameLinks = newClients.map(d => {
+      const ci = findClientIndex(d.clientName, d.petName);
+      const name = d.clientName || 'Unknown';
+      return ci >= 0 ? '<a class="client-link" onclick="goToClient(' + ci + ')">' + escapeHtml(name) + '</a>' : escapeHtml(name);
+    }).join(', ');
     alerts.push({
       icon: '🔵', cls: 'info',
       title: newClients.length + ' new client' + (newClients.length > 1 ? 's' : '') + ' recently added',
-      text: newClients.map(d => d.clientName || 'Unknown').join(', ') + ' — welcome them!'
+      html: nameLinks + ' — welcome them!'
     });
   }
 
@@ -2075,7 +2115,7 @@ function renderAlerts(data) {
   list.innerHTML = alerts.map(a =>
     '<li class="alert-item"><div class="alert-icon ' + a.cls + '">' + a.icon + '</div>' +
     '<div><strong>' + escapeHtml(a.title) + '</strong><br>' +
-    '<span style="color:var(--text-light);font-size:0.8rem">' + escapeHtml(a.text) + '</span></div></li>'
+    '<span style="color:var(--text-light);font-size:0.8rem">' + (a.html || escapeHtml(a.text)) + '</span></div></li>'
   ).join('');
 }
 
@@ -2100,7 +2140,9 @@ function renderTopClients(data) {
     const statusLabel = ns.charAt(0).toUpperCase() + ns.slice(1);
     const clientRev = getClientRevenue(d.clientName);
     const revStr = clientRev !== null ? '$' + clientRev.toFixed(0) : '$' + estimatePrice(d.service) + '*';
-    html += '<tr><td>' + (i + 1) + '</td><td><strong>' + escapeHtml(d.clientName || '—') + '</strong></td>' +
+    const cidx = findClientIndex(d.clientName, d.petName);
+    const rowClick = cidx >= 0 ? ' class="clickable-row" onclick="goToClient(' + cidx + ')" title="Click to open in Client Form"' : '';
+    html += '<tr' + rowClick + '><td>' + (i + 1) + '</td><td><strong>' + escapeHtml(d.clientName || '—') + '</strong></td>' +
       '<td>' + escapeHtml(d.petName || '—') + '</td><td>' + escapeHtml(d.breed || '—') + '</td>' +
       '<td>' + escapeHtml(d.service || '—') + '</td><td>' + formatShortDate(d.lastDate) + '</td>' +
       '<td>' + revStr + '</td>' +
@@ -2108,6 +2150,31 @@ function renderTopClients(data) {
   });
   html += '</tbody></table>';
   container.innerHTML = html;
+}
+
+function findClientIndex(clientName, petName) {
+  for (let i = 0; i < importedData.length; i++) {
+    const d = importedData[i];
+    if (d.clientName === clientName && (!petName || d.petName === petName)) return i;
+  }
+  for (let i = 0; i < importedData.length; i++) {
+    if (importedData[i].clientName === clientName) return i;
+  }
+  return -1;
+}
+
+function goToClient(idx) {
+  if (idx < 0 || idx >= importedData.length) return;
+  document.getElementById('clientSelect').value = idx;
+  currentFormIdx = idx;
+  const d = importedData[idx];
+  setFormField('clientId', 'CLT-' + String(idx + 1).padStart(3, '0'));
+  TARGET_FIELDS.forEach(f => setFormField(f.key, d[f.key] || ''));
+  formDirty = false;
+  updateEditingIndicator((d.petName || 'Unknown') + ' — ' + (d.clientName || 'Unknown'));
+  updateSectionBadges();
+  switchTab('form');
+  showToast('✅ Loaded: ' + (d.petName || 'Unknown') + ' (' + (d.clientName || 'Unknown') + ')');
 }
 
 /* ══════════════════════════════════════════
@@ -2120,13 +2187,13 @@ function renderClients() {
   document.getElementById('clientCount').textContent = importedData.length;
 
   const body = document.getElementById('clientBody');
-  body.innerHTML = importedData.map(d => {
+  body.innerHTML = importedData.map((d, idx) => {
     const ns = normalizeStatus(d.status);
     const statusClass = ns === 'active' ? 'status-active' : ns === 'inactive' ? 'status-inactive' : 'status-new';
     const statusLabel = ns.charAt(0).toUpperCase() + ns.slice(1);
     const nv = normalizeVax(d.vaxStatus);
     const vaxClass = nv === 'Current' ? 'status-current' : nv === 'Expired' ? 'status-expired' : '';
-    return '<tr>' +
+    return '<tr class="clickable-row" onclick="goToClient(' + idx + ')" title="Click to open in Client Form">' +
       '<td><strong>' + escapeHtml(d.clientName || '—') + '</strong></td>' +
       '<td>' + escapeHtml(d.phone || '—') + '</td>' +
       '<td>' + escapeHtml(d.petName || '—') + '</td>' +
