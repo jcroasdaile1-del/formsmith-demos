@@ -550,6 +550,25 @@
     border-top: 2px solid var(--border); padding-top: 8px; margin-top: 4px;
   }
   .checkout-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; }
+
+  /* Import Wizard Modal */
+  .import-wizard-modal {
+    max-width: 820px;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  .import-wizard-modal .wizard-container {
+    padding: 0 20px 20px;
+  }
+  .import-wizard-modal .wizard-steps {
+    padding: 16px 20px 0;
+  }
+  .import-wizard-modal .wizard-panel h2 {
+    font-size: 1.1rem;
+  }
+  .import-wizard-modal .preview-table-wrap {
+    max-height: 300px;
+  }
 </style>
 </head>
 <body>
@@ -559,141 +578,29 @@
   <div class="header-top">
     <div>
       <h1>🐾 Grooming Salon — Client Manager</h1>
-      <div class="subtitle">Import Wizard + Dashboard Demo</div>
+      <div class="subtitle">Dashboard + Import Demo</div>
     </div>
     <span class="header-badge">INTERACTIVE DEMO</span>
   </div>
   <div class="tab-bar">
-    <button class="tab-btn active" onclick="switchTab('import')">📥 Import</button>
-    <button class="tab-btn" onclick="switchTab('dashboard')">📊 Dashboard</button>
+    <button class="tab-btn active" onclick="switchTab('dashboard')">📊 Dashboard</button>
     <button class="tab-btn" onclick="switchTab('form')">📝 Client Form</button>
     <button class="tab-btn" onclick="switchTab('finances')">💰 Finances</button>
     <button class="tab-btn" onclick="switchTab('clients')">👥 Clients</button>
   </div>
 </header>
 
-<!-- ═══════ IMPORT TAB ═══════ -->
-<div id="tab-import" class="tab-content active">
-  <div class="sample-banner">
-    <span>💡</span>
-    <div><strong>Try it out!</strong> Upload a CSV or Excel file to see your data populate the dashboard. Your data stays in your browser — nothing is sent anywhere.</div>
-  </div>
-
-  <div class="wizard-container">
-    <div class="wizard-steps">
-      <div class="wizard-step active" id="step-ind-1">
-        <div class="step-circle">1</div>
-        <div class="step-label">Upload</div>
-      </div>
-      <div class="wizard-step" id="step-ind-2">
-        <div class="step-circle">2</div>
-        <div class="step-label">Map Columns</div>
-      </div>
-      <div class="wizard-step" id="step-ind-3">
-        <div class="step-circle">3</div>
-        <div class="step-label">Preview</div>
-      </div>
-      <div class="wizard-step" id="step-ind-4">
-        <div class="step-circle">4</div>
-        <div class="step-label">Import</div>
-      </div>
-    </div>
-
-    <!-- STEP 1: Upload -->
-    <div class="wizard-panel active" id="step-1">
-      <h2>📁 Upload Your Data</h2>
-      <p class="panel-desc">Upload a spreadsheet with your existing client data. We'll help you map it to your new system.</p>
-
-      <div class="upload-area" id="uploadArea">
-        <div class="upload-icon">📂</div>
-        <p><strong>Drop your file here</strong> or click to browse</p>
-        <p class="upload-formats">Supports: CSV, TSV, or tab-delimited text files</p>
-        <input type="file" id="fileInput" accept=".csv,.tsv,.txt">
-      </div>
-
-      <div class="file-info" id="fileInfo">
-        <span>✅</span>
-        <div id="fileInfoText"></div>
-      </div>
-
-      <div style="margin-top: 20px; padding: 16px; background: var(--purple-light); border-radius: 8px; font-size: 0.85rem;">
-        <strong>🧪 Don't have a file?</strong> No problem —
-        <a href="#" onclick="loadSampleData(); return false;" style="color: var(--primary); font-weight: 600;">click here to load sample data</a>
-        with 15 pre-built grooming clients so you can try the full import flow.
-        <br><span style="margin-top:6px;display:inline-block;opacity:0.8">Or <a href="sample-import-data.csv" download style="color: var(--primary); font-weight: 600;">download the full 55-row spreadsheet</a> to test with even more data.</span>
-      </div>
-
-      <div class="wizard-actions">
-        <div></div>
-        <button class="btn btn-primary" id="btnToStep2" disabled onclick="goToStep(2)">
-          Next: Map Columns →
-        </button>
-      </div>
-    </div>
-
-    <!-- STEP 2: Column Mapping -->
-    <div class="wizard-panel" id="step-2">
-      <h2>🔗 Map Your Columns</h2>
-      <p class="panel-desc">We auto-matched what we could. Review the mappings below and adjust any that look wrong.</p>
-
-      <div class="mapping-grid" id="mappingGrid">
-        <div class="mapping-header">Your Column</div>
-        <div class="mapping-header" style="text-align:center">→</div>
-        <div class="mapping-header">Maps To</div>
-      </div>
-
-      <div class="wizard-actions">
-        <button class="btn btn-secondary" onclick="goToStep(1)">← Back</button>
-        <button class="btn btn-primary" onclick="goToStep(3)">Next: Preview →</button>
-      </div>
-    </div>
-
-    <!-- STEP 3: Preview -->
-    <div class="wizard-panel" id="step-3">
-      <h2>👀 Preview Your Data</h2>
-      <p class="panel-desc">Here's how your data will look after import. Green = good, yellow = missing optional field, red = missing required field.</p>
-
-      <div class="import-summary" id="importSummary"></div>
-
-      <div class="preview-table-wrap">
-        <table class="preview-table" id="previewTable">
-          <thead id="previewHead"></thead>
-          <tbody id="previewBody"></tbody>
-        </table>
-      </div>
-
-      <div class="wizard-actions">
-        <button class="btn btn-secondary" onclick="goToStep(2)">← Back</button>
-        <button class="btn btn-success" onclick="doImport()">
-          <span class="btn-icon">✅</span> Import <span id="importCount"></span> Records
-        </button>
-      </div>
-    </div>
-
-    <!-- STEP 4: Done -->
-    <div class="wizard-panel" id="step-4">
-      <div class="import-success">
-        <div class="check-icon">✓</div>
-        <h2>Import Complete!</h2>
-        <p id="importResultText"></p>
-        <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
-          <button class="btn btn-primary" onclick="switchTab('dashboard')">📊 View Dashboard</button>
-          <button class="btn btn-success" onclick="switchTab('form')">📝 Add New Client</button>
-          <button class="btn btn-secondary" onclick="switchTab('clients')">👥 View Clients</button>
-          <button class="btn btn-secondary" onclick="resetWizard()">📥 Import More</button>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
 <!-- ═══════ DASHBOARD TAB ═══════ -->
-<div id="tab-dashboard" class="tab-content">
+<div id="tab-dashboard" class="tab-content active">
   <div id="dashboardEmpty" class="empty-state">
     <div class="empty-icon">📊</div>
     <h3>No Data Yet</h3>
-    <p>Import your client data using the Import tab to see your dashboard come to life.</p>
-    <button class="btn btn-primary" onclick="switchTab('import')">📥 Go to Import</button>
+    <p>Import data or submit a client form to see your dashboard come to life.</p>
+    <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+      <button class="btn btn-primary" onclick="openImportWizard('clients')">📥 Import Clients</button>
+      <button class="btn btn-success" onclick="switchTab('form')">📝 Add Client</button>
+      <button class="btn btn-purple" onclick="loadDemoData()">🧪 Load Demo Data</button>
+    </div>
   </div>
 
   <div id="dashboardContent" style="display:none;">
@@ -806,6 +713,7 @@
       <button class="btn btn-primary" onclick="loadClientForm()">Load</button>
       <button class="btn btn-outline" onclick="clearForm()">Clear</button>
       <span class="lookup-spacer"></span>
+      <button class="btn btn-secondary" onclick="openImportWizard('clients')">📥 Import Clients</button>
       <button class="btn btn-purple" onclick="showHistory()">📜 View History</button>
     </div>
 
@@ -984,8 +892,11 @@
   <div id="financesEmpty" class="empty-state">
     <div class="empty-icon">💰</div>
     <h3>No Transactions Yet</h3>
-    <p>Import client data and check out clients from the Form tab to start tracking revenue here.</p>
-    <button class="btn btn-primary" onclick="switchTab('import')">📥 Go to Import</button>
+    <p>Import transaction data or check out clients from the Client Form tab to start tracking revenue.</p>
+    <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+      <button class="btn btn-primary" onclick="openImportWizard('transactions')">📥 Import Transactions</button>
+      <button class="btn btn-success" onclick="switchTab('form')">📝 Go to Client Form</button>
+    </div>
   </div>
 
   <div id="financesContent" style="display:none;">
@@ -1035,6 +946,7 @@
       <div class="dash-card-header">
         <h3>📋 Transaction Log</h3>
         <div style="display: flex; gap: 8px;">
+          <button class="btn btn-secondary" style="padding: 6px 14px; font-size: 0.8rem;" onclick="openImportWizard('transactions')">📥 Import Transactions</button>
           <button class="btn btn-success" style="padding: 6px 14px; font-size: 0.8rem;" onclick="openCheckout()">💰 New Payment</button>
           <button class="filter-btn" onclick="exportTransactions()">📥 Export</button>
         </div>
@@ -1056,8 +968,11 @@
   <div id="clientsEmpty" class="empty-state">
     <div class="empty-icon">👥</div>
     <h3>No Clients Yet</h3>
-    <p>Import your client data using the Import tab to see your full client roster here.</p>
-    <button class="btn btn-primary" onclick="switchTab('import')">📥 Go to Import</button>
+    <p>Import client data or add clients from the Client Form tab to see your full roster here.</p>
+    <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+      <button class="btn btn-primary" onclick="openImportWizard('clients')">📥 Import Clients</button>
+      <button class="btn btn-success" onclick="switchTab('form')">📝 Add Client</button>
+    </div>
   </div>
 
   <div id="clientsContent" style="display:none;">
@@ -1094,6 +1009,125 @@
 
 <!-- ═══════ TOAST ═══════ -->
 <div class="toast" id="toast"></div>
+
+<!-- ═══════ IMPORT WIZARD MODAL ═══════ -->
+<div class="modal-overlay" id="importWizardModal" onclick="if(event.target===this)closeImportWizard()">
+  <div class="modal-box import-wizard-modal">
+    <div class="modal-header">
+      <h3 id="importWizardTitle">📥 Import Clients</h3>
+      <button class="modal-close" onclick="closeImportWizard()">&times;</button>
+    </div>
+    <div class="modal-body" style="padding: 0;">
+      <div class="wizard-container" style="border: none; margin: 0; border-radius: 0;">
+        <div class="sample-banner" style="margin: 16px 16px 0; border-radius: 8px;">
+          <span>💡</span>
+          <div><strong>Try it out!</strong> Upload a CSV file to see your data populate the app. Your data stays in your browser — nothing is sent anywhere.</div>
+        </div>
+
+        <div class="wizard-steps" style="padding-top: 16px;">
+          <div class="wizard-step active" id="step-ind-1">
+            <div class="step-circle">1</div>
+            <div class="step-label">Upload</div>
+          </div>
+          <div class="wizard-step" id="step-ind-2">
+            <div class="step-circle">2</div>
+            <div class="step-label">Map Columns</div>
+          </div>
+          <div class="wizard-step" id="step-ind-3">
+            <div class="step-circle">3</div>
+            <div class="step-label">Preview</div>
+          </div>
+          <div class="wizard-step" id="step-ind-4">
+            <div class="step-circle">4</div>
+            <div class="step-label">Import</div>
+          </div>
+        </div>
+
+        <!-- STEP 1: Upload -->
+        <div class="wizard-panel active" id="step-1">
+          <h2 id="wizardUploadHeading">📁 Upload Your Client Data</h2>
+          <p class="panel-desc" id="wizardUploadDesc">Upload a spreadsheet with your existing client data. We'll help you map it to your new system.</p>
+
+          <div class="upload-area" id="uploadArea">
+            <div class="upload-icon">📂</div>
+            <p><strong>Drop your file here</strong> or click to browse</p>
+            <p class="upload-formats">Supports: CSV, TSV, or tab-delimited text files</p>
+            <input type="file" id="fileInput" accept=".csv,.tsv,.txt">
+          </div>
+
+          <div class="file-info" id="fileInfo">
+            <span>✅</span>
+            <div id="fileInfoText"></div>
+          </div>
+
+          <div style="margin-top: 20px; padding: 16px; background: var(--purple-light); border-radius: 8px; font-size: 0.85rem;">
+            <strong>🧪 Don't have a file?</strong> No problem —
+            <a href="#" onclick="loadSampleData(); return false;" style="color: var(--primary); font-weight: 600;">click here to load sample data</a>
+            <span id="wizardSampleDesc"> with 15 pre-built grooming clients</span> so you can try the full import flow.
+            <br><span id="wizardDownloadLink" style="margin-top:6px;display:inline-block;opacity:0.8">Or <a href="sample-import-data.csv" download style="color: var(--primary); font-weight: 600;">download the full 55-row spreadsheet</a> to test with even more data.</span>
+          </div>
+
+          <div class="wizard-actions">
+            <div></div>
+            <button class="btn btn-primary" id="btnToStep2" disabled onclick="goToStep(2)">
+              Next: Map Columns →
+            </button>
+          </div>
+        </div>
+
+        <!-- STEP 2: Column Mapping -->
+        <div class="wizard-panel" id="step-2">
+          <h2>🔗 Map Your Columns</h2>
+          <p class="panel-desc">We auto-matched what we could. Review the mappings below and adjust any that look wrong.</p>
+
+          <div class="mapping-grid" id="mappingGrid">
+            <div class="mapping-header">Your Column</div>
+            <div class="mapping-header" style="text-align:center">→</div>
+            <div class="mapping-header">Maps To</div>
+          </div>
+
+          <div class="wizard-actions">
+            <button class="btn btn-secondary" onclick="goToStep(1)">← Back</button>
+            <button class="btn btn-primary" onclick="goToStep(3)">Next: Preview →</button>
+          </div>
+        </div>
+
+        <!-- STEP 3: Preview -->
+        <div class="wizard-panel" id="step-3">
+          <h2>👀 Preview Your Data</h2>
+          <p class="panel-desc">Here's how your data will look after import. Green = good, yellow = missing optional field, red = missing required field.</p>
+
+          <div class="import-summary" id="importSummary"></div>
+
+          <div class="preview-table-wrap">
+            <table class="preview-table" id="previewTable">
+              <thead id="previewHead"></thead>
+              <tbody id="previewBody"></tbody>
+            </table>
+          </div>
+
+          <div class="wizard-actions">
+            <button class="btn btn-secondary" onclick="goToStep(2)">← Back</button>
+            <button class="btn btn-success" onclick="doImport()">
+              <span class="btn-icon">✅</span> Import <span id="importCount"></span> Records
+            </button>
+          </div>
+        </div>
+
+        <!-- STEP 4: Done -->
+        <div class="wizard-panel" id="step-4">
+          <div class="import-success">
+            <div class="check-icon">✓</div>
+            <h2>Import Complete!</h2>
+            <p id="importResultText"></p>
+            <div id="importDoneButtons" style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- ═══════ HISTORY MODAL ═══════ -->
 <div class="modal-overlay" id="historyModal" onclick="if(event.target===this)closeHistory()">
@@ -1309,6 +1343,38 @@ let addonMenu = [
   { name: 'De-matting (per 15 min)', price: 15 },
 ];
 
+let wizardMode = 'clients'; // 'clients' or 'transactions'
+
+const TXN_TARGET_FIELDS = [
+  { key: 'date', label: 'Date', required: true },
+  { key: 'clientName', label: 'Client Name', required: true },
+  { key: 'petName', label: 'Pet Name', required: false },
+  { key: 'service', label: 'Service', required: false },
+  { key: 'addOns', label: 'Add-Ons', required: false },
+  { key: 'basePrice', label: 'Base Price', required: false },
+  { key: 'addOnTotal', label: 'Add-On Total', required: false },
+  { key: 'discount', label: 'Discount', required: false },
+  { key: 'tip', label: 'Tip', required: false },
+  { key: 'total', label: 'Total', required: false },
+  { key: 'method', label: 'Payment Method', required: false },
+  { key: 'status', label: 'Payment Status', required: false },
+];
+
+const TXN_ALIASES = {
+  date: ['date', 'transaction date', 'txn date', 'payment date', 'visit date', 'service date'],
+  clientName: ['client name', 'client', 'name', 'owner', 'owner name', 'customer', 'customer name'],
+  petName: ['pet name', 'pet', 'animal name', 'dog name', 'cat name'],
+  service: ['service', 'service type', 'groom type', 'grooming package', 'groom package'],
+  addOns: ['add-ons', 'add ons', 'addons', 'extras', 'additional services'],
+  basePrice: ['base price', 'base', 'price', 'service price', 'subtotal', 'sub total'],
+  addOnTotal: ['add-on total', 'addon total', 'add on total', 'extras total'],
+  discount: ['discount', 'disc', 'discount amount'],
+  tip: ['tip', 'gratuity', 'tip amount'],
+  total: ['total', 'grand total', 'amount', 'total amount', 'total paid', 'payment amount'],
+  method: ['method', 'payment method', 'pay method', 'payment type', 'pay type'],
+  status: ['status', 'payment status', 'pay status', 'paid'],
+};
+
 /* ══════════════════════════════════════════
    TAB SWITCHING
    ══════════════════════════════════════════ */
@@ -1317,7 +1383,7 @@ function switchTab(tabName) {
   document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('tab-' + tabName).classList.add('active');
-  const tabKeywords = { import: 'import', dashboard: 'dashboard', form: 'form', finances: 'finances', clients: 'client' };
+  const tabKeywords = { dashboard: 'dashboard', form: 'form', finances: 'finances', clients: 'client' };
   const kw = tabKeywords[tabName] || tabName;
   document.querySelectorAll('.tab-btn').forEach(b => {
     if (b.textContent.toLowerCase().includes(kw)) b.classList.add('active');
@@ -1326,6 +1392,61 @@ function switchTab(tabName) {
   if (tabName === 'clients' && importedData.length > 0) renderClients();
   if (tabName === 'form') renderFormTab();
   if (tabName === 'finances') renderFinances();
+  closeImportWizard();
+}
+
+/* ══════════════════════════════════════════
+   IMPORT WIZARD MODAL
+   ══════════════════════════════════════════ */
+
+function openImportWizard(mode) {
+  wizardMode = mode || 'clients';
+  resetWizard();
+  const title = document.getElementById('importWizardTitle');
+  const heading = document.getElementById('wizardUploadHeading');
+  const desc = document.getElementById('wizardUploadDesc');
+  const sampleDesc = document.getElementById('wizardSampleDesc');
+  const dlLink = document.getElementById('wizardDownloadLink');
+
+  if (wizardMode === 'transactions') {
+    title.textContent = '📥 Import Transactions';
+    heading.textContent = '📁 Upload Your Transaction Data';
+    desc.textContent = 'Upload a spreadsheet with transaction history. We\'ll map financial columns automatically.';
+    sampleDesc.textContent = ' with 16 sample transactions';
+    dlLink.innerHTML = 'Or <a href="sample-transactions.csv" download style="color: var(--primary); font-weight: 600;">download the 16-row transaction spreadsheet</a> to test with.';
+  } else {
+    title.textContent = '📥 Import Clients';
+    heading.textContent = '📁 Upload Your Client Data';
+    desc.textContent = 'Upload a spreadsheet with your existing client data. We\'ll help you map it to your new system.';
+    sampleDesc.textContent = ' with 15 pre-built grooming clients';
+    dlLink.innerHTML = 'Or <a href="sample-import-data.csv" download style="color: var(--primary); font-weight: 600;">download the full 55-row spreadsheet</a> to test with even more data.';
+  }
+  document.getElementById('importWizardModal').classList.add('show');
+}
+
+function closeImportWizard() {
+  document.getElementById('importWizardModal').classList.remove('show');
+}
+
+function loadDemoData() {
+  // Load client sample data and generate transactions in one shot — no modal needed
+  wizardMode = 'clients';
+  loadSampleData();
+  autoMapColumns();
+  // Build preview to set importedData
+  const mappedFields = Object.values(columnMap);
+  const displayFields = TARGET_FIELDS.filter(f => mappedFields.includes(f.key));
+  importedData = rawRows.map(row => {
+    const rec = {};
+    for (const [sourceCol, targetKey] of Object.entries(columnMap)) {
+      rec[targetKey] = row[sourceCol] || '';
+    }
+    return rec;
+  });
+  generateSampleTransactions();
+  populateFormLookup();
+  renderDashboard();
+  showToast('🧪 Demo data loaded — ' + importedData.length + ' clients + ' + transactions.length + ' transactions!');
 }
 
 /* ══════════════════════════════════════════
@@ -1424,11 +1545,12 @@ function splitRow(line, delimiter) {
 
 function autoMapColumns() {
   columnMap = {};
+  const aliasMap = wizardMode === 'transactions' ? TXN_ALIASES : ALIASES;
   rawHeaders.forEach(header => {
     const normalized = header.toLowerCase().replace(/[?!]/g, '').trim();
     let bestMatch = null;
     let bestScore = 0;
-    for (const [fieldKey, aliases] of Object.entries(ALIASES)) {
+    for (const [fieldKey, aliases] of Object.entries(aliasMap)) {
       for (const alias of aliases) {
         if (normalized === alias) { bestMatch = fieldKey; bestScore = 100; break; }
         if (bestScore < 80 && (normalized.includes(alias) || alias.includes(normalized))) {
@@ -1443,6 +1565,33 @@ function autoMapColumns() {
 
 /* Load embedded sample data (messy columns — exercises the auto-mapper!) */
 function loadSampleData() {
+  if (wizardMode === 'transactions') {
+    const txnCSV = `Date,Client,Pet,Service,Add-Ons,Base Price,Add-On Total,Discount,Tip,Total,Method,Status
+2026-03-25,Sarah Jennings,Biscuit,Full Groom — Large,Teeth Brushing; Ear Cleaning,75,18,0,15,108,Card,Paid
+2026-03-24,Marcus Rivera,Luna,Bath & Brush — Medium,,40,0,0,10,50,Venmo,Paid
+2026-03-24,Jennifer Morales,Pepper,Full Groom — Small,Cologne / Perfume,55,5,0,12,72,Card,Paid
+2026-03-23,Lisa Nguyen,Coco,Full Groom — Small,Blueberry Facial; Nail Grinding,55,20,0,8,83,Card,Paid
+2026-03-22,Mike O'Brien,Daisy,Full Groom — Small,"Teeth Brushing; Ear Cleaning; Cologne / Perfume",55,23,5,20,93,Cash,Paid
+2026-03-22,Jason Kim,Gizmo,Nail Trim Only,,20,0,0,5,25,Venmo,Paid
+2026-03-21,Kevin Park,Max,Bath & Brush — Large,Flea & Tick Treatment,45,15,0,10,70,Card,Paid
+2026-03-20,Tom Bradley,Bear,Bath & Brush — XL,Paw Pad Moisturizer,55,7,0,15,77,Card,Paid
+2026-03-19,Amy Patterson,Simba,Full Groom — Small,De-matting (per 15 min),55,15,0,0,70,Cash,Paid
+2026-03-18,Sandra Williams,Bella,Full Groom — Small,Teeth Brushing,55,10,0,10,75,Card,Paid
+2026-03-17,James Robinson,Harley,Deshed Treatment — Large,Nail Grinding; Ear Cleaning,85,16,0,12,113,Card,Paid
+2026-03-15,Emily Chen,Mochi,Full Groom — Small,,55,0,0,8,63,Venmo,Paid
+2026-03-14,David Kowalski,Cooper,Full Groom — Large,Flea & Tick Treatment,75,15,0,0,90,Check,Pending
+2026-03-12,Carlos Gutierrez,Rocky,Bath & Brush — Large,,45,0,0,0,45,Cash,Pending
+2026-03-10,Rachel Kim,Zeus,Bath & Brush — Large,,45,0,0,0,45,Card,Pending
+2026-03-08,Sarah Jennings,Biscuit,Full Groom — Large,Teeth Brushing,75,10,0,15,100,Card,Paid`;
+    parseCSV(txnCSV);
+    document.getElementById('fileInfoText').innerHTML =
+      '<strong>sample-transactions.csv</strong> — ' + rawRows.length + ' rows, ' + rawHeaders.length + ' columns detected';
+    document.getElementById('fileInfo').classList.add('visible');
+    document.getElementById('btnToStep2').disabled = false;
+    showToast('✅ Loaded ' + rawRows.length + ' sample transactions');
+    return;
+  }
+
   const sampleCSV = `Owner Name,Cell,Email,Fur Baby,Animal,Breed,Weight (lbs),Disposition,Fur Type,Shots Current?,Health Issues,Groom Package,Last In,Next Due,Comments,Active?,Emergency Contact,Referred By
 Sarah Jennings,414-555-0123,sarah.j@email.com,Biscuit,Dog,Golden Retriever,72,Friendly,Long,Yes,,Full Groom,2026-03-10,2026-04-07,Regular since 2024. Loves belly rubs during bath.,Active,Tom Jennings 414-555-0124,Google
 Marcus Rivera,414-555-0201,marcus.r@email.com,Luna,Dog,French Bulldog,24,Nervous,Short,Yes,Sensitive skin - hypoallergenic only,Bath & Brush,2026-03-18,2026-04-15,Towel dry only - terrified of dryers.,Active,Ana Rivera 414-555-0202,Facebook
@@ -1473,6 +1622,7 @@ James Robinson,414-555-2547,jrobinson@email.com,Harley,Dog,Husky,60,Energetic,Do
    ══════════════════════════════════════════ */
 
 function buildMappingUI() {
+  const fields = wizardMode === 'transactions' ? TXN_TARGET_FIELDS : TARGET_FIELDS;
   const grid = document.getElementById('mappingGrid');
   grid.innerHTML = '<div class="mapping-header">Your Column</div>' +
     '<div class="mapping-header" style="text-align:center">→</div>' +
@@ -1491,7 +1641,7 @@ function buildMappingUI() {
       '<div class="mapping-target">' +
         '<select onchange="updateMapping(\'' + escapeAttr(header) + '\', this.value)">' +
           '<option value="">— Skip this column —</option>' +
-          TARGET_FIELDS.map(f =>
+          fields.map(f =>
             '<option value="' + f.key + '"' + (mapped === f.key ? ' selected' : '') + '>' +
               f.label + (f.required ? ' *' : '') + '</option>'
           ).join('') +
@@ -1511,8 +1661,9 @@ function updateMapping(sourceHeader, targetField) {
    ══════════════════════════════════════════ */
 
 function buildPreview() {
+  const fields = wizardMode === 'transactions' ? TXN_TARGET_FIELDS : TARGET_FIELDS;
   const mappedFields = Object.values(columnMap);
-  const displayFields = TARGET_FIELDS.filter(f => mappedFields.includes(f.key));
+  const displayFields = fields.filter(f => mappedFields.includes(f.key));
   const records = rawRows.map(row => {
     const rec = {};
     for (const [sourceCol, targetKey] of Object.entries(columnMap)) {
@@ -1523,7 +1674,7 @@ function buildPreview() {
 
   let validCount = 0, warningCount = 0, errorCount = 0;
   const recordStatuses = records.map(rec => {
-    const hasRequired = TARGET_FIELDS.filter(f => f.required).every(f => rec[f.key] && rec[f.key].trim());
+    const hasRequired = fields.filter(f => f.required).every(f => rec[f.key] && rec[f.key].trim());
     const missingOptional = displayFields.filter(f => !f.required && (!rec[f.key] || !rec[f.key].trim())).length;
     if (!hasRequired) { errorCount++; return 'error'; }
     if (missingOptional > 3) { warningCount++; return 'warning'; }
@@ -1554,11 +1705,49 @@ function buildPreview() {
 
 function doImport() {
   goToStep(4);
-  generateSampleTransactions();
-  document.getElementById('importResultText').textContent =
-    'Successfully imported ' + importedData.length + ' client records and generated ' + transactions.length + ' sample transactions. Your dashboard, finances, client list, and form lookup are now populated.';
-  showToast('🎉 ' + importedData.length + ' records + ' + transactions.length + ' transactions imported!');
-  populateFormLookup();
+  const doneButtons = document.getElementById('importDoneButtons');
+
+  if (wizardMode === 'transactions') {
+    // Import as transactions
+    const importedTxns = importedData.map((rec, i) => ({
+      id: 'TXN-' + String(transactions.length + i + 1).padStart(3, '0'),
+      date: rec.date || new Date().toISOString().slice(0, 10),
+      clientName: rec.clientName || 'Unknown',
+      petName: rec.petName || 'Unknown',
+      service: rec.service || 'Full Groom',
+      basePrice: parseFloat(rec.basePrice) || 0,
+      addOns: rec.addOns ? rec.addOns.split(/[;,]/).map(s => s.trim()).filter(Boolean) : [],
+      addOnTotal: parseFloat(rec.addOnTotal) || 0,
+      discount: parseFloat(rec.discount) || 0,
+      tip: parseFloat(rec.tip) || 0,
+      total: parseFloat(rec.total) || 0,
+      method: rec.method || 'Card',
+      status: rec.status || 'Paid',
+      notes: ''
+    }));
+    transactions = importedTxns.concat(transactions);
+    transactions.sort((a, b) => b.date.localeCompare(a.date));
+    document.getElementById('importResultText').textContent =
+      'Successfully imported ' + importedTxns.length + ' transactions. Your finances dashboard is now populated with real data.';
+    showToast('🎉 ' + importedTxns.length + ' transactions imported!');
+    doneButtons.innerHTML =
+      '<button class="btn btn-primary" onclick="closeImportWizard();switchTab(\'dashboard\')">📊 View Dashboard</button>' +
+      '<button class="btn btn-success" onclick="closeImportWizard();switchTab(\'finances\')">💰 View Finances</button>' +
+      '<button class="btn btn-secondary" onclick="resetWizard()">📥 Import More</button>';
+    importedData = []; // clear preview data, it was txn data
+  } else {
+    // Import as clients
+    generateSampleTransactions();
+    document.getElementById('importResultText').textContent =
+      'Successfully imported ' + importedData.length + ' client records and generated ' + transactions.length + ' sample transactions. Your dashboard, finances, client list, and form lookup are now populated.';
+    showToast('🎉 ' + importedData.length + ' records + ' + transactions.length + ' transactions imported!');
+    populateFormLookup();
+    doneButtons.innerHTML =
+      '<button class="btn btn-primary" onclick="closeImportWizard();switchTab(\'dashboard\')">📊 View Dashboard</button>' +
+      '<button class="btn btn-success" onclick="closeImportWizard();switchTab(\'form\')">📝 Add New Client</button>' +
+      '<button class="btn btn-secondary" onclick="closeImportWizard();switchTab(\'clients\')">👥 View Clients</button>' +
+      '<button class="btn btn-secondary" onclick="resetWizard()">📥 Import More</button>';
+  }
 }
 
 function resetWizard() {
@@ -2514,6 +2703,7 @@ document.addEventListener('keydown', function(e) {
   if (e.key === 'Escape') {
     closeHistory();
     closeCheckout();
+    closeImportWizard();
     document.getElementById('confirmModal').classList.remove('show');
   }
 });
