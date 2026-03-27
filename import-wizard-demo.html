@@ -491,7 +491,65 @@
     .mapping-arrow { display: none; }
     .mapping-header:nth-child(2) { display: none; }
     .dash-grid { grid-template-columns: 1fr; }
+    .checkout-grid { grid-template-columns: 1fr; }
   }
+
+  /* ══════════════════════════════════════════
+     FINANCES TAB
+     ══════════════════════════════════════════ */
+  .price-sheet-table { width: 100%; border-collapse: collapse; }
+  .price-sheet-table th {
+    text-align: left; font-size: 0.72rem; text-transform: uppercase;
+    letter-spacing: 0.5px; color: var(--text-light); padding: 8px 10px;
+    border-bottom: 2px solid var(--border); font-weight: 700;
+  }
+  .price-sheet-table td { padding: 8px 10px; font-size: 0.85rem; border-bottom: 1px solid var(--border); }
+  .price-sheet-table tr:last-child td { border-bottom: none; }
+  .price-sheet-table input[type="number"] {
+    width: 80px; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px;
+    font-size: 0.85rem; text-align: right; font-family: inherit;
+  }
+  .price-sheet-table input[type="number"]:focus {
+    outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+  }
+  .txn-paid { background: var(--accent-light); color: #065f46; }
+  .txn-pending { background: var(--warning-light); color: #92400e; }
+  .txn-deposit { background: var(--purple-light); color: var(--purple); }
+
+  /* Checkout Modal */
+  .checkout-modal { max-width: 580px; }
+  .checkout-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .checkout-grid .full-width { grid-column: 1 / -1; }
+  .checkout-field { display: flex; flex-direction: column; gap: 4px; }
+  .checkout-field label {
+    font-size: 0.78rem; font-weight: 600; color: var(--text-light);
+    text-transform: uppercase; letter-spacing: 0.3px;
+  }
+  .checkout-field input, .checkout-field select {
+    padding: 9px 12px; border: 1px solid var(--border); border-radius: 8px;
+    font-size: 0.88rem; font-family: inherit;
+  }
+  .checkout-field input:focus, .checkout-field select:focus {
+    outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+  }
+  .addon-list { display: flex; flex-wrap: wrap; gap: 8px; }
+  .addon-chip {
+    display: flex; align-items: center; gap: 6px; padding: 6px 12px;
+    border: 1px solid var(--border); border-radius: 8px; font-size: 0.82rem;
+    cursor: pointer; transition: all 0.15s; user-select: none;
+  }
+  .addon-chip:hover { border-color: var(--primary); background: var(--primary-light); }
+  .addon-chip.selected { border-color: var(--accent); background: var(--accent-light); }
+  .checkout-total {
+    background: var(--bg); border-radius: 8px; padding: 16px;
+    margin-top: 16px; display: flex; flex-direction: column; gap: 6px;
+  }
+  .checkout-line { display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--text-light); }
+  .checkout-line.total {
+    font-size: 1.1rem; font-weight: 800; color: var(--text);
+    border-top: 2px solid var(--border); padding-top: 8px; margin-top: 4px;
+  }
+  .checkout-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; }
 </style>
 </head>
 <body>
@@ -509,6 +567,7 @@
     <button class="tab-btn active" onclick="switchTab('import')">📥 Import</button>
     <button class="tab-btn" onclick="switchTab('dashboard')">📊 Dashboard</button>
     <button class="tab-btn" onclick="switchTab('form')">📝 Client Form</button>
+    <button class="tab-btn" onclick="switchTab('finances')">💰 Finances</button>
     <button class="tab-btn" onclick="switchTab('clients')">👥 Clients</button>
   </div>
 </header>
@@ -658,8 +717,7 @@
       <!-- Revenue by Service -->
       <div class="dash-card">
         <div class="dash-card-header">
-          <h3>📈 Estimated Revenue by Service</h3>
-          <span class="filter-btn">Based on Avg Pricing</span>
+          <h3>📈 Revenue by Service</h3>
         </div>
         <div class="dash-card-body">
           <div class="chart-wrap"><canvas id="chartRevenue"></canvas></div>
@@ -916,6 +974,79 @@
     <div class="submit-bar">
       <button class="btn btn-outline" onclick="clearForm()">Clear Form</button>
       <button class="btn btn-success" onclick="saveFormRecord()">💾 Save Record</button>
+      <button class="btn btn-purple" onclick="openCheckout()">💰 Check Out</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ FINANCES TAB ═══════ -->
+<div id="tab-finances" class="tab-content">
+  <div id="financesEmpty" class="empty-state">
+    <div class="empty-icon">💰</div>
+    <h3>No Transactions Yet</h3>
+    <p>Import client data and check out clients from the Form tab to start tracking revenue here.</p>
+    <button class="btn btn-primary" onclick="switchTab('import')">📥 Go to Import</button>
+  </div>
+
+  <div id="financesContent" style="display:none;">
+    <div class="sample-banner">
+      <strong>⚡ Interactive Demo</strong> — Track every payment, see revenue breakdowns, and manage your price sheet. In your real app, this data syncs with your Google Sheet.
+    </div>
+
+    <!-- Summary KPIs -->
+    <div class="kpi-grid" id="finKpiGrid"></div>
+
+    <!-- Charts -->
+    <div class="dash-grid">
+      <div class="dash-card">
+        <div class="dash-card-header"><h3>📈 Weekly Revenue</h3></div>
+        <div class="dash-card-body"><div class="chart-wrap"><canvas id="chartFinRevenue"></canvas></div></div>
+      </div>
+      <div class="dash-card">
+        <div class="dash-card-header"><h3>💳 Payment Methods</h3></div>
+        <div class="dash-card-body"><div class="chart-wrap"><canvas id="chartPayMethod"></canvas></div></div>
+      </div>
+    </div>
+
+    <!-- Price Sheet (collapsible) -->
+    <div class="form-section" style="margin-bottom: 20px;">
+      <div class="section-header" onclick="toggleSection(this)">
+        💲 Price Sheet <span class="chevron">▼</span>
+      </div>
+      <div class="section-body">
+        <p style="font-size: 0.82rem; color: var(--text-light); margin-bottom: 12px;">
+          Edit prices below to update checkout calculations and revenue estimates. Changes apply immediately.
+        </p>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+          <div>
+            <h4 style="font-size: 0.85rem; margin-bottom: 8px; color: var(--text);">🛁 Base Services</h4>
+            <table class="price-sheet-table"><thead><tr><th>Service</th><th style="text-align:right">Price</th></tr></thead><tbody id="priceSheetBody"></tbody></table>
+          </div>
+          <div>
+            <h4 style="font-size: 0.85rem; margin-bottom: 8px; color: var(--text);">✨ Add-Ons</h4>
+            <table class="price-sheet-table"><thead><tr><th>Add-On</th><th style="text-align:right">Price</th></tr></thead><tbody id="addonSheetBody"></tbody></table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Transaction Log -->
+    <div class="dash-card full-width" style="margin-bottom: 20px;">
+      <div class="dash-card-header">
+        <h3>📋 Transaction Log</h3>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn btn-success" style="padding: 6px 14px; font-size: 0.8rem;" onclick="openCheckout()">💰 New Payment</button>
+          <button class="filter-btn" onclick="exportTransactions()">📥 Export</button>
+        </div>
+      </div>
+      <div class="dash-card-body" style="padding: 0;">
+        <div style="overflow-x: auto;">
+          <table class="mini-table" id="txnTable">
+            <thead><tr><th>Date</th><th>Client</th><th>Pet</th><th>Service</th><th>Add-Ons</th><th style="text-align:right">Base</th><th style="text-align:right">Add-Ons</th><th style="text-align:right">Discount</th><th style="text-align:right">Tip</th><th style="text-align:right">Total</th><th>Method</th><th>Status</th></tr></thead>
+            <tbody id="txnBody"></tbody>
+          </table>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -984,6 +1115,92 @@
       <div style="display:flex;gap:10px;justify-content:center">
         <button class="btn btn-outline" id="confirmNo">Cancel</button>
         <button class="btn btn-primary" id="confirmYes">Continue</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ CHECKOUT MODAL ═══════ -->
+<div class="modal-overlay" id="checkoutModal" onclick="if(event.target===this)closeCheckout()">
+  <div class="modal-box checkout-modal">
+    <div class="modal-header">
+      <h3>💰 Check Out Client</h3>
+      <button class="modal-close" onclick="closeCheckout()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="checkout-grid">
+        <div class="checkout-field">
+          <label>Client Name</label>
+          <input type="text" id="co-client" placeholder="Client name">
+        </div>
+        <div class="checkout-field">
+          <label>Pet Name</label>
+          <input type="text" id="co-pet" placeholder="Pet name">
+        </div>
+        <div class="checkout-field">
+          <label>Service</label>
+          <select id="co-service" onchange="updateCheckoutPrice()">
+            <option value="Full Groom">Full Groom</option>
+            <option value="Bath & Brush">Bath &amp; Brush</option>
+            <option value="Nail Trim Only">Nail Trim Only</option>
+            <option value="Deshed Treatment">Deshed Treatment</option>
+            <option value="Puppy First Groom">Puppy First Groom</option>
+          </select>
+        </div>
+        <div class="checkout-field">
+          <label>Size</label>
+          <select id="co-size" onchange="updateCheckoutPrice()">
+            <option value="Small">Small (&lt;20 lbs)</option>
+            <option value="Medium">Medium (20–50 lbs)</option>
+            <option value="Large" selected>Large (50–90 lbs)</option>
+            <option value="XL">XL (90+ lbs)</option>
+          </select>
+        </div>
+        <div class="checkout-field">
+          <label>Base Price ($)</label>
+          <input type="number" id="co-base" value="75" min="0" step="1" oninput="recalcCheckout()">
+        </div>
+        <div class="checkout-field">
+          <label>Payment Method</label>
+          <select id="co-method">
+            <option>Card</option>
+            <option>Cash</option>
+            <option>Venmo</option>
+            <option>Check</option>
+          </select>
+        </div>
+        <div class="checkout-field full-width">
+          <label>Add-Ons</label>
+          <div class="addon-list" id="addonList"></div>
+        </div>
+        <div class="checkout-field">
+          <label>Discount ($)</label>
+          <input type="number" id="co-discount" value="0" min="0" step="1" oninput="recalcCheckout()">
+        </div>
+        <div class="checkout-field">
+          <label>Tip ($)</label>
+          <input type="number" id="co-tip" value="0" min="0" step="1" oninput="recalcCheckout()">
+        </div>
+        <div class="checkout-field">
+          <label>Status</label>
+          <select id="co-status">
+            <option>Paid</option>
+            <option>Pending</option>
+            <option>Deposit</option>
+          </select>
+        </div>
+        <div class="checkout-field">
+          <label>Notes</label>
+          <input type="text" id="co-notes" placeholder="Optional">
+        </div>
+      </div>
+      <div class="checkout-total" id="co-breakdown">
+        <div class="checkout-line"><span>Base Price</span><span>$75.00</span></div>
+        <div class="checkout-line total"><span>Total</span><span id="co-total-display">$75.00</span></div>
+      </div>
+      <div class="checkout-actions">
+        <button class="btn btn-outline" onclick="closeCheckout()">Cancel</button>
+        <button class="btn btn-success" onclick="submitCheckout()">💰 Record Payment</button>
       </div>
     </div>
   </div>
@@ -1064,6 +1281,34 @@ const SERVICE_PRICES = {
   'puppy first groom': 55,
 };
 
+let transactions = [];
+
+let priceSheet = [
+  { service: 'Full Groom — Small', price: 55 },
+  { service: 'Full Groom — Medium', price: 65 },
+  { service: 'Full Groom — Large', price: 75 },
+  { service: 'Full Groom — XL', price: 90 },
+  { service: 'Bath & Brush — Small', price: 35 },
+  { service: 'Bath & Brush — Medium', price: 40 },
+  { service: 'Bath & Brush — Large', price: 45 },
+  { service: 'Bath & Brush — XL', price: 55 },
+  { service: 'Nail Trim Only', price: 20 },
+  { service: 'Deshed Treatment — Small/Med', price: 65 },
+  { service: 'Deshed Treatment — Large/XL', price: 85 },
+  { service: 'Puppy First Groom', price: 45 },
+];
+
+let addonMenu = [
+  { name: 'Teeth Brushing', price: 10 },
+  { name: 'Nail Grinding', price: 8 },
+  { name: 'Flea & Tick Treatment', price: 15 },
+  { name: 'Ear Cleaning', price: 8 },
+  { name: 'Cologne / Perfume', price: 5 },
+  { name: 'Blueberry Facial', price: 12 },
+  { name: 'Paw Pad Moisturizer', price: 7 },
+  { name: 'De-matting (per 15 min)', price: 15 },
+];
+
 /* ══════════════════════════════════════════
    TAB SWITCHING
    ══════════════════════════════════════════ */
@@ -1072,7 +1317,7 @@ function switchTab(tabName) {
   document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('tab-' + tabName).classList.add('active');
-  const tabKeywords = { import: 'import', dashboard: 'dashboard', form: 'form', clients: 'client' };
+  const tabKeywords = { import: 'import', dashboard: 'dashboard', form: 'form', finances: 'finances', clients: 'client' };
   const kw = tabKeywords[tabName] || tabName;
   document.querySelectorAll('.tab-btn').forEach(b => {
     if (b.textContent.toLowerCase().includes(kw)) b.classList.add('active');
@@ -1080,6 +1325,7 @@ function switchTab(tabName) {
   if (tabName === 'dashboard' && importedData.length > 0) renderDashboard();
   if (tabName === 'clients' && importedData.length > 0) renderClients();
   if (tabName === 'form') renderFormTab();
+  if (tabName === 'finances') renderFinances();
 }
 
 /* ══════════════════════════════════════════
@@ -1308,9 +1554,10 @@ function buildPreview() {
 
 function doImport() {
   goToStep(4);
+  generateSampleTransactions();
   document.getElementById('importResultText').textContent =
-    'Successfully imported ' + importedData.length + ' client records. Your dashboard, client list, and form lookup are now populated with your data.';
-  showToast('🎉 ' + importedData.length + ' records imported!');
+    'Successfully imported ' + importedData.length + ' client records and generated ' + transactions.length + ' sample transactions. Your dashboard, finances, client list, and form lookup are now populated.';
+  showToast('🎉 ' + importedData.length + ' records + ' + transactions.length + ' transactions imported!');
   populateFormLookup();
 }
 
@@ -1395,7 +1642,9 @@ function renderDashboard() {
     return diff >= 0 && diff <= 7;
   }).length;
 
-  const totalRevenue = data.reduce((sum, d) => sum + estimatePrice(d.service), 0);
+  const revInfo = getRevenueData(data);
+  const totalRevenue = revInfo.total;
+  const revenueIsActual = revInfo.isActual;
 
   const species = {};
   data.forEach(d => { const s = d.species || 'Unknown'; species[s] = (species[s] || 0) + 1; });
@@ -1409,9 +1658,9 @@ function renderDashboard() {
       (newClients > 0 ? '<span class="kpi-trend up">+' + newClients + ' new</span>' : '') +
     '</div>' +
     '<div class="kpi-card">' +
-      '<div class="kpi-label">Estimated Revenue</div>' +
+      '<div class="kpi-label">' + (revenueIsActual ? 'Recorded Revenue' : 'Estimated Revenue') + '</div>' +
       '<div class="kpi-value">$' + totalRevenue.toLocaleString() + '</div>' +
-      '<div class="kpi-sub">Based on avg service pricing</div>' +
+      '<div class="kpi-sub">' + (revenueIsActual ? 'From ' + transactions.length + ' transactions' : 'Based on avg service pricing') + '</div>' +
     '</div>' +
     '<div class="kpi-card purple">' +
       '<div class="kpi-label">Upcoming (7 Days)</div>' +
@@ -1440,12 +1689,19 @@ function renderCharts(data) {
   Object.values(chartInstances).forEach(c => c.destroy());
   chartInstances = {};
 
-  // Revenue by Service (bar chart)
+  // Revenue by Service (bar chart) — uses transactions if available
   const revenueByService = {};
-  data.forEach(d => {
-    const s = d.service || 'Not Specified';
-    revenueByService[s] = (revenueByService[s] || 0) + estimatePrice(d.service);
-  });
+  if (transactions.length > 0) {
+    transactions.filter(t => t.status === 'Paid').forEach(t => {
+      const s = t.service.split('—')[0].trim() || 'Other';
+      revenueByService[s] = (revenueByService[s] || 0) + t.total;
+    });
+  } else {
+    data.forEach(d => {
+      const s = d.service || 'Not Specified';
+      revenueByService[s] = (revenueByService[s] || 0) + estimatePrice(d.service);
+    });
+  }
   const revLabels = Object.keys(revenueByService);
   const revData = Object.values(revenueByService);
   const revColors = revLabels.map((_, i) => {
@@ -1648,15 +1904,17 @@ function renderTopClients(data) {
     container.innerHTML = '<div style="text-align:center;color:var(--text-light);padding:20px;">No visit data available</div>';
     return;
   }
-  let html = '<table class="mini-table"><thead><tr><th>#</th><th>Client</th><th>Pet</th><th>Breed</th><th>Service</th><th>Last Visit</th><th>Est. Revenue</th><th>Status</th></tr></thead><tbody>';
+  let html = '<table class="mini-table"><thead><tr><th>#</th><th>Client</th><th>Pet</th><th>Breed</th><th>Service</th><th>Last Visit</th><th>Revenue</th><th>Status</th></tr></thead><tbody>';
   sorted.forEach((d, i) => {
     const ns = normalizeStatus(d.status);
     const badgeClass = ns === 'active' ? 'badge-green' : ns === 'inactive' ? 'badge-red' : 'badge-purple';
     const statusLabel = ns.charAt(0).toUpperCase() + ns.slice(1);
+    const clientRev = getClientRevenue(d.clientName);
+    const revStr = clientRev !== null ? '$' + clientRev.toFixed(0) : '$' + estimatePrice(d.service) + '*';
     html += '<tr><td>' + (i + 1) + '</td><td><strong>' + escapeHtml(d.clientName || '—') + '</strong></td>' +
       '<td>' + escapeHtml(d.petName || '—') + '</td><td>' + escapeHtml(d.breed || '—') + '</td>' +
       '<td>' + escapeHtml(d.service || '—') + '</td><td>' + formatShortDate(d.lastDate) + '</td>' +
-      '<td>$' + estimatePrice(d.service) + '</td>' +
+      '<td>' + revStr + '</td>' +
       '<td><span class="badge ' + badgeClass + '">' + statusLabel + '</span></td></tr>';
   });
   html += '</tbody></table>';
@@ -1870,6 +2128,338 @@ function exportCSV() {
 }
 
 /* ══════════════════════════════════════════
+   FINANCES TAB
+   ══════════════════════════════════════════ */
+
+function getRevenueData(data) {
+  if (transactions.length > 0) {
+    const paid = transactions.filter(t => t.status === 'Paid');
+    const total = paid.reduce((s, t) => s + t.total, 0);
+    return { total: total, isActual: true };
+  }
+  const total = data.reduce((s, d) => s + estimatePrice(d.service), 0);
+  return { total: total, isActual: false };
+}
+
+function getClientRevenue(clientName) {
+  if (!clientName || transactions.length === 0) return null;
+  const ct = transactions.filter(t => t.clientName === clientName && t.status === 'Paid');
+  return ct.length > 0 ? ct.reduce((s, t) => s + t.total, 0) : null;
+}
+
+function lookupPrice(service, size) {
+  if (!service) return null;
+  const svc = service.toLowerCase().trim();
+  if (size) {
+    const entry = priceSheet.find(p => {
+      const pn = p.service.toLowerCase();
+      return pn.includes(svc) && pn.toLowerCase().includes(size.toLowerCase());
+    });
+    if (entry) return entry;
+  }
+  const entry = priceSheet.find(p => {
+    const base = p.service.toLowerCase().split('\u2014')[0].trim();
+    return base.includes(svc) || svc.includes(base);
+  });
+  return entry;
+}
+
+function getSizeLabel(val) {
+  if (!val) return '';
+  const str = String(val).toLowerCase().trim();
+  if (['small','medium','large','xl','extra large'].includes(str)) return str.charAt(0).toUpperCase() + str.slice(1);
+  const w = parseInt(val);
+  if (isNaN(w)) return '';
+  if (w < 20) return 'Small';
+  if (w < 50) return 'Medium';
+  if (w < 90) return 'Large';
+  return 'XL';
+}
+
+function renderFinances() {
+  if (transactions.length === 0 && importedData.length === 0) {
+    document.getElementById('financesEmpty').style.display = 'block';
+    document.getElementById('financesContent').style.display = 'none';
+    return;
+  }
+  document.getElementById('financesEmpty').style.display = 'none';
+  document.getElementById('financesContent').style.display = 'block';
+  renderFinKPIs();
+  renderFinCharts();
+  renderPriceSheet();
+  renderTransactionLog();
+}
+
+function renderFinKPIs() {
+  const today = new Date();
+  const todayStr = today.toISOString().slice(0, 10);
+  const weekAgo = new Date(today); weekAgo.setDate(weekAgo.getDate() - 7);
+  const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+  const todayTxns = transactions.filter(t => t.date === todayStr && t.status === 'Paid');
+  const weekTxns = transactions.filter(t => new Date(t.date) >= weekAgo && t.status === 'Paid');
+  const monthTxns = transactions.filter(t => new Date(t.date) >= monthStart && t.status === 'Paid');
+  const paidTxns = transactions.filter(t => t.status === 'Paid');
+  const pendingTxns = transactions.filter(t => t.status === 'Pending');
+  const todayRev = todayTxns.reduce((s, t) => s + t.total, 0);
+  const weekRev = weekTxns.reduce((s, t) => s + t.total, 0);
+  const monthRev = monthTxns.reduce((s, t) => s + t.total, 0);
+  const avgTicket = paidTxns.length > 0 ? paidTxns.reduce((s, t) => s + t.total, 0) / paidTxns.length : 0;
+  const outstanding = pendingTxns.reduce((s, t) => s + t.total, 0);
+  const totalTips = paidTxns.reduce((s, t) => s + (t.tip || 0), 0);
+  document.getElementById('finKpiGrid').innerHTML =
+    '<div class="kpi-card green"><div class="kpi-label">Today\'s Revenue</div><div class="kpi-value">$' + todayRev.toFixed(0) + '</div><div class="kpi-sub">' + todayTxns.length + ' transaction' + (todayTxns.length !== 1 ? 's' : '') + '</div></div>' +
+    '<div class="kpi-card"><div class="kpi-label">This Week</div><div class="kpi-value">$' + weekRev.toFixed(0) + '</div><div class="kpi-sub">' + weekTxns.length + ' transactions</div></div>' +
+    '<div class="kpi-card purple"><div class="kpi-label">This Month</div><div class="kpi-value">$' + monthRev.toFixed(0) + '</div><div class="kpi-sub">' + monthTxns.length + ' transactions</div></div>' +
+    '<div class="kpi-card"><div class="kpi-label">Avg Ticket</div><div class="kpi-value">$' + avgTicket.toFixed(0) + '</div><div class="kpi-sub">' + paidTxns.length + ' total paid</div></div>' +
+    '<div class="kpi-card ' + (outstanding > 0 ? 'yellow' : 'green') + '"><div class="kpi-label">Outstanding</div><div class="kpi-value">$' + outstanding.toFixed(0) + '</div><div class="kpi-sub">' + pendingTxns.length + ' pending</div></div>' +
+    '<div class="kpi-card green"><div class="kpi-label">Tips This Month</div><div class="kpi-value">$' + totalTips.toFixed(0) + '</div><div class="kpi-sub">Thank your clients!</div></div>';
+}
+
+function renderFinCharts() {
+  if (chartInstances.finRevenue) chartInstances.finRevenue.destroy();
+  if (chartInstances.payMethod) chartInstances.payMethod.destroy();
+  // Weekly Revenue (bar) - last 4 weeks
+  const today = new Date();
+  const weeks = [];
+  for (let i = 3; i >= 0; i--) {
+    const ws = new Date(today); ws.setDate(ws.getDate() - (i * 7) - ws.getDay());
+    const we = new Date(ws); we.setDate(we.getDate() + 6);
+    const label = (ws.getMonth()+1) + '/' + ws.getDate() + ' \u2013 ' + (we.getMonth()+1) + '/' + we.getDate();
+    const wTotal = transactions
+      .filter(t => { const td = new Date(t.date); return td >= ws && td <= we && t.status === 'Paid'; })
+      .reduce((s, t) => s + t.total, 0);
+    weeks.push({ label: label, total: wTotal });
+  }
+  chartInstances.finRevenue = new Chart(document.getElementById('chartFinRevenue'), {
+    type: 'bar',
+    data: { labels: weeks.map(w => w.label), datasets: [{ data: weeks.map(w => w.total), backgroundColor: '#10b981', borderRadius: 6, borderSkipped: false }] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => '$' + ctx.parsed.y.toLocaleString() } } },
+      scales: { y: { beginAtZero: true, ticks: { callback: v => '$' + v }, grid: { color: '#f1f5f9' } }, x: { grid: { display: false }, ticks: { font: { size: 10 } } } }
+    }
+  });
+  // Payment Method (doughnut)
+  const methodTotals = {};
+  transactions.filter(t => t.status === 'Paid').forEach(t => { methodTotals[t.method] = (methodTotals[t.method] || 0) + t.total; });
+  const mColors = { 'Card': '#2563eb', 'Cash': '#10b981', 'Venmo': '#8b5cf6', 'Check': '#f59e0b' };
+  chartInstances.payMethod = new Chart(document.getElementById('chartPayMethod'), {
+    type: 'doughnut',
+    data: {
+      labels: Object.keys(methodTotals),
+      datasets: [{ data: Object.values(methodTotals), backgroundColor: Object.keys(methodTotals).map(k => mColors[k] || '#64748b'), borderWidth: 0, hoverOffset: 6 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, cutout: '60%',
+      plugins: { legend: { position: 'right', labels: { boxWidth: 12, padding: 12, font: { size: 12 } } }, tooltip: { callbacks: { label: ctx => ctx.label + ': $' + ctx.parsed.toLocaleString() } } }
+    }
+  });
+}
+
+function renderPriceSheet() {
+  document.getElementById('priceSheetBody').innerHTML = priceSheet.map((p, i) =>
+    '<tr><td>' + escapeHtml(p.service) + '</td><td style="text-align:right"><span style="color:var(--text-light);margin-right:2px">$</span>' +
+    '<input type="number" value="' + p.price + '" min="0" step="5" onchange="priceSheet[' + i + '].price=parseFloat(this.value)||0"></td></tr>'
+  ).join('');
+  document.getElementById('addonSheetBody').innerHTML = addonMenu.map((a, i) =>
+    '<tr><td>' + escapeHtml(a.name) + '</td><td style="text-align:right"><span style="color:var(--text-light);margin-right:2px">$</span>' +
+    '<input type="number" value="' + a.price + '" min="0" step="1" onchange="addonMenu[' + i + '].price=parseFloat(this.value)||0"></td></tr>'
+  ).join('');
+}
+
+function renderTransactionLog() {
+  const body = document.getElementById('txnBody');
+  if (transactions.length === 0) {
+    body.innerHTML = '<tr><td colspan="12" style="text-align:center;padding:24px;color:var(--text-light);">No transactions yet. Check out a client from the Form tab or click \"New Payment\" above.</td></tr>';
+    return;
+  }
+  body.innerHTML = transactions.map(t => {
+    const sc = t.status === 'Paid' ? 'txn-paid' : t.status === 'Pending' ? 'txn-pending' : 'txn-deposit';
+    const addStr = t.addOns.length > 0 ? t.addOns.join(', ') : '\u2014';
+    return '<tr>' +
+      '<td>' + escapeHtml(t.date) + '</td>' +
+      '<td><strong>' + escapeHtml(t.clientName) + '</strong></td>' +
+      '<td>' + escapeHtml(t.petName) + '</td>' +
+      '<td>' + escapeHtml(t.service) + '</td>' +
+      '<td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + escapeHtml(addStr) + '">' + escapeHtml(addStr) + '</td>' +
+      '<td style="text-align:right">$' + t.basePrice.toFixed(0) + '</td>' +
+      '<td style="text-align:right">' + (t.addOnTotal > 0 ? '$' + t.addOnTotal.toFixed(0) : '\u2014') + '</td>' +
+      '<td style="text-align:right">' + (t.discount > 0 ? '-$' + t.discount.toFixed(0) : '\u2014') + '</td>' +
+      '<td style="text-align:right">' + (t.tip > 0 ? '$' + t.tip.toFixed(0) : '\u2014') + '</td>' +
+      '<td style="text-align:right;font-weight:700;">$' + t.total.toFixed(0) + '</td>' +
+      '<td>' + escapeHtml(t.method) + '</td>' +
+      '<td><span class="badge ' + sc + '">' + t.status + '</span></td>' +
+    '</tr>';
+  }).join('');
+}
+
+function generateSampleTransactions() {
+  transactions = [];
+  const methods = ['Card', 'Cash', 'Venmo', 'Card', 'Card'];
+  const tips = [0, 0, 5, 8, 10, 12, 15, 20];
+  const aNames = addonMenu.map(a => a.name);
+  importedData.forEach(d => {
+    if (!d.lastVisit) return;
+    const service = d.service || 'Full Groom';
+    const size = getSizeLabel(d.weight || d.size || '');
+    const pe = lookupPrice(service, size);
+    const base = pe ? pe.price : estimatePrice(service);
+    const nAdd = Math.floor(Math.random() * 3);
+    const shuffled = [...aNames].sort(() => Math.random() - 0.5);
+    const picks = shuffled.slice(0, nAdd);
+    const addTotal = picks.reduce((s, name) => { const a = addonMenu.find(x => x.name === name); return s + (a ? a.price : 0); }, 0);
+    const tip = tips[Math.floor(Math.random() * tips.length)];
+    const disc = Math.random() < 0.1 ? 5 : 0;
+    const total = base + addTotal - disc + tip;
+    const method = methods[Math.floor(Math.random() * methods.length)];
+    transactions.push({
+      id: 'TXN-' + String(transactions.length + 1).padStart(3, '0'),
+      date: d.lastVisit,
+      clientName: d.clientName || 'Unknown',
+      petName: d.petName || 'Unknown',
+      service: service + (size ? ' \u2014 ' + size : ''),
+      basePrice: base,
+      addOns: picks,
+      addOnTotal: addTotal,
+      discount: disc,
+      tip: tip,
+      total: total,
+      method: method,
+      status: normalizeStatus(d.status) === 'inactive' ? 'Pending' : 'Paid',
+      notes: ''
+    });
+  });
+  transactions.sort((a, b) => b.date.localeCompare(a.date));
+}
+
+/* \u2550\u2550 CHECKOUT MODAL \u2550\u2550 */
+
+function openCheckout() {
+  populateAddonList();
+  if (currentFormIdx !== null && importedData[currentFormIdx]) {
+    const d = importedData[currentFormIdx];
+    document.getElementById('co-client').value = d.clientName || '';
+    document.getElementById('co-pet').value = d.petName || '';
+    const svcSel = document.getElementById('co-service');
+    if (d.service) {
+      for (let i = 0; i < svcSel.options.length; i++) {
+        if (svcSel.options[i].value.toLowerCase().includes(d.service.toLowerCase().split(' ')[0])) {
+          svcSel.selectedIndex = i; break;
+        }
+      }
+    }
+    if (d.weight) {
+      const w = parseInt(d.weight);
+      const sizeSel = document.getElementById('co-size');
+      if (w < 20) sizeSel.value = 'Small';
+      else if (w < 50) sizeSel.value = 'Medium';
+      else if (w < 90) sizeSel.value = 'Large';
+      else sizeSel.value = 'XL';
+    }
+  } else {
+    document.getElementById('co-client').value = '';
+    document.getElementById('co-pet').value = '';
+  }
+  document.querySelectorAll('.addon-chip').forEach(c => c.classList.remove('selected'));
+  document.getElementById('co-discount').value = '0';
+  document.getElementById('co-tip').value = '0';
+  document.getElementById('co-notes').value = '';
+  updateCheckoutPrice();
+  document.getElementById('checkoutModal').classList.add('show');
+}
+
+function closeCheckout() {
+  document.getElementById('checkoutModal').classList.remove('show');
+}
+
+function populateAddonList() {
+  document.getElementById('addonList').innerHTML = addonMenu.map(a =>
+    '<div class="addon-chip" data-name="' + escapeHtml(a.name) + '" data-price="' + a.price + '" onclick="toggleAddon(this)">' +
+    '<span>' + escapeHtml(a.name) + '</span><span style="color:var(--text-light);font-size:0.75rem;">+$' + a.price + '</span></div>'
+  ).join('');
+}
+
+function toggleAddon(chip) {
+  chip.classList.toggle('selected');
+  recalcCheckout();
+}
+
+function updateCheckoutPrice() {
+  const service = document.getElementById('co-service').value;
+  const size = document.getElementById('co-size').value;
+  const entry = lookupPrice(service, size);
+  const base = entry ? entry.price : 50;
+  document.getElementById('co-base').value = base;
+  recalcCheckout();
+}
+
+function recalcCheckout() {
+  const base = parseFloat(document.getElementById('co-base').value) || 0;
+  let addonTotal = 0;
+  document.querySelectorAll('.addon-chip.selected').forEach(chip => {
+    addonTotal += parseFloat(chip.dataset.price) || 0;
+  });
+  const discount = parseFloat(document.getElementById('co-discount').value) || 0;
+  const tip = parseFloat(document.getElementById('co-tip').value) || 0;
+  const total = base + addonTotal - discount + tip;
+  let lines = '<div class="checkout-line"><span>Base Price</span><span>$' + base.toFixed(2) + '</span></div>';
+  if (addonTotal > 0) lines += '<div class="checkout-line"><span>Add-Ons</span><span>$' + addonTotal.toFixed(2) + '</span></div>';
+  if (discount > 0) lines += '<div class="checkout-line"><span>Discount</span><span>-$' + discount.toFixed(2) + '</span></div>';
+  if (tip > 0) lines += '<div class="checkout-line"><span>Tip</span><span>$' + tip.toFixed(2) + '</span></div>';
+  lines += '<div class="checkout-line total"><span>Total</span><span>$' + total.toFixed(2) + '</span></div>';
+  document.getElementById('co-breakdown').innerHTML = lines;
+}
+
+function submitCheckout() {
+  const client = document.getElementById('co-client').value;
+  const pet = document.getElementById('co-pet').value;
+  if (!client && !pet) { showToast('\u26a0\ufe0f Enter a client or pet name'); return; }
+  const service = document.getElementById('co-service').value;
+  const size = document.getElementById('co-size').value;
+  const base = parseFloat(document.getElementById('co-base').value) || 0;
+  const selAddons = []; let addonTotal = 0;
+  document.querySelectorAll('.addon-chip.selected').forEach(chip => {
+    selAddons.push(chip.dataset.name);
+    addonTotal += parseFloat(chip.dataset.price) || 0;
+  });
+  const discount = parseFloat(document.getElementById('co-discount').value) || 0;
+  const tip = parseFloat(document.getElementById('co-tip').value) || 0;
+  const method = document.getElementById('co-method').value;
+  const status = document.getElementById('co-status').value;
+  const notes = document.getElementById('co-notes').value;
+  const total = base + addonTotal - discount + tip;
+  transactions.unshift({
+    id: 'TXN-' + String(transactions.length + 1).padStart(3, '0'),
+    date: new Date().toISOString().slice(0, 10),
+    clientName: client, petName: pet,
+    service: service + (size ? ' \u2014 ' + size : ''),
+    basePrice: base, addOns: selAddons, addOnTotal: addonTotal,
+    discount: discount, tip: tip, total: total,
+    method: method, status: status, notes: notes
+  });
+  closeCheckout();
+  showToast('\ud83d\udcb0 Payment recorded \u2014 $' + total.toFixed(2) + ' (' + method + ')');
+  if (document.getElementById('tab-finances').classList.contains('active')) renderFinances();
+  if (document.getElementById('tab-dashboard').classList.contains('active')) renderDashboard();
+}
+
+function exportTransactions() {
+  if (transactions.length === 0) return;
+  const hdr = 'Date,Client,Pet,Service,Add-Ons,Base Price,Add-On Total,Discount,Tip,Total,Method,Status';
+  const rows = transactions.map(t => {
+    const adds = t.addOns.join('; ');
+    return [t.date, '"' + t.clientName + '"', '"' + t.petName + '"', '"' + t.service + '"',
+      '"' + adds + '"', t.basePrice, t.addOnTotal, t.discount, t.tip, t.total, t.method, t.status].join(',');
+  });
+  const csv = hdr + '\n' + rows.join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = 'transactions-export.csv'; a.click();
+  URL.revokeObjectURL(url);
+  showToast('\ud83d\udce5 Transactions exported');
+}
+
+/* ══════════════════════════════════════════
    UTILITIES
    ══════════════════════════════════════════ */
 
@@ -1923,6 +2513,7 @@ document.addEventListener('DOMContentLoaded', function() {
 document.addEventListener('keydown', function(e) {
   if (e.key === 'Escape') {
     closeHistory();
+    closeCheckout();
     document.getElementById('confirmModal').classList.remove('show');
   }
 });
