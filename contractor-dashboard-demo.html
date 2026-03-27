@@ -317,7 +317,7 @@
   <div class="backup-bar">
     <div class="backup-label">💾 Data Backup<small>Download a copy of all job records so you never lose your data.</small></div>
     <button class="btn btn-success" onclick="exportBackup('csv')" data-help="Download all job records as a CSV file.">📥 Export CSV</button>
-    <button class="btn btn-outline" onclick="exportBackup('json')" data-help="Download all job records as a JSON file.">📦 Export JSON</button>
+    <button class="btn btn-outline" onclick="exportBackup('json')" data-help="Download a complete backup of all job records that can fully restore your data.">📦 Full Data Backup</button>
   </div>
 
   <div class="lookup-bar">
@@ -429,10 +429,22 @@
     <div class="modal-body" id="historyBody"></div>
   </div>
 </div>
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal-box" style="max-width:400px;text-align:center">
+    <div class="modal-body" style="padding:28px 24px">
+      <div style="font-size:1.5rem;margin-bottom:12px">⚠️</div>
+      <p id="confirmMsg" style="font-size:0.92rem;margin-bottom:20px;color:#1e293b"></p>
+      <div style="display:flex;gap:10px;justify-content:center">
+        <button class="btn btn-outline" id="confirmNo">Cancel</button>
+        <button class="btn btn-primary" id="confirmYes">Continue</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <script>
-function switchTab(tab) {
-  if (formDirty && tab !== 'form' && !confirm('You have unsaved changes. Switch tabs anyway?')) return;
+async function switchTab(tab) {
+  if (formDirty && tab !== 'form' && !await customConfirm('You have unsaved changes. Switch tabs anyway?')) return;
   document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('tab-' + tab).classList.add('active');
@@ -440,6 +452,7 @@ function switchTab(tab) {
 }
 function toggleSection(h) { h.classList.toggle('collapsed'); h.nextElementSibling.classList.toggle('hidden'); }
 function showToast(msg) { const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2500); }
+function customConfirm(msg){return new Promise(r=>{const o=document.getElementById('confirmModal');document.getElementById('confirmMsg').textContent=msg;o.classList.add('show');document.getElementById('confirmYes').onclick=()=>{o.classList.remove('show');r(true);};document.getElementById('confirmNo').onclick=()=>{o.classList.remove('show');r(false);};});}
 
 const clients = {
   johnson: {
@@ -487,10 +500,10 @@ const clients = {
 function setField(id, val) { const el=document.getElementById('f-'+id); if(!el) return; if(el.tagName==='SELECT'){for(let i=0;i<el.options.length;i++){if(el.options[i].text===val||el.options[i].value===val){el.selectedIndex=i;break;}}}else{el.value=val||'';}}
 
 let formDirty = false, currentClientKey = null;
-function loadClient() {
+async function loadClient() {
   const key = document.getElementById('clientSelect').value;
   if (!key) return;
-  if (formDirty && !confirm('You have unsaved changes. Load a different job anyway?')) return;
+  if (formDirty && !await customConfirm('You have unsaved changes. Load a different job anyway?')) return;
   const c = clients[key]; if (!c) return;
   currentClientKey = key;
   Object.keys(c).forEach(k => setField(k, c[k]));
@@ -505,8 +518,8 @@ function updateEditingIndicator(label) {
   document.getElementById('unsavedBadge').classList.remove('show');
 }
 function markDirty(){if(!currentClientKey)return;formDirty=true;document.getElementById('unsavedBadge').classList.add('show');}
-function clearForm() {
-  if (formDirty && !confirm('You have unsaved changes. Clear anyway?')) return;
+async function clearForm() {
+  if (formDirty && !await customConfirm('You have unsaved changes. Clear anyway?')) return;
   document.querySelectorAll('#tab-form input, #tab-form select, #tab-form textarea').forEach(el => {
     if(el.id==='clientSelect'){el.selectedIndex=0;return;} if(el.tagName==='SELECT')el.selectedIndex=0; else el.value='';
   });

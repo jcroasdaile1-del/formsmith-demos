@@ -937,7 +937,7 @@
       <small>Download a copy of all client records so you never lose your data.</small>
     </div>
     <button class="btn btn-success" onclick="exportBackup('csv')" data-help="Download all client records as a CSV file you can open in Excel or Google Sheets.">📥 Export CSV</button>
-    <button class="btn btn-outline" onclick="exportBackup('json')" data-help="Download all client records as a JSON file — useful for full data backups.">📦 Export JSON</button>
+    <button class="btn btn-outline" onclick="exportBackup('json')" data-help="Download a complete backup of all client records that can fully restore your data.">📦 Full Data Backup</button>
   </div>
 
   <!-- Lookup Bar -->
@@ -1299,10 +1299,10 @@ function setField(id, val) {
 let formDirty = false;
 let currentClientKey = null;
 
-function loadClient() {
+async function loadClient() {
   const key = document.getElementById('clientSelect').value;
   if (!key) return;
-  if (formDirty && !confirm('You have unsaved changes. Load a different client anyway?')) return;
+  if (formDirty && !await customConfirm('You have unsaved changes. Load a different client anyway?')) return;
   const c = clients[key];
   if (!c) return;
   currentClientKey = key;
@@ -1337,8 +1337,8 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('tab-form').addEventListener('change', markDirty);
 });
 
-function clearForm() {
-  if (formDirty && !confirm('You have unsaved changes. Clear the form anyway?')) return;
+async function clearForm() {
+  if (formDirty && !await customConfirm('You have unsaved changes. Clear the form anyway?')) return;
   document.querySelectorAll('#tab-form input, #tab-form select, #tab-form textarea').forEach(el => {
     if (el.id === 'clientSelect') { el.selectedIndex = 0; return; }
     if (el.tagName === 'SELECT') { el.selectedIndex = 0; }
@@ -1617,9 +1617,9 @@ function updateSectionBadges() {
 
 // ═══════ TAB SWITCH WARNING ═══════
 const origSwitchTab = switchTab;
-window.switchTab = function(tab) {
+window.switchTab = async function(tab) {
   if (formDirty && tab !== 'form') {
-    if (!confirm('You have unsaved changes on the form. Switch tabs anyway?')) return;
+    if (!await customConfirm('You have unsaved changes on the form. Switch tabs anyway?')) return;
   }
   origSwitchTab(tab);
 };
@@ -1666,9 +1666,23 @@ function todayStamp() {
   return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
 }
 
+function customConfirm(msg){return new Promise(r=>{const o=document.getElementById('confirmModal');document.getElementById('confirmMsg').textContent=msg;o.classList.add('show');document.getElementById('confirmYes').onclick=()=>{o.classList.remove('show');r(true);};document.getElementById('confirmNo').onclick=()=>{o.classList.remove('show');r(false);};});}
+
 // Init
 document.addEventListener('DOMContentLoaded', initCharts);
 </script>
 
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal-box" style="max-width:400px;text-align:center">
+    <div class="modal-body" style="padding:28px 24px">
+      <div style="font-size:1.5rem;margin-bottom:12px">⚠️</div>
+      <p id="confirmMsg" style="font-size:0.92rem;margin-bottom:20px;color:#1e293b"></p>
+      <div style="display:flex;gap:10px;justify-content:center">
+        <button class="btn btn-outline" id="confirmNo">Cancel</button>
+        <button class="btn btn-primary" id="confirmYes">Continue</button>
+      </div>
+    </div>
+  </div>
+</div>
 </body>
 </html>
