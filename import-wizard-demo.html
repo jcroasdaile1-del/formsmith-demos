@@ -629,6 +629,120 @@
   }
   .pet-nav-add:hover { background: #16a34a; color: white; }
   .pet-navigator.hidden { display: none !important; }
+
+  /* ── Help Button (header) ── */
+  .help-btn {
+    background: var(--primary);
+    color: white;
+    border: none;
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s ease, transform 0.2s ease;
+    flex-shrink: 0;
+  }
+  .help-btn:hover { background: var(--primary-dark, #1d4ed8); transform: scale(1.1); }
+
+  /* ── Inline Tooltip Icons ── */
+  .hint-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: var(--border);
+    color: var(--text-light);
+    font-size: 0.7rem;
+    font-weight: 700;
+    cursor: help;
+    margin-left: 6px;
+    position: relative;
+    vertical-align: middle;
+    flex-shrink: 0;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+  .hint-icon:hover { background: var(--primary); color: white; }
+  .hint-icon .hint-tooltip {
+    display: none;
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--text);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 0.78rem;
+    font-weight: 400;
+    line-height: 1.4;
+    white-space: normal;
+    width: 240px;
+    z-index: 1000;
+    box-shadow: 0 4px 12px rgba(0,0,0,.25);
+    pointer-events: none;
+  }
+  .hint-icon .hint-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: var(--text);
+  }
+  .hint-icon:hover .hint-tooltip { display: block; }
+
+  /* ── Help / FAQ Modal ── */
+  .help-modal .modal-box {
+    max-width: 640px;
+    max-height: 85vh;
+    overflow-y: auto;
+  }
+  .faq-item { border-bottom: 1px solid var(--border); }
+  .faq-item:last-child { border-bottom: none; }
+  .faq-q {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 0;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--text);
+    user-select: none;
+    gap: 12px;
+  }
+  .faq-q:hover { color: var(--primary); }
+  .faq-q .faq-chevron {
+    font-size: 0.75rem;
+    transition: transform 0.2s ease;
+    flex-shrink: 0;
+    color: var(--text-light);
+  }
+  .faq-q.open .faq-chevron { transform: rotate(180deg); }
+  .faq-a {
+    display: none;
+    padding: 0 0 14px 0;
+    font-size: 0.85rem;
+    color: var(--text-light);
+    line-height: 1.6;
+  }
+  .faq-q.open + .faq-a { display: block; }
+  .help-section-title {
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--primary);
+    margin: 20px 0 8px 0;
+    padding-top: 8px;
+  }
+  .help-section-title:first-child { margin-top: 0; padding-top: 0; }
 </style>
 </head>
 <body>
@@ -641,6 +755,7 @@
       <div class="subtitle">Dashboard + Import Demo</div>
     </div>
     <span class="header-badge">INTERACTIVE DEMO</span>
+    <button class="help-btn" onclick="openHelp()" title="Help & FAQ">?</button>
   </div>
   <div class="tab-bar">
     <button class="tab-btn active" onclick="switchTab('dashboard')">📊 Dashboard</button>
@@ -684,7 +799,7 @@
       <!-- Revenue by Service -->
       <div class="dash-card">
         <div class="dash-card-header">
-          <h3>📈 Revenue by Service</h3>
+          <h3>📈 Revenue by Service <span class="hint-icon">?<span class="hint-tooltip">Shows total revenue broken down by service type. Data comes from recorded checkout transactions.</span></span></h3>
         </div>
         <div class="dash-card-body">
           <div class="chart-wrap"><canvas id="chartRevenue"></canvas></div>
@@ -713,7 +828,7 @@
       <!-- Alerts -->
       <div class="dash-card">
         <div class="dash-card-header">
-          <h3>⚠️ Alerts & Action Items</h3>
+          <h3>⚠️ Alerts & Action Items <span class="hint-icon">?<span class="hint-tooltip">Flags clients with expired vaccinations, overdue appointments, or missing info that needs attention.</span></span></h3>
         </div>
         <div class="dash-card-body">
           <ul class="alert-list" id="alertsList"></ul>
@@ -742,7 +857,7 @@
       <!-- Vaccination Status -->
       <div class="dash-card">
         <div class="dash-card-header">
-          <h3>💉 Vaccination Status</h3>
+          <h3>💉 Vaccination Status <span class="hint-icon">?<span class="hint-tooltip">Breakdown of all pets by vaccination status — Current, Expired, or Unknown. Keep this up to date for safety.</span></span></h3>
         </div>
         <div class="dash-card-body">
           <div class="chart-wrap"><canvas id="chartVax"></canvas></div>
@@ -780,7 +895,7 @@
     <!-- Section 1: Client Info -->
     <div class="form-section">
       <div class="section-header" onclick="toggleSection(this)">
-        👤 Client Information <span class="chevron">▼</span>
+        👤 Client Information <span class="hint-icon">?<span class="hint-tooltip">Client-level details like name, phone, and email. These fields are shared across all pets for the same client.</span></span> <span class="chevron">▼</span>
       </div>
       <div class="section-body">
         <div class="field-grid">
@@ -840,7 +955,7 @@
     <!-- Section 2: Pet Details -->
     <div class="form-section">
       <div class="section-header" onclick="toggleSection(this)">
-        🐾 Pet Details <span class="chevron">▼</span>
+        🐾 Pet Details <span class="hint-icon">?<span class="hint-tooltip">Each pet has its own record. Use the pet navigator above to switch between pets for the same client.</span></span> <span class="chevron">▼</span>
       </div>
       <div class="section-body">
         <div class="field-grid">
@@ -891,7 +1006,7 @@
     <!-- Section 3: Grooming Preferences -->
     <div class="form-section">
       <div class="section-header" onclick="toggleSection(this)">
-        ✂️ Grooming Preferences <span class="chevron">▼</span>
+        ✂️ Grooming Preferences <span class="hint-icon">?<span class="hint-tooltip">Set each pet's preferred service, cut style, and shampoo. Add-ons and special requests go in the text box.</span></span> <span class="chevron">▼</span>
       </div>
       <div class="section-body">
         <div class="field-grid">
@@ -918,7 +1033,7 @@
     <!-- Section 4: Appointment & Scheduling -->
     <div class="form-section">
       <div class="section-header" onclick="toggleSection(this)">
-        📅 Appointment & Scheduling <span class="chevron">▼</span>
+        📅 Appointment & Scheduling <span class="hint-icon">?<span class="hint-tooltip">Track visit history, upcoming appointments, and preferred scheduling. Status controls whether the client appears as Active or Inactive.</span></span> <span class="chevron">▼</span>
       </div>
       <div class="section-body">
         <div class="field-grid">
@@ -993,7 +1108,7 @@
     <!-- Price Sheet (collapsible) -->
     <div class="form-section" style="margin-bottom: 20px;">
       <div class="section-header" onclick="toggleSection(this)">
-        💲 Price Sheet <span class="chevron">▼</span>
+        💲 Price Sheet <span class="hint-icon">?<span class="hint-tooltip">Edit your base service prices and add-on prices here. Changes apply immediately to all new checkout calculations.</span></span> <span class="chevron">▼</span>
       </div>
       <div class="section-body">
         <p style="font-size: 0.82rem; color: var(--text-light); margin-bottom: 12px;">
@@ -1307,6 +1422,96 @@
         <button class="btn btn-outline" onclick="closeCheckout()">Cancel</button>
         <button class="btn btn-success" onclick="submitCheckout()">💰 Record Payment</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ HELP / FAQ MODAL ═══════ -->
+<div class="modal-overlay help-modal" id="helpModal" onclick="if(event.target===this)closeHelp()">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3>❓ Help & FAQ</h3>
+      <button class="modal-close" onclick="closeHelp()">&times;</button>
+    </div>
+    <div class="modal-body" style="padding: 20px 24px;">
+
+      <div class="help-section-title">Getting Started</div>
+
+      <div class="faq-item">
+        <div class="faq-q" onclick="this.classList.toggle('open')">How do I get started with the demo? <span class="faq-chevron">▼</span></div>
+        <div class="faq-a">Click <strong>"🧪 Load Demo Data"</strong> on the Dashboard tab to populate the app with sample grooming salon data. This fills in clients, pets, appointments, and transactions so you can explore every feature. You can also import your own CSV file using the <strong>"📥 Import Clients"</strong> button.</div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-q" onclick="this.classList.toggle('open')">What is Formsmith? <span class="faq-chevron">▼</span></div>
+        <div class="faq-a">Formsmith builds custom web apps that replace messy Google Sheets. Every tab, field, chart, and button is tailored to your specific business — no templates, no compromises. Your data stays in Google Sheets, but your team gets a polished, easy-to-use interface.</div>
+      </div>
+
+      <div class="help-section-title">Importing Data</div>
+
+      <div class="faq-item">
+        <div class="faq-q" onclick="this.classList.toggle('open')">How does the CSV import work? <span class="faq-chevron">▼</span></div>
+        <div class="faq-a">Click <strong>"📥 Import Clients"</strong> and upload a CSV or TSV file. The wizard auto-maps your column headers to the app's fields (it's smart about messy headers). You can review and adjust the mappings before importing. Your existing records won't be overwritten — new data is added alongside them.</div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-q" onclick="this.classList.toggle('open')">What file formats are supported? <span class="faq-chevron">▼</span></div>
+        <div class="faq-a">CSV (comma-separated) and TSV (tab-separated) files are supported. The importer automatically detects which format you're using. Excel files (.xlsx) are not directly supported — save as CSV from Excel first.</div>
+      </div>
+
+      <div class="help-section-title">Client Form</div>
+
+      <div class="faq-item">
+        <div class="faq-q" onclick="this.classList.toggle('open')">How do I add a new client? <span class="faq-chevron">▼</span></div>
+        <div class="faq-a">Go to the <strong>📝 Client Form</strong> tab, make sure the form is clear (click "Clear" if needed), then fill in the client and pet details. Click <strong>"💾 Save Record"</strong> to add them to your roster.</div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-q" onclick="this.classList.toggle('open')">How do pets work for clients with multiple animals? <span class="faq-chevron">▼</span></div>
+        <div class="faq-a">Each pet is its own record that shares the client's name, phone, and email. When a client has multiple pets, a <strong>pet navigator bar</strong> appears between the Client Info and Pet Details sections. Use the ◀ ▶ buttons to switch between pets, or click <strong>"＋ Add Pet"</strong> to register a new one.</div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-q" onclick="this.classList.toggle('open')">What does "UNSAVED CHANGES" mean? <span class="faq-chevron">▼</span></div>
+        <div class="faq-a">When you edit any field, the app tracks that you have unsaved work. A pulsing <strong>"UNSAVED CHANGES"</strong> badge appears at the top. Click <strong>"💾 Save Record"</strong> to save, or the app will ask you to confirm before navigating away.</div>
+      </div>
+
+      <div class="help-section-title">Dashboard & Reports</div>
+
+      <div class="faq-item">
+        <div class="faq-q" onclick="this.classList.toggle('open')">What are the filter pills on the dashboard? <span class="faq-chevron">▼</span></div>
+        <div class="faq-a"><strong>All Clients</strong> shows everyone. <strong>Active Only</strong> filters to clients with an Active status. <strong>Needs Attention</strong> highlights clients with expired vaccinations, overdue appointments, or missing information.</div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-q" onclick="this.classList.toggle('open')">Can I click on a client in the dashboard? <span class="faq-chevron">▼</span></div>
+        <div class="faq-a">Yes! Click any client row in the dashboard tables or the Clients tab to jump directly to their record in the Client Form. This works everywhere you see client names.</div>
+      </div>
+
+      <div class="help-section-title">Finances & Checkout</div>
+
+      <div class="faq-item">
+        <div class="faq-q" onclick="this.classList.toggle('open')">How do I record a payment? <span class="faq-chevron">▼</span></div>
+        <div class="faq-a">Load a client in the form, then click <strong>"💰 Check Out"</strong>. Select the service, add any add-ons, apply discounts or tips, choose the payment method, and click <strong>"💰 Record Payment"</strong>. The transaction appears in the Finances tab immediately.</div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-q" onclick="this.classList.toggle('open')">Can I edit the price sheet? <span class="faq-chevron">▼</span></div>
+        <div class="faq-a">Yes — go to the <strong>💰 Finances</strong> tab and expand the <strong>"💲 Price Sheet"</strong> section. You can change any base service price or add-on price. Changes apply immediately to all new checkouts.</div>
+      </div>
+
+      <div class="help-section-title">Tips</div>
+
+      <div class="faq-item">
+        <div class="faq-q" onclick="this.classList.toggle('open')">What do the little "?" circles mean? <span class="faq-chevron">▼</span></div>
+        <div class="faq-a">Hover over any <strong>?</strong> icon next to a section header or chart title to see a quick explanation of what that section does and how to use it.</div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-q" onclick="this.classList.toggle('open')">Is this a real app or just a demo? <span class="faq-chevron">▼</span></div>
+        <div class="faq-a">This is a fully interactive demo. Everything works — importing, editing, saving, checkout, charts — but data is stored in your browser's memory and will reset when you refresh. In a real Formsmith app, all data reads from and writes to your Google Sheet in real time.</div>
+      </div>
+
     </div>
   </div>
 </div>
@@ -2501,6 +2706,13 @@ function showHistory() {
 function closeHistory() { document.getElementById('historyModal').classList.remove('show'); }
 
 /* ══════════════════════════════════════════
+   HELP / FAQ MODAL
+   ══════════════════════════════════════════ */
+
+function openHelp() { document.getElementById('helpModal').classList.add('show'); }
+function closeHelp() { document.getElementById('helpModal').classList.remove('show'); }
+
+/* ══════════════════════════════════════════
    CLIENTS TAB — EXPORT
    ══════════════════════════════════════════ */
 
@@ -2913,6 +3125,7 @@ document.addEventListener('keydown', function(e) {
     closeHistory();
     closeCheckout();
     closeImportWizard();
+    closeHelp();
     document.getElementById('confirmModal').classList.remove('show');
   }
 });
