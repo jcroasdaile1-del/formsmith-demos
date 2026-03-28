@@ -2800,6 +2800,22 @@ function saveFormRecord() {
         }
       });
     }
+  } else if (currentFormIdx === null) {
+    // New client — build record from form fields and add to roster
+    const newRec = {};
+    TARGET_FIELDS.forEach(f => {
+      const el = document.getElementById('f-' + f.key);
+      newRec[f.key] = el ? (el.value || '') : '';
+    });
+    importedData.push(newRec);
+    currentFormIdx = importedData.length - 1;
+    const newId = 'CLT-' + String(currentFormIdx + 1).padStart(3, '0');
+    document.getElementById('f-clientId').value = newId;
+    populateFormLookup();
+    document.getElementById('clientSelect').value = currentFormIdx;
+    updateEditingIndicator((newRec.petName || 'Unknown') + ' — ' + (newRec.clientName || 'Unknown'));
+    renderClients();
+    renderDashboard();
   }
   formDirty = false;
   document.getElementById('unsavedBadge').classList.remove('show');
