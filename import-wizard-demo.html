@@ -360,6 +360,8 @@
   .status-expired { background: var(--warning-light); color: #92400e; }
   .status-current { background: var(--accent-light); color: #065f46; }
   .status-new { background: var(--purple-light); color: var(--purple); }
+  .notes-icon { cursor: help; font-size: 0.85rem; opacity: 0.6; margin-left: 4px; }
+  .notes-icon:hover { opacity: 1; }
 
   /* Empty state */
   .empty-state { text-align: center; padding: 80px 24px; color: var(--text-light); }
@@ -2217,12 +2219,12 @@ function getFilteredData() {
 }
 
 function normalizeStatus(s) {
-  if (!s) return 'unknown';
+  if (!s) return 'active';
   const lc = s.toLowerCase().trim();
   if (lc === 'active' || lc === 'yes' || lc === 'y') return 'active';
   if (lc === 'inactive' || lc === 'no' || lc === 'n') return 'inactive';
   if (lc.includes('new')) return 'new';
-  return lc;
+  return 'active';
 }
 
 function normalizeVax(v) {
@@ -2644,11 +2646,20 @@ function renderClients() {
   const body = document.getElementById('clientBody');
   body.innerHTML = pageData.map((d, i) => {
     const idx = start + i;
+    // If status contains unrecognized text (notes in wrong field), move it to notes
+    const rawStatus = (d.status || '').trim();
+    const statusLc = rawStatus.toLowerCase();
+    const isRealStatus = !rawStatus || ['active','inactive','new','yes','no','y','n','new client'].includes(statusLc) || statusLc.includes('new');
+    if (!isRealStatus && !d.notes) {
+      d.notes = rawStatus;
+      d.status = 'Active';
+    }
     const ns = normalizeStatus(d.status);
     const statusClass = ns === 'active' ? 'status-active' : ns === 'inactive' ? 'status-inactive' : 'status-new';
     const statusLabel = ns.charAt(0).toUpperCase() + ns.slice(1);
     const nv = normalizeVax(d.vaxStatus);
     const vaxClass = nv === 'Current' ? 'status-current' : nv === 'Expired' ? 'status-expired' : '';
+    const notesIcon = d.notes ? ' <span class="notes-icon" title="' + escapeHtml(d.notes) + '">📝</span>' : '';
     return '<tr class="clickable-row" onclick="goToClient(' + idx + ')" title="Click to open in Client Form">' +
       '<td><strong>' + escapeHtml(d.clientName || '—') + '</strong></td>' +
       '<td>' + escapeHtml(d.phone || '—') + '</td>' +
@@ -2658,7 +2669,7 @@ function renderClients() {
       '<td>' + escapeHtml(d.lastVisit || '—') + '</td>' +
       '<td>' + escapeHtml(d.nextAppt || '—') + '</td>' +
       '<td><span class="status-badge ' + vaxClass + '">' + nv + '</span></td>' +
-      '<td><span class="status-badge ' + statusClass + '">' + statusLabel + '</span></td>' +
+      '<td><span class="status-badge ' + statusClass + '">' + statusLabel + '</span>' + notesIcon + '</td>' +
     '</tr>';
   }).join('');
 
