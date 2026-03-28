@@ -3209,8 +3209,10 @@ function showKpiDetail(title, rows) {
   html += '</tbody></table>';
   if (rows.length === 0) html = '<p style="text-align:center;color:var(--text-light);padding:20px;">No records to show.</p>';
   document.getElementById('kpiDetailBody').innerHTML = html;
+  var modal = document.getElementById('kpiDetailModal');
+  modal.classList.add('show');
   document.getElementById('kpiDetailBody').scrollTop = 0;
-  document.getElementById('kpiDetailModal').classList.add('show');
+  modal.querySelector('.modal-box').scrollTop = 0;
 }
 function closeKpiDetail() {
   document.getElementById('kpiDetailModal').classList.remove('show');
