@@ -228,6 +228,8 @@
   .btn-outline:hover { background: var(--bg); color: var(--text); }
   .btn-purple { background: var(--purple); color: white; }
   .btn-purple:hover { background: #7c3aed; }
+  .btn-danger { background: #ef4444; color: white; }
+  .btn-danger:hover { background: #dc2626; }
   .btn-import { background: #f59e0b; color: white; }
   .btn-import:hover { background: #d97706; }
   .btn-backup { background: #0ea5e9; color: white; }
@@ -530,6 +532,18 @@
   .price-sheet-table input[type="number"]:focus {
     outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
   }
+  .price-sheet-table input[type="text"] {
+    width: 100%; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px;
+    font-size: 0.85rem; font-family: inherit; box-sizing: border-box;
+  }
+  .price-sheet-table input[type="text"]:focus {
+    outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+  }
+  .price-sheet-table .btn-row-delete {
+    background: none; border: none; color: #ef4444; cursor: pointer; font-size: 1rem;
+    padding: 4px 6px; border-radius: 4px; line-height: 1;
+  }
+  .price-sheet-table .btn-row-delete:hover { background: #fef2f2; }
   .txn-paid { background: var(--accent-light); color: #065f46; }
   .txn-pending { background: var(--warning-light); color: #92400e; }
   .txn-deposit { background: var(--purple-light); color: var(--purple); }
@@ -1133,6 +1147,7 @@
 
     <div class="submit-bar">
       <button class="btn btn-outline" onclick="clearForm()">Clear Form</button>
+      <button class="btn btn-danger" onclick="deleteClient()">🗑️ Delete Client</button>
       <button class="btn btn-success" onclick="saveFormRecord()">💾 Save Record</button>
       <button class="btn btn-purple" onclick="openCheckout()">💰 Check Out</button>
     </div>
@@ -1183,11 +1198,13 @@
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
           <div>
             <h4 style="font-size: 0.85rem; margin-bottom: 8px; color: var(--text);">🛁 Base Services</h4>
-            <table class="price-sheet-table"><thead><tr><th>Service</th><th style="text-align:right">Price</th></tr></thead><tbody id="priceSheetBody"></tbody></table>
+            <table class="price-sheet-table"><thead><tr><th>Service</th><th style="text-align:right">Price</th><th style="width:36px"></th></tr></thead><tbody id="priceSheetBody"></tbody></table>
+            <button class="btn btn-outline" style="margin-top:8px;font-size:0.8rem;" onclick="addPriceSheetRow()">＋ Add Service</button>
           </div>
           <div>
             <h4 style="font-size: 0.85rem; margin-bottom: 8px; color: var(--text);">✨ Add-Ons</h4>
-            <table class="price-sheet-table"><thead><tr><th>Add-On</th><th style="text-align:right">Price</th></tr></thead><tbody id="addonSheetBody"></tbody></table>
+            <table class="price-sheet-table"><thead><tr><th>Add-On</th><th style="text-align:right">Price</th><th style="width:36px"></th></tr></thead><tbody id="addonSheetBody"></tbody></table>
+            <button class="btn btn-outline" style="margin-top:8px;font-size:0.8rem;" onclick="addAddonRow()">＋ Add Add-On</button>
           </div>
         </div>
       </div>
@@ -1565,7 +1582,7 @@
 
       <div class="faq-item">
         <div class="faq-q" onclick="this.classList.toggle('open')">Can I edit the price sheet? <span class="faq-chevron">▼</span></div>
-        <div class="faq-a">Yes — go to the <strong>💰 Finances</strong> tab and expand the <strong>"💲 Price Sheet"</strong> section. You can change any base service price or add-on price. Changes apply immediately to all new checkouts.</div>
+        <div class="faq-a">Yes — go to the <strong>💰 Finances</strong> tab and expand the <strong>"💲 Price Sheet"</strong> section. You can rename, change prices, add new items, or remove existing ones. Changes apply immediately to all new checkouts.</div>
       </div>
 
       <div class="help-section-title">Tips</div>
@@ -2768,6 +2785,49 @@ async function clearForm() {
   showToast('🧹 Form cleared');
 }
 
+async function deleteClient() {
+  if (currentFormIdx === null) { showToast('⚠️ Select a client first'); return; }
+  const d = importedData[currentFormIdx];
+  const clientName = d.clientName || 'Unknown';
+  const petIndices = getClientPetIndices(clientName);
+  const petCount = petIndices.length;
+  const msg = petCount > 1
+    ? 'Delete client "' + clientName + '" and all ' + petCount + ' pet records? This cannot be undone.'
+    : 'Delete "' + (d.petName || 'Unknown') + '" (' + clientName + ')? This cannot be undone.';
+  if (!await customConfirm(msg)) return;
+  // Remove all records for this client (highest index first to preserve indices)
+  const toRemove = petIndices.sort((a, b) => b - a);
+  toRemove.forEach(idx => {
+    importedData.splice(idx, 1);
+    delete changeHistory[idx];
+  });
+  // Rebuild changeHistory keys (indices shifted)
+  const newHistory = {};
+  Object.keys(changeHistory).forEach(k => {
+    const oldIdx = parseInt(k);
+    let shift = 0;
+    toRemove.forEach(ri => { if (oldIdx > ri) shift++; });
+    newHistory[oldIdx - shift] = changeHistory[k];
+  });
+  changeHistory = newHistory;
+  // Reset form
+  currentFormIdx = null;
+  formDirty = false;
+  document.querySelectorAll('#tab-form .form-section input, #tab-form .form-section select, #tab-form .form-section textarea').forEach(el => {
+    if (el.tagName === 'SELECT') el.selectedIndex = 0;
+    else el.value = '';
+  });
+  document.getElementById('clientSelect').selectedIndex = 0;
+  document.getElementById('unsavedBadge').classList.remove('show');
+  updateEditingIndicator(null);
+  updateSectionBadges();
+  updatePetNavigator();
+  populateFormLookup();
+  renderClients();
+  renderDashboard();
+  showToast('🗑️ Deleted: ' + clientName + ' (' + petCount + ' record' + (petCount > 1 ? 's' : '') + ')');
+}
+
 function saveFormRecord() {
   const name = document.getElementById('f-petName').value;
   const clientName = document.getElementById('f-clientName').value;
@@ -3124,13 +3184,32 @@ function renderFinCharts() {
 
 function renderPriceSheet() {
   document.getElementById('priceSheetBody').innerHTML = priceSheet.map((p, i) =>
-    '<tr><td>' + escapeHtml(p.service) + '</td><td style="text-align:right"><span style="color:var(--text-light);margin-right:2px">$</span>' +
-    '<input type="number" value="' + p.price + '" min="0" step="5" onchange="priceSheet[' + i + '].price=parseFloat(this.value)||0"></td></tr>'
+    '<tr><td><input type="text" value="' + escapeHtml(p.service) + '" onchange="priceSheet[' + i + '].service=this.value"></td><td style="text-align:right"><span style="color:var(--text-light);margin-right:2px">$</span>' +
+    '<input type="number" value="' + p.price + '" min="0" step="5" onchange="priceSheet[' + i + '].price=parseFloat(this.value)||0"></td>' +
+    '<td><button class="btn-row-delete" title="Remove" onclick="removePriceSheetRow(' + i + ')">✕</button></td></tr>'
   ).join('');
   document.getElementById('addonSheetBody').innerHTML = addonMenu.map((a, i) =>
-    '<tr><td>' + escapeHtml(a.name) + '</td><td style="text-align:right"><span style="color:var(--text-light);margin-right:2px">$</span>' +
-    '<input type="number" value="' + a.price + '" min="0" step="1" onchange="addonMenu[' + i + '].price=parseFloat(this.value)||0"></td></tr>'
+    '<tr><td><input type="text" value="' + escapeHtml(a.name) + '" onchange="addonMenu[' + i + '].name=this.value"></td><td style="text-align:right"><span style="color:var(--text-light);margin-right:2px">$</span>' +
+    '<input type="number" value="' + a.price + '" min="0" step="1" onchange="addonMenu[' + i + '].price=parseFloat(this.value)||0"></td>' +
+    '<td><button class="btn-row-delete" title="Remove" onclick="removeAddonRow(' + i + ')">✕</button></td></tr>'
   ).join('');
+}
+
+function addPriceSheetRow() {
+  priceSheet.push({ service: 'New Service', price: 0 });
+  renderPriceSheet();
+}
+function removePriceSheetRow(i) {
+  priceSheet.splice(i, 1);
+  renderPriceSheet();
+}
+function addAddonRow() {
+  addonMenu.push({ name: 'New Add-On', price: 0 });
+  renderPriceSheet();
+}
+function removeAddonRow(i) {
+  addonMenu.splice(i, 1);
+  renderPriceSheet();
 }
 
 function renderTransactionLog() {
