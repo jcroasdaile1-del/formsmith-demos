@@ -220,6 +220,10 @@
   .btn-outline:hover { background: var(--bg); color: var(--text); }
   .btn-purple { background: var(--purple); color: white; }
   .btn-purple:hover { background: #7c3aed; }
+  .btn-import { background: #f59e0b; color: white; }
+  .btn-import:hover { background: #d97706; }
+  .btn-backup { background: #0ea5e9; color: white; }
+  .btn-backup:hover { background: #0284c7; }
 
   .import-success { text-align: center; padding: 24px; }
   .import-success .check-icon {
@@ -379,6 +383,10 @@
     padding: 14px 20px; background: var(--bg); border-bottom: 1px solid var(--border);
     font-weight: 700; font-size: 0.9rem; cursor: pointer;
     display: flex; align-items: center; justify-content: space-between; user-select: none;
+    gap: 8px;
+  }
+  .section-header .section-label {
+    display: flex; align-items: center; gap: 0; flex: 1; min-width: 0;
   }
   .section-header:hover { background: #e8edf3; }
   .section-header .chevron { transition: transform 0.2s; font-size: 0.8rem; color: var(--text-light); }
@@ -653,11 +661,11 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 18px; height: 18px;
+    width: 16px; height: 16px;
     border-radius: 50%;
     background: var(--border);
     color: var(--text-light);
-    font-size: 0.7rem;
+    font-size: 0.65rem;
     font-weight: 700;
     cursor: help;
     margin-left: 6px;
@@ -665,6 +673,10 @@
     vertical-align: middle;
     flex-shrink: 0;
     transition: background 0.15s ease, color 0.15s ease;
+    z-index: 1;
+  }
+  .section-header .hint-icon {
+    pointer-events: auto;
   }
   .hint-icon:hover { background: var(--primary); color: white; }
   .hint-icon .hint-tooltip {
@@ -755,7 +767,11 @@
       <div class="subtitle">Dashboard + Import Demo</div>
     </div>
     <span class="header-badge">INTERACTIVE DEMO</span>
-    <button class="help-btn" onclick="openHelp()" title="Help & FAQ">?</button>
+    <div style="display: flex; gap: 8px; align-items: center;">
+      <button class="btn btn-backup" style="padding: 6px 14px; font-size: 0.8rem;" onclick="backupData()" title="Download a backup of all your data">💾 Save Backup</button>
+      <button class="btn btn-backup" style="padding: 6px 14px; font-size: 0.8rem;" onclick="restoreData()" title="Restore data from a backup file">📂 Load Backup</button>
+      <button class="help-btn" onclick="openHelp()" title="Help & FAQ">?</button>
+    </div>
   </div>
   <div class="tab-bar">
     <button class="tab-btn active" onclick="switchTab('dashboard')">📊 Dashboard</button>
@@ -772,7 +788,7 @@
     <h3>No Data Yet</h3>
     <p>Import data or submit a client form to see your dashboard come to life.</p>
     <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
-      <button class="btn btn-primary" onclick="openImportWizard('clients')">📥 Import Clients</button>
+      <button class="btn btn-import" onclick="openImportWizard('clients')">📥 Import Clients</button>
       <button class="btn btn-success" onclick="switchTab('form')">📝 Add Client</button>
       <button class="btn btn-purple" onclick="loadDemoData()">🧪 Load Demo Data</button>
     </div>
@@ -888,14 +904,14 @@
       <button class="btn btn-primary" onclick="loadClientForm()">Load</button>
       <button class="btn btn-outline" onclick="clearForm()">Clear</button>
       <span class="lookup-spacer"></span>
-      <button class="btn btn-secondary" onclick="openImportWizard('clients')">📥 Import Clients</button>
+      <button class="btn btn-import" onclick="openImportWizard('clients')">📥 Import Clients</button>
       <button class="btn btn-purple" onclick="showHistory()">📜 View History</button>
     </div>
 
     <!-- Section 1: Client Info -->
     <div class="form-section">
       <div class="section-header" onclick="toggleSection(this)">
-        👤 Client Information <span class="hint-icon">?<span class="hint-tooltip">Client-level details like name, phone, and email. These fields are shared across all pets for the same client.</span></span> <span class="chevron">▼</span>
+        <span class="section-label">👤 Client Information <span class="hint-icon">?<span class="hint-tooltip">Client-level details like name, phone, and email. These fields are shared across all pets for the same client.</span></span></span> <span class="chevron">▼</span>
       </div>
       <div class="section-body">
         <div class="field-grid">
@@ -955,7 +971,7 @@
     <!-- Section 2: Pet Details -->
     <div class="form-section">
       <div class="section-header" onclick="toggleSection(this)">
-        🐾 Pet Details <span class="hint-icon">?<span class="hint-tooltip">Each pet has its own record. Use the pet navigator above to switch between pets for the same client.</span></span> <span class="chevron">▼</span>
+        <span class="section-label">🐾 Pet Details <span class="hint-icon">?<span class="hint-tooltip">Each pet has its own record. Use the pet navigator above to switch between pets for the same client.</span></span></span> <span class="chevron">▼</span>
       </div>
       <div class="section-body">
         <div class="field-grid">
@@ -1006,7 +1022,7 @@
     <!-- Section 3: Grooming Preferences -->
     <div class="form-section">
       <div class="section-header" onclick="toggleSection(this)">
-        ✂️ Grooming Preferences <span class="hint-icon">?<span class="hint-tooltip">Set each pet's preferred service, cut style, and shampoo. Add-ons and special requests go in the text box.</span></span> <span class="chevron">▼</span>
+        <span class="section-label">✂️ Grooming Preferences <span class="hint-icon">?<span class="hint-tooltip">Set each pet's preferred service, cut style, and shampoo. Add-ons and special requests go in the text box.</span></span></span> <span class="chevron">▼</span>
       </div>
       <div class="section-body">
         <div class="field-grid">
@@ -1033,7 +1049,7 @@
     <!-- Section 4: Appointment & Scheduling -->
     <div class="form-section">
       <div class="section-header" onclick="toggleSection(this)">
-        📅 Appointment & Scheduling <span class="hint-icon">?<span class="hint-tooltip">Track visit history, upcoming appointments, and preferred scheduling. Status controls whether the client appears as Active or Inactive.</span></span> <span class="chevron">▼</span>
+        <span class="section-label">📅 Appointment & Scheduling <span class="hint-icon">?<span class="hint-tooltip">Track visit history, upcoming appointments, and preferred scheduling. Status controls whether the client appears as Active or Inactive.</span></span></span> <span class="chevron">▼</span>
       </div>
       <div class="section-body">
         <div class="field-grid">
@@ -1080,7 +1096,7 @@
     <h3>No Transactions Yet</h3>
     <p>Import transaction data or check out clients from the Client Form tab to start tracking revenue.</p>
     <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
-      <button class="btn btn-primary" onclick="openImportWizard('transactions')">📥 Import Transactions</button>
+      <button class="btn btn-import" onclick="openImportWizard('transactions')">📥 Import Transactions</button>
       <button class="btn btn-success" onclick="switchTab('form')">📝 Go to Client Form</button>
     </div>
   </div>
@@ -1108,7 +1124,7 @@
     <!-- Price Sheet (collapsible) -->
     <div class="form-section" style="margin-bottom: 20px;">
       <div class="section-header" onclick="toggleSection(this)">
-        💲 Price Sheet <span class="hint-icon">?<span class="hint-tooltip">Edit your base service prices and add-on prices here. Changes apply immediately to all new checkout calculations.</span></span> <span class="chevron">▼</span>
+        <span class="section-label">💲 Price Sheet <span class="hint-icon">?<span class="hint-tooltip">Edit your base service prices and add-on prices here. Changes apply immediately to all new checkout calculations.</span></span></span> <span class="chevron">▼</span>
       </div>
       <div class="section-body">
         <p style="font-size: 0.82rem; color: var(--text-light); margin-bottom: 12px;">
@@ -1132,9 +1148,9 @@
       <div class="dash-card-header">
         <h3>📋 Transaction Log</h3>
         <div style="display: flex; gap: 8px;">
-          <button class="btn btn-secondary" style="padding: 6px 14px; font-size: 0.8rem;" onclick="openImportWizard('transactions')">📥 Import Transactions</button>
+          <button class="btn btn-import" style="padding: 6px 14px; font-size: 0.8rem;" onclick="openImportWizard('transactions')">📥 Import Transactions</button>
           <button class="btn btn-success" style="padding: 6px 14px; font-size: 0.8rem;" onclick="openCheckout()">💰 New Payment</button>
-          <button class="filter-btn" onclick="exportTransactions()">📥 Export</button>
+          <button class="btn btn-import" style="padding: 6px 14px; font-size: 0.8rem;" onclick="exportTransactions()">📤 Export</button>
         </div>
       </div>
       <div class="dash-card-body" style="padding: 0;">
@@ -1156,7 +1172,7 @@
     <h3>No Clients Yet</h3>
     <p>Import client data or add clients from the Client Form tab to see your full roster here.</p>
     <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
-      <button class="btn btn-primary" onclick="openImportWizard('clients')">📥 Import Clients</button>
+      <button class="btn btn-import" onclick="openImportWizard('clients')">📥 Import Clients</button>
       <button class="btn btn-success" onclick="switchTab('form')">📝 Add Client</button>
     </div>
   </div>
@@ -1164,7 +1180,7 @@
   <div id="clientsContent" style="display:none;">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
       <h2 style="font-size: 1.1rem;">👥 Client Roster (<span id="clientCount">0</span>)</h2>
-      <button class="btn btn-secondary" onclick="exportCSV()">📥 Export CSV</button>
+      <button class="btn btn-import" onclick="exportCSV()">📤 Export CSV</button>
     </div>
     <div class="data-card" style="margin-bottom: 0;">
       <table class="data-table" id="clientTable">
@@ -1510,6 +1526,11 @@
       <div class="faq-item">
         <div class="faq-q" onclick="this.classList.toggle('open')">Is this a real app or just a demo? <span class="faq-chevron">▼</span></div>
         <div class="faq-a">This is a fully interactive demo. Everything works — importing, editing, saving, checkout, charts — but data is stored in your browser's memory and will reset when you refresh. In a real Formsmith app, all data reads from and writes to your Google Sheet in real time.</div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-q" onclick="this.classList.toggle('open')">How do I back up my data? <span class="faq-chevron">▼</span></div>
+        <div class="faq-a">Click <strong>"💾 Save Backup"</strong> in the top-right corner. This downloads a JSON file with all your clients, transactions, and price settings. To restore, click <strong>"📂 Load Backup"</strong> and select your backup file. Your data will be fully restored — no re-importing needed.</div>
       </div>
 
     </div>
@@ -2711,6 +2732,69 @@ function closeHistory() { document.getElementById('historyModal').classList.remo
 
 function openHelp() { document.getElementById('helpModal').classList.add('show'); }
 function closeHelp() { document.getElementById('helpModal').classList.remove('show'); }
+
+/* ══════════════════════════════════════════
+   BACKUP & RESTORE
+   ══════════════════════════════════════════ */
+
+function backupData() {
+  if (importedData.length === 0 && transactions.length === 0) {
+    showToast('⚠️ Nothing to back up — import data first');
+    return;
+  }
+  var backup = {
+    version: 1,
+    createdAt: new Date().toISOString(),
+    clients: importedData,
+    transactions: transactions,
+    priceSheet: priceSheet,
+    addonSheet: addonSheet
+  };
+  var json = JSON.stringify(backup, null, 2);
+  var blob = new Blob([json], { type: 'application/json' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  var dateStr = new Date().toISOString().slice(0, 10);
+  a.href = url;
+  a.download = 'grooming-backup-' + dateStr + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('💾 Backup saved — ' + importedData.length + ' clients, ' + transactions.length + ' transactions');
+}
+
+function restoreData() {
+  var input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json';
+  input.onchange = function(e) {
+    var file = e.target.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function(ev) {
+      try {
+        var backup = JSON.parse(ev.target.result);
+        if (!backup.version || !backup.clients) {
+          showToast('❌ Invalid backup file');
+          return;
+        }
+        importedData = backup.clients || [];
+        transactions = backup.transactions || [];
+        if (backup.priceSheet) priceSheet = backup.priceSheet;
+        if (backup.addonSheet) addonSheet = backup.addonSheet;
+        populateLookup();
+        renderDashboard();
+        renderClients();
+        renderFinances();
+        clearForm();
+        showToast('✅ Backup restored — ' + importedData.length + ' clients, ' + transactions.length + ' transactions');
+      } catch (err) {
+        showToast('❌ Could not read backup file');
+      }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+}
 
 /* ══════════════════════════════════════════
    CLIENTS TAB — EXPORT
