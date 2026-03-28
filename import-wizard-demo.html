@@ -13,6 +13,7 @@
   gtag('config', 'G-N2MQF91QGM');
 </script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script>document.addEventListener('DOMContentLoaded', function() { if (window.Chart) Chart.defaults.devicePixelRatio = window.devicePixelRatio || 2; });</script>
 <style>
   :root {
     --primary: #2563eb;
@@ -296,12 +297,13 @@
   @media (max-width: 800px) { .dash-grid { grid-template-columns: 1fr; } }
   .dash-card {
     background: var(--card); border-radius: var(--radius);
-    box-shadow: var(--shadow); overflow: hidden;
+    box-shadow: var(--shadow); overflow: visible;
   }
   .dash-card.full-width { grid-column: 1 / -1; }
   .dash-card-header {
     padding: 16px 20px 12px; border-bottom: 1px solid var(--border);
     display: flex; align-items: center; justify-content: space-between;
+    border-radius: var(--radius) var(--radius) 0 0;
   }
   .dash-card-header h3 { font-size: 0.95rem; font-weight: 700; }
   .dash-card-header .filter-btn {
@@ -389,13 +391,13 @@
 
   .form-section {
     background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow);
-    margin-bottom: 16px; overflow: hidden;
+    margin-bottom: 16px; overflow: visible;
   }
   .section-header {
     padding: 14px 20px; background: var(--bg); border-bottom: 1px solid var(--border);
     font-weight: 700; font-size: 0.9rem; cursor: pointer;
     display: flex; align-items: center; justify-content: space-between; user-select: none;
-    gap: 8px;
+    gap: 8px; border-radius: var(--radius) var(--radius) 0 0;
   }
   .section-header .section-label {
     display: flex; align-items: center; gap: 0; flex: 1; min-width: 0;
@@ -1092,7 +1094,7 @@
         <div class="field-grid">
           <div class="field-group">
             <label>Preferred Service</label>
-            <select id="f-service"><option value="">—</option><option>Full Groom</option><option>Bath & Brush</option><option>Nail Trim Only</option><option>Deshed Treatment</option></select>
+            <select id="f-service"><option value="">—</option></select>
           </div>
           <div class="field-group">
             <label>Cut Style</label>
@@ -1444,13 +1446,7 @@
         </div>
         <div class="checkout-field">
           <label>Service</label>
-          <select id="co-service" onchange="updateCheckoutPrice()">
-            <option value="Full Groom">Full Groom</option>
-            <option value="Bath & Brush">Bath &amp; Brush</option>
-            <option value="Nail Trim Only">Nail Trim Only</option>
-            <option value="Deshed Treatment">Deshed Treatment</option>
-            <option value="Puppy First Groom">Puppy First Groom</option>
-          </select>
+          <select id="co-service" onchange="updateCheckoutPrice()"></select>
         </div>
         <div class="checkout-field">
           <label>Size</label>
@@ -3184,7 +3180,7 @@ function renderFinCharts() {
 
 function renderPriceSheet() {
   document.getElementById('priceSheetBody').innerHTML = priceSheet.map((p, i) =>
-    '<tr><td><input type="text" value="' + escapeHtml(p.service) + '" onchange="priceSheet[' + i + '].service=this.value"></td><td style="text-align:right"><span style="color:var(--text-light);margin-right:2px">$</span>' +
+    '<tr><td><input type="text" value="' + escapeHtml(p.service) + '" onchange="priceSheet[' + i + '].service=this.value;populateServiceDropdowns()"></td><td style="text-align:right"><span style="color:var(--text-light);margin-right:2px">$</span>' +
     '<input type="number" value="' + p.price + '" min="0" step="5" onchange="priceSheet[' + i + '].price=parseFloat(this.value)||0"></td>' +
     '<td><button class="btn-row-delete" title="Remove" onclick="removePriceSheetRow(' + i + ')">✕</button></td></tr>'
   ).join('');
@@ -3193,6 +3189,7 @@ function renderPriceSheet() {
     '<input type="number" value="' + a.price + '" min="0" step="1" onchange="addonMenu[' + i + '].price=parseFloat(this.value)||0"></td>' +
     '<td><button class="btn-row-delete" title="Remove" onclick="removeAddonRow(' + i + ')">✕</button></td></tr>'
   ).join('');
+  populateServiceDropdowns();
 }
 
 function addPriceSheetRow() {
@@ -3210,6 +3207,37 @@ function addAddonRow() {
 function removeAddonRow(i) {
   addonMenu.splice(i, 1);
   renderPriceSheet();
+}
+
+function populateServiceDropdowns() {
+  // Extract unique base service names from priceSheet (strip size suffixes after —)
+  const seen = new Set();
+  const services = [];
+  priceSheet.forEach(p => {
+    const base = p.service.split('\u2014')[0].trim();
+    if (base && !seen.has(base.toLowerCase())) {
+      seen.add(base.toLowerCase());
+      services.push(base);
+    }
+  });
+  // Form dropdown
+  const formSel = document.getElementById('f-service');
+  const formVal = formSel ? formSel.value : '';
+  if (formSel) {
+    formSel.innerHTML = '<option value="">\u2014</option>' + services.map(s =>
+      '<option value="' + escapeHtml(s) + '">' + escapeHtml(s) + '</option>'
+    ).join('');
+    formSel.value = formVal;
+  }
+  // Checkout dropdown
+  const coSel = document.getElementById('co-service');
+  const coVal = coSel ? coSel.value : '';
+  if (coSel) {
+    coSel.innerHTML = services.map(s =>
+      '<option value="' + escapeHtml(s) + '">' + escapeHtml(s) + '</option>'
+    ).join('');
+    coSel.value = coVal || (services[0] || '');
+  }
 }
 
 function renderTransactionLog() {
@@ -3458,6 +3486,7 @@ function customConfirm(msg) {
 
 // Listen for form changes
 document.addEventListener('DOMContentLoaded', function() {
+  populateServiceDropdowns();
   const formTab = document.getElementById('tab-form');
   if (formTab) {
     formTab.addEventListener('input', function(e) { if (e.target.id !== 'clientSelect') markDirty(); });
