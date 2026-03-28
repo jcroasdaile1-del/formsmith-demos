@@ -3205,10 +3205,10 @@ function showKpiDetail(title, rows) {
   html += '</tbody></table>';
   if (rows.length === 0) html = '<p style="text-align:center;color:var(--text-light);padding:20px;">No records to show.</p>';
   document.getElementById('kpiDetailBody').innerHTML = html;
-  document.getElementById('kpiDetailModal').classList.add('open');
+  document.getElementById('kpiDetailModal').classList.add('show');
 }
 function closeKpiDetail() {
-  document.getElementById('kpiDetailModal').classList.remove('open');
+  document.getElementById('kpiDetailModal').classList.remove('show');
 }
 
 function showFinKpiDetail(type) {
