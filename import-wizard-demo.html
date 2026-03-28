@@ -1475,7 +1475,7 @@
         </div>
         <div class="checkout-field">
           <label>Base Price ($)</label>
-          <input type="number" id="co-base" value="75" min="0" step="1" oninput="recalcCheckout()">
+          <input type="number" id="co-base" value="75" min="0" step="1" oninput="recalcCheckout()" onfocus="this.select()">
         </div>
         <div class="checkout-field">
           <label>Payment Method</label>
@@ -1492,11 +1492,11 @@
         </div>
         <div class="checkout-field">
           <label>Discount ($)</label>
-          <input type="number" id="co-discount" value="0" min="0" step="1" oninput="recalcCheckout()">
+          <input type="number" id="co-discount" value="0" min="0" step="1" oninput="recalcCheckout()" onfocus="this.select()">
         </div>
         <div class="checkout-field">
           <label>Tip ($)</label>
-          <input type="number" id="co-tip" value="0" min="0" step="1" oninput="recalcCheckout()">
+          <input type="number" id="co-tip" value="0" min="0" step="1" oninput="recalcCheckout()" onfocus="this.select()">
         </div>
         <div class="checkout-field">
           <label>Status</label>
@@ -3228,20 +3228,20 @@ function renderFinCharts() {
 
 function renderPriceSheet() {
   document.getElementById('priceSheetBody').innerHTML = priceSheet.map((p, i) =>
-    '<tr><td><input type="text" value="' + escapeHtml(p.service) + '" onchange="priceSheet[' + i + '].service=this.value;populateServiceDropdowns()"></td><td style="text-align:right"><span style="color:var(--text-light);margin-right:2px">$</span>' +
-    '<input type="number" value="' + p.price + '" min="0" step="5" onchange="priceSheet[' + i + '].price=parseFloat(this.value)||0"></td>' +
+    '<tr><td><input type="text" value="' + escapeHtml(p.service) + '" placeholder="Service name" onfocus="this.select()" onchange="priceSheet[' + i + '].service=this.value;populateServiceDropdowns()"></td><td style="text-align:right"><span style="color:var(--text-light);margin-right:2px">$</span>' +
+    '<input type="number" value="' + p.price + '" min="0" step="5" onfocus="this.select()" onchange="priceSheet[' + i + '].price=parseFloat(this.value)||0"></td>' +
     '<td><button class="btn-row-delete" title="Remove" onclick="removePriceSheetRow(' + i + ')">✕</button></td></tr>'
   ).join('');
   document.getElementById('addonSheetBody').innerHTML = addonMenu.map((a, i) =>
-    '<tr><td><input type="text" value="' + escapeHtml(a.name) + '" onchange="addonMenu[' + i + '].name=this.value"></td><td style="text-align:right"><span style="color:var(--text-light);margin-right:2px">$</span>' +
-    '<input type="number" value="' + a.price + '" min="0" step="1" onchange="addonMenu[' + i + '].price=parseFloat(this.value)||0"></td>' +
+    '<tr><td><input type="text" value="' + escapeHtml(a.name) + '" placeholder="Add-on name" onfocus="this.select()" onchange="addonMenu[' + i + '].name=this.value"></td><td style="text-align:right"><span style="color:var(--text-light);margin-right:2px">$</span>' +
+    '<input type="number" value="' + a.price + '" min="0" step="1" onfocus="this.select()" onchange="addonMenu[' + i + '].price=parseFloat(this.value)||0"></td>' +
     '<td><button class="btn-row-delete" title="Remove" onclick="removeAddonRow(' + i + ')">✕</button></td></tr>'
   ).join('');
   populateServiceDropdowns();
 }
 
 function addPriceSheetRow() {
-  priceSheet.push({ service: 'New Service', price: 0 });
+  priceSheet.push({ service: '', price: 0 });
   renderPriceSheet();
 }
 function removePriceSheetRow(i) {
@@ -3249,7 +3249,7 @@ function removePriceSheetRow(i) {
   renderPriceSheet();
 }
 function addAddonRow() {
-  addonMenu.push({ name: 'New Add-On', price: 0 });
+  addonMenu.push({ name: '', price: 0 });
   renderPriceSheet();
 }
 function removeAddonRow(i) {
