@@ -2780,6 +2780,7 @@ function saveFormRecord() {
   }
   formDirty = false;
   document.getElementById('unsavedBadge').classList.remove('show');
+  updateSectionBadges();
   updatePetNavigator();
   showToast('💾 Saved: ' + (name || clientName) + ' (' + filled + ' fields) → Google Sheet updated');
   window.scrollTo({ top: 0, behavior: 'smooth' });
