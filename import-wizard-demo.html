@@ -4,6 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Import Wizard — Grooming Dashboard Demo</title>
+<!-- Google Analytics (GA4) — Replace G-XXXXXXXXXX with your Measurement ID -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-XXXXXXXXXX');
+</script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <style>
   :root {
@@ -2748,7 +2756,7 @@ function backupData() {
     clients: importedData,
     transactions: transactions,
     priceSheet: priceSheet,
-    addonSheet: addonSheet
+    addonMenu: addonMenu
   };
   var json = JSON.stringify(backup, null, 2);
   var blob = new Blob([json], { type: 'application/json' });
@@ -2780,7 +2788,7 @@ function restoreData() {
         importedData = backup.clients || [];
         transactions = backup.transactions || [];
         if (backup.priceSheet) priceSheet = backup.priceSheet;
-        if (backup.addonSheet) addonSheet = backup.addonSheet;
+        if (backup.addonMenu) addonMenu = backup.addonMenu;
         populateLookup();
         renderDashboard();
         renderClients();
