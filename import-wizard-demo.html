@@ -2420,7 +2420,8 @@ function getWidgetContent(id) {
 }
 
 function getDefaultLayout() {
-  return WIDGET_DEFS.map(function(w, i) {
+  var defaults = ['revenue','services','upcoming','alerts','topclients'];
+  return WIDGET_DEFS.filter(function(w) { return defaults.indexOf(w.id) >= 0; }).map(function(w, i) {
     return { id: w.id, x: (i % 2) * 6, y: Math.floor(i / 2) * 4, w: w.w, h: w.h, minW: w.minW, minH: w.minH };
   });
 }
