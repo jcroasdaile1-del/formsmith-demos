@@ -1427,6 +1427,22 @@
   </div>
 </div>
 
+<!-- Delete Choice Modal (for multi-pet clients) -->
+<div class="modal-overlay" id="deleteChoiceModal">
+  <div class="modal-box" style="max-width:440px;text-align:center">
+    <div class="modal-body" style="padding:28px 24px">
+      <div style="font-size:1.5rem;margin-bottom:12px">🗑️</div>
+      <p id="deleteChoiceMsg" style="font-size:0.92rem;margin-bottom:8px;color:#1e293b;font-weight:600"></p>
+      <p id="deleteChoiceSub" style="font-size:0.82rem;margin-bottom:20px;color:var(--text-light)"></p>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <button class="btn btn-danger" id="deleteChoicePet" style="width:100%"></button>
+        <button class="btn btn-outline" id="deleteChoiceAll" style="width:100%;border-color:#ef4444;color:#ef4444"></button>
+        <button class="btn btn-outline" id="deleteChoiceCancel" style="width:100%">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ═══════ CHECKOUT MODAL ═══════ -->
 <div class="modal-overlay" id="checkoutModal" onclick="if(event.target===this)closeCheckout()">
   <div class="modal-box checkout-modal">
@@ -2785,14 +2801,47 @@ async function deleteClient() {
   if (currentFormIdx === null) { showToast('⚠️ Select a client first'); return; }
   const d = importedData[currentFormIdx];
   const clientName = d.clientName || 'Unknown';
+  const petName = d.petName || 'Unknown';
   const petIndices = getClientPetIndices(clientName);
   const petCount = petIndices.length;
-  const msg = petCount > 1
-    ? 'Delete client "' + clientName + '" and all ' + petCount + ' pet records? This cannot be undone.'
-    : 'Delete "' + (d.petName || 'Unknown') + '" (' + clientName + ')? This cannot be undone.';
-  if (!await customConfirm(msg)) return;
-  // Remove all records for this client (highest index first to preserve indices)
-  const toRemove = petIndices.sort((a, b) => b - a);
+
+  if (petCount > 1) {
+    // Multi-pet client — show choice dialog
+    const choice = await deleteChoicePrompt(clientName, petName, petCount);
+    if (choice === 'cancel') return;
+    if (choice === 'pet') {
+      // Delete only the current pet record
+      removeRecords([currentFormIdx]);
+      showToast('🗑️ Deleted pet: ' + petName + ' (client ' + clientName + ' still has ' + (petCount - 1) + ' pet' + (petCount - 1 > 1 ? 's' : '') + ')');
+    } else {
+      // Delete entire client (all pets)
+      removeRecords(petIndices);
+      showToast('🗑️ Deleted client: ' + clientName + ' (' + petCount + ' pet records removed)');
+    }
+  } else {
+    // Single pet — simple confirm
+    if (!await customConfirm('Delete "' + petName + '" (' + clientName + ')? This cannot be undone.')) return;
+    removeRecords([currentFormIdx]);
+    showToast('🗑️ Deleted: ' + petName + ' (' + clientName + ')');
+  }
+}
+
+function deleteChoicePrompt(clientName, petName, petCount) {
+  return new Promise(resolve => {
+    const modal = document.getElementById('deleteChoiceModal');
+    document.getElementById('deleteChoiceMsg').textContent = clientName + ' has ' + petCount + ' pets on file.';
+    document.getElementById('deleteChoiceSub').textContent = 'You are currently viewing ' + petName + '. What would you like to do?';
+    document.getElementById('deleteChoicePet').textContent = '🐾 Delete ' + petName + ' Only';
+    document.getElementById('deleteChoiceAll').textContent = '🗑️ Delete ' + clientName + ' & All ' + petCount + ' Pets';
+    modal.classList.add('show');
+    document.getElementById('deleteChoicePet').onclick = () => { modal.classList.remove('show'); resolve('pet'); };
+    document.getElementById('deleteChoiceAll').onclick = () => { modal.classList.remove('show'); resolve('all'); };
+    document.getElementById('deleteChoiceCancel').onclick = () => { modal.classList.remove('show'); resolve('cancel'); };
+  });
+}
+
+function removeRecords(indices) {
+  const toRemove = [...indices].sort((a, b) => b - a);
   toRemove.forEach(idx => {
     importedData.splice(idx, 1);
     delete changeHistory[idx];
@@ -2821,7 +2870,6 @@ async function deleteClient() {
   populateFormLookup();
   renderClients();
   renderDashboard();
-  showToast('🗑️ Deleted: ' + clientName + ' (' + petCount + ' record' + (petCount > 1 ? 's' : '') + ')');
 }
 
 function saveFormRecord() {
@@ -3502,6 +3550,7 @@ document.addEventListener('keydown', function(e) {
     closeImportWizard();
     closeHelp();
     document.getElementById('confirmModal').classList.remove('show');
+    document.getElementById('deleteChoiceModal').classList.remove('show');
   }
 });
 </script>
