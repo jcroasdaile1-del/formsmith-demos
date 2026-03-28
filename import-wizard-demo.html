@@ -1596,6 +1596,7 @@ let rawRows = [];
 let rawHeaders = [];
 let columnMap = {};
 let importedData = [];
+let previewData = [];
 let changeHistory = {};
 let dashFilter = 'all';
 
@@ -2126,7 +2127,7 @@ function buildPreview() {
       previewFields.map(f => '<td title="' + escapeHtml(rec[f.key] || '') + '">' + escapeHtml(rec[f.key] || '—') + '</td>').join('') + '</tr>';
   }).join('');
   document.getElementById('importCount').textContent = records.length;
-  importedData = records;
+  previewData = records;
 }
 
 /* ══════════════════════════════════════════
@@ -2139,7 +2140,7 @@ function doImport() {
 
   if (wizardMode === 'transactions') {
     // Import as transactions
-    const importedTxns = importedData.map((rec, i) => ({
+    const importedTxns = previewData.map((rec, i) => ({
       id: 'TXN-' + String(transactions.length + i + 1).padStart(3, '0'),
       date: rec.date || new Date().toISOString().slice(0, 10),
       clientName: rec.clientName || 'Unknown',
@@ -2158,17 +2159,18 @@ function doImport() {
     transactions = importedTxns.concat(transactions);
     transactions.sort((a, b) => b.date.localeCompare(a.date));
     txnPage = 1;
-    changeHistory = {};
     document.getElementById('importResultText').textContent =
       'Successfully imported ' + importedTxns.length + ' transactions. Your finances dashboard is now populated with real data.';
     showToast('🎉 ' + importedTxns.length + ' transactions imported!');
     doneButtons.innerHTML =
       '<button class="btn btn-primary" onclick="closeImportWizard();switchTab(\'dashboard\')">📊 View Dashboard</button>' +
-      '<button class="btn btn-success" onclick="closeImportWizard();switchTab(\'finances\')">💰 View Finances</button>' +
+      '<button class="btn btn-success" onclick="closeImportWizard();switchTab(\'finances\')">📥 View Finances</button>' +
       '<button class="btn btn-secondary" onclick="resetWizard()">📥 Import More</button>';
-    importedData = []; // clear preview data, it was txn data
+    previewData = []; // clear staging buffer
   } else {
     // Import as clients
+    importedData = previewData;
+    previewData = [];
     clientPage = 1;
     txnPage = 1;
     changeHistory = {};
@@ -2186,7 +2188,7 @@ function doImport() {
 }
 
 function resetWizard() {
-  rawRows = []; rawHeaders = []; columnMap = {};
+  rawRows = []; rawHeaders = []; columnMap = {}; previewData = [];
   document.getElementById('fileInfo').classList.remove('visible');
   document.getElementById('btnToStep2').disabled = true;
   fileInput.value = '';
