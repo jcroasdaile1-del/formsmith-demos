@@ -2318,16 +2318,20 @@ function renderDashboard() {
 
   // KPIs
   const totalClients = data.length;
-  const activeClients = data.filter(d => normalizeStatus(d.status) === 'active').length;
-  const inactiveClients = data.filter(d => normalizeStatus(d.status) === 'inactive').length;
-  const newClients = data.filter(d => normalizeStatus(d.status) === 'new').length;
+  const activeArr = data.filter(d => normalizeStatus(d.status) === 'active');
+  const activeClients = activeArr.length;
+  const inactiveArr = data.filter(d => normalizeStatus(d.status) === 'inactive');
+  const inactiveClients = inactiveArr.length;
+  const newArr = data.filter(d => normalizeStatus(d.status) === 'new');
+  const newClients = newArr.length;
   const expiredVax = data.filter(d => normalizeVax(d.vaxStatus) === 'Expired');
   const expiredVaxCount = expiredVax.length;
-  const upcoming = data.filter(d => {
+  const upcomingArr = data.filter(d => {
     if (!d.nextAppt) return false;
     const diff = (new Date(d.nextAppt) - today) / (1000*60*60*24);
     return diff >= 0 && diff <= 7;
-  }).length;
+  });
+  const upcoming = upcomingArr.length;
 
   const revInfo = getRevenueData(data);
   const totalRevenue = revInfo.total;
@@ -2342,7 +2346,7 @@ function renderDashboard() {
       '<div class="kpi-label">Total Clients</div>' +
       '<div class="kpi-value">' + totalClients + '</div>' +
       '<div class="kpi-sub">' + speciesStr + '</div>' +
-      (newClients > 0 ? '<span class="kpi-trend up">+' + newClients + ' new</span>' : '') +
+      (newClients > 0 ? '<span class="kpi-trend up" style="cursor:help" title="' + newArr.map(function(d) { return (d.petName || 'Unknown') + ' (' + (d.clientName || 'Unknown') + ')'; }).join('\n') + '">+' + newClients + ' new</span>' : '') +
     '</div>' +
     '<div class="kpi-card clickable" onclick="showDashKpiDetail(\'revenue\')">' +
       '<div class="kpi-label">' + (revenueIsActual ? 'Recorded Revenue' : 'Estimated Revenue') + '</div>' +
@@ -2352,7 +2356,7 @@ function renderDashboard() {
     '<div class="kpi-card purple clickable" onclick="showDashKpiDetail(\'upcoming\')">' +
       '<div class="kpi-label">Upcoming (7 Days)</div>' +
       '<div class="kpi-value">' + upcoming + '</div>' +
-      '<div class="kpi-sub">Scheduled appointments</div>' +
+      '<div class="kpi-sub" ' + (upcoming > 0 ? 'style="cursor:help" title="' + upcomingArr.map(function(d) { return (d.petName || 'Unknown') + ' (' + (d.clientName || 'Unknown') + ') — ' + d.nextAppt; }).join('\n') + '"' : '') + '>Scheduled appointments</div>' +
     '</div>' +
     '<div class="kpi-card ' + (expiredVaxCount > 0 ? 'red' : 'green') + ' clickable" onclick="showDashKpiDetail(\'vax\')">' +
       '<div class="kpi-label">Expired Vaccinations</div>' +
@@ -2363,7 +2367,7 @@ function renderDashboard() {
     '<div class="kpi-card yellow clickable" onclick="showDashKpiDetail(\'active\')">' +
       '<div class="kpi-label">Active / Inactive</div>' +
       '<div class="kpi-value">' + activeClients + ' / ' + inactiveClients + '</div>' +
-      '<div class="kpi-sub">' + (inactiveClients > 0 ? inactiveClients + ' client' + (inactiveClients > 1 ? 's' : '') + ' need follow-up' : 'All clients active') + '</div>' +
+      '<div class="kpi-sub" ' + (inactiveClients > 0 ? 'style="cursor:help" title="' + inactiveArr.map(function(d) { return (d.petName || 'Unknown') + ' (' + (d.clientName || 'Unknown') + ')'; }).join('\n') + '"' : '') + '>' + (inactiveClients > 0 ? inactiveClients + ' client' + (inactiveClients > 1 ? 's' : '') + ' need follow-up' : 'All clients active') + '</div>' +
     '</div>';
 
   renderCharts(data);
