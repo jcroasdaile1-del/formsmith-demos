@@ -2761,11 +2761,13 @@ function saveFormRecord() {
   const clientName = document.getElementById('f-clientName').value;
   if (!name && !clientName) { showToast('⚠️ Fill in at least a pet name or client name to save'); return; }
   let filled = 0;
+  let changesCount = 0;
   document.querySelectorAll('#tab-form .form-section input, #tab-form .form-section select, #tab-form .form-section textarea').forEach(el => {
     if (el.value && el.value.trim()) filled++;
   });
   if (currentFormIdx !== null && importedData[currentFormIdx]) {
     const d = importedData[currentFormIdx];
+    if (typeof changeHistory !== 'object' || changeHistory === null) changeHistory = {};
     const changes = [];
     TARGET_FIELDS.forEach(f => {
       const el = document.getElementById('f-' + f.key);
@@ -2774,8 +2776,9 @@ function saveFormRecord() {
       const oldVal = d[f.key] || '';
       if (newVal !== oldVal) changes.push({ field: f.label, oldVal: oldVal, newVal: newVal });
     });
+    changesCount = changes.length;
     if (changes.length > 0) {
-      if (!changeHistory[currentFormIdx]) changeHistory[currentFormIdx] = [];
+      if (!Array.isArray(changeHistory[currentFormIdx])) changeHistory[currentFormIdx] = [];
       changeHistory[currentFormIdx].push({ date: new Date().toISOString(), changes: changes });
     }
     TARGET_FIELDS.forEach(f => {
@@ -2799,7 +2802,8 @@ function saveFormRecord() {
   document.getElementById('unsavedBadge').classList.remove('show');
   updateSectionBadges();
   updatePetNavigator();
-  showToast('💾 Saved: ' + (name || clientName) + ' (' + filled + ' fields) → Google Sheet updated');
+  var changeNote = changesCount > 0 ? ' (' + changesCount + ' field' + (changesCount > 1 ? 's' : '') + ' changed)' : '';
+  showToast('💾 Saved: ' + (name || clientName) + changeNote + ' → Google Sheet updated');
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
