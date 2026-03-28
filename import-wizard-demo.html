@@ -255,9 +255,9 @@
   /* Date filter pills */
   .date-filter { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
   .date-filter .filter-pill {
-    padding: 6px 16px; border-radius: 20px; border: 1px solid var(--border);
-    background: white; font-size: 0.8rem; font-weight: 600; cursor: pointer;
-    color: var(--text-light); transition: all 0.15s;
+    padding: 6px 16px; border-radius: 20px; border: 1px solid #c7d2fe;
+    background: #e0e7ff; font-size: 0.8rem; font-weight: 600; cursor: pointer;
+    color: #4338ca; transition: all 0.15s;
   }
   .date-filter .filter-pill:hover { background: var(--primary-light); color: var(--primary); border-color: var(--primary); }
   .date-filter .filter-pill.active { background: var(--primary); color: white; border-color: var(--primary); }
@@ -273,6 +273,8 @@
     transition: transform 0.15s, box-shadow 0.15s;
   }
   .kpi-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+  .kpi-card.clickable { cursor: pointer; }
+  .kpi-card.clickable:active { transform: translateY(0); }
   .kpi-card.green { border-left-color: var(--accent); }
   .kpi-card.yellow { border-left-color: var(--warning); }
   .kpi-card.red { border-left-color: var(--danger); }
@@ -1173,6 +1175,21 @@
       <strong>⚡ Interactive Demo</strong> — Track every payment, see revenue breakdowns, and manage your price sheet. In your real app, this data syncs with your Google Sheet.
     </div>
 
+    <!-- Date Filter Pills -->
+    <div class="date-filter" id="finDateFilter">
+      <button class="filter-pill active" onclick="setFinDateFilter(this,'all')">All Time</button>
+      <button class="filter-pill" onclick="setFinDateFilter(this,'month')">This Month</button>
+      <button class="filter-pill" onclick="setFinDateFilter(this,'quarter')">This Quarter</button>
+      <button class="filter-pill" onclick="setFinDateFilter(this,'year')">This Year</button>
+      <button class="filter-pill" onclick="setFinDateFilter(this,'custom')">Custom Range</button>
+    </div>
+    <div id="finCustomRange" style="display:none;margin-bottom:16px;gap:10px;align-items:center;flex-wrap:wrap;">
+      <label style="font-size:0.82rem;font-weight:600;color:var(--text-light);">From</label>
+      <input type="date" id="finDateStart" class="form-input" style="width:auto;padding:6px 10px;font-size:0.82rem;" onchange="applyCustomDateRange()">
+      <label style="font-size:0.82rem;font-weight:600;color:var(--text-light);">To</label>
+      <input type="date" id="finDateEnd" class="form-input" style="width:auto;padding:6px 10px;font-size:0.82rem;" onchange="applyCustomDateRange()">
+    </div>
+
     <!-- Summary KPIs -->
     <div class="kpi-grid" id="finKpiGrid"></div>
 
@@ -1443,6 +1460,17 @@
   </div>
 </div>
 
+<!-- KPI Detail Modal -->
+<div class="modal-overlay" id="kpiDetailModal" onclick="if(event.target===this)closeKpiDetail()">
+  <div class="modal-box" style="max-width:560px;">
+    <div class="modal-header">
+      <h3 id="kpiDetailTitle">Detail</h3>
+      <button class="modal-close" onclick="closeKpiDetail()">&times;</button>
+    </div>
+    <div class="modal-body" id="kpiDetailBody" style="max-height:400px;overflow-y:auto;"></div>
+  </div>
+</div>
+
 <!-- ═══════ CHECKOUT MODAL ═══════ -->
 <div class="modal-overlay" id="checkoutModal" onclick="if(event.target===this)closeCheckout()">
   <div class="modal-box checkout-modal">
@@ -1630,6 +1658,9 @@ let importedData = [];
 let previewData = [];
 let changeHistory = {};
 let dashFilter = 'all';
+let finDateFilter = 'all';
+let finCustomStart = '';
+let finCustomEnd = '';
 
 const TARGET_FIELDS = [
   { key: 'clientName', label: 'Client Name', required: true },
@@ -2307,29 +2338,29 @@ function renderDashboard() {
   const speciesStr = Object.entries(species).map(([k,v]) => v + ' ' + k + (v > 1 ? 's' : '')).join(', ');
 
   document.getElementById('kpiGrid').innerHTML =
-    '<div class="kpi-card green">' +
+    '<div class="kpi-card green clickable" onclick="showDashKpiDetail(\'total\')">' +
       '<div class="kpi-label">Total Clients</div>' +
       '<div class="kpi-value">' + totalClients + '</div>' +
       '<div class="kpi-sub">' + speciesStr + '</div>' +
       (newClients > 0 ? '<span class="kpi-trend up">+' + newClients + ' new</span>' : '') +
     '</div>' +
-    '<div class="kpi-card">' +
+    '<div class="kpi-card clickable" onclick="showDashKpiDetail(\'revenue\')">' +
       '<div class="kpi-label">' + (revenueIsActual ? 'Recorded Revenue' : 'Estimated Revenue') + '</div>' +
       '<div class="kpi-value">$' + totalRevenue.toLocaleString() + '</div>' +
       '<div class="kpi-sub">' + (revenueIsActual ? 'From ' + transactions.length + ' transactions' : 'Based on avg service pricing') + '</div>' +
     '</div>' +
-    '<div class="kpi-card purple">' +
+    '<div class="kpi-card purple clickable" onclick="showDashKpiDetail(\'upcoming\')">' +
       '<div class="kpi-label">Upcoming (7 Days)</div>' +
       '<div class="kpi-value">' + upcoming + '</div>' +
       '<div class="kpi-sub">Scheduled appointments</div>' +
     '</div>' +
-    '<div class="kpi-card ' + (expiredVaxCount > 0 ? 'red' : 'green') + '">' +
+    '<div class="kpi-card ' + (expiredVaxCount > 0 ? 'red' : 'green') + ' clickable" onclick="showDashKpiDetail(\'vax\')">' +
       '<div class="kpi-label">Expired Vaccinations</div>' +
       '<div class="kpi-value">' + expiredVaxCount + '</div>' +
       '<div class="kpi-sub">' + (expiredVaxCount > 0 ? 'Action required — notify owners' : 'All vaccinations current') + '</div>' +
       (expiredVaxCount > 0 ? '<span class="kpi-trend down" title="' + expiredVax.map(function(d) { return (d.petName || 'Unknown') + ' (' + (d.clientName || 'Unknown') + ')'; }).join('\n') + '">⚠ Needs attention</span>' : '') +
     '</div>' +
-    '<div class="kpi-card yellow">' +
+    '<div class="kpi-card yellow clickable" onclick="showDashKpiDetail(\'active\')">' +
       '<div class="kpi-label">Active / Inactive</div>' +
       '<div class="kpi-value">' + activeClients + ' / ' + inactiveClients + '</div>' +
       '<div class="kpi-sub">' + (inactiveClients > 0 ? inactiveClients + ' client' + (inactiveClients > 1 ? 's' : '') + ' need follow-up' : 'All clients active') + '</div>' +
@@ -3112,6 +3143,142 @@ function getRevenueData(data) {
   return { total: total, isActual: false };
 }
 
+/* ── Finance Date Filters ── */
+function setFinDateFilter(btn, filter) {
+  document.querySelectorAll('#finDateFilter .filter-pill').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  finDateFilter = filter;
+  var customRow = document.getElementById('finCustomRange');
+  if (filter === 'custom') {
+    customRow.style.display = 'flex';
+  } else {
+    customRow.style.display = 'none';
+    renderFinances();
+  }
+}
+
+function applyCustomDateRange() {
+  finCustomStart = document.getElementById('finDateStart').value;
+  finCustomEnd = document.getElementById('finDateEnd').value;
+  if (finCustomStart && finCustomEnd) renderFinances();
+}
+
+function getFilteredTransactions() {
+  if (finDateFilter === 'all') return transactions;
+  var today = new Date();
+  var start, end;
+  if (finDateFilter === 'month') {
+    start = new Date(today.getFullYear(), today.getMonth(), 1);
+    end = new Date(today.getFullYear(), today.getMonth() + 1, 0, 23, 59, 59);
+  } else if (finDateFilter === 'quarter') {
+    var qMonth = Math.floor(today.getMonth() / 3) * 3;
+    start = new Date(today.getFullYear(), qMonth, 1);
+    end = new Date(today.getFullYear(), qMonth + 3, 0, 23, 59, 59);
+  } else if (finDateFilter === 'year') {
+    start = new Date(today.getFullYear(), 0, 1);
+    end = new Date(today.getFullYear(), 11, 31, 23, 59, 59);
+  } else if (finDateFilter === 'custom') {
+    if (!finCustomStart || !finCustomEnd) return transactions;
+    start = new Date(finCustomStart + 'T00:00:00');
+    end = new Date(finCustomEnd + 'T23:59:59');
+  }
+  return transactions.filter(function(t) {
+    var d = new Date(t.date);
+    return d >= start && d <= end;
+  });
+}
+
+/* ── KPI Detail Modal ── */
+function showKpiDetail(title, rows) {
+  document.getElementById('kpiDetailTitle').textContent = title;
+  var html = '<table class="mini-table" style="width:100%;font-size:0.82rem;">';
+  html += '<thead><tr>';
+  if (rows.length > 0) {
+    Object.keys(rows[0]).forEach(function(k) { html += '<th>' + escapeHtml(k) + '</th>'; });
+  }
+  html += '</tr></thead><tbody>';
+  rows.forEach(function(r) {
+    html += '<tr>';
+    Object.values(r).forEach(function(v) { html += '<td>' + escapeHtml(String(v)) + '</td>'; });
+    html += '</tr>';
+  });
+  html += '</tbody></table>';
+  if (rows.length === 0) html = '<p style="text-align:center;color:var(--text-light);padding:20px;">No records to show.</p>';
+  document.getElementById('kpiDetailBody').innerHTML = html;
+  document.getElementById('kpiDetailModal').classList.add('open');
+}
+function closeKpiDetail() {
+  document.getElementById('kpiDetailModal').classList.remove('open');
+}
+
+function showFinKpiDetail(type) {
+  var ftxn = getFilteredTransactions();
+  var today = new Date();
+  var todayStr = today.toISOString().slice(0, 10);
+  var weekAgo = new Date(today); weekAgo.setDate(weekAgo.getDate() - 7);
+  var list, title;
+  if (type === 'revenue') {
+    title = '💰 Paid Transactions';
+    list = ftxn.filter(function(t) { return t.status === 'Paid'; });
+  } else if (type === 'today') {
+    title = '📅 Today\'s Transactions';
+    list = ftxn.filter(function(t) { return t.date === todayStr && t.status === 'Paid'; });
+  } else if (type === 'week') {
+    title = '📅 This Week\'s Transactions';
+    list = ftxn.filter(function(t) { return new Date(t.date) >= weekAgo && t.status === 'Paid'; });
+  } else if (type === 'avg') {
+    title = '📊 All Paid Transactions (Avg Ticket)';
+    list = ftxn.filter(function(t) { return t.status === 'Paid'; });
+  } else if (type === 'pending') {
+    title = '⏳ Pending Transactions';
+    list = ftxn.filter(function(t) { return t.status === 'Pending'; });
+  } else if (type === 'tips') {
+    title = '💝 Transactions with Tips';
+    list = ftxn.filter(function(t) { return t.status === 'Paid' && (t.tip || 0) > 0; });
+  } else { return; }
+  var rows = list.map(function(t) {
+    return { Date: t.date, Client: t.clientName, Pet: t.petName, Service: t.service, Total: '$' + t.total.toFixed(0), Tip: t.tip > 0 ? '$' + t.tip.toFixed(0) : '—', Method: t.method, Status: t.status };
+  });
+  showKpiDetail(title, rows);
+}
+
+function showDashKpiDetail(type) {
+  var data = getFilteredData();
+  var title, rows;
+  if (type === 'total') {
+    title = '👥 All Clients';
+    rows = data.map(function(d) { return { Client: d.clientName || 'Unknown', Pet: d.petName || 'Unknown', Species: d.species || '—', Breed: d.breed || '—', Status: d.status || 'Active' }; });
+  } else if (type === 'revenue') {
+    title = '💰 Revenue Breakdown';
+    if (transactions.length > 0) {
+      var byClient = {};
+      transactions.filter(function(t) { return t.status === 'Paid'; }).forEach(function(t) {
+        if (!byClient[t.clientName]) byClient[t.clientName] = { total: 0, count: 0 };
+        byClient[t.clientName].total += t.total;
+        byClient[t.clientName].count++;
+      });
+      rows = Object.entries(byClient).sort(function(a,b) { return b[1].total - a[1].total; }).map(function(e) {
+        return { Client: e[0], Transactions: e[1].count, Total: '$' + e[1].total.toLocaleString() };
+      });
+    } else {
+      rows = data.map(function(d) { return { Client: d.clientName || 'Unknown', Service: d.service || '—', 'Est. Price': '$' + estimatePrice(d.service) }; });
+    }
+  } else if (type === 'upcoming') {
+    title = '📅 Upcoming Appointments (7 Days)';
+    var today = new Date();
+    rows = data.filter(function(d) { if (!d.nextAppt) return false; var diff = (new Date(d.nextAppt) - today) / (1000*60*60*24); return diff >= 0 && diff <= 7; })
+      .map(function(d) { return { Client: d.clientName || 'Unknown', Pet: d.petName || 'Unknown', 'Next Appt': d.nextAppt, Service: d.service || '—' }; });
+  } else if (type === 'vax') {
+    title = '⚠️ Expired Vaccinations';
+    rows = data.filter(function(d) { return normalizeVax(d.vaxStatus) === 'Expired'; })
+      .map(function(d) { return { Client: d.clientName || 'Unknown', Pet: d.petName || 'Unknown', Phone: d.phone || '—', Email: d.email || '—' }; });
+  } else if (type === 'active') {
+    title = '📊 Active / Inactive Clients';
+    rows = data.map(function(d) { return { Client: d.clientName || 'Unknown', Pet: d.petName || 'Unknown', Status: normalizeStatus(d.status).charAt(0).toUpperCase() + normalizeStatus(d.status).slice(1), 'Last Visit': d.lastVisit || '—' }; });
+  } else { return; }
+  showKpiDetail(title, rows);
+}
+
 function getClientRevenue(clientName) {
   if (!clientName || transactions.length === 0) return null;
   const ct = transactions.filter(t => t.clientName === clientName && t.status === 'Paid');
@@ -3162,33 +3329,37 @@ function renderFinances() {
 }
 
 function renderFinKPIs() {
+  const ftxn = getFilteredTransactions();
   const today = new Date();
   const todayStr = today.toISOString().slice(0, 10);
   const weekAgo = new Date(today); weekAgo.setDate(weekAgo.getDate() - 7);
   const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
-  const todayTxns = transactions.filter(t => t.date === todayStr && t.status === 'Paid');
-  const weekTxns = transactions.filter(t => new Date(t.date) >= weekAgo && t.status === 'Paid');
-  const monthTxns = transactions.filter(t => new Date(t.date) >= monthStart && t.status === 'Paid');
-  const paidTxns = transactions.filter(t => t.status === 'Paid');
-  const pendingTxns = transactions.filter(t => t.status === 'Pending');
+  const paidTxns = ftxn.filter(t => t.status === 'Paid');
+  const pendingTxns = ftxn.filter(t => t.status === 'Pending');
+  const todayTxns = paidTxns.filter(t => t.date === todayStr);
+  const weekTxns = paidTxns.filter(t => new Date(t.date) >= weekAgo);
+  const monthTxns = paidTxns.filter(t => new Date(t.date) >= monthStart);
   const todayRev = todayTxns.reduce((s, t) => s + t.total, 0);
   const weekRev = weekTxns.reduce((s, t) => s + t.total, 0);
   const monthRev = monthTxns.reduce((s, t) => s + t.total, 0);
-  const avgTicket = paidTxns.length > 0 ? paidTxns.reduce((s, t) => s + t.total, 0) / paidTxns.length : 0;
+  const totalRev = paidTxns.reduce((s, t) => s + t.total, 0);
+  const avgTicket = paidTxns.length > 0 ? totalRev / paidTxns.length : 0;
   const outstanding = pendingTxns.reduce((s, t) => s + t.total, 0);
   const totalTips = paidTxns.reduce((s, t) => s + (t.tip || 0), 0);
+  const filterLabel = finDateFilter === 'all' ? 'All Time' : finDateFilter === 'month' ? 'This Month' : finDateFilter === 'quarter' ? 'This Quarter' : finDateFilter === 'year' ? 'This Year' : 'Custom Range';
   document.getElementById('finKpiGrid').innerHTML =
-    '<div class="kpi-card green"><div class="kpi-label">Today\'s Revenue</div><div class="kpi-value">$' + todayRev.toFixed(0) + '</div><div class="kpi-sub">' + todayTxns.length + ' transaction' + (todayTxns.length !== 1 ? 's' : '') + '</div></div>' +
-    '<div class="kpi-card"><div class="kpi-label">This Week</div><div class="kpi-value">$' + weekRev.toFixed(0) + '</div><div class="kpi-sub">' + weekTxns.length + ' transactions</div></div>' +
-    '<div class="kpi-card purple"><div class="kpi-label">This Month</div><div class="kpi-value">$' + monthRev.toFixed(0) + '</div><div class="kpi-sub">' + monthTxns.length + ' transactions</div></div>' +
-    '<div class="kpi-card"><div class="kpi-label">Avg Ticket</div><div class="kpi-value">$' + avgTicket.toFixed(0) + '</div><div class="kpi-sub">' + paidTxns.length + ' total paid</div></div>' +
-    '<div class="kpi-card ' + (outstanding > 0 ? 'yellow' : 'green') + '"><div class="kpi-label">Outstanding</div><div class="kpi-value">$' + outstanding.toFixed(0) + '</div><div class="kpi-sub">' + pendingTxns.length + ' pending</div></div>' +
-    '<div class="kpi-card green"><div class="kpi-label">Tips This Month</div><div class="kpi-value">$' + totalTips.toFixed(0) + '</div><div class="kpi-sub">Thank your clients!</div></div>';
+    '<div class="kpi-card green clickable" onclick="showFinKpiDetail(\'revenue\')"><div class="kpi-label">Total Revenue (' + filterLabel + ')</div><div class="kpi-value">$' + totalRev.toLocaleString() + '</div><div class="kpi-sub">' + paidTxns.length + ' paid transaction' + (paidTxns.length !== 1 ? 's' : '') + '</div></div>' +
+    '<div class="kpi-card clickable" onclick="showFinKpiDetail(\'today\')"><div class="kpi-label">Today</div><div class="kpi-value">$' + todayRev.toFixed(0) + '</div><div class="kpi-sub">' + todayTxns.length + ' transaction' + (todayTxns.length !== 1 ? 's' : '') + '</div></div>' +
+    '<div class="kpi-card purple clickable" onclick="showFinKpiDetail(\'week\')"><div class="kpi-label">This Week</div><div class="kpi-value">$' + weekRev.toFixed(0) + '</div><div class="kpi-sub">' + weekTxns.length + ' transactions</div></div>' +
+    '<div class="kpi-card clickable" onclick="showFinKpiDetail(\'avg\')"><div class="kpi-label">Avg Ticket</div><div class="kpi-value">$' + avgTicket.toFixed(0) + '</div><div class="kpi-sub">' + paidTxns.length + ' total paid</div></div>' +
+    '<div class="kpi-card ' + (outstanding > 0 ? 'yellow' : 'green') + ' clickable" onclick="showFinKpiDetail(\'pending\')"><div class="kpi-label">Outstanding</div><div class="kpi-value">$' + outstanding.toFixed(0) + '</div><div class="kpi-sub">' + pendingTxns.length + ' pending</div></div>' +
+    '<div class="kpi-card green clickable" onclick="showFinKpiDetail(\'tips\')"><div class="kpi-label">Tips (' + filterLabel + ')</div><div class="kpi-value">$' + totalTips.toFixed(0) + '</div><div class="kpi-sub">Thank your clients!</div></div>';
 }
 
 function renderFinCharts() {
   if (chartInstances.finRevenue) chartInstances.finRevenue.destroy();
   if (chartInstances.payMethod) chartInstances.payMethod.destroy();
+  const ftxn = getFilteredTransactions();
   // Weekly Revenue (bar) - last 4 weeks
   const today = new Date();
   const weeks = [];
@@ -3196,7 +3367,7 @@ function renderFinCharts() {
     const ws = new Date(today); ws.setDate(ws.getDate() - (i * 7) - ws.getDay());
     const we = new Date(ws); we.setDate(we.getDate() + 6);
     const label = (ws.getMonth()+1) + '/' + ws.getDate() + ' \u2013 ' + (we.getMonth()+1) + '/' + we.getDate();
-    const wTotal = transactions
+    const wTotal = ftxn
       .filter(t => { const td = new Date(t.date); return td >= ws && td <= we && t.status === 'Paid'; })
       .reduce((s, t) => s + t.total, 0);
     weeks.push({ label: label, total: wTotal });
@@ -3212,7 +3383,7 @@ function renderFinCharts() {
   });
   // Payment Method (doughnut)
   const methodTotals = {};
-  transactions.filter(t => t.status === 'Paid').forEach(t => { methodTotals[t.method] = (methodTotals[t.method] || 0) + t.total; });
+  ftxn.filter(t => t.status === 'Paid').forEach(t => { methodTotals[t.method] = (methodTotals[t.method] || 0) + t.total; });
   const mColors = { 'Card': '#2563eb', 'Cash': '#10b981', 'Venmo': '#8b5cf6', 'Check': '#f59e0b' };
   chartInstances.payMethod = new Chart(document.getElementById('chartPayMethod'), {
     type: 'doughnut',
@@ -3291,18 +3462,19 @@ function populateServiceDropdowns() {
 
 function renderTransactionLog() {
   const body = document.getElementById('txnBody');
-  if (transactions.length === 0) {
-    body.innerHTML = '<tr><td colspan="12" style="text-align:center;padding:24px;color:var(--text-light);">No transactions yet. Check out a client from the Form tab or click \"New Payment\" above.</td></tr>';
+  const ftxn = getFilteredTransactions();
+  if (ftxn.length === 0) {
+    body.innerHTML = '<tr><td colspan="12" style="text-align:center;padding:24px;color:var(--text-light);">' + (transactions.length === 0 ? 'No transactions yet. Check out a client from the Form tab or click "New Payment" above.' : 'No transactions match the selected date range.') + '</td></tr>';
     document.getElementById('txnPagination').innerHTML = '';
     return;
   }
 
-  const totalPages = Math.ceil(transactions.length / PAGE_SIZE);
+  const totalPages = Math.ceil(ftxn.length / PAGE_SIZE);
   if (txnPage > totalPages) txnPage = totalPages;
   if (txnPage < 1) txnPage = 1;
   const start = (txnPage - 1) * PAGE_SIZE;
-  const end = Math.min(start + PAGE_SIZE, transactions.length);
-  const pageData = transactions.slice(start, end);
+  const end = Math.min(start + PAGE_SIZE, ftxn.length);
+  const pageData = ftxn.slice(start, end);
 
   body.innerHTML = pageData.map(t => {
     const sc = t.status === 'Paid' ? 'txn-paid' : t.status === 'Pending' ? 'txn-pending' : 'txn-deposit';
@@ -3323,7 +3495,7 @@ function renderTransactionLog() {
     '</tr>';
   }).join('');
 
-  renderPaginationBar('txnPagination', txnPage, totalPages, transactions.length, start + 1, end, 'txnPage', 'renderTransactionLog');
+  renderPaginationBar('txnPagination', txnPage, totalPages, ftxn.length, start + 1, end, 'txnPage', 'renderTransactionLog');
 }
 
 function generateSampleTransactions() {
