@@ -590,6 +590,45 @@
     color: #1d4ed8;
     border-bottom-style: solid;
   }
+
+  /* Pet Navigator */
+  .pet-navigator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: linear-gradient(135deg, #ede9fe 0%, #e0e7ff 100%);
+    border: 1px solid #c4b5fd;
+    border-radius: 10px;
+    padding: 10px 16px;
+    margin-bottom: 16px;
+  }
+  .pet-nav-btn {
+    background: white;
+    border: 1px solid #c4b5fd;
+    border-radius: 6px;
+    padding: 5px 12px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--primary);
+    transition: all 0.15s;
+  }
+  .pet-nav-btn:hover { background: var(--primary); color: white; }
+  .pet-nav-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+  .pet-nav-btn:disabled:hover { background: white; color: var(--primary); }
+  .pet-nav-info {
+    flex: 1;
+    text-align: center;
+    font-size: 0.85rem;
+    color: var(--text);
+  }
+  .pet-nav-add {
+    background: #f0fdf4;
+    border-color: #86efac;
+    color: #16a34a;
+  }
+  .pet-nav-add:hover { background: #16a34a; color: white; }
+  .pet-navigator.hidden { display: none !important; }
 </style>
 </head>
 <body>
@@ -785,6 +824,17 @@
           </div>
         </div>
       </div>
+    </div>
+
+    <!-- Pet Navigator -->
+    <div class="pet-navigator hidden" id="petNavigator">
+      <button class="pet-nav-btn" id="prevPetBtn" onclick="prevPet()" title="Previous Pet">◀</button>
+      <div class="pet-nav-info">
+        <span id="petNavLabel">Pet 1 of 1</span>
+        <span id="petNavName" style="font-weight:600;"></span>
+      </div>
+      <button class="pet-nav-btn" id="nextPetBtn" onclick="nextPet()" title="Next Pet">▶</button>
+      <button class="pet-nav-btn pet-nav-add" onclick="addPet()" title="Add another pet for this client">＋ Add Pet</button>
     </div>
 
     <!-- Section 2: Pet Details -->
@@ -1298,6 +1348,80 @@ const TARGET_FIELDS = [
   { key: 'notes', label: 'Notes', required: false },
 ];
 
+// Client-level fields (shared across all pets for the same client)
+const CLIENT_FIELDS = ['clientName', 'phone', 'email'];
+
+function getClientPetIndices(clientName) {
+  const indices = [];
+  for (let i = 0; i < importedData.length; i++) {
+    if (importedData[i].clientName === clientName) indices.push(i);
+  }
+  return indices;
+}
+
+function updatePetNavigator() {
+  const nav = document.getElementById('petNavigator');
+  if (currentFormIdx === null) { nav.classList.add('hidden'); return; }
+  const d = importedData[currentFormIdx];
+  if (!d || !d.clientName) { nav.classList.add('hidden'); return; }
+  const petIndices = getClientPetIndices(d.clientName);
+  nav.classList.remove('hidden');
+  const pos = petIndices.indexOf(currentFormIdx) + 1;
+  document.getElementById('petNavLabel').textContent = '🐾 Pet ' + pos + ' of ' + petIndices.length;
+  document.getElementById('petNavName').textContent = d.petName ? ' — ' + d.petName : '';
+  document.getElementById('prevPetBtn').disabled = pos <= 1;
+  document.getElementById('nextPetBtn').disabled = pos >= petIndices.length;
+}
+
+async function prevPet() {
+  if (currentFormIdx === null) return;
+  const d = importedData[currentFormIdx];
+  const petIndices = getClientPetIndices(d.clientName);
+  const pos = petIndices.indexOf(currentFormIdx);
+  if (pos <= 0) return;
+  if (formDirty && !await customConfirm('You have unsaved changes. Switch pets anyway?')) return;
+  loadPetRecord(petIndices[pos - 1]);
+}
+
+async function nextPet() {
+  if (currentFormIdx === null) return;
+  const d = importedData[currentFormIdx];
+  const petIndices = getClientPetIndices(d.clientName);
+  const pos = petIndices.indexOf(currentFormIdx);
+  if (pos >= petIndices.length - 1) return;
+  if (formDirty && !await customConfirm('You have unsaved changes. Switch pets anyway?')) return;
+  loadPetRecord(petIndices[pos + 1]);
+}
+
+function loadPetRecord(idx) {
+  currentFormIdx = idx;
+  const d = importedData[idx];
+  document.getElementById('clientSelect').value = idx;
+  setFormField('clientId', 'CLT-' + String(idx + 1).padStart(3, '0'));
+  TARGET_FIELDS.forEach(f => setFormField(f.key, d[f.key] || ''));
+  formDirty = false;
+  updateEditingIndicator((d.petName || 'Unknown') + ' — ' + (d.clientName || 'Unknown'));
+  updateSectionBadges();
+  updatePetNavigator();
+}
+
+async function addPet() {
+  if (currentFormIdx === null) { showToast('⚠️ Select a client first'); return; }
+  if (formDirty && !await customConfirm('You have unsaved changes. Add a new pet anyway?')) return;
+  const d = importedData[currentFormIdx];
+  const newRec = {};
+  CLIENT_FIELDS.forEach(k => { newRec[k] = d[k] || ''; });
+  TARGET_FIELDS.forEach(f => {
+    if (!CLIENT_FIELDS.includes(f.key)) newRec[f.key] = '';
+  });
+  const petIndices = getClientPetIndices(d.clientName);
+  const insertAfter = petIndices[petIndices.length - 1];
+  importedData.splice(insertAfter + 1, 0, newRec);
+  populateFormLookup();
+  loadPetRecord(insertAfter + 1);
+  showToast('➕ New pet added for ' + (d.clientName || 'Unknown') + ' — fill in the details!');
+}
+
 const ALIASES = {
   clientName: ['client name', 'client', 'name', 'owner', 'owner name', 'customer', 'customer name', 'full name'],
   phone: ['phone', 'phone number', 'tel', 'telephone', 'mobile', 'cell', 'cell phone'],
@@ -1615,6 +1739,7 @@ function loadSampleData() {
 
   const sampleCSV = `Owner Name,Cell,Email,Fur Baby,Animal,Breed,Weight (lbs),Disposition,Fur Type,Shots Current?,Health Issues,Groom Package,Last In,Next Due,Comments,Active?,Emergency Contact,Referred By
 Sarah Jennings,414-555-0123,sarah.j@email.com,Biscuit,Dog,Golden Retriever,72,Friendly,Long,Yes,,Full Groom,2026-03-10,2026-04-07,Regular since 2024. Loves belly rubs during bath.,Active,Tom Jennings 414-555-0124,Google
+Sarah Jennings,414-555-0123,sarah.j@email.com,Muffin,Dog,Pomeranian,8,Energetic,Long,Yes,,Bath & Brush,2026-03-10,2026-04-07,Tiny but feisty. Hates nail trims.,Active,Tom Jennings 414-555-0124,Google
 Marcus Rivera,414-555-0201,marcus.r@email.com,Luna,Dog,French Bulldog,24,Nervous,Short,Yes,Sensitive skin - hypoallergenic only,Bath & Brush,2026-03-18,2026-04-15,Towel dry only - terrified of dryers.,Active,Ana Rivera 414-555-0202,Facebook
 Emily Chen,414-555-0303,echen@email.com,Mochi,Cat,Persian,11,Calm,Long,Yes,,Full Groom,2026-02-28,2026-04-28,Indoor cat. Check for mats behind ears and belly.,Active,Wei Chen 414-555-0304,Instagram
 David Kowalski,414-555-0405,d.kowalski@email.com,Cooper,Dog,Australian Shepherd,58,Energetic,Double,No,,Full Groom,2026-01-15,2026-04-01,High energy. Needs 2 handlers. Vaccines overdue!,Active,Maria Kowalski 414-555-0406,Word of mouth
@@ -1623,6 +1748,7 @@ Tom Bradley,414-555-0609,tbradley@email.com,Bear,Dog,Bernese Mountain Dog,95,Gen
 Lisa Nguyen,414-555-0711,lisa.n@email.com,Coco,Dog,Toy Poodle,7,Shy,Curly,Yes,Grain-free treats only,Full Groom,2026-03-20,2026-04-17,Pink bow every visit.,Active,Michael Nguyen 414-555-0712,Instagram
 Rachel Kim,414-555-0813,rachelk@email.com,Zeus,Dog,German Shepherd,82,Aggressive,Double,Yes,,Bath & Brush,2026-02-10,,,Muzzle required. Experienced groomers only.,Inactive,Daniel Kim 414-555-0814,Walk-in
 Mike O'Brien,414-555-0915,mikeob@email.com,Daisy,Dog,Shih Tzu,12,Friendly,Long,Yes,,Full Groom,2026-03-15,2026-04-12,Gets the works every time. Great tipper.,Active,Kelly O'Brien 414-555-0916,Word of mouth
+Mike O'Brien,414-555-0915,mikeob@email.com,Rosie,Dog,Maltese,6,Calm,Silky,Yes,,Full Groom,2026-03-15,2026-04-12,Loves being brushed. Very gentle.,Active,Kelly O'Brien 414-555-0916,Word of mouth
 Amy Patterson,414-555-1017,amy.p@email.com,Simba,Cat,Maine Coon,18,Calm,Long,Yes,,Full Groom,2026-03-01,2026-05-01,Indoor/outdoor cat. Heavy matting at belly.,Active,James Patterson 414-555-1018,Facebook
 Carlos Gutierrez,414-555-1119,carlosg@email.com,Rocky,Dog,Pit Bull Mix,55,Friendly,Short,No,,Bath & Brush,2026-01-20,,,Vaccines expired. Cannot book until updated.,Inactive,Maria Gutierrez 414-555-1120,Walk-in
 Sandra Williams,414-555-1221,s.williams@email.com,Bella,Dog,Yorkshire Terrier,6,Nervous,Silky,Yes,,Full Groom,2026-03-25,2026-04-22,New client first visit 3/25. Scissors on face only.,New Client,Robert Williams 414-555-1222,Yelp
@@ -2173,6 +2299,7 @@ function goToClient(idx) {
   formDirty = false;
   updateEditingIndicator((d.petName || 'Unknown') + ' — ' + (d.clientName || 'Unknown'));
   updateSectionBadges();
+  updatePetNavigator();
   switchTab('form');
   showToast('✅ Loaded: ' + (d.petName || 'Unknown') + ' (' + (d.clientName || 'Unknown') + ')');
 }
@@ -2263,6 +2390,7 @@ async function loadClientForm() {
   formDirty = false;
   updateEditingIndicator((d.petName || 'Unknown') + ' — ' + (d.clientName || 'Unknown'));
   updateSectionBadges();
+  updatePetNavigator();
   showToast('✅ Loaded: ' + (d.petName || 'Unknown') + ' (' + (d.clientName || 'Unknown') + ')');
 }
 
@@ -2291,6 +2419,7 @@ async function clearForm() {
   formDirty = false; currentFormIdx = null;
   updateEditingIndicator(null);
   updateSectionBadges();
+  updatePetNavigator();
   showToast('🧹 Form cleared');
 }
 
@@ -2307,9 +2436,22 @@ function saveFormRecord() {
       const el = document.getElementById('f-' + f.key);
       if (el) importedData[currentFormIdx][f.key] = el.value || '';
     });
+    // Sync client-level fields across all pets for this client
+    const syncName = importedData[currentFormIdx].clientName;
+    if (syncName) {
+      const petIndices = getClientPetIndices(syncName);
+      petIndices.forEach(pi => {
+        if (pi !== currentFormIdx) {
+          CLIENT_FIELDS.forEach(k => {
+            importedData[pi][k] = importedData[currentFormIdx][k];
+          });
+        }
+      });
+    }
   }
   formDirty = false;
   document.getElementById('unsavedBadge').classList.remove('show');
+  updatePetNavigator();
   showToast('💾 Saved: ' + (name || clientName) + ' (' + filled + ' fields) → Google Sheet updated');
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
