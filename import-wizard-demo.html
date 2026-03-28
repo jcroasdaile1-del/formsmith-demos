@@ -288,7 +288,7 @@
     padding: 2px 8px; border-radius: 10px;
   }
   .kpi-trend.up { background: var(--accent-light); color: #059669; }
-  .kpi-trend.down { background: var(--danger-light); color: #dc2626; }
+  .kpi-trend.down { background: var(--danger-light); color: #dc2626; cursor: help; }
 
   /* Dashboard cards grid */
   .dash-grid {
@@ -2290,7 +2290,8 @@ function renderDashboard() {
   const activeClients = data.filter(d => normalizeStatus(d.status) === 'active').length;
   const inactiveClients = data.filter(d => normalizeStatus(d.status) === 'inactive').length;
   const newClients = data.filter(d => normalizeStatus(d.status) === 'new').length;
-  const expiredVax = data.filter(d => normalizeVax(d.vaxStatus) === 'Expired').length;
+  const expiredVax = data.filter(d => normalizeVax(d.vaxStatus) === 'Expired');
+  const expiredVaxCount = expiredVax.length;
   const upcoming = data.filter(d => {
     if (!d.nextAppt) return false;
     const diff = (new Date(d.nextAppt) - today) / (1000*60*60*24);
@@ -2322,11 +2323,11 @@ function renderDashboard() {
       '<div class="kpi-value">' + upcoming + '</div>' +
       '<div class="kpi-sub">Scheduled appointments</div>' +
     '</div>' +
-    '<div class="kpi-card ' + (expiredVax > 0 ? 'red' : 'green') + '">' +
+    '<div class="kpi-card ' + (expiredVaxCount > 0 ? 'red' : 'green') + '">' +
       '<div class="kpi-label">Expired Vaccinations</div>' +
-      '<div class="kpi-value">' + expiredVax + '</div>' +
-      '<div class="kpi-sub">' + (expiredVax > 0 ? 'Action required — notify owners' : 'All vaccinations current') + '</div>' +
-      (expiredVax > 0 ? '<span class="kpi-trend down">⚠ Needs attention</span>' : '') +
+      '<div class="kpi-value">' + expiredVaxCount + '</div>' +
+      '<div class="kpi-sub">' + (expiredVaxCount > 0 ? 'Action required — notify owners' : 'All vaccinations current') + '</div>' +
+      (expiredVaxCount > 0 ? '<span class="kpi-trend down" title="' + expiredVax.map(function(d) { return (d.petName || 'Unknown') + ' (' + (d.clientName || 'Unknown') + ')'; }).join('\n') + '">⚠ Needs attention</span>' : '') +
     '</div>' +
     '<div class="kpi-card yellow">' +
       '<div class="kpi-label">Active / Inactive</div>' +
