@@ -3315,7 +3315,7 @@ function customConfirm(msg) {
 document.addEventListener('DOMContentLoaded', function() {
   const formTab = document.getElementById('tab-form');
   if (formTab) {
-    formTab.addEventListener('input', markDirty);
+    formTab.addEventListener('input', function(e) { if (e.target.id !== 'clientSelect') markDirty(); });
     formTab.addEventListener('change', function(e) { if (e.target.id !== 'clientSelect') markDirty(); });
   }
 });
