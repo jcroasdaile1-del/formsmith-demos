@@ -646,6 +646,46 @@
   .pet-nav-add:hover { background: #16a34a; color: white; }
   .pet-navigator.hidden { display: none !important; }
 
+  /* ── Pagination ── */
+  .pagination-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-top: 1px solid var(--border);
+    font-size: 0.82rem;
+    color: var(--text-light);
+    background: var(--bg);
+  }
+  .pagination-bar .page-info { font-weight: 600; }
+  .pagination-btns {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+  .pagination-btns button {
+    padding: 5px 12px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: white;
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text);
+    transition: all 0.15s ease;
+  }
+  .pagination-btns button:hover:not(:disabled) { background: var(--primary); color: white; border-color: var(--primary); }
+  .pagination-btns button:disabled { opacity: 0.4; cursor: not-allowed; }
+  .pagination-btns .page-num {
+    min-width: 32px;
+    text-align: center;
+    padding: 5px 8px;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 0.82rem;
+  }
+  .pagination-btns .page-num.active { background: var(--primary); color: white; border-color: var(--primary); }
+
   /* ── Help Button (header) ── */
   .help-btn {
     background: var(--primary);
@@ -1169,6 +1209,7 @@
           </table>
         </div>
       </div>
+      <div class="pagination-bar" id="txnPagination"></div>
     </div>
   </div>
 </div>
@@ -1208,6 +1249,7 @@
         <tbody id="clientBody"></tbody>
       </table>
     </div>
+    <div class="pagination-bar" id="clientPagination"></div>
   </div>
 </div>
 
@@ -1629,11 +1671,13 @@ async function nextPet() {
 
 function loadPetRecord(idx) {
   currentFormIdx = idx;
+  formLoading = true;
   const d = importedData[idx];
   document.getElementById('clientSelect').value = idx;
   setFormField('clientId', 'CLT-' + String(idx + 1).padStart(3, '0'));
   TARGET_FIELDS.forEach(f => setFormField(f.key, d[f.key] || ''));
   formDirty = false;
+  formLoading = false;
   updateEditingIndicator((d.petName || 'Unknown') + ' — ' + (d.clientName || 'Unknown'));
   updateSectionBadges();
   updatePetNavigator();
@@ -1822,6 +1866,8 @@ function loadDemoData() {
     }
     return rec;
   });
+  clientPage = 1;
+  txnPage = 1;
   generateSampleTransactions();
   populateFormLookup();
   renderDashboard();
@@ -2108,6 +2154,7 @@ function doImport() {
     }));
     transactions = importedTxns.concat(transactions);
     transactions.sort((a, b) => b.date.localeCompare(a.date));
+    txnPage = 1;
     document.getElementById('importResultText').textContent =
       'Successfully imported ' + importedTxns.length + ' transactions. Your finances dashboard is now populated with real data.';
     showToast('🎉 ' + importedTxns.length + ' transactions imported!');
@@ -2118,6 +2165,8 @@ function doImport() {
     importedData = []; // clear preview data, it was txn data
   } else {
     // Import as clients
+    clientPage = 1;
+    txnPage = 1;
     generateSampleTransactions();
     document.getElementById('importResultText').textContent =
       'Successfully imported ' + importedData.length + ' client records and generated ' + transactions.length + ' sample transactions. Your dashboard, finances, client list, and form lookup are now populated.';
@@ -2527,10 +2576,12 @@ function goToClient(idx) {
   if (idx < 0 || idx >= importedData.length) return;
   document.getElementById('clientSelect').value = idx;
   currentFormIdx = idx;
+  formLoading = true;
   const d = importedData[idx];
   setFormField('clientId', 'CLT-' + String(idx + 1).padStart(3, '0'));
   TARGET_FIELDS.forEach(f => setFormField(f.key, d[f.key] || ''));
   formDirty = false;
+  formLoading = false;
   updateEditingIndicator((d.petName || 'Unknown') + ' — ' + (d.clientName || 'Unknown'));
   updateSectionBadges();
   updatePetNavigator();
@@ -2542,13 +2593,52 @@ function goToClient(idx) {
    CLIENTS TAB
    ══════════════════════════════════════════ */
 
+let clientPage = 1;
+let txnPage = 1;
+const PAGE_SIZE = 25;
+
+function renderPaginationBar(containerId, currentPage, totalPages, totalItems, rangeStart, rangeEnd, pageVar, renderFn) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  if (totalPages <= 1) { el.innerHTML = ''; return; }
+  let html = '<span style="color:var(--text-light);font-size:13px;">Showing ' + rangeStart + '–' + rangeEnd + ' of ' + totalItems + '</span>';
+  html += '<span class="pagination-btns">';
+  html += '<button class="page-num' + (currentPage === 1 ? '' : '') + '"' + (currentPage === 1 ? ' disabled' : '') + ' onclick="' + pageVar + '=' + (currentPage - 1) + ';' + renderFn + '()">&laquo; Prev</button>';
+  const maxVisible = 7;
+  let startP = Math.max(1, currentPage - 3);
+  let endP = Math.min(totalPages, startP + maxVisible - 1);
+  if (endP - startP < maxVisible - 1) startP = Math.max(1, endP - maxVisible + 1);
+  if (startP > 1) { html += '<button class="page-num" onclick="' + pageVar + '=1;' + renderFn + '()">1</button>'; if (startP > 2) html += '<span style="padding:0 4px;color:var(--text-light)">…</span>'; }
+  for (let p = startP; p <= endP; p++) {
+    html += '<button class="page-num' + (p === currentPage ? ' active' : '') + '" onclick="' + pageVar + '=' + p + ';' + renderFn + '()">' + p + '</button>';
+  }
+  if (endP < totalPages) { if (endP < totalPages - 1) html += '<span style="padding:0 4px;color:var(--text-light)">…</span>'; html += '<button class="page-num" onclick="' + pageVar + '=' + totalPages + ';' + renderFn + '()">' + totalPages + '</button>'; }
+  html += '<button class="page-num"' + (currentPage === totalPages ? ' disabled' : '') + ' onclick="' + pageVar + '=' + (currentPage + 1) + ';' + renderFn + '()">Next &raquo;</button>';
+  html += '</span>';
+  el.innerHTML = html;
+}
+
 function renderClients() {
+  if (importedData.length === 0) {
+    document.getElementById('clientsEmpty').style.display = 'block';
+    document.getElementById('clientsContent').style.display = 'none';
+    document.getElementById('clientPagination').innerHTML = '';
+    return;
+  }
   document.getElementById('clientsEmpty').style.display = 'none';
   document.getElementById('clientsContent').style.display = 'block';
   document.getElementById('clientCount').textContent = importedData.length;
 
+  const totalPages = Math.ceil(importedData.length / PAGE_SIZE);
+  if (clientPage > totalPages) clientPage = totalPages;
+  if (clientPage < 1) clientPage = 1;
+  const start = (clientPage - 1) * PAGE_SIZE;
+  const end = Math.min(start + PAGE_SIZE, importedData.length);
+  const pageData = importedData.slice(start, end);
+
   const body = document.getElementById('clientBody');
-  body.innerHTML = importedData.map((d, idx) => {
+  body.innerHTML = pageData.map((d, i) => {
+    const idx = start + i;
     const ns = normalizeStatus(d.status);
     const statusClass = ns === 'active' ? 'status-active' : ns === 'inactive' ? 'status-inactive' : 'status-new';
     const statusLabel = ns.charAt(0).toUpperCase() + ns.slice(1);
@@ -2566,6 +2656,8 @@ function renderClients() {
       '<td><span class="status-badge ' + statusClass + '">' + statusLabel + '</span></td>' +
     '</tr>';
   }).join('');
+
+  renderPaginationBar('clientPagination', clientPage, totalPages, importedData.length, start + 1, end, 'clientPage', 'renderClients');
 }
 
 /* ══════════════════════════════════════════
@@ -2573,6 +2665,7 @@ function renderClients() {
    ══════════════════════════════════════════ */
 
 let formDirty = false;
+let formLoading = false;
 let currentFormIdx = null;
 
 function renderFormTab() {
@@ -2619,9 +2712,11 @@ async function loadClientForm() {
   const d = importedData[parseInt(idx)];
   if (!d) return;
   currentFormIdx = parseInt(idx);
+  formLoading = true;
   setFormField('clientId', 'CLT-' + String(currentFormIdx + 1).padStart(3, '0'));
   TARGET_FIELDS.forEach(f => setFormField(f.key, d[f.key] || ''));
   formDirty = false;
+  formLoading = false;
   updateEditingIndicator((d.petName || 'Unknown') + ' — ' + (d.clientName || 'Unknown'));
   updateSectionBadges();
   updatePetNavigator();
@@ -2638,7 +2733,7 @@ function updateEditingIndicator(label) {
 }
 
 function markDirty() {
-  if (currentFormIdx === null) return;
+  if (currentFormIdx === null || formLoading) return;
   formDirty = true;
   document.getElementById('unsavedBadge').classList.add('show');
 }
@@ -2787,6 +2882,8 @@ function restoreData() {
         }
         importedData = backup.clients || [];
         transactions = backup.transactions || [];
+        clientPage = 1;
+        txnPage = 1;
         if (backup.priceSheet) priceSheet = backup.priceSheet;
         if (backup.addonMenu) addonMenu = backup.addonMenu;
         populateLookup();
@@ -2973,9 +3070,18 @@ function renderTransactionLog() {
   const body = document.getElementById('txnBody');
   if (transactions.length === 0) {
     body.innerHTML = '<tr><td colspan="12" style="text-align:center;padding:24px;color:var(--text-light);">No transactions yet. Check out a client from the Form tab or click \"New Payment\" above.</td></tr>';
+    document.getElementById('txnPagination').innerHTML = '';
     return;
   }
-  body.innerHTML = transactions.map(t => {
+
+  const totalPages = Math.ceil(transactions.length / PAGE_SIZE);
+  if (txnPage > totalPages) txnPage = totalPages;
+  if (txnPage < 1) txnPage = 1;
+  const start = (txnPage - 1) * PAGE_SIZE;
+  const end = Math.min(start + PAGE_SIZE, transactions.length);
+  const pageData = transactions.slice(start, end);
+
+  body.innerHTML = pageData.map(t => {
     const sc = t.status === 'Paid' ? 'txn-paid' : t.status === 'Pending' ? 'txn-pending' : 'txn-deposit';
     const addStr = t.addOns.length > 0 ? t.addOns.join(', ') : '\u2014';
     return '<tr>' +
@@ -2993,6 +3099,8 @@ function renderTransactionLog() {
       '<td><span class="badge ' + sc + '">' + t.status + '</span></td>' +
     '</tr>';
   }).join('');
+
+  renderPaginationBar('txnPagination', txnPage, totalPages, transactions.length, start + 1, end, 'txnPage', 'renderTransactionLog');
 }
 
 function generateSampleTransactions() {
