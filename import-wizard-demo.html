@@ -13,6 +13,8 @@
   gtag('config', 'G-N2MQF91QGM');
 </script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/gridstack@10.3.1/dist/gridstack.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/gridstack@10.3.1/dist/gridstack-all.js"></script>
 <script>document.addEventListener('DOMContentLoaded', function() { if (window.Chart) Chart.defaults.devicePixelRatio = window.devicePixelRatio || 2; });</script>
 <style>
   :root {
@@ -823,6 +825,64 @@
     padding-top: 8px;
   }
   .help-section-title:first-child { margin-top: 0; padding-top: 0; }
+
+  /* ── Gridstack Dashboard Customizer ── */
+  .dash-toolbar {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 16px; flex-wrap: wrap;
+  }
+  .dash-toolbar .btn { font-size: 0.8rem; padding: 6px 14px; }
+  .grid-stack { min-height: 100px; }
+  .grid-stack-item-content {
+    background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow);
+    overflow: visible; display: flex; flex-direction: column;
+  }
+  .grid-stack-item-content .dash-card-header {
+    padding: 14px 20px; border-bottom: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: center;
+    border-radius: var(--radius) var(--radius) 0 0; background: var(--card);
+  }
+  .grid-stack-item-content .dash-card-header h3 { font-size: 0.95rem; font-weight: 700; margin: 0; }
+  .grid-stack-item-content .dash-card-body { padding: 16px 20px 20px; flex: 1; overflow: auto; }
+  .grid-stack-item-content .chart-wrap { position: relative; height: 220px; }
+
+  /* Edit mode visual cues */
+  .grid-stack.editing .grid-stack-item-content {
+    border: 2px dashed var(--primary); cursor: move;
+  }
+  .grid-stack.editing .gs-resize-handle {
+    display: block !important;
+  }
+  .grid-stack:not(.editing) .gs-resize-handle {
+    display: none !important;
+  }
+  .widget-hide-btn {
+    display: none; background: none; border: none; cursor: pointer;
+    font-size: 1.1rem; color: var(--text-light); padding: 2px 6px; border-radius: 4px;
+  }
+  .widget-hide-btn:hover { background: var(--danger-light); color: var(--danger); }
+  .grid-stack.editing .widget-hide-btn { display: inline-block; }
+
+  /* Widget picker modal */
+  .widget-picker-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 8px 0;
+  }
+  .widget-picker-item {
+    display: flex; align-items: center; gap: 10px; padding: 10px 14px;
+    border: 1px solid var(--border); border-radius: var(--radius); cursor: pointer;
+    transition: all 0.15s; background: var(--bg);
+  }
+  .widget-picker-item:hover { border-color: var(--primary); background: var(--primary-light); }
+  .widget-picker-item.active { border-color: var(--primary); background: var(--primary-light); }
+  .widget-picker-item .widget-icon { font-size: 1.3rem; }
+  .widget-picker-item .widget-name { font-size: 0.85rem; font-weight: 600; }
+  .widget-picker-check {
+    margin-left: auto; width: 20px; height: 20px; border-radius: 4px;
+    border: 2px solid var(--border); display: flex; align-items: center;
+    justify-content: center; font-size: 0.75rem; color: white; transition: all 0.15s;
+  }
+  .widget-picker-item.active .widget-picker-check {
+    background: var(--primary); border-color: var(--primary);
+  }
 </style>
 </head>
 <body>
@@ -868,86 +928,26 @@
       <strong>⚡ Interactive Demo</strong> — This dashboard is built from your imported data. In a real Formsmith app, these numbers update live from your Google Sheet.
     </div>
 
-    <!-- Filter Pills -->
-    <div class="date-filter">
-      <button class="filter-pill active" onclick="setDashFilter(this,'all')">All Clients</button>
-      <button class="filter-pill" onclick="setDashFilter(this,'active')">Active Only</button>
-      <button class="filter-pill" onclick="setDashFilter(this,'attention')">Needs Attention</button>
+    <!-- Filter Pills + Dashboard Toolbar -->
+    <div class="date-filter" style="justify-content:space-between;">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="filter-pill active" onclick="setDashFilter(this,'all')">All Clients</button>
+        <button class="filter-pill" onclick="setDashFilter(this,'active')">Active Only</button>
+        <button class="filter-pill" onclick="setDashFilter(this,'attention')">Needs Attention</button>
+      </div>
+      <div class="dash-toolbar" style="margin-bottom:0;">
+        <button class="btn btn-outline" id="dashEditBtn" onclick="toggleDashEdit()">⚙️ Customize</button>
+        <button class="btn btn-outline" id="dashAddBtn" onclick="openWidgetPicker()" style="display:none;">＋ Add Widget</button>
+        <button class="btn btn-outline" id="dashResetBtn" onclick="resetDashLayout()" style="display:none;">↩ Reset Layout</button>
+        <button class="btn btn-success" id="dashSaveBtn" onclick="saveDashEdit()" style="display:none;">✓ Done</button>
+      </div>
     </div>
 
     <!-- KPI Cards -->
     <div class="kpi-grid" id="kpiGrid"></div>
 
-    <!-- Charts & Tables Grid -->
-    <div class="dash-grid">
-      <!-- Revenue by Service -->
-      <div class="dash-card">
-        <div class="dash-card-header">
-          <h3>📈 Revenue by Service <span class="hint-icon">?<span class="hint-tooltip">Shows total revenue broken down by service type. Data comes from recorded checkout transactions.</span></span></h3>
-        </div>
-        <div class="dash-card-body">
-          <div class="chart-wrap"><canvas id="chartRevenue"></canvas></div>
-        </div>
-      </div>
-
-      <!-- Services Breakdown -->
-      <div class="dash-card">
-        <div class="dash-card-header">
-          <h3>🛁 Services Breakdown</h3>
-        </div>
-        <div class="dash-card-body">
-          <div class="chart-wrap"><canvas id="chartServices"></canvas></div>
-        </div>
-      </div>
-
-      <!-- Upcoming Appointments -->
-      <div class="dash-card">
-        <div class="dash-card-header">
-          <h3>📅 Upcoming Appointments</h3>
-          <span class="filter-btn">Next 30 Days</span>
-        </div>
-        <div class="dash-card-body" id="upcomingBody"></div>
-      </div>
-
-      <!-- Alerts -->
-      <div class="dash-card">
-        <div class="dash-card-header">
-          <h3>⚠️ Alerts & Action Items <span class="hint-icon">?<span class="hint-tooltip">Flags clients with expired vaccinations, overdue appointments, or missing info that needs attention.</span></span></h3>
-        </div>
-        <div class="dash-card-body">
-          <ul class="alert-list" id="alertsList"></ul>
-        </div>
-      </div>
-
-      <!-- Top Clients -->
-      <div class="dash-card full-width">
-        <div class="dash-card-header">
-          <h3>🏆 Top Clients by Recent Activity</h3>
-          <span class="filter-btn">Last 30 Days</span>
-        </div>
-        <div class="dash-card-body" id="topClientsBody"></div>
-      </div>
-
-      <!-- Breed Distribution -->
-      <div class="dash-card">
-        <div class="dash-card-header">
-          <h3>🐕 Breed Distribution</h3>
-        </div>
-        <div class="dash-card-body">
-          <div class="chart-wrap"><canvas id="chartBreed"></canvas></div>
-        </div>
-      </div>
-
-      <!-- Vaccination Status -->
-      <div class="dash-card">
-        <div class="dash-card-header">
-          <h3>💉 Vaccination Status <span class="hint-icon">?<span class="hint-tooltip">Breakdown of all pets by vaccination status — Current, Expired, or Unknown. Keep this up to date for safety.</span></span></h3>
-        </div>
-        <div class="dash-card-body">
-          <div class="chart-wrap"><canvas id="chartVax"></canvas></div>
-        </div>
-      </div>
-    </div>
+    <!-- Gridstack Dashboard -->
+    <div class="grid-stack" id="dashGrid"></div>
   </div>
 </div>
 
@@ -1468,6 +1468,23 @@
       <button class="modal-close" onclick="closeKpiDetail()">&times;</button>
     </div>
     <div class="modal-body" id="kpiDetailBody" style="max-height:400px;overflow-y:auto;padding:0;"></div>
+  </div>
+</div>
+
+<!-- Widget Picker Modal -->
+<div class="modal-overlay" id="widgetPickerModal" onclick="if(event.target===this)closeWidgetPicker()">
+  <div class="modal-box" style="max-width:520px;">
+    <div class="modal-header">
+      <h3>📊 Choose Widgets</h3>
+      <button class="modal-close" onclick="closeWidgetPicker()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:0.82rem;color:var(--text-light);margin-bottom:12px;">Click to toggle widgets on or off. Drag to reorder them on the dashboard.</p>
+      <div class="widget-picker-grid" id="widgetPickerGrid"></div>
+      <div style="text-align:right;margin-top:16px;">
+        <button class="btn btn-success" onclick="applyWidgetPicker()">Apply</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -2370,15 +2387,256 @@ function renderDashboard() {
       '<div class="kpi-sub" ' + (inactiveClients > 0 ? 'style="cursor:help" title="' + inactiveArr.map(function(d) { return (d.petName || 'Unknown') + ' (' + (d.clientName || 'Unknown') + ')'; }).join('\n') + '"' : '') + '>' + (inactiveClients > 0 ? inactiveClients + ' client' + (inactiveClients > 1 ? 's' : '') + ' need follow-up' : 'All clients active') + '</div>' +
     '</div>';
 
+  renderDashWidgets(data);
+}
+
+/* ══════════════════════════════════════════
+   GRIDSTACK DASHBOARD ENGINE
+   ══════════════════════════════════════════ */
+var dashGridInstance = null;
+var dashEditMode = false;
+
+var WIDGET_DEFS = [
+  { id: 'revenue',  icon: '📈', name: 'Revenue by Service',   w: 6, h: 4, minW: 4, minH: 3 },
+  { id: 'services', icon: '🛁', name: 'Services Breakdown',   w: 6, h: 4, minW: 4, minH: 3 },
+  { id: 'upcoming', icon: '📅', name: 'Upcoming Appointments', w: 6, h: 4, minW: 4, minH: 3 },
+  { id: 'alerts',   icon: '⚠️', name: 'Alerts & Action Items', w: 6, h: 4, minW: 4, minH: 3 },
+  { id: 'topclients', icon: '🏆', name: 'Top Clients',        w: 12, h: 4, minW: 6, minH: 3 },
+  { id: 'breed',    icon: '🐕', name: 'Breed Distribution',    w: 6, h: 4, minW: 4, minH: 3 },
+  { id: 'vax',      icon: '💉', name: 'Vaccination Status',    w: 6, h: 4, minW: 4, minH: 3 }
+];
+
+function getWidgetContent(id) {
+  var defs = {
+    revenue:  '<div class="dash-card-header"><h3>📈 Revenue by Service</h3><button class="widget-hide-btn" onclick="event.stopPropagation();hideWidget(\'revenue\')" title="Hide widget">✕</button></div><div class="dash-card-body"><div class="chart-wrap"><canvas id="chartRevenue"></canvas></div></div>',
+    services: '<div class="dash-card-header"><h3>🛁 Services Breakdown</h3><button class="widget-hide-btn" onclick="event.stopPropagation();hideWidget(\'services\')" title="Hide widget">✕</button></div><div class="dash-card-body"><div class="chart-wrap"><canvas id="chartServices"></canvas></div></div>',
+    upcoming: '<div class="dash-card-header"><h3>📅 Upcoming Appointments</h3><button class="widget-hide-btn" onclick="event.stopPropagation();hideWidget(\'upcoming\')" title="Hide widget">✕</button></div><div class="dash-card-body" id="upcomingBody"></div>',
+    alerts:   '<div class="dash-card-header"><h3>⚠️ Alerts & Action Items</h3><button class="widget-hide-btn" onclick="event.stopPropagation();hideWidget(\'alerts\')" title="Hide widget">✕</button></div><div class="dash-card-body"><ul class="alert-list" id="alertsList"></ul></div>',
+    topclients: '<div class="dash-card-header"><h3>🏆 Top Clients</h3><button class="widget-hide-btn" onclick="event.stopPropagation();hideWidget(\'topclients\')" title="Hide widget">✕</button></div><div class="dash-card-body" id="topClientsBody"></div>',
+    breed:    '<div class="dash-card-header"><h3>🐕 Breed Distribution</h3><button class="widget-hide-btn" onclick="event.stopPropagation();hideWidget(\'breed\')" title="Hide widget">✕</button></div><div class="dash-card-body"><div class="chart-wrap"><canvas id="chartBreed"></canvas></div></div>',
+    vax:      '<div class="dash-card-header"><h3>💉 Vaccination Status</h3><button class="widget-hide-btn" onclick="event.stopPropagation();hideWidget(\'vax\')" title="Hide widget">✕</button></div><div class="dash-card-body"><div class="chart-wrap"><canvas id="chartVax"></canvas></div></div>'
+  };
+  return defs[id] || '';
+}
+
+function getDefaultLayout() {
+  return WIDGET_DEFS.map(function(w, i) {
+    return { id: w.id, x: (i % 2) * 6, y: Math.floor(i / 2) * 4, w: w.w, h: w.h, minW: w.minW, minH: w.minH };
+  });
+}
+
+function getSavedLayout() {
+  try {
+    var saved = localStorage.getItem('formsmith_dash_layout');
+    if (saved) return JSON.parse(saved);
+  } catch(e) {}
+  return null;
+}
+
+function saveLayout() {
+  if (!dashGridInstance) return;
+  var items = dashGridInstance.getGridItems();
+  var layout = [];
+  items.forEach(function(el) {
+    var node = el.gridstackNode;
+    if (node) {
+      layout.push({ id: node.id, x: node.x, y: node.y, w: node.w, h: node.h });
+    }
+  });
+  localStorage.setItem('formsmith_dash_layout', JSON.stringify(layout));
+}
+
+function renderDashWidgets(data) {
+  // Destroy existing charts before rebuilding
+  Object.values(chartInstances).forEach(function(c) { c.destroy(); });
+  chartInstances = {};
+
+  var savedLayout = getSavedLayout();
+  var layout = savedLayout || getDefaultLayout();
+
+  // Build gridstack items
+  var gridEl = document.getElementById('dashGrid');
+  
+  // Destroy previous grid if it exists
+  if (dashGridInstance) {
+    dashGridInstance.destroy(false);
+    dashGridInstance = null;
+  }
+  gridEl.innerHTML = '';
+
+  // Initialize Gridstack
+  dashGridInstance = GridStack.init({
+    column: 12,
+    cellHeight: 70,
+    animate: true,
+    disableResize: true,
+    disableDrag: true,
+    float: false,
+    margin: 8
+  }, gridEl);
+
+  // Add widgets
+  layout.forEach(function(item) {
+    var def = WIDGET_DEFS.find(function(d) { return d.id === item.id; });
+    if (!def) return;
+    dashGridInstance.addWidget({
+      id: item.id,
+      x: item.x,
+      y: item.y,
+      w: item.w,
+      h: item.h,
+      minW: def.minW,
+      minH: def.minH,
+      content: getWidgetContent(item.id)
+    });
+  });
+
+  // Now render data into the widgets
   renderCharts(data);
   renderUpcoming(data);
   renderAlerts(data);
   renderTopClients(data);
 }
 
+/* ── Edit Mode ── */
+function toggleDashEdit() {
+  dashEditMode = !dashEditMode;
+  var grid = document.getElementById('dashGrid');
+  var editBtn = document.getElementById('dashEditBtn');
+  var addBtn = document.getElementById('dashAddBtn');
+  var resetBtn = document.getElementById('dashResetBtn');
+  var saveBtn = document.getElementById('dashSaveBtn');
+
+  if (dashEditMode) {
+    grid.classList.add('editing');
+    dashGridInstance.enable();
+    dashGridInstance.enableResize(true);
+    dashGridInstance.enableMove(true);
+    editBtn.style.display = 'none';
+    addBtn.style.display = '';
+    resetBtn.style.display = '';
+    saveBtn.style.display = '';
+  } else {
+    saveDashEdit();
+  }
+}
+
+function saveDashEdit() {
+  dashEditMode = false;
+  var grid = document.getElementById('dashGrid');
+  grid.classList.remove('editing');
+  dashGridInstance.disable();
+  dashGridInstance.enableResize(false);
+  dashGridInstance.enableMove(false);
+  document.getElementById('dashEditBtn').style.display = '';
+  document.getElementById('dashAddBtn').style.display = 'none';
+  document.getElementById('dashResetBtn').style.display = 'none';
+  document.getElementById('dashSaveBtn').style.display = 'none';
+  saveLayout();
+}
+
+function resetDashLayout() {
+  localStorage.removeItem('formsmith_dash_layout');
+  dashEditMode = false;
+  document.getElementById('dashEditBtn').style.display = '';
+  document.getElementById('dashAddBtn').style.display = 'none';
+  document.getElementById('dashResetBtn').style.display = 'none';
+  document.getElementById('dashSaveBtn').style.display = 'none';
+  renderDashboard();
+}
+
+function hideWidget(widgetId) {
+  if (!dashGridInstance) return;
+  var items = dashGridInstance.getGridItems();
+  for (var i = 0; i < items.length; i++) {
+    if (items[i].gridstackNode && items[i].gridstackNode.id === widgetId) {
+      dashGridInstance.removeWidget(items[i]);
+      break;
+    }
+  }
+  saveLayout();
+}
+
+/* ── Widget Picker ── */
+function openWidgetPicker() {
+  var currentIds = [];
+  if (dashGridInstance) {
+    dashGridInstance.getGridItems().forEach(function(el) {
+      if (el.gridstackNode) currentIds.push(el.gridstackNode.id);
+    });
+  }
+  var html = WIDGET_DEFS.map(function(w) {
+    var active = currentIds.indexOf(w.id) >= 0;
+    return '<div class="widget-picker-item' + (active ? ' active' : '') + '" data-id="' + w.id + '" onclick="toggleWidgetPick(this)">' +
+      '<span class="widget-icon">' + w.icon + '</span>' +
+      '<span class="widget-name">' + w.name + '</span>' +
+      '<span class="widget-picker-check">' + (active ? '✓' : '') + '</span>' +
+    '</div>';
+  }).join('');
+  document.getElementById('widgetPickerGrid').innerHTML = html;
+  document.getElementById('widgetPickerModal').classList.add('show');
+}
+
+function closeWidgetPicker() {
+  document.getElementById('widgetPickerModal').classList.remove('show');
+}
+
+function toggleWidgetPick(el) {
+  el.classList.toggle('active');
+  var check = el.querySelector('.widget-picker-check');
+  check.textContent = el.classList.contains('active') ? '✓' : '';
+}
+
+function applyWidgetPicker() {
+  var picks = document.querySelectorAll('#widgetPickerGrid .widget-picker-item.active');
+  var wantedIds = [];
+  picks.forEach(function(el) { wantedIds.push(el.getAttribute('data-id')); });
+
+  // Get current items
+  var currentIds = [];
+  if (dashGridInstance) {
+    dashGridInstance.getGridItems().forEach(function(el) {
+      if (el.gridstackNode) currentIds.push(el.gridstackNode.id);
+    });
+  }
+
+  // Remove items not wanted
+  currentIds.forEach(function(id) {
+    if (wantedIds.indexOf(id) < 0) hideWidget(id);
+  });
+
+  // Add items not present
+  wantedIds.forEach(function(id) {
+    if (currentIds.indexOf(id) < 0) {
+      var def = WIDGET_DEFS.find(function(d) { return d.id === id; });
+      if (!def) return;
+      dashGridInstance.addWidget({
+        id: def.id, w: def.w, h: def.h, minW: def.minW, minH: def.minH,
+        content: getWidgetContent(def.id)
+      });
+    }
+  });
+
+  // Re-render data into any newly added widgets
+  var data = getFilteredData();
+  renderCharts(data);
+  renderUpcoming(data);
+  renderAlerts(data);
+  renderTopClients(data);
+
+  saveLayout();
+  closeWidgetPicker();
+}
+
 function renderCharts(data) {
   Object.values(chartInstances).forEach(c => c.destroy());
   chartInstances = {};
+
+  // Guard: skip charts whose canvas no longer exists (widget hidden)
+  var hasRevenue = !!document.getElementById('chartRevenue');
+  var hasServices = !!document.getElementById('chartServices');
+  var hasBreed = !!document.getElementById('chartBreed');
+  var hasVax = !!document.getElementById('chartVax');
 
   // Revenue by Service (bar chart) — uses transactions if available
   const revenueByService = {};
@@ -2399,7 +2657,7 @@ function renderCharts(data) {
     const palette = ['#2563eb','#10b981','#f59e0b','#8b5cf6','#ef4444','#06b6d4','#ec4899'];
     return palette[i % palette.length];
   });
-  chartInstances.revenue = new Chart(document.getElementById('chartRevenue'), {
+  if (hasRevenue) chartInstances.revenue = new Chart(document.getElementById('chartRevenue'), {
     type: 'bar',
     data: {
       labels: revLabels,
@@ -2422,7 +2680,7 @@ function renderCharts(data) {
   const serviceCounts = {};
   data.forEach(d => { const s = d.service || 'Not Specified'; serviceCounts[s] = (serviceCounts[s] || 0) + 1; });
   const svcColors = ['#2563eb','#10b981','#f59e0b','#8b5cf6','#ef4444','#06b6d4'];
-  chartInstances.services = new Chart(document.getElementById('chartServices'), {
+  if (hasServices) chartInstances.services = new Chart(document.getElementById('chartServices'), {
     type: 'doughnut',
     data: {
       labels: Object.keys(serviceCounts),
@@ -2442,7 +2700,7 @@ function renderCharts(data) {
   const breedCounts = {};
   data.forEach(d => { const b = d.breed || 'Unknown'; breedCounts[b] = (breedCounts[b] || 0) + 1; });
   const sortedBreeds = Object.entries(breedCounts).sort((a,b) => b[1] - a[1]).slice(0, 12);
-  chartInstances.breed = new Chart(document.getElementById('chartBreed'), {
+  if (hasBreed) chartInstances.breed = new Chart(document.getElementById('chartBreed'), {
     type: 'bar',
     data: {
       labels: sortedBreeds.map(e => e[0]),
@@ -2462,7 +2720,7 @@ function renderCharts(data) {
   const vaxCounts = {};
   data.forEach(d => { const v = normalizeVax(d.vaxStatus); vaxCounts[v] = (vaxCounts[v] || 0) + 1; });
   const vaxColorMap = { 'Current': '#10b981', 'Expired': '#ef4444', 'Unknown': '#94a3b8' };
-  chartInstances.vax = new Chart(document.getElementById('chartVax'), {
+  if (hasVax) chartInstances.vax = new Chart(document.getElementById('chartVax'), {
     type: 'doughnut',
     data: {
       labels: Object.keys(vaxCounts),
@@ -2480,6 +2738,8 @@ function renderCharts(data) {
 }
 
 function renderUpcoming(data) {
+  const container = document.getElementById('upcomingBody');
+  if (!container) return;
   const today = new Date();
   const upcoming = data
     .filter(d => {
@@ -2490,7 +2750,6 @@ function renderUpcoming(data) {
     .sort((a,b) => new Date(a.nextAppt) - new Date(b.nextAppt))
     .slice(0, 10);
 
-  const container = document.getElementById('upcomingBody');
   if (upcoming.length === 0) {
     container.innerHTML = '<div style="text-align:center;color:var(--text-light);padding:20px;">No upcoming appointments in the next 30 days</div>';
     return;
@@ -2589,6 +2848,7 @@ function renderAlerts(data) {
   }
 
   const list = document.getElementById('alertsList');
+  if (!list) return;
   if (alerts.length === 0) {
     list.innerHTML = '<li style="padding:16px;color:var(--accent);font-weight:600;">✅ No alerts — everything looks good!</li>';
     return;
@@ -2601,6 +2861,8 @@ function renderAlerts(data) {
 }
 
 function renderTopClients(data) {
+  const container = document.getElementById('topClientsBody');
+  if (!container) return;
   const today = new Date();
   const withDates = data.filter(d => d.lastVisit).map(d => ({
     ...d,
@@ -2609,7 +2871,6 @@ function renderTopClients(data) {
   }));
   const sorted = withDates.sort((a,b) => a.daysAgo - b.daysAgo).slice(0, 8);
 
-  const container = document.getElementById('topClientsBody');
   if (sorted.length === 0) {
     container.innerHTML = '<div style="text-align:center;color:var(--text-light);padding:20px;">No visit data available</div>';
     return;
