@@ -1596,6 +1596,7 @@ let rawRows = [];
 let rawHeaders = [];
 let columnMap = {};
 let importedData = [];
+let changeHistory = {};
 let dashFilter = 'all';
 
 const TARGET_FIELDS = [
@@ -1868,6 +1869,7 @@ function loadDemoData() {
   });
   clientPage = 1;
   txnPage = 1;
+  changeHistory = {};
   generateSampleTransactions();
   populateFormLookup();
   renderDashboard();
@@ -2155,6 +2157,7 @@ function doImport() {
     transactions = importedTxns.concat(transactions);
     transactions.sort((a, b) => b.date.localeCompare(a.date));
     txnPage = 1;
+    changeHistory = {};
     document.getElementById('importResultText').textContent =
       'Successfully imported ' + importedTxns.length + ' transactions. Your finances dashboard is now populated with real data.';
     showToast('🎉 ' + importedTxns.length + ' transactions imported!');
@@ -2167,6 +2170,7 @@ function doImport() {
     // Import as clients
     clientPage = 1;
     txnPage = 1;
+    changeHistory = {};
     generateSampleTransactions();
     document.getElementById('importResultText').textContent =
       'Successfully imported ' + importedData.length + ' client records and generated ' + transactions.length + ' sample transactions. Your dashboard, finances, client list, and form lookup are now populated.';
@@ -2761,9 +2765,22 @@ function saveFormRecord() {
     if (el.value && el.value.trim()) filled++;
   });
   if (currentFormIdx !== null && importedData[currentFormIdx]) {
+    const d = importedData[currentFormIdx];
+    const changes = [];
     TARGET_FIELDS.forEach(f => {
       const el = document.getElementById('f-' + f.key);
-      if (el) importedData[currentFormIdx][f.key] = el.value || '';
+      if (!el) return;
+      const newVal = el.value || '';
+      const oldVal = d[f.key] || '';
+      if (newVal !== oldVal) changes.push({ field: f.label, oldVal: oldVal, newVal: newVal });
+    });
+    if (changes.length > 0) {
+      if (!changeHistory[currentFormIdx]) changeHistory[currentFormIdx] = [];
+      changeHistory[currentFormIdx].push({ date: new Date().toISOString(), changes: changes });
+    }
+    TARGET_FIELDS.forEach(f => {
+      const el = document.getElementById('f-' + f.key);
+      if (el) d[f.key] = el.value || '';
     });
     // Sync client-level fields across all pets for this client
     const syncName = importedData[currentFormIdx].clientName;
@@ -2816,14 +2833,29 @@ function showHistory() {
   if (currentFormIdx === null) { showToast('⚠️ Select a client first'); return; }
   const d = importedData[currentFormIdx];
   document.getElementById('historyName').textContent = d.petName || 'Client';
+  let html = '';
+  const entries = changeHistory[currentFormIdx] || [];
+  for (let i = entries.length - 1; i >= 0; i--) {
+    const e = entries[i];
+    const dt = new Date(e.date);
+    html += '<div class="history-entry">';
+    html += '<div class="history-date">' + formatDate(dt) + ' at ' + dt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' · by You</div>';
+    e.changes.forEach(c => {
+      html += '<div class="history-change"><span class="history-field">' + escapeHtml(c.field) + ':</span> ';
+      if (c.oldVal) html += '<span class="history-old">' + escapeHtml(c.oldVal) + '</span> → ';
+      html += '<span class="history-new">' + escapeHtml(c.newVal || '(cleared)') + '</span></div>';
+    });
+    html += '</div>';
+  }
   const importDate = new Date();
   importDate.setDate(importDate.getDate() - 1);
-  let html = '<div class="history-entry">' +
-    '<div class="history-date">' + formatDate(importDate) + ' · by You</div>' +
-    '<div class="history-change"><span class="history-field">Record Imported:</span> <span class="history-new">Imported from CSV upload</span></div>';
+  html += '<div class="history-entry">';
+  html += '<div class="history-date">' + formatDate(importDate) + ' · by You</div>';
+  html += '<div class="history-change"><span class="history-field">Record Imported:</span> <span class="history-new">Imported from CSV upload</span></div>';
   if (d.lastVisit) html += '<div class="history-change"><span class="history-field">Last Visit:</span> <span class="history-new">' + escapeHtml(d.lastVisit) + '</span></div>';
   if (d.notes) html += '<div class="history-change"><span class="history-field">Notes:</span> <span class="history-new">' + escapeHtml(d.notes) + '</span></div>';
   html += '</div>';
+  if (!html) html = '<p style="text-align:center;color:var(--text-light);padding:24px;">No changes recorded yet.</p>';
   document.getElementById('historyBody').innerHTML = html;
   document.getElementById('historyModal').classList.add('show');
 }
@@ -2851,6 +2883,7 @@ function backupData() {
     createdAt: new Date().toISOString(),
     clients: importedData,
     transactions: transactions,
+    changeHistory: changeHistory,
     priceSheet: priceSheet,
     addonMenu: addonMenu
   };
@@ -2883,6 +2916,7 @@ function restoreData() {
         }
         importedData = backup.clients || [];
         transactions = backup.transactions || [];
+        changeHistory = backup.changeHistory || {};
         clientPage = 1;
         txnPage = 1;
         if (backup.priceSheet) priceSheet = backup.priceSheet;
