@@ -584,7 +584,8 @@
     .checkout-modal .modal-body { padding: 10px 14px 12px; }
     .checkout-grid { gap: 6px; }
     .checkout-field label { font-size: 0.65rem; }
-    .checkout-field input, .checkout-field select { padding: 5px 8px; font-size: 0.78rem; }
+    .checkout-field input, .checkout-field select { padding: 5px 8px; font-size: 0.78rem; width: 100%; box-sizing: border-box; }
+    .checkout-field select { padding-right: 26px; }
     .addon-chip { padding: 3px 7px; font-size: 0.68rem; gap: 3px; }
     .addon-list { gap: 4px; }
     .checkout-total { padding: 8px 10px; margin-top: 6px; gap: 3px; }
@@ -650,8 +651,9 @@
   }
   .checkout-field input, .checkout-field select {
     padding: 6px 10px; border: 1px solid var(--border); border-radius: 6px;
-    font-size: 0.82rem; font-family: inherit;
+    font-size: 0.82rem; font-family: inherit; width: 100%; box-sizing: border-box;
   }
+  .checkout-field select { padding-right: 28px; }
   .checkout-field input:focus, .checkout-field select:focus {
     outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
   }
