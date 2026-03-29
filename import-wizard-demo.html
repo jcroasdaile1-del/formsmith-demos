@@ -511,13 +511,81 @@
 
   /* Responsive */
   @media (max-width: 768px) {
-    .tab-content { padding: 16px; }
-    .wizard-panel { padding: 20px; }
+    .tab-content { padding: 12px; }
+    .wizard-panel { padding: 16px; }
     .mapping-grid { grid-template-columns: 1fr; gap: 6px; }
     .mapping-arrow { display: none; }
     .mapping-header:nth-child(2) { display: none; }
     .dash-grid { grid-template-columns: 1fr; }
     .checkout-grid { grid-template-columns: 1fr; }
+
+    /* Header */
+    .header-top { padding: 12px 14px 6px; flex-wrap: wrap; gap: 8px; }
+    .header-top h1 { font-size: 1.05rem; }
+    .header-badge { font-size: 0.65rem; padding: 3px 10px; }
+    .header-top > div:last-child { width: 100%; display: flex; justify-content: flex-end; }
+    .header-top > div:last-child .btn-backup { font-size: 0.7rem !important; padding: 5px 10px !important; }
+
+    /* Tab bar */
+    .tab-bar { padding: 0 8px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .tab-btn { font-size: 0.78rem; padding: 8px 12px; white-space: nowrap; }
+
+    /* KPI cards */
+    .kpi-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+    .kpi-value { font-size: 1.3rem; }
+    .kpi-label { font-size: 0.68rem; }
+    .kpi-sub { font-size: 0.7rem; }
+    .kpi-card { padding: 14px; }
+
+    /* Gridstack */
+    .grid-stack { min-height: 50px; }
+    .grid-stack-item { width: 100% !important; left: 0 !important; position: relative !important; }
+    .grid-stack-item-content .dash-card-header { padding: 10px 14px; }
+    .grid-stack-item-content .dash-card-header h3 { font-size: 0.85rem; }
+    .grid-stack-item-content .dash-card-body { padding: 10px 12px 14px; }
+
+    /* Filter pills + toolbar */
+    .date-filter { gap: 6px; flex-direction: column; }
+    .date-filter > div:first-child { display: flex; gap: 6px; flex-wrap: wrap; }
+    .date-filter .filter-pill { font-size: 0.72rem; padding: 5px 12px; }
+    .dash-toolbar { gap: 6px; }
+    .dash-toolbar .btn { font-size: 0.7rem; padding: 5px 10px; }
+
+    /* Form fields */
+    .field-grid { grid-template-columns: 1fr; gap: 10px; }
+    .section-body { padding: 14px; }
+    .section-header { padding: 12px 14px; font-size: 0.82rem; }
+    .submit-bar { flex-wrap: wrap; }
+
+    /* Tables on mobile */
+    .data-card { padding: 12px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .data-table { font-size: 0.78rem; min-width: 600px; }
+    .mini-table { font-size: 0.75rem; min-width: 500px; }
+
+    /* Modals */
+    .modal-box { width: 95%; max-height: 85vh; }
+    .modal-header { padding: 14px 16px; }
+    .modal-body { padding: 14px 16px; }
+
+    /* Sample banner */
+    .sample-banner { font-size: 0.78rem; padding: 10px 14px; flex-direction: column; text-align: center; }
+
+    /* Buttons */
+    .btn { font-size: 0.82rem; padding: 8px 14px; }
+
+    /* Widget picker */
+    .widget-picker-grid { grid-template-columns: 1fr; }
+
+    /* Checkout modal */
+    .checkout-modal { width: 95% !important; }
+  }
+
+  @media (max-width: 420px) {
+    .kpi-grid { grid-template-columns: 1fr; }
+    .kpi-value { font-size: 1.5rem; }
+    .header-top h1 { font-size: 0.95rem; }
+    .tab-btn { font-size: 0.72rem; padding: 8px 10px; }
+    .field-group input, .field-group select, .field-group textarea { font-size: 16px; }
   }
 
   /* ══════════════════════════════════════════
@@ -2466,14 +2534,15 @@ function renderDashWidgets(data) {
   gridEl.innerHTML = '';
 
   // Initialize Gridstack
+  var isMobile = window.innerWidth <= 768;
   dashGridInstance = GridStack.init({
-    column: 12,
-    cellHeight: 70,
+    column: isMobile ? 1 : 12,
+    cellHeight: isMobile ? 60 : 70,
     animate: true,
     disableResize: true,
     disableDrag: true,
     float: false,
-    margin: 8
+    margin: isMobile ? 6 : 8
   }, gridEl);
 
   // Add widgets
@@ -2482,11 +2551,11 @@ function renderDashWidgets(data) {
     if (!def) return;
     dashGridInstance.addWidget({
       id: item.id,
-      x: item.x,
-      y: item.y,
-      w: item.w,
+      x: isMobile ? 0 : item.x,
+      y: isMobile ? undefined : item.y,
+      w: isMobile ? 1 : item.w,
       h: item.h,
-      minW: def.minW,
+      minW: isMobile ? 1 : def.minW,
       minH: def.minH,
       content: getWidgetContent(item.id)
     });
