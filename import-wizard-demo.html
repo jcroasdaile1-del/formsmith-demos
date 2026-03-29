@@ -539,7 +539,6 @@
 
     /* Gridstack */
     .grid-stack { min-height: 50px; }
-    .grid-stack-item { width: 100% !important; left: 0 !important; position: relative !important; }
     .grid-stack-item-content .dash-card-header { padding: 10px 14px; }
     .grid-stack-item-content .dash-card-header h3 { font-size: 0.85rem; }
     .grid-stack-item-content .dash-card-body { padding: 10px 12px 14px; }
@@ -2490,13 +2489,13 @@ function getWidgetContent(id) {
 function getDefaultLayout() {
   var defaults = ['revenue','services','upcoming','alerts','topclients'];
   return WIDGET_DEFS.filter(function(w) { return defaults.indexOf(w.id) >= 0; }).map(function(w, i) {
-    return { id: w.id, x: (i % 2) * 6, y: Math.floor(i / 2) * 4, w: w.w, h: w.h, minW: w.minW, minH: w.minH };
+    return { id: w.id, x: (i % 2) * 6, y: Math.floor(i / 2) * 5, w: w.w, h: w.h, minW: w.minW, minH: w.minH };
   });
 }
 
 function getSavedLayout() {
   try {
-    var saved = localStorage.getItem('formsmith_dash_layout');
+    var saved = localStorage.getItem('formsmith_dash_layout_v2');
     if (saved) return JSON.parse(saved);
   } catch(e) {}
   return null;
@@ -2512,7 +2511,7 @@ function saveLayout() {
       layout.push({ id: node.id, x: node.x, y: node.y, w: node.w, h: node.h });
     }
   });
-  localStorage.setItem('formsmith_dash_layout', JSON.stringify(layout));
+  localStorage.setItem('formsmith_dash_layout_v2', JSON.stringify(layout));
 }
 
 function renderDashWidgets(data) {
@@ -2606,7 +2605,7 @@ function saveDashEdit() {
 }
 
 function resetDashLayout() {
-  localStorage.removeItem('formsmith_dash_layout');
+  localStorage.removeItem('formsmith_dash_layout_v2');
   dashEditMode = false;
   document.getElementById('dashGrid').classList.remove('editing');
   document.getElementById('dashEditBtn').style.display = '';
