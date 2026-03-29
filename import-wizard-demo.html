@@ -637,6 +637,7 @@
   .txn-paid { background: var(--accent-light); color: #065f46; }
   .txn-pending { background: var(--warning-light); color: #92400e; }
   .txn-deposit { background: var(--purple-light); color: var(--purple); }
+  .txn-toolbar { display: flex; gap: 8px; flex-wrap: wrap; }
 
   /* Price sheet mobile */
   @media (max-width: 768px) {
@@ -646,6 +647,8 @@
     .price-sheet-table input[type="text"] { padding: 5px 6px; font-size: 0.78rem; }
     .price-sheet-table input[type="number"] { width: 60px; padding: 5px 6px; font-size: 0.78rem; }
     .price-sheet-table .btn-row-delete { font-size: 0.85rem; padding: 2px 4px; }
+    .txn-toolbar { gap: 5px; }
+    .txn-toolbar .btn { font-size: 0.7rem !important; padding: 5px 8px !important; }
   }
 
   /* Checkout Modal */
@@ -1329,9 +1332,9 @@
 
     <!-- Transaction Log -->
     <div class="dash-card full-width" style="margin-bottom: 20px;">
-      <div class="dash-card-header">
+      <div class="dash-card-header" style="flex-wrap: wrap; gap: 8px;">
         <h3>📋 Transaction Log</h3>
-        <div style="display: flex; gap: 8px;">
+        <div class="txn-toolbar">
           <button class="btn btn-import" style="padding: 6px 14px; font-size: 0.8rem;" onclick="openImportWizard('transactions')">📥 Import Transactions</button>
           <button class="btn btn-success" style="padding: 6px 14px; font-size: 0.8rem;" onclick="openCheckout()">💰 New Payment</button>
           <button class="btn btn-import" style="padding: 6px 14px; font-size: 0.8rem;" onclick="exportTransactions()">📤 Export</button>
