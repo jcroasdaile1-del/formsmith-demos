@@ -302,6 +302,16 @@ body.dark-mode .h2h-selectors select { background: #374151; color: #e5e7eb; bord
 .sub-badge { display: inline-block; background: #fef3c7; color: #92400e; font-size: 0.62rem; font-weight: 700; padding: 1px 6px; border-radius: 4px; margin-left: 4px; vertical-align: middle; }
 body.dark-mode .sub-badge { background: #422006; color: #fbbf24; }
 
+/* ── Submitted Week ── */
+.submitted-bar { background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%); border: 1px solid #16a34a; border-radius: var(--radius); padding: 14px 20px; margin-bottom: 16px; display: flex; align-items: center; gap: 10px; font-size: 0.88rem; font-weight: 600; color: #166534; }
+body.dark-mode .submitted-bar { background: #064e3b; border-color: #059669; color: #6ee7b7; }
+.submit-scores-area { margin-top: 20px; padding: 16px 0 8px; border-top: 2px solid var(--border); display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.submit-progress { font-size: 0.82rem; color: var(--text-light); }
+
+/* ── Clear Season ── */
+.clear-season-section { margin-top: 16px; padding-top: 16px; border-top: 2px dashed var(--danger); }
+.clear-season-section .section-warning { font-size: 0.78rem; color: var(--danger); margin-bottom: 8px; font-weight: 500; }
+
 /* ══════════════════════════════════════════
    RESPONSIVE — 768px
    ══════════════════════════════════════════ */
@@ -421,6 +431,10 @@ body.dark-mode .sub-badge { background: #422006; color: #fbbf24; }
         <div class="field-group"><label>Handicap %</label><input type="number" id="cfg-handicapPct" value="80" min="0" max="100" onchange="saveConfig()"></div>
         <div class="field-group"><label>Archers per Team</label><select id="cfg-archersPerTeam" onchange="saveConfig()"><option>3</option><option>4</option><option>5</option></select></div>
         <div class="field-group"><label>Start Date</label><input type="date" id="cfg-startDate" value="2026-06-01" onchange="saveConfig()"></div>
+      </div>
+      <div class="clear-season-section">
+        <p class="section-warning">⚠️ End of season — this permanently deletes ALL data (teams, scores, brackets, schedule).</p>
+        <button class="btn btn-danger btn-sm" onclick="clearSeasonStep1()">🗑️ Clear Entire Season</button>
       </div>
     </div>
   </div>
@@ -620,6 +634,7 @@ let teams = [];       // { id, name, archers:[], bracket:null }
 let scores = {};      // scores[weekNum] = { [teamId]: [score1, score2, score3] }
 let schedule = {};    // schedule[bracket] = [ { week, teamA_id, teamB_id }, ... ]
 let substitutes = {};  // substitutes[weekNum] = { [teamId]: { archerIdx: subName } }
+let submittedWeeks = {}; // submittedWeeks[weekNum] = true (locked after submit)
 let editingTeamIdx = null;
 let previewTeams = [];
 
@@ -1153,7 +1168,8 @@ function populateWeekSelect() {
   sel.innerHTML = '';
   for (let w = 1; w <= Math.max(totalWeeks, config.qualWeeks); w++) {
     const label = w <= config.qualWeeks ? 'Week ' + w + ' (Qualifying)' : 'Week ' + w;
-    sel.innerHTML += '<option value="' + w + '"' + (String(w) === current ? ' selected' : '') + '>' + label + '</option>';
+    const submitted = submittedWeeks[w] ? ' ✓' : '';
+    sel.innerHTML += '<option value="' + w + '"' + (String(w) === current ? ' selected' : '') + '>' + label + submitted + '</option>';
   }
   if (!current) sel.value = '1';
 }
@@ -1165,7 +1181,10 @@ function renderScoreEntry() {
 
   if (week <= config.qualWeeks || !config.bracketsLocked) {
     // Qualifying: all teams shoot, no matchups
-    let html = '<h3 style="margin-bottom:12px;">🎯 Qualifying — Week ' + week + '</h3><p style="font-size:0.85rem;color:var(--text-light);margin-bottom:16px;">Enter individual scores for all teams. No matchups during qualifying.</p>';
+    const locked = submittedWeeks[week];
+    let html = '';
+    if (locked) html += '<div class="submitted-bar"><span style="font-size:1.3rem;">✅</span> Week ' + week + ' scores submitted!<button class="btn btn-outline btn-sm" style="margin-left:auto;" onclick="unsubmitWeek(' + week + ')">✏️ Edit Scores</button></div>';
+    html += '<h3 style="margin-bottom:12px;">🎯 Qualifying — Week ' + week + '</h3><p style="font-size:0.85rem;color:var(--text-light);margin-bottom:16px;">Enter individual scores for all teams. No matchups during qualifying.</p>';
     teams.forEach(t => {
       const s = (scores[week] && scores[week][t.id]) || [];
       const total = s.reduce((a, b) => a + (b || 0), 0);
@@ -1173,17 +1192,20 @@ function renderScoreEntry() {
       t.archers.forEach((a, ai) => {
         const dispName = getArcherName(t.id, ai, week);
         const isSub = isSubstitute(t.id, ai, week);
-        html += '<div class="score-row"><span class="name">' + esc(dispName) + (isSub ? ' <span class="sub-badge">SUB</span>' : '') + '</span><input class="score-input" type="number" min="0" max="' + getPerfectScore() + '" value="' + (s[ai] || '') + '" onfocus="this.select()" onchange="setScore(' + t.id + ',' + week + ',' + ai + ',this.value)"></div>';
+        html += '<div class="score-row"><span class="name">' + esc(dispName) + (isSub ? ' <span class="sub-badge">SUB</span>' : '') + '</span><input class="score-input" type="number" min="0" max="' + getPerfectScore() + '" value="' + (s[ai] || '') + '" onfocus="this.select()" onchange="setScore(' + t.id + ',' + week + ',' + ai + ',this.value)"' + (locked ? ' disabled style="opacity:0.6;cursor:not-allowed;"' : '') + '></div>';
       });
       html += '</div>';
     });
+    if (!locked) html += buildSubmitBar(week);
     area.innerHTML = html;
     return;
   }
 
   // Bracket play: show matchups by bracket
   const brackets = [...new Set(teams.map(t => t.bracket).filter(Boolean))].sort();
+  const locked = submittedWeeks[week];
   let html = '';
+  if (locked) html += '<div class="submitted-bar"><span style="font-size:1.3rem;">✅</span> Week ' + week + ' scores submitted!<button class="btn btn-outline btn-sm" style="margin-left:auto;" onclick="unsubmitWeek(' + week + ')">✏️ Edit Scores</button></div>';
   brackets.forEach(b => {
     const matchups = getWeekMatchups(b, week);
     if (matchups.length === 0) return;
@@ -1205,7 +1227,7 @@ function renderScoreEntry() {
       tA.archers.forEach((a, ai) => {
         const dispA = getArcherName(tA.id, ai, week);
         const isSubA = isSubstitute(tA.id, ai, week);
-        html += '<div class="score-row"><span class="name">' + esc(dispA) + (isSubA ? ' <span class="sub-badge">SUB</span>' : '') + '</span><input class="score-input" type="number" min="0" max="' + getPerfectScore() + '" value="' + (sA[ai] || '') + '" onfocus="this.select()" onchange="setScore(' + tA.id + ',' + week + ',' + ai + ',this.value)"></div>';
+        html += '<div class="score-row"><span class="name">' + esc(dispA) + (isSubA ? ' <span class="sub-badge">SUB</span>' : '') + '</span><input class="score-input" type="number" min="0" max="' + getPerfectScore() + '" value="' + (sA[ai] || '') + '" onfocus="this.select()" onchange="setScore(' + tA.id + ',' + week + ',' + ai + ',this.value)"' + (locked ? ' disabled style="opacity:0.6;cursor:not-allowed;"' : '') + '></div>';
       });
       html += '</div>';
       // Team B archers
@@ -1213,7 +1235,7 @@ function renderScoreEntry() {
       tB.archers.forEach((a, ai) => {
         const dispB = getArcherName(tB.id, ai, week);
         const isSubB = isSubstitute(tB.id, ai, week);
-        html += '<div class="score-row"><span class="name">' + esc(dispB) + (isSubB ? ' <span class="sub-badge">SUB</span>' : '') + '</span><input class="score-input" type="number" min="0" max="' + getPerfectScore() + '" value="' + (sB[ai] || '') + '" onfocus="this.select()" onchange="setScore(' + tB.id + ',' + week + ',' + ai + ',this.value)"></div>';
+        html += '<div class="score-row"><span class="name">' + esc(dispB) + (isSubB ? ' <span class="sub-badge">SUB</span>' : '') + '</span><input class="score-input" type="number" min="0" max="' + getPerfectScore() + '" value="' + (sB[ai] || '') + '" onfocus="this.select()" onchange="setScore(' + tB.id + ',' + week + ',' + ai + ',this.value)"' + (locked ? ' disabled style="opacity:0.6;cursor:not-allowed;"' : '') + '></div>';
       });
       html += '</div></div>';
       // Totals & result
@@ -1235,6 +1257,7 @@ function renderScoreEntry() {
     });
   });
   if (!html) html = '<div style="text-align:center;padding:30px;color:var(--text-light);">No matchups for this week. Lock brackets on the Teams tab to generate the schedule.</div>';
+  else if (!locked) html += buildSubmitBar(week);
   area.innerHTML = html;
 }
 
@@ -1244,6 +1267,92 @@ function setScore(teamId, week, archerIdx, val) {
   scores[week][teamId][archerIdx] = parseInt(val) || 0;
   // Re-render to update totals/handicaps
   renderScoreEntry();
+}
+
+function buildSubmitBar(week) {
+  if (submittedWeeks[week]) {
+    return '<div class="submitted-bar">' +
+      '<span style="font-size:1.3rem;">✅</span> Week ' + week + ' scores submitted!' +
+      '<button class="btn btn-outline btn-sm" style="margin-left:auto;" onclick="unsubmitWeek(' + week + ')">✏️ Edit Scores</button>' +
+      '</div>';
+  }
+  // Count how many teams have scores entered
+  const teamsWithScores = teams.filter(t => scores[week] && scores[week][t.id] && scores[week][t.id].some(s => s > 0)).length;
+  const totalTeams = teams.length;
+  const allFilled = teamsWithScores === totalTeams && totalTeams > 0;
+  const pct = totalTeams > 0 ? Math.round(teamsWithScores / totalTeams * 100) : 0;
+  return '<div class="submit-scores-area">' +
+    '<button class="btn btn-primary" onclick="submitWeekScores(' + week + ')"' + (teamsWithScores === 0 ? ' disabled style="opacity:0.5;cursor:not-allowed;background:var(--primary);color:white;"' : '') + '>✅ Submit Week ' + week + ' Scores</button>' +
+    '<span class="submit-progress">' + teamsWithScores + '/' + totalTeams + ' teams scored (' + pct + '%)' +
+    (allFilled ? ' — <span style="color:var(--primary);font-weight:600;">Ready!</span>' : '') +
+    '</span></div>';
+}
+
+function submitWeekScores(week) {
+  const teamsWithScores = teams.filter(t => scores[week] && scores[week][t.id] && scores[week][t.id].some(s => s > 0));
+  const missing = teams.filter(t => !scores[week] || !scores[week][t.id] || !scores[week][t.id].some(s => s > 0));
+  if (teamsWithScores.length === 0) { showToast('⚠️ No scores entered for this week'); return; }
+  let msg = 'Submit scores for Week ' + week + '?\n\n';
+  msg += teamsWithScores.length + ' of ' + teams.length + ' teams have scores.';
+  if (missing.length > 0) {
+    msg += '\n\n⚠️ Missing scores for ' + missing.length + ' team(s):\n';
+    msg += missing.slice(0, 10).map(t => '  • ' + t.name).join('\n');
+    if (missing.length > 10) msg += '\n  ... and ' + (missing.length - 10) + ' more';
+    msg += '\n\nSubmit anyway?';
+  }
+  if (!confirm(msg)) return;
+  submittedWeeks[week] = true;
+  renderScoreEntry();
+  showToast('✅ Week ' + week + ' scores submitted!');
+}
+
+function unsubmitWeek(week) {
+  if (!confirm('Unlock Week ' + week + ' scores for editing?')) return;
+  delete submittedWeeks[week];
+  renderScoreEntry();
+  showToast('✏️ Week ' + week + ' unlocked for editing');
+}
+
+function clearSeasonStep1() {
+  const teamCount = teams.length;
+  const weekCount = Object.keys(scores).length;
+  if (teamCount === 0 && weekCount === 0) {
+    showToast('ℹ️ Nothing to clear — season is already empty');
+    return;
+  }
+  const msg = '⚠️ WARNING: Clear Entire Season?\n\n' +
+    'This will PERMANENTLY delete:\n' +
+    '  • ' + teamCount + ' teams and all rosters\n' +
+    '  • ' + weekCount + ' weeks of scores\n' +
+    '  • All brackets, schedules, and standings\n' +
+    '  • All substitute assignments\n\n' +
+    'This CANNOT be undone.\n\n' +
+    'Are you sure you want to continue?';
+  if (!confirm(msg)) return;
+  clearSeasonStep2();
+}
+
+function clearSeasonStep2() {
+  const typed = prompt('🔒 Final confirmation:\n\nType CLEAR to permanently delete all season data:');
+  if (!typed || typed.trim().toUpperCase() !== 'CLEAR') {
+    showToast('❌ Season clear cancelled');
+    return;
+  }
+  // Back up first (auto-download)
+  if (teams.length > 0) {
+    backupData();
+  }
+  // Reset everything
+  teams = [];
+  scores = {};
+  schedule = {};
+  substitutes = {};
+  submittedWeeks = {};
+  config.bracketsLocked = false;
+  loadConfigUI();
+  renderTeams();
+  renderDashboard();
+  showToast('🗑️ Season cleared — backup was downloaded automatically');
 }
 
 /* ══════════════════════════════════════════
@@ -1634,7 +1743,7 @@ function exportTeamsCSV() {
    BACKUP / RESTORE
    ══════════════════════════════════════════ */
 function backupData() {
-  const data = { version: 2, date: new Date().toISOString(), config, teams, scores, schedule, substitutes };
+  const data = { version: 2, date: new Date().toISOString(), config, teams, scores, schedule, substitutes, submittedWeeks };
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a'); a.href = url; a.download = 'archery-league-backup-' + new Date().toISOString().slice(0, 10) + '.json'; a.click();
@@ -1654,6 +1763,7 @@ function restoreData(event) {
       if (d.scores) scores = d.scores;
       if (d.schedule) schedule = d.schedule;
       if (d.substitutes) substitutes = d.substitutes;
+      if (d.submittedWeeks) submittedWeeks = d.submittedWeeks;
       loadConfigUI();
       renderTeams();
       renderDashboard();
