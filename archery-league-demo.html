@@ -312,6 +312,15 @@ body.dark-mode .submitted-bar { background: #064e3b; border-color: #059669; colo
 .clear-season-section { margin-top: 16px; padding-top: 16px; border-top: 2px dashed var(--danger); }
 .clear-season-section .section-warning { font-size: 0.78rem; color: var(--danger); margin-bottom: 8px; font-weight: 500; }
 
+/* ── Config Edit State ── */
+.config-actions { display: flex; gap: 8px; margin-top: 14px; align-items: center; flex-wrap: wrap; }
+.config-actions .config-status { font-size: 0.78rem; color: var(--text-light); margin-left: auto; }
+#seasonConfig .field-group input:disabled, #seasonConfig .field-group select:disabled { opacity: 0.65; cursor: not-allowed; background: var(--bg); }
+body.dark-mode #seasonConfig .field-group input:disabled, body.dark-mode #seasonConfig .field-group select:disabled { background: #111827; }
+.config-editing-banner { background: var(--warning-light); border: 1px solid var(--warning); border-radius: 8px; padding: 8px 14px; margin-bottom: 12px; font-size: 0.82rem; color: #92400e; font-weight: 500; display: none; }
+.config-editing-banner.show { display: block; }
+body.dark-mode .config-editing-banner { background: #422006; border-color: #d97706; color: #fbbf24; }
+
 /* ══════════════════════════════════════════
    RESPONSIVE — 768px
    ══════════════════════════════════════════ */
@@ -421,16 +430,23 @@ body.dark-mode .submitted-bar { background: #064e3b; border-color: #059669; colo
   <div class="form-section" id="seasonConfig">
     <div class="section-header" onclick="toggleSection(this)"><span class="section-label">⚙️ Season Configuration</span><span class="chevron">▼</span></div>
     <div class="section-body">
+      <div class="config-editing-banner" id="configEditBanner">✏️ Editing — make your changes, then click Save to commit them.</div>
       <div class="field-grid">
-        <div class="field-group"><label>League Name</label><input type="text" id="cfg-leagueName" value="Buckskin Bowmen" onchange="saveConfig()"></div>
-        <div class="field-group"><label>Season</label><input type="text" id="cfg-season" value="2026 Summer" onchange="saveConfig()"></div>
-        <div class="field-group"><label>Number of Brackets</label><select id="cfg-numBrackets" onchange="saveConfig()"><option>2</option><option>3</option><option selected>4</option><option>5</option></select></div>
-        <div class="field-group"><label>Qualifying Weeks</label><select id="cfg-qualWeeks" onchange="saveConfig()"><option>2</option><option selected>3</option><option>4</option></select></div>
-        <div class="field-group"><label>Targets per Round</label><input type="number" id="cfg-targets" value="28" onchange="saveConfig()"></div>
-        <div class="field-group"><label>Points per Target</label><input type="number" id="cfg-ptsPerTarget" value="10" onchange="saveConfig()"></div>
-        <div class="field-group"><label>Handicap %</label><input type="number" id="cfg-handicapPct" value="80" min="0" max="100" onchange="saveConfig()"></div>
-        <div class="field-group"><label>Archers per Team</label><select id="cfg-archersPerTeam" onchange="saveConfig()"><option>3</option><option>4</option><option>5</option></select></div>
-        <div class="field-group"><label>Start Date</label><input type="date" id="cfg-startDate" value="2026-06-01" onchange="saveConfig()"></div>
+        <div class="field-group"><label>League Name</label><input type="text" id="cfg-leagueName" value="Buckskin Bowmen" disabled></div>
+        <div class="field-group"><label>Season</label><input type="text" id="cfg-season" value="2026 Summer" disabled></div>
+        <div class="field-group"><label>Number of Brackets</label><select id="cfg-numBrackets" disabled><option>2</option><option>3</option><option selected>4</option><option>5</option></select></div>
+        <div class="field-group"><label>Qualifying Weeks</label><select id="cfg-qualWeeks" disabled><option>2</option><option selected>3</option><option>4</option></select></div>
+        <div class="field-group"><label>Targets per Round</label><input type="number" id="cfg-targets" value="28" disabled></div>
+        <div class="field-group"><label>Points per Target</label><input type="number" id="cfg-ptsPerTarget" value="10" disabled></div>
+        <div class="field-group"><label>Handicap %</label><input type="number" id="cfg-handicapPct" value="80" min="0" max="100" disabled></div>
+        <div class="field-group"><label>Archers per Team</label><select id="cfg-archersPerTeam" disabled><option>3</option><option>4</option><option>5</option></select></div>
+        <div class="field-group"><label>Start Date</label><input type="date" id="cfg-startDate" value="2026-06-01" disabled></div>
+      </div>
+      <div class="config-actions">
+        <button class="btn btn-outline btn-sm" id="btnEditConfig" onclick="editConfig()">✏️ Edit Configuration</button>
+        <button class="btn btn-primary btn-sm" id="btnSaveConfig" onclick="commitConfig()" style="display:none;">💾 Save Configuration</button>
+        <button class="btn btn-sm" id="btnCancelConfig" onclick="cancelConfigEdit()" style="display:none;background:var(--bg);color:var(--text);border:1px solid var(--border);">Cancel</button>
+        <span class="config-status" id="configStatus">🔒 Locked</span>
       </div>
       <div class="clear-season-section">
         <p class="section-warning">⚠️ End of season — this permanently deletes ALL data (teams, scores, brackets, schedule).</p>
@@ -682,6 +698,52 @@ function saveConfig() {
   config.handicapPct = parseInt(document.getElementById('cfg-handicapPct').value) || 80;
   config.archersPerTeam = parseInt(document.getElementById('cfg-archersPerTeam').value) || 3;
   config.startDate = document.getElementById('cfg-startDate').value;
+}
+
+let configSnapshot = null;
+
+function editConfig() {
+  // Warn if brackets are locked — some changes are dangerous
+  if (config.bracketsLocked) {
+    if (!confirm('⚠️ Brackets are locked. Changing settings like Number of Brackets or Qualifying Weeks could cause issues with the current schedule.\n\nProceed with editing?')) return;
+  }
+  // Snapshot current config for cancel
+  configSnapshot = JSON.parse(JSON.stringify(config));
+  // Enable all fields
+  document.querySelectorAll('#seasonConfig .field-group input, #seasonConfig .field-group select').forEach(el => el.disabled = false);
+  document.getElementById('btnEditConfig').style.display = 'none';
+  document.getElementById('btnSaveConfig').style.display = '';
+  document.getElementById('btnCancelConfig').style.display = '';
+  document.getElementById('configStatus').textContent = '✏️ Editing';
+  document.getElementById('configEditBanner').classList.add('show');
+}
+
+function commitConfig() {
+  saveConfig();
+  lockConfigUI();
+  configSnapshot = null;
+  showToast('💾 Configuration saved');
+  // Refresh any affected views
+  renderDashboard();
+}
+
+function cancelConfigEdit() {
+  if (configSnapshot) {
+    config = configSnapshot;
+    configSnapshot = null;
+  }
+  loadConfigUI();
+  lockConfigUI();
+  showToast('↩️ Changes discarded');
+}
+
+function lockConfigUI() {
+  document.querySelectorAll('#seasonConfig .field-group input, #seasonConfig .field-group select').forEach(el => el.disabled = true);
+  document.getElementById('btnEditConfig').style.display = '';
+  document.getElementById('btnSaveConfig').style.display = 'none';
+  document.getElementById('btnCancelConfig').style.display = 'none';
+  document.getElementById('configStatus').textContent = '🔒 Locked';
+  document.getElementById('configEditBanner').classList.remove('show');
 }
 
 function loadConfigUI() {
