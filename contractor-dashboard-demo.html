@@ -3,8 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Contractor — Job & Client Manager + Dashboard</title>
+<title>Concrete Job Manager — Dashboard + Job Form</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script>document.addEventListener('DOMContentLoaded', function() { if (window.Chart) Chart.defaults.devicePixelRatio = window.devicePixelRatio || 2; });</script>
 <style>
   :root {
     --primary: #2563eb;
@@ -28,8 +29,9 @@
     --shadow-lg: 0 4px 12px rgba(0,0,0,0.1);
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); line-height: 1.5; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); line-height: 1.5; -webkit-text-size-adjust: 100%; }
 
+  /* ── Header ── */
   .app-header { background: linear-gradient(135deg, #1e3a5f 0%, #0f2440 100%); color: white; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
   .header-top { display: flex; align-items: center; justify-content: space-between; padding: 16px 24px 8px; }
   .header-top h1 { font-size: 1.35rem; font-weight: 700; letter-spacing: -0.5px; }
@@ -39,14 +41,18 @@
   .tab-btn { background: none; border: none; color: rgba(255,255,255,0.65); font-size: 0.9rem; font-weight: 600; padding: 10px 20px; cursor: pointer; border-bottom: 3px solid transparent; transition: all 0.2s; }
   .tab-btn:hover { color: rgba(255,255,255,0.9); }
   .tab-btn.active { color: white; border-bottom-color: #f59e0b; }
+
+  /* ── Layout ── */
   .tab-content { display: none; padding: 24px; max-width: 1200px; margin: 0 auto; }
   .tab-content.active { display: block; }
   .sample-banner { background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: 1px solid #f59e0b; border-radius: var(--radius); padding: 12px 20px; margin-bottom: 20px; font-size: 0.85rem; color: #92400e; display: flex; align-items: center; gap: 10px; }
   .sample-banner strong { color: #78350f; }
 
-  .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px; }
-  .kpi-card { background: var(--card); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); border-left: 4px solid var(--primary); transition: transform 0.15s, box-shadow 0.15s; }
+  /* ── KPI Cards ── */
+  .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+  .kpi-card { background: var(--card); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); border-left: 4px solid var(--primary); transition: transform 0.15s, box-shadow 0.15s; cursor: pointer; -webkit-tap-highlight-color: transparent; }
   .kpi-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+  .kpi-card:active { transform: translateY(0); box-shadow: var(--shadow); }
   .kpi-card.green { border-left-color: var(--accent); }
   .kpi-card.yellow { border-left-color: var(--warning); }
   .kpi-card.red { border-left-color: var(--danger); }
@@ -62,17 +68,17 @@
   .kpi-trend.up { background: var(--accent-light); color: #059669; }
   .kpi-trend.down { background: var(--danger-light); color: #dc2626; }
 
+  /* ── Dashboard Grid ── */
   .dash-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px; }
-  @media (max-width: 800px) { .dash-grid { grid-template-columns: 1fr; } }
-  .dash-card { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
-  .dash-card-header { padding: 16px 20px 12px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .dash-card { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); overflow: visible; }
+  .dash-card-header { padding: 16px 20px 12px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; border-radius: var(--radius) var(--radius) 0 0; }
   .dash-card-header h3 { font-size: 0.95rem; font-weight: 700; }
-  .dash-card-header .filter-btn { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 4px 12px; font-size: 0.75rem; cursor: pointer; color: var(--text-light); font-weight: 600; }
   .dash-card-body { padding: 16px 20px 20px; }
   .dash-card.full-width { grid-column: 1 / -1; }
   .chart-wrap { position: relative; height: 250px; width: 100%; }
   .chart-wrap-sm { position: relative; height: 200px; width: 100%; }
 
+  /* ── Tables ── */
   .mini-table { width: 100%; border-collapse: collapse; }
   .mini-table th { text-align: left; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-light); padding: 8px 10px; border-bottom: 2px solid var(--border); font-weight: 700; }
   .mini-table td { padding: 10px; font-size: 0.85rem; border-bottom: 1px solid var(--border); }
@@ -83,6 +89,8 @@
   .badge-yellow { background: var(--warning-light); color: #b45309; }
   .badge-red { background: var(--danger-light); color: #dc2626; }
   .badge-blue { background: var(--primary-light); color: var(--primary); }
+
+  /* ── Alerts ── */
   .alert-list { list-style: none; }
   .alert-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
   .alert-item:last-child { border-bottom: none; }
@@ -91,27 +99,34 @@
   .alert-icon.crit { background: var(--danger-light); }
   .alert-icon.info { background: var(--primary-light); }
 
+  /* ── Date Filter ── */
   .date-filter { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
-  .filter-pill { padding: 6px 16px; border-radius: 20px; border: 1px solid var(--border); background: white; font-size: 0.8rem; font-weight: 600; cursor: pointer; color: var(--text-light); transition: all 0.15s; }
-  .filter-pill:hover { background: var(--primary-light); color: var(--primary); border-color: var(--primary); }
+  .filter-pill { padding: 6px 16px; border-radius: 20px; border: 1px solid #bfdbfe; background: var(--primary-light); font-size: 0.8rem; font-weight: 600; cursor: pointer; color: var(--primary-dark); transition: all 0.15s; }
+  .filter-pill:hover { background: #bfdbfe; color: var(--primary-dark); border-color: var(--primary); }
   .filter-pill.active { background: var(--primary); color: white; border-color: var(--primary); }
 
+  /* ── Lookup Bar ── */
   .lookup-bar { background: var(--card); border-radius: var(--radius); padding: 16px 20px; box-shadow: var(--shadow); display: flex; align-items: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
   .lookup-bar label { font-weight: 700; font-size: 0.85rem; white-space: nowrap; }
-  .lookup-bar select, .lookup-bar input[type="text"] { padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.85rem; background: var(--bg); min-width: 200px; }
+  .lookup-bar select, .lookup-bar input[type="text"] { padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.85rem; background: var(--bg); min-width: 200px; width: 100%; box-sizing: border-box; padding-right: 28px; }
+  .lookup-spacer { flex: 1; }
+
+  /* ── Buttons — NEVER WHITE ── */
   .btn { padding: 8px 18px; border-radius: 8px; border: none; font-size: 0.82rem; font-weight: 700; cursor: pointer; transition: all 0.15s; white-space: nowrap; }
   .btn-primary { background: var(--primary); color: white; }
   .btn-primary:hover { background: var(--primary-dark); }
   .btn-success { background: var(--accent); color: white; }
   .btn-success:hover { background: #059669; }
-  .btn-outline { background: white; color: var(--text-light); border: 1px solid var(--border); }
-  .btn-outline:hover { background: var(--bg); color: var(--text); }
+  .btn-outline { background: var(--primary-light); color: var(--primary-dark); border: 1px solid #bfdbfe; }
+  .btn-outline:hover { background: #bfdbfe; color: var(--primary-dark); }
   .btn-purple { background: var(--purple); color: white; }
-  .btn-purple:hover { background: #7c3aed; }
-  .lookup-spacer { flex: 1; }
+  .btn-purple:hover { background: #6d28d9; }
+  .btn-danger { background: var(--danger-light); color: #b91c1c; border: 1px solid #fca5a5; }
+  .btn-danger:hover { background: #fca5a5; color: #991b1b; }
 
-  .form-section { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 16px; overflow: hidden; }
-  .section-header { padding: 14px 20px; background: var(--bg); border-bottom: 1px solid var(--border); font-weight: 700; font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; justify-content: space-between; user-select: none; }
+  /* ── Form Sections ── */
+  .form-section { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 16px; overflow: visible; }
+  .section-header { padding: 14px 20px; background: var(--bg); border-bottom: 1px solid var(--border); font-weight: 700; font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; justify-content: space-between; user-select: none; border-radius: var(--radius) var(--radius) 0 0; }
   .section-header:hover { background: #e8edf3; }
   .section-header .chevron { transition: transform 0.2s; font-size: 0.8rem; color: var(--text-light); }
   .section-header.collapsed .chevron { transform: rotate(-90deg); }
@@ -121,12 +136,24 @@
   .field-group { display: flex; flex-direction: column; gap: 4px; }
   .field-group.full-width { grid-column: 1 / -1; }
   .field-group label { font-size: 0.78rem; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.3px; }
-  .field-group input, .field-group select, .field-group textarea { padding: 9px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.88rem; font-family: inherit; background: white; transition: border-color 0.15s; }
+  .field-group input, .field-group select, .field-group textarea { padding: 9px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.88rem; font-family: inherit; background: white; transition: border-color 0.15s; width: 100%; box-sizing: border-box; }
+  .field-group select { padding-right: 28px; }
   .field-group input:focus, .field-group select:focus, .field-group textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
   .field-group textarea { resize: vertical; min-height: 70px; }
   .submit-bar { display: flex; justify-content: flex-end; gap: 10px; padding: 16px 0; }
-  .toast { position: fixed; bottom: 30px; right: 30px; background: #1e293b; color: white; padding: 14px 24px; border-radius: 10px; font-size: 0.88rem; font-weight: 600; box-shadow: 0 4px 20px rgba(0,0,0,0.25); z-index: 9999; opacity: 0; transform: translateY(20px); transition: all 0.3s; pointer-events: none; }
+  .auto-field { background: #f1f5f9 !important; color: var(--text-light); cursor: default; }
+
+  /* ── Crew Toggle ── */
+  .crew-check-group { display: flex; align-items: center; gap: 8px; padding: 4px 0; }
+  .crew-check-group input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--primary); cursor: pointer; flex-shrink: 0; }
+  .crew-check-group label { font-size: 0.88rem; font-weight: 600; color: var(--text); text-transform: none; letter-spacing: 0; cursor: pointer; }
+  .hidden { display: none !important; }
+
+  /* ── Toast ── */
+  .toast { position: fixed; bottom: 30px; right: 30px; background: #1e293b; color: white; padding: 14px 24px; border-radius: 10px; font-size: 0.88rem; font-weight: 600; box-shadow: 0 4px 20px rgba(0,0,0,0.25); z-index: 9999; opacity: 0; transform: translateY(20px); transition: all 0.3s; pointer-events: none; max-width: 90vw; }
   .toast.show { opacity: 1; transform: translateY(0); }
+
+  /* ── Modals ── */
   .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 500; justify-content: center; align-items: center; }
   .modal-overlay.show { display: flex; }
   .modal-box { background: white; border-radius: var(--radius); width: 90%; max-width: 620px; max-height: 80vh; overflow-y: auto; box-shadow: 0 8px 30px rgba(0,0,0,0.25); }
@@ -137,14 +164,29 @@
   .history-entry { padding: 12px 0; border-bottom: 1px solid var(--border); }
   .history-entry:last-child { border-bottom: none; }
   .history-date { font-size: 0.75rem; color: var(--text-light); font-weight: 600; margin-bottom: 4px; }
-  .history-change { font-size: 0.85rem; display: flex; gap: 6px; }
+  .history-change { font-size: 0.85rem; display: flex; gap: 6px; flex-wrap: wrap; }
   .history-field { font-weight: 700; }
   .history-old { color: var(--danger); text-decoration: line-through; }
   .history-new { color: var(--accent); font-weight: 600; }
-  .app-footer { text-align: center; padding: 24px; color: var(--text-light); font-size: 0.8rem; border-top: 1px solid var(--border); margin-top: 20px; }
-  .app-footer a { color: var(--primary); text-decoration: none; font-weight: 600; }
-  .app-footer a:hover { text-decoration: underline; }
 
+  /* ── KPI Detail Modal ── */
+  .kpi-detail-header { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+  .kpi-detail-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0; }
+  .kpi-detail-title { font-size: 1.05rem; font-weight: 800; }
+  .kpi-detail-subtitle { font-size: 0.78rem; color: var(--text-light); margin-top: 2px; }
+  .kpi-detail-stat { display: flex; gap: 16px; margin-bottom: 16px; flex-wrap: wrap; }
+  .kpi-detail-stat-item { background: var(--bg); border-radius: 8px; padding: 10px 14px; flex: 1; min-width: 100px; }
+  .kpi-detail-stat-item .stat-label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-light); font-weight: 600; }
+  .kpi-detail-stat-item .stat-value { font-size: 1.15rem; font-weight: 800; margin-top: 2px; }
+  .kpi-detail-table { width: 100%; border-collapse: collapse; margin-top: 4px; }
+  .kpi-detail-table th { text-align: left; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-light); padding: 8px 8px; border-bottom: 2px solid var(--border); font-weight: 700; position: sticky; top: 0; background: white; z-index: 2; }
+  .kpi-detail-table td { padding: 9px 8px; font-size: 0.82rem; border-bottom: 1px solid var(--border); }
+  .kpi-detail-table tr:last-child td { border-bottom: none; }
+  .kpi-detail-table tr:hover { background: #f8fafc; }
+  .kpi-detail-note { font-size: 0.78rem; color: var(--text-light); margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border); font-style: italic; }
+  .wx-cell { min-width: 90px; text-align: center; line-height: 1.4; }
+
+  /* ── Tooltips ── */
   [data-help] { position: relative; }
   [data-help]::after { content: attr(data-help); position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%); background: #1e293b; color: #fff; font-size: 0.75rem; font-weight: 500; line-height: 1.4; padding: 8px 12px; border-radius: 8px; white-space: normal; width: max-content; max-width: 260px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); opacity: 0; visibility: hidden; transition: opacity 0.2s, visibility 0.2s; z-index: 200; pointer-events: none; text-transform: none; letter-spacing: normal; }
   [data-help]::before { content: ''; position: absolute; bottom: calc(100% + 2px); left: 50%; transform: translateX(-50%); border: 6px solid transparent; border-top-color: #1e293b; opacity: 0; visibility: hidden; transition: opacity 0.2s, visibility 0.2s; z-index: 200; pointer-events: none; }
@@ -153,6 +195,7 @@
   .field-group:last-child [data-help]::before, .submit-bar [data-help]::before { left: auto; right: 12px; transform: none; }
   .help-icon { display: inline-block; width: 16px; height: 16px; border-radius: 50%; background: var(--primary-light); color: var(--primary); font-size: 0.65rem; font-weight: 800; text-align: center; line-height: 16px; margin-left: 4px; cursor: help; vertical-align: middle; }
 
+  /* ── Editing Indicator ── */
   .editing-indicator { background: linear-gradient(135deg, var(--primary-light), #eff6ff); border: 1px solid var(--primary); border-radius: var(--radius); padding: 10px 16px; margin-bottom: 12px; font-size: 0.85rem; color: var(--primary-dark); display: none; align-items: center; gap: 8px; font-weight: 600; }
   .editing-indicator.show { display: flex; }
   .editing-indicator .edit-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--primary); animation: pulse-dot 1.5s ease-in-out infinite; }
@@ -162,9 +205,122 @@
   .section-fill-badge { font-size: 0.7rem; padding: 2px 8px; border-radius: 10px; font-weight: 700; margin-right: 8px; }
   .section-fill-badge.filled { background: var(--accent-light); color: #059669; }
   .section-fill-badge.empty { background: var(--bg); color: var(--text-light); }
+
+  /* ── Backup Bar ── */
   .backup-bar { background: var(--card); border-radius: var(--radius); padding: 14px 20px; box-shadow: var(--shadow); display: flex; align-items: center; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; border-left: 4px solid var(--accent); }
   .backup-bar .backup-label { font-weight: 700; font-size: 0.85rem; flex: 1; }
   .backup-bar .backup-label small { display: block; font-weight: 400; font-size: 0.78rem; color: var(--text-light); margin-top: 2px; }
+
+  /* ── Footer ── */
+  .app-footer { text-align: center; padding: 24px; color: var(--text-light); font-size: 0.8rem; border-top: 1px solid var(--border); margin-top: 20px; }
+  .app-footer a { color: var(--primary); text-decoration: none; font-weight: 600; }
+  .app-footer a:hover { text-decoration: underline; }
+
+  /* ══════════════════════════════════════════════════════════════════
+     MOBILE RESPONSIVE — MUST come AFTER all base CSS
+     ══════════════════════════════════════════════════════════════════ */
+  @media (max-width: 768px) {
+    /* Header */
+    .header-top { padding: 12px 16px 6px; }
+    .header-top h1 { font-size: 1.1rem; }
+    .header-badge { font-size: 0.65rem; padding: 3px 10px; }
+    .tab-bar { padding: 0 12px; }
+    .tab-btn { font-size: 0.82rem; padding: 8px 14px; }
+
+    /* Content */
+    .tab-content { padding: 16px; }
+
+    /* KPIs — 2 columns on mobile */
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .kpi-card { padding: 14px; }
+    .kpi-value { font-size: 1.4rem; }
+    .kpi-label { font-size: 0.72rem; }
+    .kpi-sub { font-size: 0.72rem; }
+
+    /* Dashboard grid — single column */
+    .dash-grid { grid-template-columns: 1fr; gap: 14px; }
+    .dash-card-header { padding: 12px 16px 10px; }
+    .dash-card-body { padding: 12px 16px 16px; }
+
+    /* Charts shrink */
+    .chart-wrap { height: 220px; }
+    .chart-wrap-sm { height: 180px; }
+
+    /* Tables */
+    .mini-table { font-size: 0.78rem; }
+    .mini-table th, .mini-table td { padding: 6px 8px; }
+
+    /* Filter pills */
+    .date-filter { gap: 6px; }
+    .filter-pill { padding: 5px 12px; font-size: 0.75rem; flex: 1 1 auto; text-align: center; min-width: 0; }
+
+    /* Sample banner */
+    .sample-banner { padding: 10px 14px; font-size: 0.8rem; flex-wrap: wrap; }
+
+    /* Lookup bar — stack vertically */
+    .lookup-bar { flex-direction: column; align-items: stretch; gap: 8px; padding: 14px 16px; }
+    .lookup-bar label { font-size: 0.82rem; }
+    .lookup-bar select { min-width: unset; width: 100%; font-size: 16px; padding: 10px 28px 10px 12px; }
+    .lookup-spacer { display: none; }
+    .lookup-bar .btn { width: 100%; min-height: 44px; justify-content: center; display: flex; align-items: center; }
+
+    /* Form sections */
+    .section-header { padding: 12px 16px; font-size: 0.85rem; }
+    .section-body { padding: 14px; }
+    .field-grid { grid-template-columns: 1fr; gap: 10px; }
+    .field-group input, .field-group select, .field-group textarea {
+      font-size: 16px; /* prevents iOS zoom on focus */
+      padding: 10px 12px;
+    }
+    .field-group select { padding-right: 28px; }
+
+    /* All buttons touch-friendly */
+    .btn { min-height: 44px; font-size: 0.85rem; padding: 10px 16px; display: flex; align-items: center; justify-content: center; }
+    .submit-bar { flex-direction: column; }
+    .submit-bar .btn { width: 100%; }
+
+    /* Backup bar stacks */
+    .backup-bar { flex-direction: column; align-items: stretch; padding: 12px 16px; }
+    .backup-bar .btn { width: 100%; min-height: 44px; display: flex; align-items: center; justify-content: center; }
+
+    /* Modal */
+    .modal-box { width: 95%; max-width: none; max-height: 90vh; }
+    .modal-header { padding: 14px 18px; }
+    .modal-body { padding: 14px 18px; }
+
+    /* KPI Detail — mobile */
+    .kpi-detail-stat { gap: 8px; }
+    .kpi-detail-stat-item { padding: 8px 10px; min-width: 80px; }
+    .kpi-detail-stat-item .stat-value { font-size: 1rem; }
+    .kpi-detail-table th, .kpi-detail-table td { padding: 7px 6px; font-size: 0.78rem; }
+    .kpi-detail-header { margin-bottom: 12px; }
+    .kpi-detail-title { font-size: 0.95rem; }
+    .kpi-detail-icon { width: 36px; height: 36px; font-size: 1rem; }
+
+    /* Editing indicator */
+    .editing-indicator { padding: 8px 12px; font-size: 0.8rem; flex-wrap: wrap; }
+
+    /* Toast */
+    .toast { bottom: 16px; right: 16px; left: 16px; text-align: center; font-size: 0.82rem; padding: 12px 16px; }
+
+    /* Footer */
+    .app-footer { padding: 16px; font-size: 0.75rem; }
+
+    /* Crew toggle */
+    .crew-check-group label { font-size: 0.85rem; }
+
+    /* Alert items */
+    .alert-item { font-size: 0.8rem; }
+  }
+
+  /* Extra small phones */
+  @media (max-width: 400px) {
+    .kpi-grid { grid-template-columns: 1fr; }
+    .tab-btn { font-size: 0.75rem; padding: 8px 10px; }
+    .header-top h1 { font-size: 1rem; }
+    .header-badge { display: none; }
+    .kpi-value { font-size: 1.2rem; }
+  }
 </style>
 </head>
 <body>
@@ -172,7 +328,7 @@
 <header class="app-header">
   <div class="header-top">
     <div>
-      <h1>🔨 Contractor — Job & Client Manager</h1>
+      <h1>🔨 Concrete Job Manager</h1>
       <div class="subtitle">Powered by Google Sheets</div>
     </div>
     <span class="header-badge">INTERACTIVE DEMO</span>
@@ -197,32 +353,32 @@
   </div>
 
   <div class="kpi-grid">
-    <div class="kpi-card green" data-help="Jobs with status In Progress or Scheduled in the selected time range.">
+    <div class="kpi-card green" onclick="showKpiDetail('active')">
       <div class="kpi-label" id="kpi-jobs-label">Active Jobs This Month</div>
-      <div class="kpi-value" id="kpi-jobs">8</div>
-      <div class="kpi-sub" id="kpi-jobs-sub">vs. 6 last month</div>
-      <span class="kpi-trend up" id="kpi-jobs-trend">↑ 33%</span>
+      <div class="kpi-value" id="kpi-jobs">4</div>
+      <div class="kpi-sub" id="kpi-jobs-sub">vs. 2 last month</div>
+      <span class="kpi-trend up" id="kpi-jobs-trend">↑ 100%</span>
     </div>
-    <div class="kpi-card" data-help="Total invoiced amount from the Job Total field for the selected period.">
+    <div class="kpi-card" onclick="showKpiDetail('revenue')">
       <div class="kpi-label" id="kpi-rev-label">Revenue This Month</div>
-      <div class="kpi-value" id="kpi-rev">$42,500</div>
-      <div class="kpi-sub" id="kpi-rev-sub">Sum of all invoiced jobs</div>
-      <span class="kpi-trend up" id="kpi-rev-trend">↑ 12%</span>
+      <div class="kpi-value" id="kpi-rev">$14,200</div>
+      <div class="kpi-sub" id="kpi-rev-sub">Avg job: $3,550</div>
+      <span class="kpi-trend up" id="kpi-rev-trend">↑ 87%</span>
     </div>
-    <div class="kpi-card purple" data-help="Unique clients with at least one active or completed job.">
+    <div class="kpi-card purple" onclick="showKpiDetail('clients')">
       <div class="kpi-label">Total Clients</div>
-      <div class="kpi-value">37</div>
-      <div class="kpi-sub" id="kpi-clients-sub">4 new this month</div>
+      <div class="kpi-value">24</div>
+      <div class="kpi-sub" id="kpi-clients-sub">3 new this month</div>
     </div>
-    <div class="kpi-card yellow" data-help="Inspections scheduled in the next 14 days.">
-      <div class="kpi-label">Upcoming Inspections</div>
+    <div class="kpi-card yellow" onclick="showKpiDetail('upcoming')">
+      <div class="kpi-label">Upcoming Pours</div>
       <div class="kpi-value">3</div>
-      <div class="kpi-sub">Next: Mar 28 (Johnson deck)</div>
+      <div class="kpi-sub">Next: Apr 3 (Johnson driveway)</div>
     </div>
-    <div class="kpi-card red" data-help="Invoices past their due date that haven't been paid.">
+    <div class="kpi-card red" onclick="showKpiDetail('overdue')">
       <div class="kpi-label">Overdue Invoices</div>
-      <div class="kpi-value">2</div>
-      <div class="kpi-sub">$6,200 outstanding</div>
+      <div class="kpi-value">1</div>
+      <div class="kpi-sub">$2,400 outstanding</div>
     </div>
   </div>
 
@@ -236,24 +392,22 @@
 
     <div class="dash-card">
       <div class="dash-card-header">
-        <h3 data-help="Breakdown of job types across all active and completed jobs.">🔧 Job Types</h3>
+        <h3 data-help="Breakdown of concrete job types across all jobs.">🧱 Job Types</h3>
       </div>
       <div class="dash-card-body"><div class="chart-wrap"><canvas id="jobTypesChart"></canvas></div></div>
     </div>
 
     <div class="dash-card">
       <div class="dash-card-header">
-        <h3 data-help="All jobs scheduled in the next 14 days with start dates and status.">📅 Upcoming Jobs</h3>
+        <h3 data-help="All jobs scheduled in the next 14 days with start dates and status.">📅 Upcoming Pours</h3>
       </div>
       <div class="dash-card-body">
         <table class="mini-table">
-          <thead><tr><th>Start Date</th><th>Client</th><th>Job</th><th>Value</th><th>Status</th></tr></thead>
+          <thead><tr><th>Start</th><th>Client</th><th>Job</th><th>Value</th><th>Status</th></tr></thead>
           <tbody>
-            <tr><td>Mar 27</td><td>Johnson</td><td>Deck Build</td><td>$8,500</td><td><span class="badge badge-blue">Scheduled</span></td></tr>
-            <tr><td>Mar 28</td><td>Rivera</td><td>Kitchen Reno</td><td>$22,000</td><td><span class="badge badge-green">In Progress</span></td></tr>
-            <tr><td>Mar 30</td><td>Williams</td><td>Bathroom Tile</td><td>$4,800</td><td><span class="badge badge-blue">Scheduled</span></td></tr>
-            <tr><td>Apr 1</td><td>Nguyen</td><td>Fence Install</td><td>$3,200</td><td><span class="badge badge-blue">Scheduled</span></td></tr>
-            <tr><td>Apr 3</td><td>Campbell</td><td>Basement Finish</td><td>$18,500</td><td><span class="badge badge-yellow">Permit Pending</span></td></tr>
+            <tr><td>Apr 3</td><td>Johnson</td><td>Driveway Pour</td><td>$6,000</td><td><span class="badge badge-blue">Scheduled</span></td></tr>
+            <tr><td>Apr 5</td><td>Williams</td><td>Sidewalk</td><td>$2,800</td><td><span class="badge badge-blue">Scheduled</span></td></tr>
+            <tr><td>Apr 8</td><td>Campbell</td><td>Patio</td><td>$5,200</td><td><span class="badge badge-blue">Scheduled</span></td></tr>
           </tbody>
         </table>
       </div>
@@ -261,14 +415,13 @@
 
     <div class="dash-card">
       <div class="dash-card-header">
-        <h3 data-help="Items needing your attention — overdue invoices, expiring permits, and upcoming inspections.">⚠️ Alerts & Action Items</h3>
+        <h3 data-help="Items needing your attention — overdue invoices, weather, and material orders.">⚠️ Alerts</h3>
       </div>
       <div class="dash-card-body">
         <ul class="alert-list">
-          <li class="alert-item"><div class="alert-icon crit">🔴</div><div><strong>2 invoices overdue.</strong><br><span style="color:var(--text-light);font-size:0.8rem">Anderson ($3,800 — 14 days late), Park ($2,400 — 7 days late)</span></div></li>
-          <li class="alert-item"><div class="alert-icon warn">🟡</div><div><strong>Permit expiring: Campbell basement.</strong><br><span style="color:var(--text-light);font-size:0.8rem">Building permit expires Apr 15 — schedule inspection or request extension.</span></div></li>
-          <li class="alert-item"><div class="alert-icon warn">🟡</div><div><strong>3 inspections upcoming.</strong><br><span style="color:var(--text-light);font-size:0.8rem">Johnson deck (Mar 28), Rivera kitchen (Apr 2), Williams bathroom (Apr 5).</span></div></li>
-          <li class="alert-item"><div class="alert-icon info">🔵</div><div><strong>Material order pending for Nguyen fence.</strong><br><span style="color:var(--text-light);font-size:0.8rem">Lumber order placed Mar 20 — confirm delivery before start date.</span></div></li>
+          <li class="alert-item"><div class="alert-icon crit">🔴</div><div><strong>1 invoice overdue.</strong><br><span style="color:var(--text-light);font-size:0.8rem">Anderson ($2,400 — 10 days late)</span></div></li>
+          <li class="alert-item"><div class="alert-icon warn">🟡</div><div><strong>Weather advisory: Rain forecast Apr 4-5.</strong><br><span style="color:var(--text-light);font-size:0.8rem">May delay Williams sidewalk pour — check forecast morning of.</span></div></li>
+          <li class="alert-item"><div class="alert-icon info">🔵</div><div><strong>Material order: Johnson driveway.</strong><br><span style="color:var(--text-light);font-size:0.8rem">8 yards readymix — confirm delivery with Hanson for Apr 3 AM.</span></div></li>
         </ul>
       </div>
     </div>
@@ -279,13 +432,13 @@
       </div>
       <div class="dash-card-body">
         <table class="mini-table">
-          <thead><tr><th>#</th><th>Client</th><th>Jobs</th><th>Total Revenue</th><th>Last Job</th><th>Payment Status</th></tr></thead>
+          <thead><tr><th>#</th><th>Client</th><th>Jobs</th><th>Total Revenue</th><th>Last Job</th><th>Payment</th></tr></thead>
           <tbody>
-            <tr><td>1</td><td>Rivera Family</td><td>5</td><td>$67,200</td><td>Kitchen Reno (active)</td><td><span class="badge badge-green">Current</span></td></tr>
-            <tr><td>2</td><td>Campbell Properties</td><td>4</td><td>$52,800</td><td>Basement Finish (upcoming)</td><td><span class="badge badge-green">Current</span></td></tr>
-            <tr><td>3</td><td>Johnson Residence</td><td>3</td><td>$28,500</td><td>Deck Build (upcoming)</td><td><span class="badge badge-green">Current</span></td></tr>
-            <tr><td>4</td><td>Anderson LLC</td><td>3</td><td>$22,400</td><td>Office Buildout (complete)</td><td><span class="badge badge-red">Overdue</span></td></tr>
-            <tr><td>5</td><td>Park Residence</td><td>2</td><td>$14,600</td><td>Drywall Repair (complete)</td><td><span class="badge badge-red">Overdue</span></td></tr>
+            <tr><td>1</td><td>Rivera Family</td><td>3</td><td>$16,800</td><td>Stamped Patio (active)</td><td><span class="badge badge-green">Current</span></td></tr>
+            <tr><td>2</td><td>Johnson Residence</td><td>2</td><td>$11,200</td><td>Driveway Pour (upcoming)</td><td><span class="badge badge-green">Current</span></td></tr>
+            <tr><td>3</td><td>Campbell Properties</td><td>2</td><td>$9,600</td><td>Patio (upcoming)</td><td><span class="badge badge-green">Current</span></td></tr>
+            <tr><td>4</td><td>Nguyen</td><td>2</td><td>$8,200</td><td>Garage Floor (done)</td><td><span class="badge badge-green">Paid</span></td></tr>
+            <tr><td>5</td><td>Anderson</td><td>1</td><td>$2,400</td><td>Steps (done)</td><td><span class="badge badge-red">Overdue</span></td></tr>
           </tbody>
         </table>
       </div>
@@ -296,7 +449,7 @@
       <div class="dash-card-body"><div class="chart-wrap-sm"><canvas id="statusChart"></canvas></div></div>
     </div>
     <div class="dash-card">
-      <div class="dash-card-header"><h3 data-help="Revenue by job category showing where your income concentrates.">💰 Revenue by Category</h3></div>
+      <div class="dash-card-header"><h3 data-help="Revenue by concrete service type.">💰 Revenue by Type</h3></div>
       <div class="dash-card-body"><div class="chart-wrap-sm"><canvas id="catChart"></canvas></div></div>
     </div>
   </div>
@@ -317,20 +470,19 @@
   <div class="backup-bar">
     <div class="backup-label">💾 Data Backup<small>Download a copy of all job records so you never lose your data.</small></div>
     <button class="btn btn-success" onclick="exportBackup('csv')" data-help="Download all job records as a CSV file.">📥 Export CSV</button>
-    <button class="btn btn-outline" onclick="exportBackup('json')" data-help="Download a complete backup of all job records that can fully restore your data.">📦 Full Data Backup</button>
+    <button class="btn btn-outline" onclick="exportBackup('json')" data-help="Download a complete backup that can fully restore your data.">📦 Full Backup</button>
   </div>
 
   <div class="lookup-bar">
     <label>🔎 Lookup Job:</label>
-    <select id="clientSelect" onchange="loadClient()" data-help="Select an existing job to load its full record.">
-      <option value="">— Select —</option>
-      <option value="johnson">JOB-001 — Johnson Deck Build</option>
-      <option value="rivera">JOB-002 — Rivera Kitchen Renovation</option>
-      <option value="williams">JOB-003 — Williams Bathroom Tile</option>
-      <option value="nguyen">JOB-004 — Nguyen Fence Install</option>
+    <select id="clientSelect" onchange="loadClient()" data-help="Select a job to auto-load its full record.">
+      <option value="">— Select a Job —</option>
+      <option value="johnson">JOB-001 — Johnson · Driveway Pour</option>
+      <option value="rivera">JOB-002 — Rivera · Stamped Patio</option>
+      <option value="williams">JOB-003 — Williams · Sidewalk</option>
+      <option value="nguyen">JOB-004 — Nguyen · Garage Floor</option>
     </select>
-    <button class="btn btn-primary" onclick="loadClient()" data-help="Load selected job into all form fields.">Load</button>
-    <button class="btn btn-outline" onclick="clearForm()" data-help="Clear all fields. Does not delete saved data.">Clear</button>
+    <button class="btn btn-danger" onclick="clearForm()" data-help="Clear all fields to start a new job entry.">🧹 Clear Form</button>
     <span class="lookup-spacer"></span>
     <button class="btn btn-purple" onclick="showHistory()" data-help="View every change made to this job record.">📜 View History</button>
   </div>
@@ -340,12 +492,12 @@
     <div class="section-header" onclick="toggleSection(this)">👤 Client Information <span class="chevron">▼</span></div>
     <div class="section-body">
       <div class="field-grid">
-        <div class="field-group"><label>Job ID <span class="help-icon" data-help="Auto-generated unique job identifier.">?</span></label><input type="text" id="f-jobId" readonly style="background:#f1f5f9"></div>
+        <div class="field-group"><label>Job ID <span class="help-icon" data-help="Auto-generated. You don't need to enter this.">?</span></label><input type="text" id="f-jobId" readonly class="auto-field"></div>
         <div class="field-group"><label>Client Name</label><input type="text" id="f-clientName"></div>
         <div class="field-group"><label>Phone</label><input type="tel" id="f-phone"></div>
         <div class="field-group"><label>Email</label><input type="email" id="f-email"></div>
         <div class="field-group full-width"><label>Job Site Address</label><input type="text" id="f-address"></div>
-        <div class="field-group"><label>Referral Source <span class="help-icon" data-help="How this client found you. Tracks which marketing channels work.">?</span></label>
+        <div class="field-group"><label>How'd they find you? <span class="help-icon" data-help="Tracks which marketing channels bring you work.">?</span></label>
           <select id="f-referral"><option>Word of Mouth</option><option>Google Search</option><option>Facebook</option><option>Nextdoor</option><option>Yard Sign</option><option>Repeat Client</option><option>Other</option></select>
         </div>
       </div>
@@ -354,65 +506,90 @@
 
   <!-- Section 2: Job Details -->
   <div class="form-section">
-    <div class="section-header" onclick="toggleSection(this)">📋 Job Details <span class="chevron">▼</span></div>
+    <div class="section-header" onclick="toggleSection(this)">🧱 Job Details <span class="chevron">▼</span></div>
     <div class="section-body">
       <div class="field-grid">
-        <div class="field-group"><label>Job Type <span class="help-icon" data-help="Category of work. Feeds the Job Types chart on the dashboard.">?</span></label>
-          <select id="f-jobType"><option>Renovation</option><option>New Build</option><option>Repair</option><option>Addition</option><option>Deck/Patio</option><option>Fencing</option><option>Flooring</option><option>Roofing</option><option>Other</option></select>
+        <div class="field-group"><label>Job Type <span class="help-icon" data-help="Type of concrete work. Feeds the Job Types chart on the dashboard.">?</span></label>
+          <select id="f-jobType">
+            <option>Driveway</option><option>Sidewalk</option><option>Patio</option>
+            <option>Garage Floor</option><option>Foundation</option><option>Retaining Wall</option>
+            <option>Steps / Stoop</option><option>Curb &amp; Gutter</option>
+            <option>Stamped / Decorative</option><option>Tear-out &amp; Replace</option>
+            <option>Repair / Patch</option><option>Other</option>
+          </select>
         </div>
-        <div class="field-group full-width"><label>Job Description</label><textarea id="f-jobDesc" rows="2"></textarea></div>
+        <div class="field-group"><label>Square Footage</label><input type="number" id="f-sqft" min="0" placeholder="e.g. 800"></div>
+        <div class="field-group"><label>Thickness</label>
+          <select id="f-thickness"><option>4"</option><option>5"</option><option>6"</option><option>8"</option></select>
+        </div>
+        <div class="field-group"><label>PSI</label>
+          <select id="f-psi"><option>3000</option><option>3500</option><option>4000</option><option>4500</option><option>5000</option></select>
+        </div>
+        <div class="field-group"><label>Finish</label>
+          <select id="f-finish"><option>Broom</option><option>Smooth / Trowel</option><option>Exposed Aggregate</option><option>Stamped</option><option>Colored</option><option>Polished</option><option>Salt Finish</option></select>
+        </div>
+        <div class="field-group"><label>Reinforcement</label>
+          <select id="f-reinforcement"><option>Wire Mesh</option><option>Rebar #3</option><option>Rebar #4</option><option>Fiber Mesh</option><option>None</option></select>
+        </div>
         <div class="field-group"><label>Priority</label>
           <select id="f-priority"><option>Normal</option><option>High</option><option>Rush</option></select>
         </div>
-        <div class="field-group"><label>Permit Required <span class="help-icon" data-help="If 'Yes', the permit number and expiry must be filled in below.">?</span></label>
-          <select id="f-permitReq"><option>No</option><option>Yes</option><option>Pending</option></select>
-        </div>
-        <div class="field-group"><label>Permit Number</label><input type="text" id="f-permitNum" placeholder="e.g. BP-2026-0412"></div>
-        <div class="field-group"><label>Permit Expiry</label><input type="date" id="f-permitExpiry"></div>
+        <div class="field-group full-width"><label>Job Description</label><textarea id="f-jobDesc" rows="2" placeholder="Describe the job..."></textarea></div>
       </div>
     </div>
   </div>
 
-  <!-- Section 3: Scope & Materials -->
+  <!-- Section 3: Crew & Materials -->
   <div class="form-section">
-    <div class="section-header" onclick="toggleSection(this)">🧱 Scope & Materials <span class="chevron">▼</span></div>
+    <div class="section-header" onclick="toggleSection(this)">🚧 Crew &amp; Materials <span class="chevron">▼</span></div>
     <div class="section-body">
-      <div class="field-grid">
-        <div class="field-group full-width"><label>Scope of Work</label><textarea id="f-scope" rows="3"></textarea></div>
-        <div class="field-group"><label>Material Cost ($)</label><input type="number" id="f-materialCost" min="0" step="0.01" placeholder="e.g. 3200.00"></div>
-        <div class="field-group"><label>Labor Cost ($)</label><input type="number" id="f-laborCost" min="0" step="0.01" placeholder="e.g. 5000.00"></div>
-        <div class="field-group"><label>Material Supplier</label><input type="text" id="f-supplier" placeholder="e.g. Home Depot, Menards"></div>
-        <div class="field-group"><label>Crew Size</label>
-          <select id="f-crewSize"><option>1 (Solo)</option><option>2</option><option>3</option><option>4+</option></select>
+      <div class="crew-check-group">
+        <input type="checkbox" id="f-hasCrew" onchange="toggleCrewFields()">
+        <label for="f-hasCrew">Working with a crew on this job?</label>
+      </div>
+      <div id="crewFields" class="hidden">
+        <div class="field-grid" style="margin-top:12px">
+          <div class="field-group"><label>Crew Size</label>
+            <select id="f-crewSize"><option>2</option><option>3</option><option>4</option><option>5+</option></select>
+          </div>
+          <div class="field-group full-width"><label>Crew Notes</label><input type="text" id="f-crewNotes" placeholder="e.g. Bringing cousin Mike to help with the pour"></div>
         </div>
+      </div>
+      <div class="field-grid" style="margin-top:14px">
+        <div class="field-group full-width"><label>Scope of Work</label><textarea id="f-scope" rows="3" placeholder="Detailed description of the work..."></textarea></div>
+        <div class="field-group"><label>Material Cost ($)</label><input type="number" id="f-materialCost" min="0" step="0.01" placeholder="e.g. 2800"></div>
+        <div class="field-group"><label>Labor Cost ($)</label><input type="number" id="f-laborCost" min="0" step="0.01" placeholder="e.g. 3200"></div>
+        <div class="field-group"><label>Material Supplier</label><input type="text" id="f-supplier" placeholder="e.g. Hanson Ready Mix"></div>
       </div>
     </div>
   </div>
 
-  <!-- Section 4: Schedule & Billing -->
+  <!-- Section 4: Schedule & Payment -->
   <div class="form-section">
-    <div class="section-header" onclick="toggleSection(this)">📅 Schedule & Billing <span class="chevron">▼</span></div>
+    <div class="section-header" onclick="toggleSection(this)">📅 Schedule &amp; Payment <span class="chevron">▼</span></div>
     <div class="section-body">
       <div class="field-grid">
         <div class="field-group"><label>Start Date</label><input type="date" id="f-startDate"></div>
         <div class="field-group"><label>Estimated Completion</label><input type="date" id="f-endDate"></div>
-        <div class="field-group"><label>Job Status <span class="help-icon" data-help="Current status. Feeds the Jobs by Status chart on the dashboard.">?</span></label>
-          <select id="f-status"><option>Estimate Sent</option><option>Scheduled</option><option>In Progress</option><option>Inspection Needed</option><option>Completed</option><option>On Hold</option></select>
+        <div class="field-group"><label>Job Status <span class="help-icon" data-help="Feeds the Jobs by Status chart on the dashboard.">?</span></label>
+          <select id="f-status"><option>Estimate Sent</option><option>Scheduled</option><option>In Progress</option><option>Completed</option><option>On Hold</option></select>
         </div>
-        <div class="field-group"><label>Job Total ($) <span class="help-icon" data-help="Total amount invoiced for this job. Feeds the Revenue KPI and charts on the dashboard.">?</span></label>
-          <input type="number" id="f-jobTotal" min="0" step="0.01" placeholder="e.g. 8500.00">
+        <div class="field-group"><label>Job Total ($) <span class="help-icon" data-help="Total amount for this job. Feeds the Revenue KPI.">?</span></label>
+          <input type="number" id="f-jobTotal" min="0" step="0.01" placeholder="e.g. 6000">
         </div>
         <div class="field-group"><label>Payment Status</label>
-          <select id="f-payStatus"><option>Not Invoiced</option><option>Invoiced</option><option>Partial Payment</option><option>Paid in Full</option><option>Overdue</option></select>
+          <select id="f-payStatus"><option>Not Invoiced</option><option>Invoiced</option><option>Deposit Paid</option><option>Paid in Full</option><option>Overdue</option></select>
         </div>
-        <div class="field-group"><label>Inspection Date</label><input type="date" id="f-inspectionDate"></div>
-        <div class="field-group full-width"><label>Notes</label><textarea id="f-notes" rows="2"></textarea></div>
+        <div class="field-group"><label>Permit Required</label>
+          <select id="f-permitReq"><option>No</option><option>Yes</option><option>Pending</option></select>
+        </div>
+        <div class="field-group full-width"><label>Notes</label><textarea id="f-notes" rows="2" placeholder="Any additional details..."></textarea></div>
       </div>
     </div>
   </div>
 
   <div class="submit-bar">
-    <button class="btn btn-outline" onclick="clearForm()" data-help="Clear all fields. Does not delete saved data.">Clear Form</button>
+    <button class="btn btn-danger" onclick="clearForm()" data-help="Clear all fields. Does not delete saved data.">🧹 Clear</button>
     <button class="btn btn-success" onclick="saveRecord()" data-help="Save this job record to your Google Sheet.">💾 Save Record</button>
   </div>
 </div>
@@ -429,11 +606,17 @@
     <div class="modal-body" id="historyBody"></div>
   </div>
 </div>
+<div class="modal-overlay" id="kpiDetailModal" onclick="if(event.target===this)closeKpiDetail()">
+  <div class="modal-box">
+    <div class="modal-header"><h3 id="kpiDetailTitle">KPI Detail</h3><button class="modal-close" onclick="closeKpiDetail()">&times;</button></div>
+    <div class="modal-body" id="kpiDetailBody"></div>
+  </div>
+</div>
 <div class="modal-overlay" id="confirmModal">
   <div class="modal-box" style="max-width:400px;text-align:center">
     <div class="modal-body" style="padding:28px 24px">
       <div style="font-size:1.5rem;margin-bottom:12px">⚠️</div>
-      <p id="confirmMsg" style="font-size:0.92rem;margin-bottom:20px;color:#1e293b"></p>
+      <p id="confirmMsg" style="font-size:0.92rem;margin-bottom:20px;color:var(--text)"></p>
       <div style="display:flex;gap:10px;justify-content:center">
         <button class="btn btn-outline" id="confirmNo">Cancel</button>
         <button class="btn btn-primary" id="confirmYes">Continue</button>
@@ -443,185 +626,608 @@
 </div>
 
 <script>
+/* ── Tab & UI Helpers ── */
 async function switchTab(tab) {
   if (formDirty && tab !== 'form' && !await customConfirm('You have unsaved changes. Switch tabs anyway?')) return;
   document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('tab-' + tab).classList.add('active');
-  document.querySelector(`.tab-btn[onclick="switchTab('${tab}')"]`).classList.add('active');
+  document.querySelector('.tab-btn[onclick="switchTab(\'' + tab + '\')"]').classList.add('active');
 }
 function toggleSection(h) { h.classList.toggle('collapsed'); h.nextElementSibling.classList.toggle('hidden'); }
-function showToast(msg) { const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2500); }
-function customConfirm(msg){return new Promise(r=>{const o=document.getElementById('confirmModal');document.getElementById('confirmMsg').textContent=msg;o.classList.add('show');document.getElementById('confirmYes').onclick=()=>{o.classList.remove('show');r(true);};document.getElementById('confirmNo').onclick=()=>{o.classList.remove('show');r(false);};});}
+function showToast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(t._timer); t._timer = setTimeout(() => t.classList.remove('show'), 2800); }
+function customConfirm(msg) { return new Promise(r => { const o = document.getElementById('confirmModal'); document.getElementById('confirmMsg').textContent = msg; o.classList.add('show'); document.body.style.overflow = 'hidden'; document.getElementById('confirmYes').onclick = () => { o.classList.remove('show'); document.body.style.overflow = ''; r(true); }; document.getElementById('confirmNo').onclick = () => { o.classList.remove('show'); document.body.style.overflow = ''; r(false); }; }); }
 
+/* ── Sample Data — Concrete Jobs ── */
 const clients = {
   johnson: {
-    jobId:'JOB-001', clientName:'Mike Johnson', phone:'(414) 555-0221', email:'mike.johnson@email.com',
-    address:'4521 N Sherman Blvd, Milwaukee, WI 53209', referral:'Word of Mouth',
-    jobType:'Deck/Patio', jobDesc:'12x16 composite deck with built-in bench seating and railing. Client wants Trex decking in Saddle color.',
-    priority:'Normal', permitReq:'Yes', permitNum:'BP-2026-0389', permitExpiry:'2026-06-15',
-    scope:'Demo existing wood porch. Frame and build new 12x16 composite deck. Install built-in L-shaped bench on two sides. Trex Select railing in white. 3-step staircase to yard.',
-    materialCost:'3400', laborCost:'5100', supplier:'Menards — Capitol Dr', crewSize:'2',
-    startDate:'2026-03-27', endDate:'2026-04-08', status:'Scheduled',
-    jobTotal:'8500', payStatus:'Partial Payment', inspectionDate:'2026-03-28', notes:'Client paid $4,250 deposit. Inspection scheduled for framing stage. Neighbor approved fence-line clearance.'
+    jobId: 'JOB-001', clientName: 'Mike Johnson', phone: '(414) 555-0221', email: 'mike.johnson@email.com',
+    address: '4521 N Sherman Blvd, Milwaukee, WI 53209', referral: 'Word of Mouth',
+    jobType: 'Driveway', sqft: '800', thickness: '4"', psi: '3500', finish: 'Broom', reinforcement: 'Wire Mesh',
+    priority: 'Normal', jobDesc: 'Full driveway tear-out and repour. Existing driveway is cracked and heaving.',
+    hasCrew: true, crewSize: '2', crewNotes: 'Bringing cousin Mike for the pour day',
+    scope: 'Tear out existing concrete driveway (800 sqft). Excavate and regrade sub-base. Set forms, place wire mesh. Pour 4" at 3500 PSI. Broom finish with control joints every 6ft. Cure and seal.',
+    materialCost: '2800', laborCost: '3200', supplier: 'Hanson Ready Mix',
+    startDate: '2026-04-03', endDate: '2026-04-05', status: 'Scheduled',
+    jobTotal: '6000', payStatus: 'Deposit Paid', permitReq: 'No',
+    notes: 'Client paid $1,500 deposit. Dumpster ordered for tear-out debris. Readymix confirmed for Apr 3 morning pour.'
   },
   rivera: {
-    jobId:'JOB-002', clientName:'Maria Rivera', phone:'(414) 555-0387', email:'maria.rivera@email.com',
-    address:'1847 S Kinnickinnic Ave, Milwaukee, WI 53207', referral:'Google Search',
-    jobType:'Renovation', jobDesc:'Full kitchen renovation including cabinets, countertops, backsplash, and flooring. Remove wall between kitchen and dining room.',
-    priority:'High', permitReq:'Yes', permitNum:'BP-2026-0342', permitExpiry:'2026-07-30',
-    scope:'Remove load-bearing wall (install LVL beam). New custom cabinets (42" uppers). Quartz countertops — Calacatta Gold. Subway tile backsplash. LVP flooring. New electrical for island. Plumbing relocation for sink.',
-    materialCost:'9800', laborCost:'12200', supplier:'Floor & Decor, IKEA cabinets', crewSize:'3',
-    startDate:'2026-03-10', endDate:'2026-04-20', status:'In Progress',
-    jobTotal:'22000', payStatus:'Partial Payment', inspectionDate:'2026-04-02', notes:'Structural inspection passed 3/15. Cabinets arriving 3/28. Electrician subcontracted — $2,400.'
+    jobId: 'JOB-002', clientName: 'Maria Rivera', phone: '(414) 555-0387', email: 'maria.rivera@email.com',
+    address: '1847 S Kinnickinnic Ave, Milwaukee, WI 53207', referral: 'Google Search',
+    jobType: 'Stamped / Decorative', sqft: '400', thickness: '4"', psi: '4000', finish: 'Stamped', reinforcement: 'Wire Mesh',
+    priority: 'Normal', jobDesc: 'New stamped patio off the back door. Ashlar slate stamp pattern, sandstone color with dark walnut release.',
+    hasCrew: true, crewSize: '3', crewNotes: 'Need stamping crew — Jason and Troy',
+    scope: 'Excavate patio area (400 sqft). Compact and grade sub-base. Set forms with slight slope for drainage. Pour 4" at 4000 PSI. Apply sandstone integral color. Hand-stamp with ashlar slate pattern. Apply dark walnut antiquing release agent. Seal with 2 coats acrylic sealer.',
+    materialCost: '2400', laborCost: '3600', supplier: 'Brickform / Hanson Ready Mix',
+    startDate: '2026-03-24', endDate: '2026-03-27', status: 'In Progress',
+    jobTotal: '6000', payStatus: 'Deposit Paid', permitReq: 'No',
+    notes: 'Stamp mats and release agent picked up 3/22. Color matched with client on 3/20. Second pour if weather holds.'
   },
   williams: {
-    jobId:'JOB-003', clientName:'Terrence Williams', phone:'(414) 555-0512', email:'twillliams88@email.com',
-    address:'6230 W North Ave, Milwaukee, WI 53213', referral:'Nextdoor',
-    jobType:'Flooring', jobDesc:'Master bathroom remodel — tear out old floor and shower tile, install new porcelain tile throughout.',
-    priority:'Normal', permitReq:'No', permitNum:'', permitExpiry:'',
-    scope:'Demo existing floor tile and shower surround. Waterproof shower pan and walls (Kerdi system). Install 12x24 porcelain floor tile in herringbone pattern. Shower wall tile — white subway. Glass shower door installation.',
-    materialCost:'1800', laborCost:'3000', supplier:'Floor & Decor', crewSize:'1 (Solo)',
-    startDate:'2026-03-30', endDate:'2026-04-05', status:'Scheduled',
-    jobTotal:'4800', payStatus:'Invoiced', inspectionDate:'', notes:'Client providing glass shower door — we install only. Waterproofing must cure 24hrs before tile.'
+    jobId: 'JOB-003', clientName: 'Terrence Williams', phone: '(414) 555-0512', email: 'twilliams88@email.com',
+    address: '6230 W North Ave, Milwaukee, WI 53213', referral: 'Nextdoor',
+    jobType: 'Sidewalk', sqft: '320', thickness: '4"', psi: '3000', finish: 'Broom', reinforcement: 'None',
+    priority: 'Normal', jobDesc: 'Replace city-flagged sidewalk panels (4 panels). Standard broom finish.',
+    hasCrew: false, crewSize: '', crewNotes: '',
+    scope: 'Saw-cut and remove 4 flagged sidewalk panels (~320 sqft). Re-grade sub-base. Form and pour 4" concrete at 3000 PSI. Standard broom finish. Saw-cut control joints to match existing.',
+    materialCost: '1200', laborCost: '1600', supplier: 'Hanson Ready Mix',
+    startDate: '2026-04-05', endDate: '2026-04-06', status: 'Scheduled',
+    jobTotal: '2800', payStatus: 'Not Invoiced', permitReq: 'Yes',
+    notes: 'City inspection required after pour. Client has city violation letter — needs done before May 1 deadline.'
   },
   nguyen: {
-    jobId:'JOB-004', clientName:'David Nguyen', phone:'(414) 555-0644', email:'d.nguyen@email.com',
-    address:'3150 S 76th St, Milwaukee, WI 53219', referral:'Repeat Client',
-    jobType:'Fencing', jobDesc:'120 linear feet of 6ft cedar privacy fence with one walk gate and one double drive gate.',
-    priority:'Normal', permitReq:'No', permitNum:'', permitExpiry:'',
-    scope:'Set 4x4 treated posts in concrete (8ft spacing). Install 2x4 rails and 1x6 cedar pickets (dog-ear). One 36" walk gate near house. One 10ft double-swing drive gate at alley. Stain all surfaces — semi-transparent cedar tone.',
-    materialCost:'2100', laborCost:'1100', supplier:'Menards — S 27th St', crewSize:'2',
-    startDate:'2026-04-01', endDate:'2026-04-04', status:'Scheduled',
-    jobTotal:'3200', payStatus:'Not Invoiced', inspectionDate:'', notes:'Repeat client — did his garage in 2025. Lumber ordered 3/20, delivery confirmed 3/29. Diggers Hotline called.'
+    jobId: 'JOB-004', clientName: 'David Nguyen', phone: '(414) 555-0644', email: 'd.nguyen@email.com',
+    address: '3150 S 76th St, Milwaukee, WI 53219', referral: 'Repeat Client',
+    jobType: 'Garage Floor', sqft: '576', thickness: '5"', psi: '4000', finish: 'Smooth / Trowel', reinforcement: 'Rebar #3',
+    priority: 'Normal', jobDesc: '24x24 garage floor re-pour. 5" thick with rebar for vehicle weight. Smooth trowel finish.',
+    hasCrew: false, crewSize: '', crewNotes: '',
+    scope: 'Demo existing cracked garage floor. Excavate, re-grade and compact. Install vapor barrier. Set rebar grid (#3 at 16" OC). Pour 5" at 4000 PSI. Power trowel to smooth finish. Saw-cut control joints.',
+    materialCost: '2100', laborCost: '2400', supplier: 'Hanson Ready Mix',
+    startDate: '2026-03-15', endDate: '2026-03-18', status: 'Completed',
+    jobTotal: '4500', payStatus: 'Paid in Full', permitReq: 'No',
+    notes: 'Repeat client — did his driveway last year. Job completed on time. Paid cash on completion.'
   }
 };
 
-function setField(id, val) { const el=document.getElementById('f-'+id); if(!el) return; if(el.tagName==='SELECT'){for(let i=0;i<el.options.length;i++){if(el.options[i].text===val||el.options[i].value===val){el.selectedIndex=i;break;}}}else{el.value=val||'';}}
+/* ── State ── */
+let formDirty = false;
+let formLoading = false;
+let currentClientKey = null;
+let nextJobId = 5; // Start after the 4 sample jobs
 
-let formDirty = false, currentClientKey = null;
+function generateJobId() {
+  return 'JOB-' + String(nextJobId).padStart(3, '0');
+}
+
+/* ── Field Helpers ── */
+function setField(id, val) {
+  const el = document.getElementById('f-' + id);
+  if (!el) return;
+  if (el.type === 'checkbox') {
+    el.checked = (val === true || val === 'true' || val === 'Yes');
+    return;
+  }
+  if (el.tagName === 'SELECT') {
+    for (let i = 0; i < el.options.length; i++) {
+      if (el.options[i].text === val || el.options[i].value === val) { el.selectedIndex = i; break; }
+    }
+  } else {
+    el.value = val || '';
+  }
+}
+
+/* ── Load Client — auto-fires on dropdown change ── */
 async function loadClient() {
   const key = document.getElementById('clientSelect').value;
   if (!key) return;
-  if (formDirty && !await customConfirm('You have unsaved changes. Load a different job anyway?')) return;
-  const c = clients[key]; if (!c) return;
+  if (formDirty && !await customConfirm('You have unsaved changes. Load a different job anyway?')) {
+    // Reset dropdown to current selection
+    if (currentClientKey) {
+      document.getElementById('clientSelect').value = currentClientKey;
+    } else {
+      document.getElementById('clientSelect').selectedIndex = 0;
+    }
+    return;
+  }
+  const c = clients[key];
+  if (!c) return;
+
+  formLoading = true; // Guard — prevent markDirty from firing during programmatic field sets
   currentClientKey = key;
   Object.keys(c).forEach(k => setField(k, c[k]));
+  toggleCrewFields(); // Show/hide crew fields based on checkbox state
+  formLoading = false;
+
   formDirty = false;
   updateEditingIndicator(c.clientName + ' — ' + c.jobType);
   updateSectionBadges();
   showToast('✅ Loaded: ' + c.clientName + ' — ' + c.jobType);
 }
+
+/* ── Editing Indicator ── */
 function updateEditingIndicator(label) {
-  const el=document.getElementById('editingIndicator'), lbl=document.getElementById('editingLabel');
-  if(label){lbl.textContent='Editing: '+label;el.classList.add('show');}else{el.classList.remove('show');}
+  const el = document.getElementById('editingIndicator'), lbl = document.getElementById('editingLabel');
+  if (label) { lbl.textContent = 'Editing: ' + label; el.classList.add('show'); }
+  else { el.classList.remove('show'); }
   document.getElementById('unsavedBadge').classList.remove('show');
 }
-function markDirty(){if(!currentClientKey)return;formDirty=true;document.getElementById('unsavedBadge').classList.add('show');}
-async function clearForm() {
-  if (formDirty && !await customConfirm('You have unsaved changes. Clear anyway?')) return;
-  document.querySelectorAll('#tab-form input, #tab-form select, #tab-form textarea').forEach(el => {
-    if(el.id==='clientSelect'){el.selectedIndex=0;return;} if(el.tagName==='SELECT')el.selectedIndex=0; else el.value='';
-  });
-  formDirty=false; currentClientKey=null; updateEditingIndicator(null); updateSectionBadges(); showToast('🧹 Form cleared');
-}
-function saveRecord() {
-  const name=document.getElementById('f-clientName').value, type=document.getElementById('f-jobType').value;
-  if(!name){showToast('⚠️ Fill in at least a client name to save');return;}
-  let filled=0; document.querySelectorAll('#tab-form .form-section input, #tab-form .form-section select, #tab-form .form-section textarea').forEach(el=>{if(el.value&&el.value.trim())filled++;});
-  formDirty=false; document.getElementById('unsavedBadge').classList.remove('show');
-  showToast('💾 Saved: '+name+' — '+type+' ('+filled+' fields) → Google Sheet updated');
-  window.scrollTo({top:0,behavior:'smooth'});
+
+/* ── Mark Dirty — with formLoading guard + clientSelect exclusion ── */
+function markDirty(e) {
+  if (formLoading) return;
+  if (e && e.target && e.target.id === 'clientSelect') return;
+  if (!currentClientKey && !document.getElementById('f-clientName').value.trim()) return;
+  formDirty = true;
+  document.getElementById('unsavedBadge').classList.add('show');
 }
 
+/* ── Clear Form — always confirms if data present ── */
+async function clearForm() {
+  const hasData = currentClientKey || document.getElementById('f-clientName').value.trim();
+  if (hasData) {
+    const msg = formDirty ? 'You have unsaved changes. Clear the form anyway?' : 'Clear all form fields?';
+    if (!await customConfirm(msg)) return;
+  }
+
+  formLoading = true;
+  document.querySelectorAll('#tab-form input, #tab-form select, #tab-form textarea').forEach(el => {
+    if (el.id === 'clientSelect') { el.selectedIndex = 0; return; }
+    if (el.type === 'checkbox') { el.checked = false; return; }
+    if (el.tagName === 'SELECT') el.selectedIndex = 0;
+    else el.value = '';
+  });
+  // Auto-generate next Job ID
+  document.getElementById('f-jobId').value = generateJobId();
+  // Hide crew fields
+  document.getElementById('crewFields').classList.add('hidden');
+  formLoading = false;
+
+  formDirty = false;
+  currentClientKey = null;
+  updateEditingIndicator(null);
+  updateSectionBadges();
+  showToast('🧹 Form cleared — ready for a new job');
+}
+
+/* ── Save Record ── */
+function saveRecord() {
+  const name = document.getElementById('f-clientName').value;
+  const type = document.getElementById('f-jobType').value;
+  if (!name) { showToast('⚠️ Fill in at least a client name to save'); return; }
+  let filled = 0;
+  document.querySelectorAll('#tab-form .form-section input, #tab-form .form-section select, #tab-form .form-section textarea').forEach(el => {
+    if (el.type === 'checkbox') { if (el.checked) filled++; }
+    else if (el.value && el.value.trim()) filled++;
+  });
+  // If this is a new record, increment the Job ID counter
+  if (!currentClientKey) { nextJobId++; }
+  formDirty = false;
+  document.getElementById('unsavedBadge').classList.remove('show');
+  updateSectionBadges();
+  showToast('💾 Saved: ' + name + ' — ' + type + ' (' + filled + ' fields) → Google Sheet updated');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+/* ── Crew Toggle ── */
+function toggleCrewFields() {
+  const checked = document.getElementById('f-hasCrew').checked;
+  const fields = document.getElementById('crewFields');
+  if (checked) {
+    fields.classList.remove('hidden');
+  } else {
+    fields.classList.add('hidden');
+    // Clear crew fields when unchecking (only if user interaction, not during load)
+    if (!formLoading) {
+      document.getElementById('f-crewSize').selectedIndex = 0;
+      document.getElementById('f-crewNotes').value = '';
+    }
+  }
+}
+
+/* ── History ── */
 const historyData = {
   johnson: [
-    {date:'Mar 22, 2026 — 3:15 PM', user:'You', changes:[
-      {field:'Status',old:'Estimate Sent',new:'Scheduled'},{field:'Payment Status',old:'Not Invoiced',new:'Partial Payment'},
-      {field:'Notes',old:'Waiting on permit approval.',new:'Client paid $4,250 deposit. Inspection scheduled for framing stage.'}
+    { date: 'Mar 28, 2026 — 3:15 PM', user: 'You', changes: [
+      { field: 'Status', old: 'Estimate Sent', new: 'Scheduled' },
+      { field: 'Payment Status', old: 'Not Invoiced', new: 'Deposit Paid' },
+      { field: 'Notes', old: 'Waiting on readymix quote.', new: 'Client paid $1,500 deposit. Readymix confirmed for Apr 3.' }
     ]},
-    {date:'Mar 10, 2026 — 9:00 AM', user:'You', changes:[{field:'Record Created',old:'—',new:'JOB-001'}]}
+    { date: 'Mar 15, 2026 — 9:00 AM', user: 'You', changes: [{ field: 'Record Created', old: '—', new: 'JOB-001' }] }
   ],
   rivera: [
-    {date:'Mar 15, 2026 — 4:30 PM', user:'You', changes:[
-      {field:'Notes',old:'Structural inspection pending.',new:'Structural inspection passed 3/15. Cabinets arriving 3/28.'},
-      {field:'Material Cost',old:'$8,200',new:'$9,800'}
+    { date: 'Mar 22, 2026 — 4:30 PM', user: 'You', changes: [
+      { field: 'Status', old: 'Scheduled', new: 'In Progress' },
+      { field: 'Notes', old: 'Color matching pending.', new: 'Stamp mats and release agent picked up. Color matched with client on 3/20.' }
     ]},
-    {date:'Mar 10, 2026 — 10:00 AM', user:'You', changes:[{field:'Status',old:'Scheduled',new:'In Progress'}]},
-    {date:'Feb 25, 2026 — 2:00 PM', user:'You', changes:[{field:'Record Created',old:'—',new:'JOB-002'}]}
+    { date: 'Mar 10, 2026 — 10:00 AM', user: 'You', changes: [{ field: 'Record Created', old: '—', new: 'JOB-002' }] }
   ],
   williams: [
-    {date:'Mar 18, 2026 — 11:00 AM', user:'You', changes:[{field:'Record Created',old:'—',new:'JOB-003'}]}
+    { date: 'Mar 20, 2026 — 11:00 AM', user: 'You', changes: [{ field: 'Record Created', old: '—', new: 'JOB-003' }] }
   ],
   nguyen: [
-    {date:'Mar 20, 2026 — 8:45 AM', user:'You', changes:[
-      {field:'Supplier',old:'TBD',new:'Menards — S 27th St'},{field:'Notes',old:'',new:'Lumber ordered 3/20, delivery confirmed 3/29.'}
+    { date: 'Mar 18, 2026 — 2:00 PM', user: 'You', changes: [
+      { field: 'Status', old: 'In Progress', new: 'Completed' },
+      { field: 'Payment Status', old: 'Deposit Paid', new: 'Paid in Full' }
     ]},
-    {date:'Mar 15, 2026 — 1:00 PM', user:'You', changes:[{field:'Record Created',old:'—',new:'JOB-004'}]}
+    { date: 'Mar 8, 2026 — 8:45 AM', user: 'You', changes: [{ field: 'Record Created', old: '—', new: 'JOB-004' }] }
   ]
 };
 function showHistory() {
-  const key=document.getElementById('clientSelect').value;
-  if(!key){showToast('⚠️ Select a job first');return;}
-  document.getElementById('historyName').textContent=clients[key].clientName+' — '+clients[key].jobType;
-  const entries=historyData[key]||[];
-  let html='';
-  entries.forEach(e=>{html+='<div class="history-entry"><div class="history-date">'+e.date+' · by '+e.user+'</div>';e.changes.forEach(c=>{html+='<div class="history-change"><span class="history-field">'+c.field+':</span> ';if(c.old!=='—')html+='<span class="history-old">'+c.old+'</span> → ';html+='<span class="history-new">'+c.new+'</span></div>';});html+='</div>';});
-  document.getElementById('historyBody').innerHTML=html;
-  document.getElementById('historyModal').classList.add('show');
+  const key = document.getElementById('clientSelect').value;
+  if (!key) { showToast('⚠️ Select a job first'); return; }
+  document.getElementById('historyName').textContent = clients[key].clientName + ' — ' + clients[key].jobType;
+  const entries = historyData[key] || [];
+  let html = '';
+  entries.forEach(e => {
+    html += '<div class="history-entry"><div class="history-date">' + e.date + ' · by ' + e.user + '</div>';
+    e.changes.forEach(c => {
+      html += '<div class="history-change"><span class="history-field">' + c.field + ':</span> ';
+      if (c.old !== '—') html += '<span class="history-old">' + c.old + '</span> → ';
+      html += '<span class="history-new">' + c.new + '</span></div>';
+    });
+    html += '</div>';
+  });
+  document.getElementById('historyBody').innerHTML = html;
+  const modal = document.getElementById('historyModal');
+  modal.classList.add('show');
+  document.body.style.overflow = 'hidden';
+  // Reset scroll on both the modal box and body
+  const box = modal.querySelector('.modal-box');
+  if (box) box.scrollTop = 0;
+  const body = modal.querySelector('.modal-body');
+  if (body) body.scrollTop = 0;
 }
-function closeHistory(){document.getElementById('historyModal').classList.remove('show');}
-document.addEventListener('keydown',e=>{if(e.key==='Escape')closeHistory();});
+function closeHistory() {
+  document.getElementById('historyModal').classList.remove('show');
+  document.body.style.overflow = '';
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeHistory(); closeKpiDetail(); } });
 
-function updateSectionBadges(){
-  document.querySelectorAll('#tab-form .form-section').forEach(section=>{
-    const fields=section.querySelectorAll('input, select, textarea'); let filled=0,total=0;
-    fields.forEach(f=>{if(f.id==='clientSelect')return;total++;if(f.value&&f.value.trim())filled++;});
-    let badge=section.querySelector('.section-fill-badge'); const header=section.querySelector('.section-header');
-    if(!badge){badge=document.createElement('span');badge.className='section-fill-badge';header.insertBefore(badge,header.querySelector('.chevron'));}
-    if(filled>0){badge.textContent=filled+'/'+total+' filled';badge.className='section-fill-badge filled';}else{badge.textContent='empty';badge.className='section-fill-badge empty';}
+/* ── KPI Detail Modal ── */
+function showKpiDetail(type) {
+  const modal = document.getElementById('kpiDetailModal');
+  const title = document.getElementById('kpiDetailTitle');
+  const body = document.getElementById('kpiDetailBody');
+  let html = '';
+
+  if (type === 'active') {
+    title.textContent = '🟢 Active Jobs';
+    html += '<div class="kpi-detail-header"><div class="kpi-detail-icon" style="background:var(--accent-light)">🔨</div><div><div class="kpi-detail-title">4 Active Jobs</div><div class="kpi-detail-subtitle">Jobs currently Scheduled or In Progress</div></div></div>';
+    html += '<div class="kpi-detail-stat">';
+    html += '<div class="kpi-detail-stat-item"><div class="stat-label">Scheduled</div><div class="stat-value" style="color:#2563eb">3</div></div>';
+    html += '<div class="kpi-detail-stat-item"><div class="stat-label">In Progress</div><div class="stat-value" style="color:#059669">1</div></div>';
+    html += '<div class="kpi-detail-stat-item"><div class="stat-label">Total Value</div><div class="stat-value">$20,000</div></div>';
+    html += '</div>';
+    html += '<table class="kpi-detail-table"><thead><tr><th>Job ID</th><th>Client</th><th>Type</th><th>Value</th><th>Status</th></tr></thead><tbody>';
+    html += '<tr><td>JOB-001</td><td>Mike Johnson</td><td>Driveway</td><td>$6,000</td><td><span class="badge badge-blue">Scheduled</span></td></tr>';
+    html += '<tr><td>JOB-002</td><td>Maria Rivera</td><td>Stamped Patio</td><td>$6,000</td><td><span class="badge badge-green">In Progress</span></td></tr>';
+    html += '<tr><td>JOB-003</td><td>Terrence Williams</td><td>Sidewalk</td><td>$2,800</td><td><span class="badge badge-blue">Scheduled</span></td></tr>';
+    html += '<tr><td>—</td><td>Campbell</td><td>Patio</td><td>$5,200</td><td><span class="badge badge-blue">Scheduled</span></td></tr>';
+    html += '</tbody></table>';
+    html += '<div class="kpi-detail-note">In your real app, this list updates automatically from your Google Sheet.</div>';
+  }
+
+  else if (type === 'revenue') {
+    title.textContent = '💰 Revenue Breakdown';
+    html += '<div class="kpi-detail-header"><div class="kpi-detail-icon" style="background:var(--primary-light)">💵</div><div><div class="kpi-detail-title">$14,200 This Month</div><div class="kpi-detail-subtitle">Total invoiced from all jobs this month</div></div></div>';
+    html += '<div class="kpi-detail-stat">';
+    html += '<div class="kpi-detail-stat-item"><div class="stat-label">Collected</div><div class="stat-value" style="color:#059669">$9,000</div></div>';
+    html += '<div class="kpi-detail-stat-item"><div class="stat-label">Pending</div><div class="stat-value" style="color:#d97706">$2,800</div></div>';
+    html += '<div class="kpi-detail-stat-item"><div class="stat-label">Overdue</div><div class="stat-value" style="color:#dc2626">$2,400</div></div>';
+    html += '</div>';
+    html += '<table class="kpi-detail-table"><thead><tr><th>Client</th><th>Job</th><th>Total</th><th>Payment</th></tr></thead><tbody>';
+    html += '<tr><td>Mike Johnson</td><td>Driveway</td><td>$6,000</td><td><span class="badge badge-yellow">Deposit Paid</span></td></tr>';
+    html += '<tr><td>Maria Rivera</td><td>Stamped Patio</td><td>$6,000</td><td><span class="badge badge-yellow">Deposit Paid</span></td></tr>';
+    html += '<tr><td>Terrence Williams</td><td>Sidewalk</td><td>$2,800</td><td><span class="badge badge-blue">Not Invoiced</span></td></tr>';
+    html += '<tr><td>David Nguyen</td><td>Garage Floor</td><td>$4,500</td><td><span class="badge badge-green">Paid in Full</span></td></tr>';
+    html += '<tr><td>Anderson</td><td>Steps</td><td>$2,400</td><td><span class="badge badge-red">Overdue</span></td></tr>';
+    html += '</tbody></table>';
+    html += '<div class="kpi-detail-note">Revenue includes all jobs invoiced in the selected time range, regardless of payment status.</div>';
+  }
+
+  else if (type === 'clients') {
+    title.textContent = '👥 Client List';
+    html += '<div class="kpi-detail-header"><div class="kpi-detail-icon" style="background:var(--purple-light)">👤</div><div><div class="kpi-detail-title">24 Total Clients</div><div class="kpi-detail-subtitle">Everyone who\'s ever had a job on the books</div></div></div>';
+    html += '<div class="kpi-detail-stat">';
+    html += '<div class="kpi-detail-stat-item"><div class="stat-label">Active</div><div class="stat-value" style="color:#059669">8</div></div>';
+    html += '<div class="kpi-detail-stat-item"><div class="stat-label">New This Month</div><div class="stat-value" style="color:#2563eb">3</div></div>';
+    html += '<div class="kpi-detail-stat-item"><div class="stat-label">Repeat</div><div class="stat-value" style="color:#7c3aed">5</div></div>';
+    html += '</div>';
+    html += '<table class="kpi-detail-table"><thead><tr><th>Client</th><th>Phone</th><th>Jobs</th><th>Total Spent</th><th>Source</th></tr></thead><tbody>';
+    html += '<tr><td>Mike Johnson</td><td>(414) 555-0221</td><td>2</td><td>$11,200</td><td>Word of Mouth</td></tr>';
+    html += '<tr><td>Maria Rivera</td><td>(414) 555-0387</td><td>3</td><td>$16,800</td><td>Google Search</td></tr>';
+    html += '<tr><td>Terrence Williams</td><td>(414) 555-0512</td><td>1</td><td>$2,800</td><td>Nextdoor</td></tr>';
+    html += '<tr><td>David Nguyen</td><td>(414) 555-0644</td><td>2</td><td>$8,200</td><td>Repeat Client</td></tr>';
+    html += '<tr><td>Campbell</td><td>(414) 555-0780</td><td>2</td><td>$9,600</td><td>Yard Sign</td></tr>';
+    html += '<tr><td>Anderson</td><td>(414) 555-0891</td><td>1</td><td>$2,400</td><td>Facebook</td></tr>';
+    html += '</tbody></table>';
+    html += '<div class="kpi-detail-note">Showing top clients. In your real app, all 24 clients would be listed with full contact info.</div>';
+  }
+
+  else if (type === 'upcoming') {
+    title.textContent = '📅 Upcoming Pours';
+    html += '<div class="kpi-detail-header"><div class="kpi-detail-icon" style="background:var(--warning-light)">🗓️</div><div><div class="kpi-detail-title">3 Pours in the Next 14 Days</div><div class="kpi-detail-subtitle">Jobs scheduled to start soon</div></div></div>';
+    html += '<div class="kpi-detail-stat">';
+    html += '<div class="kpi-detail-stat-item"><div class="stat-label">This Week</div><div class="stat-value" style="color:#d97706">1</div></div>';
+    html += '<div class="kpi-detail-stat-item"><div class="stat-label">Next Week</div><div class="stat-value" style="color:#2563eb">2</div></div>';
+    html += '<div class="kpi-detail-stat-item"><div class="stat-label">Total Yards</div><div class="stat-value">~22</div></div>';
+    html += '</div>';
+    html += '<table class="kpi-detail-table"><thead><tr><th>Date</th><th>Client</th><th>Type</th><th>Sqft</th><th>Weather</th></tr></thead><tbody>';
+    html += '<tr><td><strong>Apr 3</strong></td><td>Mike Johnson</td><td>Driveway</td><td>800</td><td id="wx-apr3" class="wx-cell">Loading…</td></tr>';
+    html += '<tr><td><strong>Apr 5</strong></td><td>Terrence Williams</td><td>Sidewalk</td><td>320</td><td id="wx-apr5" class="wx-cell">Loading…</td></tr>';
+    html += '<tr><td><strong>Apr 8</strong></td><td>Campbell</td><td>Patio</td><td>450</td><td id="wx-apr8" class="wx-cell">Loading…</td></tr>';
+    html += '</tbody></table>';
+    html += '<div id="wx-note" class="kpi-detail-note" style="display:none"></div>';
+    // Fetch live weather after rendering
+    setTimeout(() => loadPourWeather(), 50);
+  }
+
+  else if (type === 'overdue') {
+    title.textContent = '🔴 Overdue Invoices';
+    html += '<div class="kpi-detail-header"><div class="kpi-detail-icon" style="background:var(--danger-light)">💸</div><div><div class="kpi-detail-title">$2,400 Overdue</div><div class="kpi-detail-subtitle">Invoices past their due date</div></div></div>';
+    html += '<div class="kpi-detail-stat">';
+    html += '<div class="kpi-detail-stat-item"><div class="stat-label">Total Overdue</div><div class="stat-value" style="color:#dc2626">$2,400</div></div>';
+    html += '<div class="kpi-detail-stat-item"><div class="stat-label">Oldest</div><div class="stat-value" style="color:#dc2626">10 days</div></div>';
+    html += '<div class="kpi-detail-stat-item"><div class="stat-label">Invoices</div><div class="stat-value">1</div></div>';
+    html += '</div>';
+    html += '<table class="kpi-detail-table"><thead><tr><th>Client</th><th>Job</th><th>Amount</th><th>Due Date</th><th>Days Late</th></tr></thead><tbody>';
+    html += '<tr><td><strong>Anderson</strong></td><td>Steps / Stoop</td><td style="color:#dc2626;font-weight:700">$2,400</td><td>Mar 22</td><td><span class="badge badge-red">10 days</span></td></tr>';
+    html += '</tbody></table>';
+    html += '<div class="kpi-detail-note">Consider sending a reminder or calling Anderson directly. In your real app, you can track follow-up attempts here.</div>';
+  }
+
+  body.innerHTML = html;
+  modal.classList.add('show');
+  document.body.style.overflow = 'hidden';
+  // Reset scroll on all scrollable parts
+  const box = modal.querySelector('.modal-box');
+  if (box) box.scrollTop = 0;
+  body.scrollTop = 0;
+}
+
+/* ── NWS Weather API for Upcoming Pours ── */
+let weatherCache = null;
+let weatherCacheTime = 0;
+const WEATHER_CACHE_MS = 30 * 60 * 1000; // 30 minutes
+
+async function loadPourWeather() {
+  // Pour dates mapped to their cell IDs (month is 0-indexed in JS Date)
+  const pours = [
+    { id: 'wx-apr3', date: new Date(2026, 3, 3), client: 'Johnson' },
+    { id: 'wx-apr5', date: new Date(2026, 3, 5), client: 'Williams' },
+    { id: 'wx-apr8', date: new Date(2026, 3, 8), client: 'Campbell' }
+  ];
+
+  try {
+    const periods = await fetchMilwaukeeWeather();
+    if (!periods || periods.length === 0) throw new Error('No forecast data');
+
+    let warnings = [];
+    pours.forEach(pour => {
+      const cell = document.getElementById(pour.id);
+      if (!cell) return;
+      // Find daytime period matching this date
+      const match = periods.find(p => {
+        const pDate = new Date(p.startTime);
+        return pDate.getFullYear() === pour.date.getFullYear() &&
+               pDate.getMonth() === pour.date.getMonth() &&
+               pDate.getDate() === pour.date.getDate() &&
+               p.isDaytime;
+      });
+      if (match) {
+        const fc = match.shortForecast.toLowerCase();
+        const isRain = /rain|shower|storm|thunder|drizzle/.test(fc);
+        const isSnow = /snow|sleet|ice|freez/.test(fc);
+        const isBad = isRain || isSnow;
+        const icon = isRain ? '🌧️' : isSnow ? '❄️' : /cloud/.test(fc) ? '⛅' : '☀️';
+        const tempStr = match.temperature + '°' + match.temperatureUnit;
+        cell.innerHTML = '<span style="white-space:nowrap">' + icon + ' ' + tempStr + '</span><br><span style="font-size:0.75rem;color:' + (isBad ? '#dc2626' : 'var(--text-light)') + '">' + match.shortForecast + '</span>';
+        if (isBad) {
+          cell.style.background = isBad ? '#fef2f2' : '';
+          warnings.push('⚠️ ' + pour.client + ' pour (' + formatPourDate(pour.date) + '): ' + match.shortForecast + ' ' + tempStr + ' — consider rescheduling.');
+        }
+      } else {
+        cell.innerHTML = '<span style="color:var(--text-light)">No forecast<br>available yet</span>';
+      }
+    });
+
+    // Show warnings or all-clear
+    const noteEl = document.getElementById('wx-note');
+    if (noteEl) {
+      if (warnings.length > 0) {
+        noteEl.innerHTML = warnings.join('<br>');
+        noteEl.style.display = 'block';
+        noteEl.style.color = '#dc2626';
+        noteEl.style.fontStyle = 'normal';
+        noteEl.style.fontWeight = '600';
+      } else {
+        noteEl.textContent = '✅ Weather looks good for all upcoming pours. Data from the National Weather Service.';
+        noteEl.style.display = 'block';
+        noteEl.style.color = '#059669';
+        noteEl.style.fontWeight = '600';
+        noteEl.style.fontStyle = 'normal';
+      }
+    }
+  } catch (err) {
+    console.warn('Weather API error:', err);
+    // Fallback — show "unavailable" in each cell
+    pours.forEach(pour => {
+      const cell = document.getElementById(pour.id);
+      if (cell) cell.innerHTML = '<span style="color:var(--text-light);font-size:0.78rem">Weather unavailable</span>';
+    });
+    const noteEl = document.getElementById('wx-note');
+    if (noteEl) {
+      noteEl.textContent = '⚠️ Could not load weather data. Check your internet connection and try again.';
+      noteEl.style.display = 'block';
+      noteEl.style.color = '#d97706';
+    }
+  }
+}
+
+async function fetchMilwaukeeWeather() {
+  const now = Date.now();
+  if (weatherCache && (now - weatherCacheTime) < WEATHER_CACHE_MS) return weatherCache;
+
+  // Milwaukee, WI coords — covers all sample job addresses
+  const pointsResp = await fetch('https://api.weather.gov/points/43.0389,-87.9065', {
+    headers: { 'User-Agent': 'ConcreteJobManager/1.0 (demo app)', 'Accept': 'application/geo+json' }
+  });
+  if (!pointsResp.ok) throw new Error('NWS points request failed: ' + pointsResp.status);
+  const pointsData = await pointsResp.json();
+  const forecastUrl = pointsData.properties.forecast;
+
+  const forecastResp = await fetch(forecastUrl, {
+    headers: { 'User-Agent': 'ConcreteJobManager/1.0 (demo app)', 'Accept': 'application/geo+json' }
+  });
+  if (!forecastResp.ok) throw new Error('NWS forecast request failed: ' + forecastResp.status);
+  const forecastData = await forecastResp.json();
+
+  weatherCache = forecastData.properties.periods;
+  weatherCacheTime = now;
+  return weatherCache;
+}
+
+function formatPourDate(d) {
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+function closeKpiDetail() {
+  document.getElementById('kpiDetailModal').classList.remove('show');
+  document.body.style.overflow = '';
+}
+
+/* ── Section Badges ── */
+function updateSectionBadges() {
+  document.querySelectorAll('#tab-form .form-section').forEach(section => {
+    const fields = section.querySelectorAll('input, select, textarea');
+    let filled = 0, total = 0;
+    fields.forEach(f => {
+      if (f.id === 'clientSelect') return;
+      if (f.type === 'checkbox') return; // Don't count checkbox as a "field"
+      // Skip hidden crew fields from count if crew is unchecked
+      if (f.closest('.hidden')) return;
+      total++;
+      if (f.value && f.value.trim()) filled++;
+    });
+    let badge = section.querySelector('.section-fill-badge');
+    const header = section.querySelector('.section-header');
+    if (!badge) { badge = document.createElement('span'); badge.className = 'section-fill-badge'; header.insertBefore(badge, header.querySelector('.chevron')); }
+    if (filled > 0) { badge.textContent = filled + '/' + total + ' filled'; badge.className = 'section-fill-badge filled'; }
+    else { badge.textContent = 'empty'; badge.className = 'section-fill-badge empty'; }
   });
 }
 
+/* ── KPI Date Ranges ── */
 const kpiSets = {
-  month:   {jobs:'8',rev:'$42,500',trend:'↑ 33%',revTrend:'↑ 12%',sub:'vs. 6 last month',revSub:'Sum of all invoiced jobs',newC:'4 new this month',jobsLabel:'Active Jobs This Month',revLabel:'Revenue This Month'},
-  quarter: {jobs:'22',rev:'$118,400',trend:'↑ 18%',revTrend:'↑ 15%',sub:'vs. 19 last quarter',revSub:'Avg job: $5,382',newC:'11 new this quarter',jobsLabel:'Active Jobs This Quarter',revLabel:'Revenue This Quarter'},
-  year:    {jobs:'64',rev:'$389,000',trend:'↑ 24%',revTrend:'↑ 20%',sub:'vs. 52 last year',revSub:'Avg job: $6,078',newC:'37 total clients',jobsLabel:'Jobs This Year',revLabel:'Revenue This Year'},
-  all:     {jobs:'147',rev:'$812,500',trend:'',revTrend:'',sub:'since Jan 2023',revSub:'Avg job: $5,527',newC:'37 total clients',jobsLabel:'Jobs — All Time',revLabel:'Revenue — All Time'}
+  month:   { jobs: '4', rev: '$14,200', trend: '↑ 100%', revTrend: '↑ 87%', sub: 'vs. 2 last month', revSub: 'Avg job: $3,550', newC: '3 new this month', jobsLabel: 'Active Jobs This Month', revLabel: 'Revenue This Month' },
+  quarter: { jobs: '11', rev: '$26,600', trend: '↑ 22%', revTrend: '↑ 30%', sub: 'vs. 9 last quarter', revSub: 'Avg job: $2,418', newC: '8 new this quarter', jobsLabel: 'Active Jobs This Quarter', revLabel: 'Revenue This Quarter' },
+  year:    { jobs: '28', rev: '$44,400', trend: '↑ 40%', revTrend: '↑ 35%', sub: 'vs. 20 last year', revSub: 'Avg job: $1,586', newC: '24 total clients', jobsLabel: 'Jobs This Year', revLabel: 'Revenue This Year' },
+  all:     { jobs: '52', rev: '$112,800', trend: '', revTrend: '', sub: 'since Jan 2024', revSub: 'Avg job: $2,169', newC: '24 total clients', jobsLabel: 'Jobs — All Time', revLabel: 'Revenue — All Time' }
 };
 function setDateRange(btn, range) {
-  document.querySelectorAll('.filter-pill').forEach(b=>b.classList.remove('active')); btn.classList.add('active');
-  const d=kpiSets[range], cards=document.querySelectorAll('.kpi-card');
-  document.getElementById('kpi-jobs-label').textContent=d.jobsLabel;
-  document.getElementById('kpi-rev-label').textContent=d.revLabel;
-  document.getElementById('kpi-jobs').textContent=d.jobs;
-  document.getElementById('kpi-jobs-sub').textContent=d.sub;
-  const t0=document.getElementById('kpi-jobs-trend'); t0.textContent=d.trend; t0.style.display=d.trend?'':'none';
-  document.getElementById('kpi-rev').textContent=d.rev;
-  document.getElementById('kpi-rev-sub').textContent=d.revSub;
-  const t1=document.getElementById('kpi-rev-trend'); t1.textContent=d.revTrend; t1.style.display=d.revTrend?'':'none';
-  document.getElementById('kpi-clients-sub').textContent=d.newC;
+  document.querySelectorAll('.filter-pill').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const d = kpiSets[range];
+  document.getElementById('kpi-jobs-label').textContent = d.jobsLabel;
+  document.getElementById('kpi-rev-label').textContent = d.revLabel;
+  document.getElementById('kpi-jobs').textContent = d.jobs;
+  document.getElementById('kpi-jobs-sub').textContent = d.sub;
+  const t0 = document.getElementById('kpi-jobs-trend'); t0.textContent = d.trend; t0.style.display = d.trend ? '' : 'none';
+  document.getElementById('kpi-rev').textContent = d.rev;
+  document.getElementById('kpi-rev-sub').textContent = d.revSub;
+  const t1 = document.getElementById('kpi-rev-trend'); t1.textContent = d.revTrend; t1.style.display = d.revTrend ? '' : 'none';
+  document.getElementById('kpi-clients-sub').textContent = d.newC;
 }
 
+/* ── Backup Export ── */
 function exportBackup(fmt) {
-  const all=Object.values(clients);
-  if(fmt==='csv'){const h=Object.keys(all[0]),rows=[h.join(',')];all.forEach(c=>{const r=h.map(k=>{let v=(c[k]||'').toString();if(v.includes(',')||v.includes('"')||v.includes('\n'))v='"'+v.replace(/"/g,'""')+'"';return v;});rows.push(r.join(','));});const b=new Blob([rows.join('\n')],{type:'text/csv'});dl(b,'contractor-jobs-backup-'+ds()+'.csv');showToast('📥 CSV backup — '+all.length+' records');}
-  else{const b=new Blob([JSON.stringify(all,null,2)],{type:'application/json'});dl(b,'contractor-jobs-backup-'+ds()+'.json');showToast('📦 JSON backup — '+all.length+' records');}
+  const all = Object.values(clients);
+  if (fmt === 'csv') {
+    const h = Object.keys(all[0]);
+    const rows = [h.join(',')];
+    all.forEach(c => {
+      const r = h.map(k => {
+        let v = (c[k] === true ? 'Yes' : c[k] === false ? 'No' : (c[k] || '')).toString();
+        if (v.includes(',') || v.includes('"') || v.includes('\n')) v = '"' + v.replace(/"/g, '""') + '"';
+        return v;
+      });
+      rows.push(r.join(','));
+    });
+    const b = new Blob([rows.join('\n')], { type: 'text/csv' });
+    dl(b, 'concrete-jobs-backup-' + ds() + '.csv');
+    showToast('📥 CSV backup — ' + all.length + ' records');
+  } else {
+    const b = new Blob([JSON.stringify(all, null, 2)], { type: 'application/json' });
+    dl(b, 'concrete-jobs-backup-' + ds() + '.json');
+    showToast('📦 JSON backup — ' + all.length + ' records');
+  }
 }
-function dl(b,f){const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=f;document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(a.href);}
-function ds(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function dl(b, f) { const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = f; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(a.href); }
+function ds() { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
 
+/* ── Charts ── */
 function initCharts() {
-  new Chart(document.getElementById('revenueChart'),{type:'bar',data:{labels:['Oct','Nov','Dec','Jan','Feb','Mar'],datasets:[{label:'Revenue',data:[28500,35200,31800,38400,37900,42500],backgroundColor:['#dbeafe','#dbeafe','#dbeafe','#dbeafe','#dbeafe','#1e3a5f'],borderRadius:6,borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>'$'+c.parsed.y.toLocaleString()}}},scales:{y:{beginAtZero:true,ticks:{callback:v=>'$'+v.toLocaleString()},grid:{color:'#f1f5f9'}},x:{grid:{display:false}}}}});
-  new Chart(document.getElementById('jobTypesChart'),{type:'doughnut',data:{labels:['Renovation','Deck/Patio','Flooring','Fencing','Repair','Addition'],datasets:[{data:[5,3,3,2,4,1],backgroundColor:['#1e3a5f','#f59e0b','#10b981','#8b5cf6','#ef4444','#06b6d4'],borderWidth:0,hoverOffset:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{boxWidth:12,padding:12,font:{size:12}}}},cutout:'60%'}});
-  new Chart(document.getElementById('statusChart'),{type:'bar',data:{labels:['Estimate','Scheduled','In Progress','Inspection','Completed','On Hold'],datasets:[{data:[3,4,2,1,5,1],backgroundColor:'#f59e0b',borderRadius:4,borderSkipped:false}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{beginAtZero:true,grid:{color:'#f1f5f9'}},y:{grid:{display:false},ticks:{font:{size:11}}}}}});
-  new Chart(document.getElementById('catChart'),{type:'bar',data:{labels:['Renovation','Deck','Floor','Fence','Repair','Addition'],datasets:[{data:[67200,28500,14400,6400,12800,18500],backgroundColor:'#10b981',borderRadius:6,borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>'$'+c.parsed.y.toLocaleString()}}},scales:{y:{beginAtZero:true,ticks:{callback:v=>'$'+(v/1000)+'k'},grid:{color:'#f1f5f9'}},x:{grid:{display:false}}}}});
+  new Chart(document.getElementById('revenueChart'), {
+    type: 'bar',
+    data: {
+      labels: ['Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar'],
+      datasets: [{
+        label: 'Revenue',
+        data: [8200, 6400, 3200, 4800, 7600, 14200],
+        backgroundColor: ['#dbeafe', '#dbeafe', '#dbeafe', '#dbeafe', '#dbeafe', '#1e3a5f'],
+        borderRadius: 6, borderSkipped: false
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => '$' + c.parsed.y.toLocaleString() } } },
+      scales: { y: { beginAtZero: true, ticks: { callback: v => '$' + (v / 1000) + 'k' }, grid: { color: '#f1f5f9' } }, x: { grid: { display: false } } }
+    }
+  });
+  new Chart(document.getElementById('jobTypesChart'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Driveways', 'Patios', 'Sidewalks', 'Garage Floors', 'Steps', 'Other'],
+      datasets: [{ data: [8, 6, 5, 4, 3, 2], backgroundColor: ['#1e3a5f', '#f59e0b', '#10b981', '#8b5cf6', '#ef4444', '#06b6d4'], borderWidth: 0, hoverOffset: 6 }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { boxWidth: 12, padding: 10, font: { size: 11 } } } }, cutout: '60%' }
+  });
+  new Chart(document.getElementById('statusChart'), {
+    type: 'bar',
+    data: {
+      labels: ['Estimate Sent', 'Scheduled', 'In Progress', 'Completed', 'On Hold'],
+      datasets: [{ data: [2, 3, 1, 4, 1], backgroundColor: '#f59e0b', borderRadius: 4, borderSkipped: false }]
+    },
+    options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, grid: { color: '#f1f5f9' } }, y: { grid: { display: false }, ticks: { font: { size: 11 } } } } }
+  });
+  new Chart(document.getElementById('catChart'), {
+    type: 'bar',
+    data: {
+      labels: ['Driveways', 'Patios', 'Sidewalks', 'Garage', 'Steps', 'Other'],
+      datasets: [{ data: [48000, 36000, 14000, 18000, 9000, 5400], backgroundColor: '#10b981', borderRadius: 6, borderSkipped: false }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => '$' + c.parsed.y.toLocaleString() } } },
+      scales: { y: { beginAtZero: true, ticks: { callback: v => '$' + (v / 1000) + 'k' }, grid: { color: '#f1f5f9' } }, x: { grid: { display: false } } }
+    }
+  });
 }
 
+/* ── DOMContentLoaded ── */
 document.addEventListener('DOMContentLoaded', function() {
   initCharts();
+
+  // Auto-generate Job ID for new entries
+  document.getElementById('f-jobId').value = generateJobId();
+
+  // Dirty tracking — exclude clientSelect from triggering markDirty
   document.getElementById('tab-form').addEventListener('input', markDirty);
   document.getElementById('tab-form').addEventListener('change', markDirty);
+
+  // Section badges
+  updateSectionBadges();
 });
 </script>
 </body>
