@@ -29,6 +29,7 @@
     --shadow-lg: 0 4px 12px rgba(0,0,0,0.1);
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { overflow-x: hidden; width: 100%; }
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); line-height: 1.5; -webkit-text-size-adjust: 100%; }
 
   /* ── Header ── */
@@ -75,8 +76,8 @@
   .dash-card-header h3 { font-size: 0.95rem; font-weight: 700; }
   .dash-card-body { padding: 16px 20px 20px; }
   .dash-card.full-width { grid-column: 1 / -1; }
-  .chart-wrap { position: relative; height: 250px; width: 100%; }
-  .chart-wrap-sm { position: relative; height: 200px; width: 100%; }
+  .chart-wrap { position: relative; height: 250px; width: 100%; overflow: hidden; }
+  .chart-wrap-sm { position: relative; height: 200px; width: 100%; overflow: hidden; }
 
   /* ── Tables ── */
   .mini-table { width: 100%; border-collapse: collapse; }
@@ -242,13 +243,14 @@
     .dash-card-header { padding: 12px 16px 10px; }
     .dash-card-body { padding: 12px 16px 16px; }
 
-    /* Charts shrink */
-    .chart-wrap { height: 220px; }
-    .chart-wrap-sm { height: 180px; }
+    /* Charts shrink — extra room for legends */
+    .chart-wrap { height: 260px; }
+    .chart-wrap-sm { height: 200px; }
 
-    /* Tables */
+    /* Tables — prevent horizontal overflow */
     .mini-table { font-size: 0.78rem; }
     .mini-table th, .mini-table td { padding: 6px 8px; }
+    .dash-card-body { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 
     /* Filter pills */
     .date-filter { gap: 6px; }
@@ -633,6 +635,7 @@ async function switchTab(tab) {
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('tab-' + tab).classList.add('active');
   document.querySelector('.tab-btn[onclick="switchTab(\'' + tab + '\')"]').classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'instant' });
 }
 function toggleSection(h) { h.classList.toggle('collapsed'); h.nextElementSibling.classList.toggle('hidden'); }
 function showToast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(t._timer); t._timer = setTimeout(() => t.classList.remove('show'), 2800); }
@@ -1191,7 +1194,7 @@ function initCharts() {
       labels: ['Driveways', 'Patios', 'Sidewalks', 'Garage Floors', 'Steps', 'Other'],
       datasets: [{ data: [8, 6, 5, 4, 3, 2], backgroundColor: ['#1e3a5f', '#f59e0b', '#10b981', '#8b5cf6', '#ef4444', '#06b6d4'], borderWidth: 0, hoverOffset: 6 }]
     },
-    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { boxWidth: 12, padding: 10, font: { size: 11 } } } }, cutout: '60%' }
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: window.innerWidth <= 768 ? 'bottom' : 'right', labels: { boxWidth: 12, padding: 8, font: { size: window.innerWidth <= 768 ? 10 : 11 } } } }, cutout: '60%' }
   });
   new Chart(document.getElementById('statusChart'), {
     type: 'bar',
