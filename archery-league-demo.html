@@ -159,7 +159,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 .score-entry-table .archer-cell { display: flex; align-items: center; gap: 8px; }
 .score-entry-table .archer-cell .archer-name { flex: 1; font-size: 0.8rem; color: var(--text-light); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px; }
 .score-entry-table .archer-cell .score-input { width: 58px; }
-.score-entry-wrap { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+.score-entry-wrap { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; margin-bottom: 24px; }
 .score-entry-wrap .table-scroll { max-height: 65vh; overflow-y: auto; overflow-x: auto; }
 .bracket-prompt { background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); border: 1px solid #93c5fd; border-radius: var(--radius); padding: 20px 24px; margin-top: 16px; text-align: center; }
 .bracket-prompt h4 { margin: 0 0 8px; font-size: 1rem; color: #1e40af; }
@@ -356,7 +356,7 @@ body.dark-mode .sub-badge { background: #422006; color: #fbbf24; }
 /* ── Submitted Week ── */
 .submitted-bar { background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%); border: 1px solid #16a34a; border-radius: var(--radius); padding: 14px 20px; margin-bottom: 16px; display: flex; align-items: center; gap: 10px; font-size: 0.88rem; font-weight: 600; color: #166534; }
 body.dark-mode .submitted-bar { background: #064e3b; border-color: #059669; color: #6ee7b7; }
-.submit-scores-area { margin-top: 20px; padding: 16px 0 8px; border-top: 2px solid var(--border); display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.submit-scores-area { padding: 14px 20px; border-top: 2px solid var(--border); display: flex; align-items: center; gap: 12px; flex-wrap: wrap; background: var(--card); }
 .submit-progress { font-size: 0.82rem; color: var(--text-light); }
 
 /* ── Clear Season ── */
@@ -1371,14 +1371,18 @@ function renderScoreEntry() {
       });
       html += '<td class="num">' + (total > 0 ? total : '—') + '</td></tr>';
     });
-    html += '</tbody></table></div></div>';
+    html += '</tbody></table></div>';
     if (qualTeamFilter && filteredTeams.length === 0) html += '<div style="text-align:center;padding:20px;color:var(--text-light);">No teams match "' + esc(qualTeamFilter) + '"</div>';
     // Check if all qualifying weeks are submitted — show bracket transition prompt
     const allQualSubmitted = Array.from({length: config.qualWeeks}, (_, i) => i + 1).every(w => submittedWeeks[w]);
     if (allQualSubmitted && !config.bracketsLocked) {
+      html += '</div>';
       html += '<div class="bracket-prompt"><h4>Qualifying Complete</h4><p>All ' + config.qualWeeks + ' qualifying weeks are submitted. Lock brackets to generate the schedule and start bracket play.</p><button class="btn btn-primary" onclick="lockBrackets(); switchTab(\'scores\');">Lock Brackets & Start Season</button></div>';
     } else if (!locked) {
       html += buildSubmitBar(week);
+      html += '</div>';
+    } else {
+      html += '</div>';
     }
     area.innerHTML = html;
     return;
