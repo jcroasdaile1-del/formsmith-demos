@@ -135,6 +135,32 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 .badge-gray { background: #f3f4f6; color: #6b7280; }
 .badge-teal { background: var(--teal-light); color: #0f766e; }
 
+/* ── Qualifying Compact Cards ── */
+.qual-toolbar { display: flex; gap: 10px; align-items: center; margin-bottom: 14px; flex-wrap: wrap; }
+.qual-search { flex: 1; min-width: 160px; max-width: 280px; padding: 7px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.85rem; font-family: inherit; background: var(--card); color: var(--text); }
+.qual-search:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(22,163,74,0.15); }
+.qual-search::placeholder { color: var(--text-light); }
+.score-entry-table { width: 100%; border-collapse: collapse; }
+.score-entry-table thead { position: sticky; top: 0; z-index: 2; }
+.score-entry-table th { background: var(--card); padding: 10px 12px; font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; color: var(--text-light); border-bottom: 2px solid var(--border); text-align: left; }
+.score-entry-table th.num { text-align: right; }
+.score-entry-table td { padding: 6px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; font-size: 0.85rem; }
+.score-entry-table td.team-cell { font-weight: 600; white-space: nowrap; }
+.score-entry-table td.num { text-align: right; font-weight: 700; }
+.score-entry-table tr:hover td { background: rgba(22,163,74,0.04); }
+.score-entry-table .archer-cell { display: flex; align-items: center; gap: 8px; }
+.score-entry-table .archer-cell .archer-name { flex: 1; font-size: 0.8rem; color: var(--text-light); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px; }
+.score-entry-table .archer-cell .score-input { width: 58px; }
+.score-entry-wrap { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+.score-entry-wrap .table-scroll { max-height: 65vh; overflow-y: auto; overflow-x: auto; }
+.bracket-prompt { background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); border: 1px solid #93c5fd; border-radius: var(--radius); padding: 20px 24px; margin-top: 16px; text-align: center; }
+.bracket-prompt h4 { margin: 0 0 8px; font-size: 1rem; color: #1e40af; }
+.bracket-prompt p { margin: 0 0 14px; font-size: 0.85rem; color: #3b82f6; }
+.week-nav-btn { background: none; border: 1px solid var(--border); border-radius: 6px; padding: 6px 10px; cursor: pointer; font-size: 0.9rem; color: var(--text); font-family: inherit; line-height: 1; }
+.week-nav-btn:hover { background: var(--bg); border-color: var(--primary); color: var(--primary); }
+.week-nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+.week-nav-btn:disabled:hover { background: none; border-color: var(--border); color: var(--text); }
+
 /* ── Score Entry Grid ── */
 .score-matchup { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 16px; padding: 16px 20px; }
 .matchup-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 2px solid var(--border); }
@@ -209,6 +235,9 @@ body:has(.modal-overlay.show) { overflow: hidden; }
 .standings-table .rank-1 td { background: #fef9c3; }
 .standings-table .rank-2 td { background: #f5f5f4; }
 .standings-table .rank-3 td { background: #fff7ed; }
+.data-table .rank-1 td { background: #fef9c3; }
+.data-table .rank-2 td { background: #f5f5f4; }
+.data-table .rank-3 td { background: #fff7ed; }
 
 /* ── Bracket Tabs ── */
 .bracket-tabs { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
@@ -249,11 +278,25 @@ body.dark-mode .app-header { background: linear-gradient(135deg, #0c1f0f 0%, #0f
 body.dark-mode .sample-banner { background: linear-gradient(135deg, #064e3b 0%, #065f46 100%); border-color: #059669; color: #d1fae5; }
 body.dark-mode .sample-banner strong { color: #6ee7b7; }
 body.dark-mode .score-input { background: #374151; color: #e5e7eb; border-color: #4b5563; }
+body.dark-mode .qual-search { background: #374151; color: #e5e7eb; border-color: #4b5563; }
+body.dark-mode .score-entry-table th { background: #1f2937; color: #9ca3af; border-color: #374151; }
+body.dark-mode .score-entry-table td { border-color: #374151; }
+body.dark-mode .score-entry-table tr:hover td { background: rgba(74,222,128,0.06); }
+body.dark-mode .score-entry-wrap { background: #1f2937; }
+body.dark-mode .bracket-prompt { background: linear-gradient(135deg, #1e3a5f 0%, #172554 100%); border-color: #3b82f6; }
+body.dark-mode .bracket-prompt h4 { color: #93c5fd; }
+body.dark-mode .bracket-prompt p { color: #60a5fa; }
+body.dark-mode .week-nav-btn { color: #e5e7eb; border-color: #4b5563; }
+body.dark-mode .week-nav-btn:hover { background: #374151; border-color: #4ade80; color: #4ade80; }
+body.dark-mode .submitted-bar { background: linear-gradient(135deg, #064e3b 0%, #065f46 100%); border-color: #059669; color: #6ee7b7; }
 body.dark-mode .section-header:hover { background: #1f2937; }
 body.dark-mode .data-table tr:hover td, body.dark-mode .standings-table tr:hover td { background: #1f2937; }
-body.dark-mode .standings-table .rank-1 td { background: #422006; }
-body.dark-mode .standings-table .rank-2 td { background: #27272a; }
-body.dark-mode .standings-table .rank-3 td { background: #431407; }
+body.dark-mode .standings-table .rank-1 td { background: #3b3518; color: #fbbf24; }
+body.dark-mode .standings-table .rank-2 td { background: #4b5563; color: #f3f4f6; }
+body.dark-mode .standings-table .rank-3 td { background: #3b2718; color: #fb923c; }
+body.dark-mode .data-table .rank-1 td { background: #3b3518; color: #fbbf24; }
+body.dark-mode .data-table .rank-2 td { background: #4b5563; color: #f3f4f6; }
+body.dark-mode .data-table .rank-3 td { background: #3b2718; color: #fb923c; }
 body.dark-mode .bracket-tab { background: #064e3b; color: #6ee7b7; border-color: #059669; }
 body.dark-mode .bracket-tab.active { background: #059669; color: #fff; }
 body.dark-mode .btn-outline { background: #064e3b; color: #6ee7b7; border-color: #059669; }
@@ -350,6 +393,9 @@ body.dark-mode .config-editing-banner { background: #422006; border-color: #d977
   .matchup-totals { grid-template-columns: 1fr; gap: 6px; }
   .matchup-totals .team-side.right { text-align: left; }
   .score-input { width: 50px; font-size: 16px; }
+  .qual-search { max-width: none; }
+  .score-entry-table .archer-cell .archer-name { max-width: 70px; font-size: 0.72rem; }
+  .score-entry-table td, .score-entry-table th { padding: 5px 6px; }
   .chart-wrap { height: 200px; }
   .data-table { font-size: 0.78rem; }
   .data-table th, .data-table td { padding: 6px 8px; }
@@ -455,8 +501,8 @@ body.dark-mode .config-editing-banner { background: #422006; border-color: #d977
     </div>
   </div>
   <div class="dash-card">
-    <div class="dash-card-header"><h3>📋 Team Roster (<span id="teamCount">0</span> teams)</h3></div>
-    <div class="dash-card-body" style="padding:0;overflow-x:auto;"><table class="data-table" id="teamTable"><thead><tr><th>#</th><th>Team Name</th><th>Archer 1</th><th>Archer 2</th><th>Archer 3</th><th>Bracket</th><th>Qual. Avg</th><th></th></tr></thead><tbody id="teamBody"></tbody></table></div>
+    <div class="dash-card-header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;"><h3>📋 Team Roster (<span id="teamCount">0</span> teams)</h3><div id="teamBulkActions" style="display:none;gap:8px;"><button class="btn btn-outline btn-sm" onclick="editSelectedTeam()">✏️ Edit</button> <button class="btn btn-sm" style="background:var(--danger-light);color:#991b1b;border:1px solid #fca5a5;" onclick="deleteSelectedTeams()">🗑️ Delete</button></div></div>
+    <div class="dash-card-body" style="padding:0;overflow-x:auto;"><table class="data-table" id="teamTable"><thead><tr><th style="width:36px;"><input type="checkbox" id="teamSelectAll" onchange="toggleAllTeams(this.checked)"></th><th>#</th><th>Team Name</th><th>Archer 1</th><th>Archer 2</th><th>Archer 3</th><th>Bracket</th><th>Qual. Avg</th></tr></thead><tbody id="teamBody"></tbody></table></div>
   </div>
 </div>
 
@@ -465,11 +511,14 @@ body.dark-mode .config-editing-banner { background: #422006; border-color: #d977
   <div class="sample-banner"><strong>🎯 Score Entry</strong> — Select a week, then enter individual scores for each matchup. Handicaps and results calculate automatically.</div>
   <div style="display:flex;gap:10px;align-items:center;margin-bottom:16px;flex-wrap:wrap;">
     <label style="font-weight:600;font-size:0.88rem;">Week:</label>
+    <button class="week-nav-btn" id="weekPrev" onclick="changeWeek(-1)" title="Previous week">◀</button>
     <select id="weekSelect" style="padding:8px 14px;border:1px solid var(--border);border-radius:8px;font-size:0.88rem;font-family:inherit;width:auto;min-width:200px;padding-right:28px;box-sizing:border-box;background:var(--card);color:var(--text);" onchange="renderScoreEntry()"></select>
+    <button class="week-nav-btn" id="weekNext" onclick="changeWeek(1)" title="Next week">▶</button>
     <button class="btn btn-outline btn-sm no-print" onclick="printWeek()">🖨️ Print Week</button>
     <button class="btn btn-accent btn-sm no-print" onclick="copyWeekSummary()">📧 Email Summary</button>
     <button class="btn btn-purple btn-sm no-print" onclick="exportSeasonReport()">📊 Full Report</button>
   </div>
+  <div id="scoreBracketTabs" class="bracket-tabs" style="display:none;"></div>
   <div id="scoreEntryArea"></div>
 </div>
 
@@ -502,6 +551,7 @@ body.dark-mode .config-editing-banner { background: #422006; border-color: #d977
   <div class="dash-card">
     <div class="dash-card-header"><h3>🏹 Individual Averages</h3></div>
     <div class="dash-card-body" style="padding:0;overflow-x:auto;"><table class="data-table" id="statsTable"><thead><tr><th>#</th><th>Archer</th><th>Team</th><th>Bracket</th><th class="num">Weeks Shot</th><th class="num">Total Pts</th><th class="num">Average</th><th class="num">High</th><th class="num">Low</th></tr></thead><tbody id="statsBody"></tbody></table></div>
+    <div id="statsPagination" style="display:flex;justify-content:center;align-items:center;gap:8px;padding:12px 16px;border-top:1px solid var(--border);"></div>
   </div>
 </div>
 
@@ -651,6 +701,7 @@ let scores = {};      // scores[weekNum] = { [teamId]: [score1, score2, score3] 
 let schedule = {};    // schedule[bracket] = [ { week, teamA_id, teamB_id }, ... ]
 let substitutes = {};  // substitutes[weekNum] = { [teamId]: { archerIdx: subName } }
 let submittedWeeks = {}; // submittedWeeks[weekNum] = true (locked after submit)
+let qualTeamFilter = '';
 let editingTeamIdx = null;
 let previewTeams = [];
 
@@ -789,13 +840,14 @@ function renderTeams() {
   }
   body.innerHTML = teams.map((t, i) => {
     const avg = getTeamQualAvg(t.id);
-    return '<tr><td>' + (i + 1) + '</td><td style="font-weight:600;">' + esc(t.name) + '</td>' +
+    return '<tr><td><input type="checkbox" class="team-check" data-idx="' + i + '" onchange="updateTeamBulkActions()"></td><td>' + (i + 1) + '</td><td style="font-weight:600;">' + esc(t.name) + '</td>' +
       t.archers.map(a => '<td>' + esc(a) + '</td>').join('') +
       (t.archers.length < 3 ? '<td></td>'.repeat(3 - t.archers.length) : '') +
       '<td>' + (t.bracket ? '<span class="badge badge-green">' + esc(t.bracket) + '</span>' : '<span class="badge badge-gray">—</span>') + '</td>' +
-      '<td class="num">' + (avg > 0 ? avg.toFixed(1) : '—') + '</td>' +
-      '<td><button class="btn btn-outline btn-sm" onclick="editTeam(' + i + ')">✏️</button> <button class="btn btn-sm" style="background:var(--danger-light);color:#991b1b;border:1px solid #fca5a5;" onclick="deleteTeam(' + i + ')">✕</button></td></tr>';
+      '<td class="num">' + (avg > 0 ? avg.toFixed(1) : '—') + '</td></tr>';
   }).join('');
+  document.getElementById('teamSelectAll').checked = false;
+  updateTeamBulkActions();
   // Update lock button
   document.getElementById('btnLockBrackets').textContent = config.bracketsLocked ? '🔓 Unlock Brackets' : '🔒 Lock Brackets';
 }
@@ -849,6 +901,41 @@ function deleteTeam(idx) {
   teams.splice(idx, 1);
   renderTeams();
   showToast('🗑️ Team deleted');
+}
+
+function getSelectedTeamIndices() {
+  return [...document.querySelectorAll('.team-check:checked')].map(cb => parseInt(cb.dataset.idx));
+}
+
+function updateTeamBulkActions() {
+  const selected = getSelectedTeamIndices();
+  const bar = document.getElementById('teamBulkActions');
+  bar.style.display = selected.length > 0 ? 'flex' : 'none';
+}
+
+function toggleAllTeams(checked) {
+  document.querySelectorAll('.team-check').forEach(cb => cb.checked = checked);
+  updateTeamBulkActions();
+}
+
+function editSelectedTeam() {
+  const sel = getSelectedTeamIndices();
+  if (sel.length !== 1) { showToast('⚠️ Select exactly one team to edit'); return; }
+  editTeam(sel[0]);
+}
+
+function deleteSelectedTeams() {
+  const sel = getSelectedTeamIndices();
+  if (sel.length === 0) return;
+  const names = sel.map(i => teams[i].name);
+  const msg = sel.length === 1
+    ? 'Delete team "' + names[0] + '"?'
+    : 'Delete ' + sel.length + ' teams?\n\n' + names.slice(0, 10).map(n => '  • ' + n).join('\n') + (names.length > 10 ? '\n  ... and ' + (names.length - 10) + ' more' : '');
+  if (!confirm(msg)) return;
+  // Delete in reverse index order so indices stay valid
+  sel.sort((a, b) => b - a).forEach(i => teams.splice(i, 1));
+  renderTeams();
+  showToast('🗑️ ' + sel.length + ' team' + (sel.length > 1 ? 's' : '') + ' deleted');
 }
 
 /* ══════════════════════════════════════════
@@ -1039,8 +1126,10 @@ function calcBracketStandings(bracket, upToWeek) {
   });
   return Object.values(records).sort((a, b) => {
     if (b.wins !== a.wins) return b.wins - a.wins;
-    const pctA = a.wins / Math.max(a.wins + a.losses + a.ties, 1);
-    const pctB = b.wins / Math.max(b.wins + b.losses + b.ties, 1);
+    const gamesA = (a.wins - 0.5 * a.ties) + a.losses + a.ties;
+    const gamesB = (b.wins - 0.5 * b.ties) + b.losses + b.ties;
+    const pctA = a.wins / Math.max(gamesA, 1);
+    const pctB = b.wins / Math.max(gamesB, 1);
     return pctB - pctA;
   });
 }
@@ -1182,7 +1271,7 @@ function renderLeaderboard() {
     let html = '<table class="data-table"><thead><tr><th style="width:32px"></th><th>Archer</th><th>Team</th><th class="num">Avg</th><th class="num">High</th></tr></thead><tbody>';
     top10.forEach((a, i) => {
       const medal = i < 3 ? medals[i] : '<span style="color:var(--text-light);font-size:0.78rem;">' + (i+1) + '</span>';
-      html += '<tr' + (i < 3 ? ' style="background:' + ['#fef9c3','#f5f5f4','#fff7ed'][i] + '"' : '') + '><td style="text-align:center;font-size:1.1rem;">' + medal + '</td><td style="font-weight:600;">' + esc(a.name) + '</td><td style="font-size:0.8rem;color:var(--text-light);">' + esc(a.team) + '</td><td class="num" style="font-weight:700;">' + a.avg.toFixed(1) + '</td><td class="num">' + a.high + '</td></tr>';
+      html += '<tr' + (i < 3 ? ' class="rank-' + (i + 1) + '"' : '') + '><td style="text-align:center;font-size:1.1rem;">' + medal + '</td><td style="font-weight:600;">' + esc(a.name) + '</td><td style="font-size:0.8rem;color:var(--text-light);">' + esc(a.team) + '</td><td class="num" style="font-weight:700;">' + a.avg.toFixed(1) + '</td><td class="num">' + a.high + '</td></tr>';
     });
     html += '</tbody></table>';
     archEl.innerHTML = html;
@@ -1208,7 +1297,7 @@ function renderLeaderboard() {
     let html = '<table class="data-table"><thead><tr><th style="width:32px"></th><th>Team</th><th>Bracket</th><th class="num">Avg</th></tr></thead><tbody>';
     topTeams.forEach((t, i) => {
       const medal = i < 3 ? medals[i] : '<span style="color:var(--text-light);font-size:0.78rem;">' + (i+1) + '</span>';
-      html += '<tr' + (i < 3 ? ' style="background:' + ['#fef9c3','#f5f5f4','#fff7ed'][i] + '"' : '') + '><td style="text-align:center;font-size:1.1rem;">' + medal + '</td><td style="font-weight:600;">' + esc(t.name) + '</td><td>' + (t.bracket ? '<span class="badge badge-green">' + esc(t.bracket) + '</span>' : '—') + '</td><td class="num" style="font-weight:700;">' + t.avg.toFixed(1) + '</td></tr>';
+      html += '<tr' + (i < 3 ? ' class="rank-' + (i + 1) + '"' : '') + '><td style="text-align:center;font-size:1.1rem;">' + medal + '</td><td style="font-weight:600;">' + esc(t.name) + '</td><td>' + (t.bracket ? '<span class="badge badge-green">' + esc(t.bracket) + '</span>' : '—') + '</td><td class="num" style="font-weight:700;">' + t.avg.toFixed(1) + '</td></tr>';
     });
     html += '</tbody></table>';
     teamEl.innerHTML = html;
@@ -1221,6 +1310,7 @@ function renderLeaderboard() {
 function renderScoreTab() {
   populateWeekSelect();
   renderScoreEntry();
+  updateWeekNav();
 }
 
 function populateWeekSelect() {
@@ -1238,40 +1328,70 @@ function populateWeekSelect() {
 
 function renderScoreEntry() {
   const area = document.getElementById('scoreEntryArea');
+  const bracketTabsEl = document.getElementById('scoreBracketTabs');
   const week = parseInt(document.getElementById('weekSelect').value);
-  if (!week) { area.innerHTML = ''; return; }
+  if (!week) { area.innerHTML = ''; bracketTabsEl.style.display = 'none'; return; }
 
   if (week <= config.qualWeeks || !config.bracketsLocked) {
-    // Qualifying: all teams shoot, no matchups
+    bracketTabsEl.style.display = 'none';
+    // Qualifying: all teams shoot, no matchups — table layout
     const locked = submittedWeeks[week];
     let html = '';
-    if (locked) html += '<div class="submitted-bar"><span style="font-size:1.3rem;">✅</span> Week ' + week + ' scores submitted!<button class="btn btn-outline btn-sm" style="margin-left:auto;" onclick="unsubmitWeek(' + week + ')">✏️ Edit Scores</button></div>';
-    html += '<h3 style="margin-bottom:12px;">🎯 Qualifying — Week ' + week + '</h3><p style="font-size:0.85rem;color:var(--text-light);margin-bottom:16px;">Enter individual scores for all teams. No matchups during qualifying.</p>';
-    teams.forEach(t => {
+    if (locked) html += '<div class="submitted-bar">Week ' + week + ' scores submitted<button class="btn btn-outline btn-sm" style="margin-left:auto;" onclick="unsubmitWeek(' + week + ')">✏️ Edit Scores</button></div>';
+    html += '<h3 style="margin-bottom:4px;">🎯 Qualifying — Week ' + week + '</h3><p style="font-size:0.85rem;color:var(--text-light);margin-bottom:12px;">Enter individual scores for all teams. No matchups during qualifying.</p>';
+    // Toolbar: search + progress
+    const scoredCount = teams.filter(t => scores[week] && scores[week][t.id] && scores[week][t.id].some(v => v > 0)).length;
+    html += '<div class="qual-toolbar">';
+    html += '<input class="qual-search" type="text" placeholder="Search teams..." value="' + esc(qualTeamFilter) + '" oninput="filterQualTeams(this.value)">';
+    html += '<span style="font-size:0.82rem;color:var(--text-light);">' + scoredCount + '/' + teams.length + ' scored</span>';
+    html += '</div>';
+    // Build table
+    const filteredTeams = qualTeamFilter ? teams.filter(t => t.name.toLowerCase().includes(qualTeamFilter)) : teams;
+    const archerCount = config.archersPerTeam || 3;
+    html += '<div class="score-entry-wrap"><div class="table-scroll">';
+    html += '<table class="score-entry-table"><thead><tr><th>Team</th>';
+    for (let a = 1; a <= archerCount; a++) html += '<th>Archer ' + a + '</th>';
+    html += '<th class="num">Total</th></tr></thead><tbody>';
+    filteredTeams.forEach(t => {
       const s = (scores[week] && scores[week][t.id]) || [];
       const total = s.reduce((a, b) => a + (b || 0), 0);
-      html += '<div class="score-matchup"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;"><strong>' + esc(t.name) + '</strong><span style="font-size:0.85rem;color:var(--text-light);">Total: <strong>' + total + '</strong></span></div>';
+      html += '<tr><td class="team-cell">' + esc(t.name) + '</td>';
       t.archers.forEach((a, ai) => {
         const dispName = getArcherName(t.id, ai, week);
         const isSub = isSubstitute(t.id, ai, week);
-        html += '<div class="score-row"><span class="name">' + esc(dispName) + (isSub ? ' <span class="sub-badge">SUB</span>' : '') + '</span><input class="score-input" type="number" min="0" max="' + getPerfectScore() + '" value="' + (s[ai] || '') + '" onfocus="this.select()" onchange="setScore(' + t.id + ',' + week + ',' + ai + ',this.value)"' + (locked ? ' disabled style="opacity:0.6;cursor:not-allowed;"' : '') + '></div>';
+        html += '<td><div class="archer-cell"><span class="archer-name" title="' + esc(dispName) + '">' + esc(dispName) + (isSub ? ' <span class="sub-badge">SUB</span>' : '') + '</span><input class="score-input" type="number" min="0" max="' + getPerfectScore() + '" value="' + (s[ai] || '') + '" onfocus="this.select()" onchange="setScore(' + t.id + ',' + week + ',' + ai + ',this.value)"' + (locked ? ' disabled style="opacity:0.6;cursor:not-allowed;"' : '') + '></div></td>';
       });
-      html += '</div>';
+      html += '<td class="num">' + (total > 0 ? total : '—') + '</td></tr>';
     });
-    if (!locked) html += buildSubmitBar(week);
+    html += '</tbody></table></div></div>';
+    if (qualTeamFilter && filteredTeams.length === 0) html += '<div style="text-align:center;padding:20px;color:var(--text-light);">No teams match "' + esc(qualTeamFilter) + '"</div>';
+    // Check if all qualifying weeks are submitted — show bracket transition prompt
+    const allQualSubmitted = Array.from({length: config.qualWeeks}, (_, i) => i + 1).every(w => submittedWeeks[w]);
+    if (allQualSubmitted && !config.bracketsLocked) {
+      html += '<div class="bracket-prompt"><h4>Qualifying Complete</h4><p>All ' + config.qualWeeks + ' qualifying weeks are submitted. Lock brackets to generate the schedule and start bracket play.</p><button class="btn btn-primary" onclick="lockBrackets(); switchTab(\'scores\');">Lock Brackets & Start Season</button></div>';
+    } else if (!locked) {
+      html += buildSubmitBar(week);
+    }
     area.innerHTML = html;
     return;
   }
 
-  // Bracket play: show matchups by bracket
+  // Bracket play: show bracket tabs + selected bracket only
   const brackets = [...new Set(teams.map(t => t.bracket).filter(Boolean))].sort();
   const locked = submittedWeeks[week];
+  // Build/update bracket tabs
+  bracketTabsEl.style.display = brackets.length > 0 ? '' : 'none';
+  const currentActive = bracketTabsEl.querySelector('.bracket-tab.active');
+  const currentBracket = currentActive ? currentActive.dataset.bracket : null;
+  const selectedBracket = (currentBracket && brackets.includes(currentBracket)) ? currentBracket : brackets[0];
+  bracketTabsEl.innerHTML = brackets.map(b => '<button class="bracket-tab' + (b === selectedBracket ? ' active' : '') + '" data-bracket="' + b + '" onclick="selectScoreBracket(\'' + b + '\')">Bracket ' + b + '</button>').join('');
+  // Render only the selected bracket
   let html = '';
-  if (locked) html += '<div class="submitted-bar"><span style="font-size:1.3rem;">✅</span> Week ' + week + ' scores submitted!<button class="btn btn-outline btn-sm" style="margin-left:auto;" onclick="unsubmitWeek(' + week + ')">✏️ Edit Scores</button></div>';
-  brackets.forEach(b => {
-    const matchups = getWeekMatchups(b, week);
-    if (matchups.length === 0) return;
-    html += '<h3 style="margin:16px 0 10px;">Bracket ' + b + '</h3>';
+  if (locked) html += '<div class="submitted-bar">Week ' + week + ' scores submitted<button class="btn btn-outline btn-sm" style="margin-left:auto;" onclick="unsubmitWeek(' + week + ')">✏️ Edit Scores</button></div>';
+  const matchups = getWeekMatchups(selectedBracket, week);
+  if (matchups.length === 0) {
+    html += '<div style="text-align:center;padding:30px;color:var(--text-light);">No matchups for Bracket ' + selectedBracket + ' this week.</div>';
+  } else {
     matchups.forEach(m => {
       if (!m.teamA || !m.teamB) return;
       const tA = teams.find(t => t.id === m.teamA);
@@ -1282,25 +1402,20 @@ function renderScoreEntry() {
       const result = calcMatchResult(tA.id, tB.id, week);
       html += '<div class="score-matchup">';
       html += '<div class="matchup-header"><div class="matchup-team"><div class="matchup-team-name">' + esc(tA.name) + '</div></div><div class="vs">VS</div><div class="matchup-team" style="text-align:right;"><div class="matchup-team-name">' + esc(tB.name) + '</div></div></div>';
-      // Score inputs side by side
       html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">';
-      // Team A archers
       html += '<div>';
       tA.archers.forEach((a, ai) => {
         const dispA = getArcherName(tA.id, ai, week);
         const isSubA = isSubstitute(tA.id, ai, week);
         html += '<div class="score-row"><span class="name">' + esc(dispA) + (isSubA ? ' <span class="sub-badge">SUB</span>' : '') + '</span><input class="score-input" type="number" min="0" max="' + getPerfectScore() + '" value="' + (sA[ai] || '') + '" onfocus="this.select()" onchange="setScore(' + tA.id + ',' + week + ',' + ai + ',this.value)"' + (locked ? ' disabled style="opacity:0.6;cursor:not-allowed;"' : '') + '></div>';
       });
-      html += '</div>';
-      // Team B archers
-      html += '<div>';
+      html += '</div><div>';
       tB.archers.forEach((a, ai) => {
         const dispB = getArcherName(tB.id, ai, week);
         const isSubB = isSubstitute(tB.id, ai, week);
         html += '<div class="score-row"><span class="name">' + esc(dispB) + (isSubB ? ' <span class="sub-badge">SUB</span>' : '') + '</span><input class="score-input" type="number" min="0" max="' + getPerfectScore() + '" value="' + (sB[ai] || '') + '" onfocus="this.select()" onchange="setScore(' + tB.id + ',' + week + ',' + ai + ',this.value)"' + (locked ? ' disabled style="opacity:0.6;cursor:not-allowed;"' : '') + '></div>';
       });
       html += '</div></div>';
-      // Totals & result
       if (result) {
         html += '<div class="matchup-totals"><div class="team-side">';
         html += '<div class="label-val"><span>Raw Score</span><span>' + result.rawA + '</span></div>';
@@ -1317,7 +1432,7 @@ function renderScoreEntry() {
       }
       html += '</div>';
     });
-  });
+  }
   if (!html) html = '<div style="text-align:center;padding:30px;color:var(--text-light);">No matchups for this week. Lock brackets on the Teams tab to generate the schedule.</div>';
   else if (!locked) html += buildSubmitBar(week);
   area.innerHTML = html;
@@ -1327,14 +1442,65 @@ function setScore(teamId, week, archerIdx, val) {
   if (!scores[week]) scores[week] = {};
   if (!scores[week][teamId]) scores[week][teamId] = [];
   scores[week][teamId][archerIdx] = parseInt(val) || 0;
-  // Re-render to update totals/handicaps
+  // Update the total cell without full re-render to preserve focus
+  const area = document.getElementById('scoreEntryArea');
+  const rows = area.querySelectorAll('.score-entry-table tbody tr');
+  const teamIdx = (qualTeamFilter ? teams.filter(t => t.name.toLowerCase().includes(qualTeamFilter)) : teams).findIndex(t => t.id === teamId);
+  if (teamIdx >= 0 && rows[teamIdx]) {
+    const s = scores[week][teamId] || [];
+    const total = s.reduce((a, b) => a + (b || 0), 0);
+    const cells = rows[teamIdx].querySelectorAll('td');
+    cells[cells.length - 1].textContent = total > 0 ? total : '—';
+    // Update scored count in toolbar
+    const scoredCount = teams.filter(t => scores[week] && scores[week][t.id] && scores[week][t.id].some(v => v > 0)).length;
+    const countSpan = area.querySelector('.qual-toolbar span');
+    if (countSpan) countSpan.textContent = scoredCount + '/' + teams.length + ' scored';
+  }
+}
+
+function toggleQualTeam(id) { }
+function expandAllQual() { }
+function collapseAllQual() { }
+
+function selectScoreBracket(b) {
+  document.querySelectorAll('#scoreBracketTabs .bracket-tab').forEach(t => t.classList.toggle('active', t.dataset.bracket === b));
   renderScoreEntry();
+}
+
+function filterQualTeams(val) {
+  qualTeamFilter = val.toLowerCase();
+  renderScoreEntry();
+  // Restore focus to search input and cursor position
+  const searchInput = document.querySelector('.qual-search');
+  if (searchInput) { searchInput.focus(); searchInput.setSelectionRange(val.length, val.length); }
+}
+
+function changeWeek(dir) {
+  const sel = document.getElementById('weekSelect');
+  const current = parseInt(sel.value);
+  const totalWeeks = Math.max(getTotalSeasonWeeks(), config.qualWeeks);
+  const next = current + dir;
+  if (next < 1 || next > totalWeeks) return;
+  sel.value = String(next);
+  qualTeamFilter = '';
+  renderScoreEntry();
+  updateWeekNav();
+}
+
+function updateWeekNav() {
+  const sel = document.getElementById('weekSelect');
+  const current = parseInt(sel.value) || 1;
+  const totalWeeks = Math.max(getTotalSeasonWeeks(), config.qualWeeks);
+  const prev = document.getElementById('weekPrev');
+  const next = document.getElementById('weekNext');
+  if (prev) prev.disabled = current <= 1;
+  if (next) next.disabled = current >= totalWeeks;
 }
 
 function buildSubmitBar(week) {
   if (submittedWeeks[week]) {
     return '<div class="submitted-bar">' +
-      '<span style="font-size:1.3rem;">✅</span> Week ' + week + ' scores submitted!' +
+      'Week ' + week + ' scores submitted' +
       '<button class="btn btn-outline btn-sm" style="margin-left:auto;" onclick="unsubmitWeek(' + week + ')">✏️ Edit Scores</button>' +
       '</div>';
   }
@@ -1344,7 +1510,7 @@ function buildSubmitBar(week) {
   const allFilled = teamsWithScores === totalTeams && totalTeams > 0;
   const pct = totalTeams > 0 ? Math.round(teamsWithScores / totalTeams * 100) : 0;
   return '<div class="submit-scores-area">' +
-    '<button class="btn btn-primary" onclick="submitWeekScores(' + week + ')"' + (teamsWithScores === 0 ? ' disabled style="opacity:0.5;cursor:not-allowed;background:var(--primary);color:white;"' : '') + '>✅ Submit Week ' + week + ' Scores</button>' +
+    '<button class="btn btn-primary" onclick="submitWeekScores(' + week + ')"' + (teamsWithScores === 0 ? ' disabled style="opacity:0.5;cursor:not-allowed;background:var(--primary);color:white;"' : '') + '>Submit Week ' + week + ' Scores</button>' +
     '<span class="submit-progress">' + teamsWithScores + '/' + totalTeams + ' teams scored (' + pct + '%)' +
     (allFilled ? ' — <span style="color:var(--primary);font-weight:600;">Ready!</span>' : '') +
     '</span></div>';
@@ -1364,8 +1530,15 @@ function submitWeekScores(week) {
   }
   if (!confirm(msg)) return;
   submittedWeeks[week] = true;
+  // Auto-advance to next week if available
+  const sel = document.getElementById('weekSelect');
+  const totalWeeks = Math.max(getTotalSeasonWeeks(), config.qualWeeks);
+  if (week < totalWeeks) {
+    sel.value = String(week + 1);
+  }
   renderScoreEntry();
-  showToast('✅ Week ' + week + ' scores submitted!');
+  updateWeekNav();
+  showToast('Week ' + week + ' submitted — advanced to Week ' + (week < totalWeeks ? week + 1 : week));
 }
 
 function unsubmitWeek(week) {
@@ -1460,11 +1633,12 @@ function renderBracketStandings(bracket) {
 
   let html = '<div class="dash-card"><div class="dash-card-header"><h3>🏆 Bracket ' + bracket + ' Standings</h3></div><div class="dash-card-body" style="padding:0;overflow-x:auto;"><table class="standings-table"><thead><tr><th>Rank</th><th>Team</th><th class="num">W</th><th class="num">L</th><th class="num">T</th><th class="num">Win%</th><th class="num">GB</th><th class="num">Avg Score</th></tr></thead><tbody>';
   standings.forEach((s, i) => {
-    const totalGames = s.wins + s.losses + s.ties;
+    const actualWins = s.wins - 0.5 * s.ties;
+    const totalGames = actualWins + s.losses + s.ties;
     const winPct = totalGames > 0 ? (s.wins / totalGames * 100).toFixed(1) : '—';
     const gb = topWins > 0 ? (topWins - s.wins).toFixed(1) : '—';
     const avgScore = s.weeksShot > 0 ? (s.totalScore / s.weeksShot).toFixed(1) : '—';
-    html += '<tr' + (i < 3 ? ' class="rank-' + (i + 1) + '"' : '') + '><td>' + (i + 1) + '</td><td style="font-weight:600;">' + esc(s.name) + '</td><td class="num">' + s.wins + '</td><td class="num">' + s.losses + '</td><td class="num">' + s.ties + '</td><td class="num">' + winPct + '%</td><td class="num">' + gb + '</td><td class="num">' + avgScore + '</td></tr>';
+    html += '<tr' + (i < 3 ? ' class="rank-' + (i + 1) + '"' : '') + '><td>' + (i + 1) + '</td><td style="font-weight:600;">' + esc(s.name) + '</td><td class="num">' + actualWins + '</td><td class="num">' + s.losses + '</td><td class="num">' + s.ties + '</td><td class="num">' + winPct + '%</td><td class="num">' + gb + '</td><td class="num">' + avgScore + '</td></tr>';
   });
   html += '</tbody></table></div></div>';
   area.innerHTML = html;
@@ -1527,10 +1701,13 @@ function renderBracketSchedule(bracket) {
 /* ══════════════════════════════════════════
    RENDER: INDIVIDUAL STATS
    ══════════════════════════════════════════ */
+let statsPage = 1;
+const STATS_PER_PAGE = 30;
+let cachedArcherStats = [];
+
 function renderStats() {
   renderRecords();
-  const body = document.getElementById('statsBody');
-  const archerStats = [];
+  cachedArcherStats = [];
   teams.forEach(t => {
     t.archers.forEach((name, ai) => {
       let totalPts = 0, weeks = 0, high = 0, low = Infinity;
@@ -1543,17 +1720,51 @@ function renderStats() {
         }
       });
       if (low === Infinity) low = 0;
-      archerStats.push({ name, team: t.name, bracket: t.bracket || '—', totalPts, weeks, avg: weeks > 0 ? totalPts / weeks : 0, high, low });
+      cachedArcherStats.push({ name, team: t.name, bracket: t.bracket || '—', totalPts, weeks, avg: weeks > 0 ? totalPts / weeks : 0, high, low });
     });
   });
-  archerStats.sort((a, b) => b.avg - a.avg);
-  if (archerStats.length === 0) {
+  cachedArcherStats.sort((a, b) => b.avg - a.avg);
+  statsPage = 1;
+  renderStatsPage();
+}
+
+function renderStatsPage() {
+  const body = document.getElementById('statsBody');
+  const pagination = document.getElementById('statsPagination');
+  if (cachedArcherStats.length === 0) {
     body.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:30px;color:var(--text-light);">No scores entered yet.</td></tr>';
+    pagination.innerHTML = '';
     return;
   }
-  body.innerHTML = archerStats.map((a, i) =>
-    '<tr><td>' + (i + 1) + '</td><td style="font-weight:600;">' + esc(a.name) + '</td><td>' + esc(a.team) + '</td><td>' + (a.bracket !== '—' ? '<span class="badge badge-green">' + esc(a.bracket) + '</span>' : '—') + '</td><td class="num">' + a.weeks + '</td><td class="num">' + a.totalPts + '</td><td class="num" style="font-weight:700;">' + (a.avg > 0 ? a.avg.toFixed(1) : '—') + '</td><td class="num">' + (a.high || '—') + '</td><td class="num">' + (a.low || '—') + '</td></tr>'
-  ).join('');
+  const totalPages = Math.ceil(cachedArcherStats.length / STATS_PER_PAGE);
+  if (statsPage > totalPages) statsPage = totalPages;
+  if (statsPage < 1) statsPage = 1;
+  const start = (statsPage - 1) * STATS_PER_PAGE;
+  const pageData = cachedArcherStats.slice(start, start + STATS_PER_PAGE);
+  body.innerHTML = pageData.map((a, pi) => {
+    const i = start + pi;
+    return '<tr><td>' + (i + 1) + '</td><td style="font-weight:600;">' + esc(a.name) + '</td><td>' + esc(a.team) + '</td><td>' + (a.bracket !== '—' ? '<span class="badge badge-green">' + esc(a.bracket) + '</span>' : '—') + '</td><td class="num">' + a.weeks + '</td><td class="num">' + a.totalPts + '</td><td class="num" style="font-weight:700;">' + (a.avg > 0 ? a.avg.toFixed(1) : '—') + '</td><td class="num">' + (a.high || '—') + '</td><td class="num">' + (a.low || '—') + '</td></tr>';
+  }).join('');
+  // Pagination controls
+  if (totalPages <= 1) { pagination.innerHTML = ''; return; }
+  let pg = '<button class="btn btn-outline btn-sm" onclick="goStatsPage(' + (statsPage - 1) + ')"' + (statsPage === 1 ? ' disabled style="opacity:0.4;cursor:not-allowed;"' : '') + '>◀</button>';
+  for (let p = 1; p <= totalPages; p++) {
+    pg += '<button class="btn btn-sm' + (p === statsPage ? ' btn-primary' : ' btn-outline') + '" onclick="goStatsPage(' + p + ')">' + p + '</button>';
+  }
+  pg += '<button class="btn btn-outline btn-sm" onclick="goStatsPage(' + (statsPage + 1) + ')"' + (statsPage === totalPages ? ' disabled style="opacity:0.4;cursor:not-allowed;"' : '') + '>▶</button>';
+  pg += '<span style="font-size:0.78rem;color:var(--text-light);margin-left:8px;">' + cachedArcherStats.length + ' archers</span>';
+  pagination.innerHTML = pg;
+}
+
+function goStatsPage(p) {
+  const totalPages = Math.ceil(cachedArcherStats.length / STATS_PER_PAGE);
+  if (p < 1 || p > totalPages) return;
+  statsPage = p;
+  renderStatsPage();
+  // Scroll to top of the stats card, accounting for sticky header
+  var card = document.getElementById('statsTable').closest('.dash-card');
+  var headerH = document.querySelector('.app-header').offsetHeight;
+  window.scrollTo({ top: card.getBoundingClientRect().top + window.pageYOffset - headerH - 8, behavior: 'instant' });
 }
 
 /* ══════════════════════════════════════════
@@ -1637,10 +1848,11 @@ function printWeek() {
         body += '<table><thead><tr><th>#</th><th>Team</th><th class="r">W</th><th class="r">L</th><th class="r">T</th><th class="r">Win%</th><th class="r">GB</th></tr></thead><tbody>';
         const topW = standings[0].wins;
         standings.forEach((s, i) => {
-          const games = s.wins + s.losses + s.ties;
+          const actualW = s.wins - 0.5 * s.ties;
+          const games = actualW + s.losses + s.ties;
           const pct = games > 0 ? (s.wins / games * 100).toFixed(1) : '—';
           const gb = (topW - s.wins).toFixed(1);
-          body += '<tr' + (i < 3 ? ' class="top"' : '') + '><td>' + (i+1) + '</td><td class="bold">' + esc(s.name) + '</td><td class="r">' + s.wins + '</td><td class="r">' + s.losses + '</td><td class="r">' + s.ties + '</td><td class="r">' + pct + '%</td><td class="r">' + gb + '</td></tr>';
+          body += '<tr' + (i < 3 ? ' class="top"' : '') + '><td>' + (i+1) + '</td><td class="bold">' + esc(s.name) + '</td><td class="r">' + actualW + '</td><td class="r">' + s.losses + '</td><td class="r">' + s.ties + '</td><td class="r">' + pct + '%</td><td class="r">' + gb + '</td></tr>';
         });
         body += '</tbody></table>';
       }
@@ -2101,10 +2313,11 @@ function exportSeasonReport() {
     brackets.forEach(b => {
       const st = calcBracketStandings(b, getTotalSeasonWeeks());
       st.forEach((s, i) => {
-        const games = s.wins + s.losses + s.ties;
+        const actualW = s.wins - 0.5 * s.ties;
+        const games = actualW + s.losses + s.ties;
         const pct = games > 0 ? (s.wins/games*100).toFixed(1) : '0.0';
         const avg = s.weeksShot > 0 ? (s.totalScore/s.weeksShot).toFixed(1) : '0';
-        csv += b + ',' + (i+1) + ',"' + s.name.replace(/"/g,'""') + '",' + s.wins + ',' + s.losses + ',' + s.ties + ',' + pct + '%,' + avg + '\n';
+        csv += b + ',' + (i+1) + ',"' + s.name.replace(/"/g,'""') + '",' + actualW + ',' + s.losses + ',' + s.ties + ',' + pct + '%,' + avg + '\n';
       });
     });
     csv += '\n';
@@ -2175,7 +2388,7 @@ function copyWeekSummary() {
       const st = calcBracketStandings(b, week);
       if (st.length > 0 && st[0].wins > 0) {
         text += '  Standings: ';
-        text += st.slice(0, 5).map((s, i) => (i+1) + '. ' + s.name + ' (' + s.wins + '-' + s.losses + ')').join('  ');
+        text += st.slice(0, 5).map((s, i) => (i+1) + '. ' + s.name + ' (' + (s.wins - 0.5 * s.ties) + '-' + s.losses + (s.ties > 0 ? '-' + s.ties : '') + ')').join('  ');
         text += '\n';
       }
       text += '\n';
