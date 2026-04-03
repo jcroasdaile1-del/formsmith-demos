@@ -659,9 +659,9 @@ body.dark-mode .config-editing-banner { background: #422006; border-color: #d977
     <div class="modal-header"><h3>⚔️ Head-to-Head History</h3><button class="modal-close" onclick="closeH2HModal()">&times;</button></div>
     <div class="modal-body">
       <div class="h2h-selectors">
-        <select id="h2hTeamA" onchange="renderH2H()"><option value="">Select Team A...</option></select>
+        <select id="h2hTeamA" onchange="updateH2HTeamB()"><option value="">Select Team...</option></select>
         <span style="font-weight:800;color:var(--text-light);">VS</span>
-        <select id="h2hTeamB" onchange="renderH2H()"><option value="">Select Team B...</option></select>
+        <select id="h2hTeamB" onchange="renderH2H()"><option value="">Select Team...</option></select>
       </div>
       <div id="h2hResults"></div>
     </div>
@@ -2230,8 +2230,38 @@ function openH2HModal() {
   const selB = document.getElementById('h2hTeamB');
   const opts = '<option value="">Select Team...</option>' + teams.map(t => '<option value="' + t.id + '">' + esc(t.name) + '</option>').join('');
   selA.innerHTML = opts;
-  selB.innerHTML = opts;
-  document.getElementById('h2hResults').innerHTML = '<div style="text-align:center;padding:30px;color:var(--text-light);">Select two teams to compare</div>';
+  selB.innerHTML = '<option value="">Select Team...</option>';
+  document.getElementById('h2hResults').innerHTML = '<div style="text-align:center;padding:30px;color:var(--text-light);">Select a team to see opponents</div>';
+}
+
+function getOpponents(teamId) {
+  const opponentIds = new Set();
+  Object.keys(schedule).forEach(b => {
+    (schedule[b] || []).forEach(m => {
+      if (m.teamA === teamId) opponentIds.add(m.teamB);
+      else if (m.teamB === teamId) opponentIds.add(m.teamA);
+    });
+  });
+  return teams.filter(t => opponentIds.has(t.id)).sort((a, b) => a.name.localeCompare(b.name));
+}
+
+function updateH2HTeamB() {
+  const selA = document.getElementById('h2hTeamA');
+  const selB = document.getElementById('h2hTeamB');
+  const idA = parseInt(selA.value);
+  if (!idA) {
+    selB.innerHTML = '<option value="">Select Team...</option>';
+    document.getElementById('h2hResults').innerHTML = '<div style="text-align:center;padding:30px;color:var(--text-light);">Select a team to see opponents</div>';
+    return;
+  }
+  const opponents = getOpponents(idA);
+  selB.innerHTML = '<option value="">Select Team...</option>' + opponents.map(t => '<option value="' + t.id + '">' + esc(t.name) + '</option>').join('');
+  if (opponents.length === 0) {
+    document.getElementById('h2hResults').innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-light);">This team hasn\'t played any opponents yet.</div>';
+  } else {
+    document.getElementById('h2hResults').innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-light);">' + opponents.length + ' opponent' + (opponents.length !== 1 ? 's' : '') + ' found — select one</div>';
+  }
+  renderH2H();
 }
 function closeH2HModal() { document.getElementById('h2hModal').classList.remove('show'); }
 
