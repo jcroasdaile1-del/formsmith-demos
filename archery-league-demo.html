@@ -1136,8 +1136,8 @@ function calcBracketStandings(bracket, upToWeek) {
     if (b.wins !== a.wins) return b.wins - a.wins;
     const gamesA = (a.wins - 0.5 * a.ties) + a.losses + a.ties;
     const gamesB = (b.wins - 0.5 * b.ties) + b.losses + b.ties;
-    const pctA = a.wins / Math.max(gamesA, 1);
-    const pctB = b.wins / Math.max(gamesB, 1);
+    const pctA = (a.wins - 0.5 * a.ties) / Math.max(gamesA, 1);
+    const pctB = (b.wins - 0.5 * b.ties) / Math.max(gamesB, 1);
     return pctB - pctA;
   });
 }
@@ -1413,7 +1413,9 @@ function renderScoreEntry() {
       const sB = (scores[week] && scores[week][tB.id]) || [];
       const result = calcMatchResult(tA.id, tB.id, week);
       html += '<div class="score-matchup">';
-      html += '<div class="matchup-header"><div class="matchup-team"><div class="matchup-team-name">' + esc(tA.name) + '</div></div><div class="vs">VS</div><div class="matchup-team" style="text-align:right;"><div class="matchup-team-name">' + esc(tB.name) + '</div></div></div>';
+      const badgeA = result ? (result.resultA === 'WIN' ? ' <span style="color:#16a34a;font-weight:800;font-size:0.8em;">W</span>' : result.resultA === 'LOSS' ? ' <span style="color:#dc2626;font-weight:800;font-size:0.8em;">L</span>' : ' <span style="color:#d97706;font-weight:800;font-size:0.8em;">T</span>') : '';
+      const badgeB = result ? (result.resultB === 'WIN' ? ' <span style="color:#16a34a;font-weight:800;font-size:0.8em;">W</span>' : result.resultB === 'LOSS' ? ' <span style="color:#dc2626;font-weight:800;font-size:0.8em;">L</span>' : ' <span style="color:#d97706;font-weight:800;font-size:0.8em;">T</span>') : '';
+      html += '<div class="matchup-header"><div class="matchup-team"><div class="matchup-team-name">' + esc(tA.name) + badgeA + '</div></div><div class="vs">VS</div><div class="matchup-team" style="text-align:right;"><div class="matchup-team-name">' + esc(tB.name) + badgeB + '</div></div></div>';
       html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">';
       html += '<div>';
       tA.archers.forEach((a, ai) => {
@@ -1647,7 +1649,7 @@ function renderBracketStandings(bracket) {
   standings.forEach((s, i) => {
     const actualWins = s.wins - 0.5 * s.ties;
     const totalGames = actualWins + s.losses + s.ties;
-    const winPct = totalGames > 0 ? (s.wins / totalGames * 100).toFixed(1) : '—';
+    const winPct = totalGames > 0 ? (actualWins / totalGames * 100).toFixed(1) : '—';
     const gb = topWins > 0 ? (topWins - s.wins).toFixed(1) : '—';
     const avgScore = s.weeksShot > 0 ? (s.totalScore / s.weeksShot).toFixed(1) : '—';
     html += '<tr' + (i < 3 ? ' class="rank-' + (i + 1) + '"' : '') + '><td>' + (i + 1) + '</td><td style="font-weight:600;">' + esc(s.name) + '</td><td class="num">' + actualWins + '</td><td class="num">' + s.losses + '</td><td class="num">' + s.ties + '</td><td class="num">' + winPct + '%</td><td class="num">' + gb + '</td><td class="num">' + avgScore + '</td></tr>';
@@ -1862,7 +1864,7 @@ function printWeek() {
         standings.forEach((s, i) => {
           const actualW = s.wins - 0.5 * s.ties;
           const games = actualW + s.losses + s.ties;
-          const pct = games > 0 ? (s.wins / games * 100).toFixed(1) : '—';
+          const pct = games > 0 ? (actualW / games * 100).toFixed(1) : '—';
           const gb = (topW - s.wins).toFixed(1);
           body += '<tr' + (i < 3 ? ' class="top"' : '') + '><td>' + (i+1) + '</td><td class="bold">' + esc(s.name) + '</td><td class="r">' + actualW + '</td><td class="r">' + s.losses + '</td><td class="r">' + s.ties + '</td><td class="r">' + pct + '%</td><td class="r">' + gb + '</td></tr>';
         });
@@ -2358,7 +2360,7 @@ function exportSeasonReport() {
       st.forEach((s, i) => {
         const actualW = s.wins - 0.5 * s.ties;
         const games = actualW + s.losses + s.ties;
-        const pct = games > 0 ? (s.wins/games*100).toFixed(1) : '0.0';
+        const pct = games > 0 ? (actualW/games*100).toFixed(1) : '0.0';
         const avg = s.weeksShot > 0 ? (s.totalScore/s.weeksShot).toFixed(1) : '0';
         csv += b + ',' + (i+1) + ',"' + s.name.replace(/"/g,'""') + '",' + actualW + ',' + s.losses + ',' + s.ties + ',' + pct + '%,' + avg + '\n';
       });
@@ -2618,7 +2620,7 @@ function showStreakDetail() {
 
   let html = '<div class="modal-overlay show" id="streakModal" onclick="if(event.target===this)this.remove()">';
   html += '<div class="modal-box trend-modal-box"><div class="modal-header"><h3>🔥 Win Streaks</h3><button class="modal-close" onclick="document.getElementById(\'streakModal\').remove()">&times;</button></div>';
-  html += '<div class="modal-body"><table class="data-table"><thead><tr><th>Rank</th><th>Team</th><th>Bracket</th><th class="num">Best Streak</th><th class="num">Current</th></tr></thead><tbody>';
+  html += '<div class="modal-body" style="overflow-y:auto;max-height:65vh;"><table class="data-table"><thead><tr><th style="position:sticky;top:0;z-index:2;background:var(--card);">Rank</th><th style="position:sticky;top:0;z-index:2;background:var(--card);">Team</th><th style="position:sticky;top:0;z-index:2;background:var(--card);">Bracket</th><th class="num" style="position:sticky;top:0;z-index:2;background:var(--card);">Best Streak</th><th class="num" style="position:sticky;top:0;z-index:2;background:var(--card);">Current</th></tr></thead><tbody>';
   allStreaks.forEach((s, i) => {
     const isCurrent = s.current > 0 && s.current === s.streak;
     html += '<tr><td>' + (i + 1) + '</td><td style="font-weight:600;">' + esc(s.name) + '</td><td>' + s.bracket + '</td><td class="num" style="font-weight:700;color:var(--primary);">' + s.streak + ' W</td><td class="num"' + (isCurrent ? ' style="color:var(--primary);font-weight:600;"' : '') + '>' + (s.current > 0 ? s.current + ' W' : '—') + '</td></tr>';
