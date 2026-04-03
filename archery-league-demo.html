@@ -2238,6 +2238,7 @@ function getOpponents(teamId) {
   const opponentIds = new Set();
   Object.keys(schedule).forEach(b => {
     (schedule[b] || []).forEach(m => {
+      if (!submittedWeeks[m.week]) return;
       if (m.teamA === teamId) opponentIds.add(m.teamB);
       else if (m.teamB === teamId) opponentIds.add(m.teamA);
     });
@@ -2579,19 +2580,51 @@ function renderRecords() {
   html += recordCard('📊', highTeam.score, 'Highest Team Score', highTeam.name + ' (Wk ' + highTeam.week + ')');
   if (lowIndiv.score > 0) html += recordCard('📉', lowIndiv.score, 'Lowest Individual Score', lowIndiv.name + ' (Wk ' + lowIndiv.week + ')');
   if (mostPerfect.count > 0) html += recordCard('💯', mostPerfect.count, 'Most Perfect Scores (' + perfect + ')', mostPerfect.name + ' (' + mostPerfect.team + ')');
-  if (longestStreak.streak > 0) html += recordCard('🔥', longestStreak.streak + ' W', 'Longest Win Streak', longestStreak.name);
-
-  // Total arrows (fun stat)
-  let totalScoreEntries = 0;
-  Object.values(scores).forEach(ws => Object.values(ws).forEach(s => s.forEach(v => { if (v > 0) totalScoreEntries++; })));
-  html += recordCard('🏹', totalScoreEntries, 'Total Score Cards Filed', 'Across ' + Object.keys(scores).length + ' weeks');
+  if (longestStreak.streak > 0) html += recordCard('🔥', longestStreak.streak + ' W', 'Longest Win Streak', longestStreak.name, 'onclick="showStreakDetail()" style="cursor:pointer;"');
 
   html += '</div>';
   area.innerHTML = html;
 }
 
-function recordCard(icon, value, label, holder) {
-  return '<div class="record-card"><div class="record-icon">' + icon + '</div><div class="record-value">' + value + '</div><div class="record-label">' + label + '</div><div class="record-holder">' + esc(holder) + '</div></div>';
+function recordCard(icon, value, label, holder, extraAttrs) {
+  return '<div class="record-card"' + (extraAttrs ? ' ' + extraAttrs : '') + '><div class="record-icon">' + icon + '</div><div class="record-value">' + value + '</div><div class="record-label">' + label + '</div><div class="record-holder">' + esc(holder) + '</div></div>';
+}
+
+function showStreakDetail() {
+  if (!config.bracketsLocked) return;
+  const allStreaks = [];
+  const brackets = Object.keys(schedule);
+  brackets.forEach(b => {
+    const bracketTeams = teams.filter(t => t.bracket === b);
+    bracketTeams.forEach(t => {
+      let currentStreak = 0, maxStreak = 0;
+      const weeks = [...new Set((schedule[b] || []).map(m => m.week))].sort((a, c) => a - c);
+      weeks.forEach(w => {
+        if (!submittedWeeks[w]) return;
+        const matchups = getWeekMatchups(b, w);
+        matchups.forEach(m => {
+          if (m.teamA !== t.id && m.teamB !== t.id) return;
+          const result = calcMatchResult(m.teamA, m.teamB, w);
+          if (!result) return;
+          const myResult = m.teamA === t.id ? result.resultA : result.resultB;
+          if (myResult === 'WIN') { currentStreak++; if (currentStreak > maxStreak) maxStreak = currentStreak; }
+          else currentStreak = 0;
+        });
+      });
+      allStreaks.push({ name: t.name, bracket: b, streak: maxStreak, current: currentStreak });
+    });
+  });
+  allStreaks.sort((a, b) => b.streak - a.streak || b.current - a.current || a.name.localeCompare(b.name));
+
+  let html = '<div class="modal-overlay show" id="streakModal" onclick="if(event.target===this)this.remove()">';
+  html += '<div class="modal-box trend-modal-box"><div class="modal-header"><h3>🔥 Win Streaks</h3><button class="modal-close" onclick="document.getElementById(\'streakModal\').remove()">&times;</button></div>';
+  html += '<div class="modal-body"><table class="data-table"><thead><tr><th>Rank</th><th>Team</th><th>Bracket</th><th class="num">Best Streak</th><th class="num">Current</th></tr></thead><tbody>';
+  allStreaks.forEach((s, i) => {
+    const isCurrent = s.current > 0 && s.current === s.streak;
+    html += '<tr><td>' + (i + 1) + '</td><td style="font-weight:600;">' + esc(s.name) + '</td><td>' + s.bracket + '</td><td class="num" style="font-weight:700;color:var(--primary);">' + s.streak + ' W</td><td class="num"' + (isCurrent ? ' style="color:var(--primary);font-weight:600;"' : '') + '>' + (s.current > 0 ? s.current + ' W' : '—') + '</td></tr>';
+  });
+  html += '</tbody></table></div></div></div>';
+  document.body.insertAdjacentHTML('beforeend', html);
 }
 
 /* ══════════════════════════════════════════
