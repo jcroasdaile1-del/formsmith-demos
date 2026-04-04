@@ -508,7 +508,7 @@ input, select, textarea { font-family: inherit; font-size: 0.88rem; }
         <div class="form-group"><label>Your Name</label><input id="setOwnerName"></div>
         <div class="form-group"><label>Phone</label><input id="setBizPhone"></div>
         <div class="form-group"><label>Email</label><input id="setBizEmail" type="email"></div>
-        <div class="form-group"><label>Payment Link (Venmo/PayPal/etc.)</label><input id="setPayLink" placeholder="https://venmo.com/yourname"></div>
+        <div class="form-group"><label>Email Provider</label><select id="setEmailProvider"><option value="default">Default (mailto:)</option><option value="gmail">Gmail</option><option value="outlook">Outlook</option><option value="yahoo">Yahoo Mail</option></select></div>
         <div class="form-group"><label>Mileage Rate ($/mile)</label><input id="setMileageRate" type="number" step="0.01" value="0.67"></div>
       </div>
       <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap;">
@@ -516,6 +516,10 @@ input, select, textarea { font-family: inherit; font-size: 0.88rem; }
         <button class="btn btn-danger" onclick="if(confirm('Erase ALL data?')){localStorage.clear();location.reload();}">Reset All Data</button>
       </div>
     </div>
+  </div>
+  <div class="card" style="max-width:600px;margin-top:16px;">
+    <div class="card-header">💳 Payment Links</div>
+    <div class="card-body" id="payLinksArea"></div>
   </div>
   <div class="card" style="max-width:600px;margin-top:16px;">
     <div class="card-header">Services & Pricing</div>
@@ -597,7 +601,7 @@ let checkins = [];      // { id, bookingId, clientId, petNames, time, notes, pho
 let invoices = [];      // { id, clientId, clientName, items[], subtotal, tip, total, status, date, sentDate, paidDate, paymentMethod }
 let expenses = [];      // { id, date, category, description, amount, mileage }
 let services = [];      // { id, name, duration, price }
-let settings = { bizName: 'PawTracker', ownerName: '', phone: '', email: '', payLink: '', mileageRate: 0.67 };
+let settings = { bizName: 'PawTracker', ownerName: '', phone: '', email: '', payLinks: [], emailProvider: 'default', mileageRate: 0.67 };
 
 let calView = 'month';
 let calDate = new Date();
@@ -619,7 +623,7 @@ function todayStr() { return new Date().toISOString().slice(0, 10); }
 function showToast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(t._tm); t._tm = setTimeout(() => t.classList.remove('show'), 3000); }
 
 const AVATAR_COLORS = ['#ef4444','#f97316','#f59e0b','#10b981','#14b8a6','#3b82f6','#6366f1','#8b5cf6','#ec4899','#e11d48','#059669','#7c3aed'];
-function getInitials(name) { return name.split(' ').filter(Boolean).map(w => w[0]).join('').toUpperCase().slice(0,2); }
+function getInitials(name) { return name.split(' ').filter(w => w && /[a-zA-Z]/.test(w[0])).map(w => w[0]).join('').toUpperCase().slice(0,2); }
 function nameColor(name) { let h = 0; for (let i = 0; i < name.length; i++) h = name.charCodeAt(i) + ((h << 5) - h); return AVATAR_COLORS[Math.abs(h) % AVATAR_COLORS.length]; }
 function avatarHtml(name, size) { return '<div class="avatar-circle' + (size === 'lg' ? ' lg' : '') + '" style="background:' + nameColor(name) + '">' + esc(getInitials(name)) + '</div>'; }
 
@@ -636,6 +640,10 @@ function loadData() {
     clients = d.clients || []; bookings = d.bookings || []; checkins = d.checkins || [];
     invoices = d.invoices || []; expenses = d.expenses || []; services = d.services || [];
     settings = Object.assign(settings, d.settings || {});
+    if (settings.payLink && !settings.payLinks) { settings.payLinks = [{ platform: 'Other', url: settings.payLink }]; }
+    if (!settings.payLinks) settings.payLinks = [];
+    if (!settings.emailProvider) settings.emailProvider = 'default';
+    delete settings.payLink;
     nextId = d.nextId || 1;
   } catch(e) {}
 }
@@ -816,7 +824,7 @@ function renderDayView() {
       html += '<div class="slot-info"><div class="slot-client">' + esc(c ? c.name : '') + '</div><div class="slot-pet">🐾 ' + esc(petNames) + '</div><div class="slot-service">' + esc(b.service) + ' · ' + b.duration + 'min · ' + fmt$(b.price) + '</div></div>';
       html += '<div class="slot-actions">';
       if (b.status === 'confirmed' || b.status === 'scheduled') {
-        html += '<button class="btn btn-sm btn-primary" onclick="event.stopPropagation();startCheckin(' + b.id + ')">Check In</button>';
+        html += '<button class="btn btn-sm btn-primary" onclick="event.stopPropagation();startCheckin(' + b.id + ')">🚶 Walk</button>';
       }
       html += '<span class="badge badge-' + statusColor(b.status) + '">' + b.status + '</span></div>';
       html += '</div>';
@@ -961,6 +969,7 @@ function openClientDetail(id) {
   footer += '<button class="btn btn-outline" onclick="openClientPortal(' + c.id + ')">📋 Report Card</button>';
   footer += '<button class="btn btn-outline" onclick="sendSMS(' + c.id + ')">📱 Text</button>';
   if (c.email) footer += '<button class="btn btn-outline" onclick="sendEmail(' + c.id + ')">✉️ Email</button>';
+  if (settings.payLinks && settings.payLinks.length) footer += '<button class="btn btn-outline" onclick="sendPaymentLink(' + c.id + ')">💳 Pay Link</button>';
   footer += '<button class="btn btn-danger btn-sm" onclick="deleteClient(' + c.id + ')" style="margin-left:auto;">🗑️ Delete</button>';
   footer += '<button class="btn btn-ghost" onclick="document.getElementById(\'detailModal\').classList.remove(\'show\')">× Close</button>';
 
@@ -1014,7 +1023,33 @@ function sendSMS(clientId) {
 function sendEmail(clientId) {
   const c = clients.find(cl => cl.id === clientId);
   if (!c || !c.email) { showToast('⚠️ No email'); return; }
-  window.open('mailto:' + c.email + '?subject=' + encodeURIComponent(settings.bizName + ' - Update'), '_blank');
+  const subject = settings.bizName + ' - Update';
+  const provider = settings.emailProvider || 'default';
+  if (provider === 'gmail') {
+    window.open('https://mail.google.com/mail/?view=cm&fs=1&to=' + encodeURIComponent(c.email) + '&su=' + encodeURIComponent(subject), '_blank');
+  } else if (provider === 'outlook') {
+    window.open('https://outlook.live.com/mail/0/deeplink/compose?to=' + encodeURIComponent(c.email) + '&subject=' + encodeURIComponent(subject), '_blank');
+  } else if (provider === 'yahoo') {
+    window.open('https://compose.mail.yahoo.com/?to=' + encodeURIComponent(c.email) + '&subject=' + encodeURIComponent(subject), '_blank');
+  } else {
+    window.open('mailto:' + c.email + '?subject=' + encodeURIComponent(subject), '_blank');
+  }
+}
+
+function sendPaymentLink(clientId) {
+  const c = clients.find(cl => cl.id === clientId);
+  if (!c) return;
+  if (!settings.payLinks || settings.payLinks.length === 0) { showToast('⚠️ Add payment links in Settings first'); return; }
+  let msg = 'Hi ' + c.name.split(' ')[0] + '! Here are my payment options:\n';
+  settings.payLinks.forEach(function(pl) { msg += '\n💳 ' + pl.platform + ': ' + pl.url; });
+  msg += '\n\nThank you! — ' + (settings.ownerName || settings.bizName);
+  if (c.phone) {
+    window.open('sms:' + c.phone + '?body=' + encodeURIComponent(msg), '_blank');
+  } else if (navigator.share) {
+    navigator.share({ text: msg }).catch(function() {});
+  } else {
+    navigator.clipboard.writeText(msg).then(function() { showToast('📋 Copied to clipboard'); });
+  }
 }
 
 /* ══════════════════════════════════════════
@@ -1156,7 +1191,7 @@ function openBookingDetail(id) {
 
   let footer = '';
   if (b.status === 'scheduled' || b.status === 'confirmed') {
-    footer += '<button class="btn btn-primary" onclick="startCheckin(' + b.id + ')">📍 Check In</button>';
+    footer += '<button class="btn btn-primary" onclick="startCheckin(' + b.id + ')">� Start Walk</button>';
     footer += '<button class="btn btn-accent" onclick="completeBooking(' + b.id + ')">✅ Complete</button>';
     footer += '<button class="btn btn-outline" onclick="markNoShow(' + b.id + ')">🚫 No-Show</button>';
     footer += '<button class="btn btn-danger btn-sm" onclick="cancelBooking(' + b.id + ')">Cancel</button>';
@@ -1197,30 +1232,37 @@ function startCheckin(bookingId) {
   const b = bookings.find(bk => bk.id === bookingId);
   if (!b) return;
   const c = clients.find(cl => cl.id === b.clientId);
+  const petNames = c ? c.pets.filter(p => b.petIds.includes(p.name)).map(p => p.name).join(', ') : '';
   checkinPhotos = [];
-  activeRoute = { points: [], watchId: null, startTime: null, tracking: false };
+  activeRoute = { points: [], watchId: null, startTime: Date.now(), tracking: false, timerInterval: null };
 
-  let html = '<div style="margin-bottom:12px;font-weight:700;">' + esc(b.service) + ' — ' + esc(c ? c.name : '') + '</div>';
-  // GPS Route Tracker
-  html += '<div class="route-tracker" id="routeTracker" style="display:none;">';
-  html += '<div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-weight:700;"><span class="pulse-dot" id="routePulse"></span> GPS Route Tracking</span><button class="btn btn-sm btn-danger" onclick="stopRouteTracking()">⏹ Stop</button></div>';
+  let html = '<div style="margin-bottom:14px;"><div style="font-weight:800;font-size:1.1rem;">🚶 Walk Started</div>';
+  html += '<div style="color:var(--text-light);font-size:0.88rem;">' + esc(b.service) + ' — ' + esc(c ? c.name : '') + '</div>';
+  if (petNames) html += '<div style="color:var(--text-light);font-size:0.85rem;">🐾 ' + esc(petNames) + '</div>';
+  html += '</div>';
+
+  // GPS Route Tracker — always visible
+  html += '<div class="route-tracker" id="routeTracker">';
+  html += '<div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-weight:700;"><span class="pulse-dot" id="routePulse"></span> GPS Tracking</span></div>';
   html += '<div class="route-stats"><div class="route-stat"><div class="stat-val" id="routeDistance">0.00</div><div class="stat-label">Miles</div></div>';
   html += '<div class="route-stat"><div class="stat-val" id="routeDuration">0:00</div><div class="stat-label">Duration</div></div>';
-  html += '<div class="route-stat"><div class="stat-val" id="routePoints">0</div><div class="stat-label">Points</div></div></div>';
+  html += '<div class="route-stat"><div class="stat-val" id="routePoints">0</div><div class="stat-label">GPS Points</div></div></div>';
   html += '</div>';
-  html += '<div style="margin-bottom:10px;"><button class="btn btn-sm btn-outline" id="routeStartBtn" onclick="startRouteTracking()" style="background:#d1fae5;color:#065f46;border-color:#10b981;">📍 Start GPS Route Tracking</button></div>';
-  html += '<div class="form-group"><label>Notes</label><textarea id="ciNotes" rows="3" placeholder="How did the walk go? Any concerns?"></textarea></div>';
-  html += '<div class="form-group" style="margin-top:8px;"><label>📸 Photo</label><div style="display:flex;gap:8px;align-items:center;"><button class="btn btn-sm btn-outline" onclick="document.getElementById(\'ciPhotoInput\').click()">📷 Add Photo</button><span id="ciPhotoCount" style="font-size:0.8rem;color:var(--text-light);"></span></div><div id="ciPhotoPreview" class="checkin-photos" style="margin-top:6px;"></div></div>';
-  html += '<div style="margin-top:8px;font-size:0.82rem;color:var(--text-light);">Auto-timestamped at check-in</div>';
 
-  let footer = '<button class="btn btn-primary" onclick="saveCheckin(' + bookingId + ')">📍 Save Check-in</button>';
-  footer += '<button class="btn btn-outline" onclick="saveCheckin(' + bookingId + ', true)">📍 Save & Share</button>';
+  html += '<div class="form-group" style="margin-top:12px;"><label>Walk Notes</label><textarea id="ciNotes" rows="2" placeholder="How is the walk going?"></textarea></div>';
+  html += '<div class="form-group" style="margin-top:8px;"><label>📸 Photos</label><div style="display:flex;gap:8px;align-items:center;"><button class="btn btn-sm btn-outline" onclick="document.getElementById(\'ciPhotoInput\').click()">📷 Take Photo</button><span id="ciPhotoCount" style="font-size:0.8rem;color:var(--text-light);"></span></div><div id="ciPhotoPreview" class="checkin-photos" style="margin-top:6px;"></div></div>';
+
+  let footer = '<button class="btn btn-primary" style="background:var(--red);" onclick="saveCheckin(' + bookingId + ')">🏁 End Walk</button>';
+  footer += '<button class="btn btn-outline" onclick="saveCheckin(' + bookingId + ', true)">🏁 End & Share</button>';
   footer += '<button class="btn btn-ghost" onclick="stopRouteTracking();document.getElementById(\'detailModal\').classList.remove(\'show\')">Cancel</button>';
 
-  document.getElementById('detailModalTitle').textContent = '📍 Check In';
+  document.getElementById('detailModalTitle').textContent = '🚶 Walk in Progress';
   document.getElementById('detailModalBody').innerHTML = html;
   document.getElementById('detailModalFooter').innerHTML = footer;
   document.getElementById('detailModal').classList.add('show');
+
+  // Auto-start GPS tracking
+  startRouteTracking();
 }
 
 function saveCheckin(bookingId, share) {
@@ -1398,7 +1440,7 @@ function sendInvoice(id) {
   let msg = settings.bizName + ' Invoice #' + String(inv.id).padStart(4, '0') + '\n\n' + items;
   if (inv.tip > 0) msg += '\nTip: ' + fmt$(inv.tip);
   msg += '\n\nTotal: ' + fmt$(inv.total);
-  if (settings.payLink) msg += '\n\nPay here: ' + settings.payLink;
+  if (settings.payLinks && settings.payLinks.length) { msg += '\n\nPay here:'; settings.payLinks.forEach(function(pl) { msg += '\n' + pl.platform + ': ' + pl.url; }); }
 
   if (c && c.phone) {
     window.open('sms:' + c.phone + '?body=' + encodeURIComponent(msg), '_blank');
@@ -1487,8 +1529,22 @@ function renderSettings() {
   document.getElementById('setOwnerName').value = settings.ownerName || '';
   document.getElementById('setBizPhone').value = settings.phone || '';
   document.getElementById('setBizEmail').value = settings.email || '';
-  document.getElementById('setPayLink').value = settings.payLink || '';
+  document.getElementById('setEmailProvider').value = settings.emailProvider || 'default';
   document.getElementById('setMileageRate').value = settings.mileageRate;
+
+  // Payment Links
+  let plHtml = '';
+  (settings.payLinks || []).forEach(function(pl, i) {
+    plHtml += '<div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">';
+    plHtml += '<select onchange="settings.payLinks[' + i + '].platform=this.value;saveData();" style="border:1px solid var(--border);padding:6px 10px;border-radius:6px;background:var(--card);color:var(--text);min-width:110px;">';
+    ['Venmo','PayPal','CashApp','Zelle','Other'].forEach(function(p) { plHtml += '<option' + (pl.platform === p ? ' selected' : '') + '>' + p + '</option>'; });
+    plHtml += '</select>';
+    plHtml += '<input value="' + esc(pl.url) + '" onchange="settings.payLinks[' + i + '].url=this.value.trim();saveData();" placeholder="https://..." style="border:1px solid var(--border);padding:6px 10px;border-radius:6px;flex:1;background:var(--card);color:var(--text);">';
+    plHtml += '<button class="btn btn-sm btn-ghost" onclick="settings.payLinks.splice(' + i + ',1);saveData();renderSettings();" style="color:var(--red);">🗑️</button>';
+    plHtml += '</div>';
+  });
+  plHtml += '<button class="btn btn-sm btn-outline" onclick="settings.payLinks.push({platform:\'Venmo\',url:\'\'});saveData();renderSettings();">+ Add Payment Link</button>';
+  document.getElementById('payLinksArea').innerHTML = plHtml;
 
   // Services
   let html = '<table class="data-table"><thead><tr><th>Service</th><th>Duration</th><th class="num">Price</th><th></th></tr></thead><tbody>';
@@ -1508,7 +1564,7 @@ function saveSettings() {
   settings.ownerName = document.getElementById('setOwnerName').value.trim();
   settings.phone = document.getElementById('setBizPhone').value.trim();
   settings.email = document.getElementById('setBizEmail').value.trim();
-  settings.payLink = document.getElementById('setPayLink').value.trim();
+  settings.emailProvider = document.getElementById('setEmailProvider').value;
   settings.mileageRate = parseFloat(document.getElementById('setMileageRate').value) || 0.67;
   saveData(); showToast('✅ Settings saved');
 }
@@ -1555,23 +1611,38 @@ function exportAllData() {
 let activeRoute = { points: [], watchId: null, startTime: null, tracking: false };
 
 function startRouteTracking() {
-  if (!navigator.geolocation) { showToast('⚠️ GPS not available in this browser'); return; }
-  activeRoute = { points: [], watchId: null, startTime: Date.now(), tracking: true };
-  document.getElementById('routeTracker').style.display = '';
-  document.getElementById('routeStartBtn').style.display = 'none';
+  if (!navigator.geolocation) {
+    const el = document.getElementById('routeTracker');
+    if (el) el.innerHTML = '<div style="color:var(--text-light);font-size:0.85rem;">📍 GPS not available — walk timer still active</div>';
+    // Still run the timer even without GPS
+    activeRoute.startTime = Date.now();
+    activeRoute.timerInterval = setInterval(updateWalkTimer, 1000);
+    return;
+  }
+  activeRoute = { points: [], watchId: null, startTime: Date.now(), tracking: true, timerInterval: null };
   activeRoute.watchId = navigator.geolocation.watchPosition(
     function(pos) {
       activeRoute.points.push({ lat: pos.coords.latitude, lng: pos.coords.longitude, t: Date.now() });
       const dist = calcRouteDistance(activeRoute.points);
-      const dur = Math.round((Date.now() - activeRoute.startTime) / 60000);
       const el = document.getElementById('routeDistance'); if (el) el.textContent = dist.toFixed(2);
-      const el2 = document.getElementById('routeDuration'); if (el2) el2.textContent = dur + ':' + String(Math.round((Date.now() - activeRoute.startTime) / 1000) % 60).padStart(2, '0');
       const el3 = document.getElementById('routePoints'); if (el3) el3.textContent = activeRoute.points.length;
     },
-    function(err) { showToast('⚠️ GPS error: ' + err.message); },
+    function(err) {
+      const el = document.getElementById('routeTracker');
+      if (el) el.querySelector('span').textContent = '📍 GPS unavailable — walk timer active';
+    },
     { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 }
   );
-  showToast('📍 GPS tracking started');
+  activeRoute.timerInterval = setInterval(updateWalkTimer, 1000);
+}
+
+function updateWalkTimer() {
+  if (!activeRoute.startTime) return;
+  const seconds = Math.round((Date.now() - activeRoute.startTime) / 1000);
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  const el = document.getElementById('routeDuration');
+  if (el) el.textContent = mins + ':' + String(secs).padStart(2, '0');
 }
 
 function stopRouteTracking() {
@@ -1579,6 +1650,7 @@ function stopRouteTracking() {
     navigator.geolocation.clearWatch(activeRoute.watchId);
     activeRoute.watchId = null;
   }
+  if (activeRoute.timerInterval) { clearInterval(activeRoute.timerInterval); activeRoute.timerInterval = null; }
   activeRoute.tracking = false;
 }
 
@@ -1984,6 +2056,13 @@ function handleCheckinPhotoUpload(input) {
 /* ══════════════════════════════════════════
    SAMPLE DATA
    ══════════════════════════════════════════ */
+function generatePetPhoto(name) {
+  var pairs = [['#10b981','#047857'],['#3b82f6','#1d4ed8'],['#f59e0b','#b45309'],['#ef4444','#b91c1c'],['#8b5cf6','#6d28d9'],['#ec4899','#be185d'],['#14b8a6','#0f766e'],['#f97316','#c2410c']];
+  var pair = pairs[name.length % pairs.length];
+  var letter = name[0].toUpperCase();
+  return 'data:image/svg+xml;base64,' + btoa('<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="' + pair[0] + '"/><stop offset="100%" stop-color="' + pair[1] + '"/></linearGradient></defs><rect width="200" height="200" fill="url(#g)"/><circle cx="100" cy="65" r="28" fill="rgba(255,255,255,0.25)"/><circle cx="70" cy="40" r="13" fill="rgba(255,255,255,0.25)"/><circle cx="130" cy="40" r="13" fill="rgba(255,255,255,0.25)"/><circle cx="58" cy="65" r="11" fill="rgba(255,255,255,0.25)"/><circle cx="142" cy="65" r="11" fill="rgba(255,255,255,0.25)"/><text x="100" y="160" text-anchor="middle" font-size="44" font-weight="bold" fill="rgba(255,255,255,0.9)" font-family="sans-serif">' + letter + '</text></svg>');
+}
+
 function loadSampleData() {
   if (clients.length > 0 && !confirm('This will replace existing data. Continue?')) return;
 
@@ -2028,6 +2107,9 @@ function loadSampleData() {
       { name: 'Sushi', breed: 'Cat', weight: '12', age: '4 years', meds: 'Thyroid pill 1x/day', vetName: '', notes: 'Hide pill in treats. She is smart and will spit it out.' }
     ]}
   ];
+
+  // Add pet photos to all pets
+  clients.forEach(function(c) { c.pets.forEach(function(p) { p.photo = generatePetPhoto(p.name); }); });
 
   // Generate bookings (past 2 weeks + upcoming)
   bookings = [];
@@ -2085,9 +2167,9 @@ function loadSampleData() {
   checkins = [];
   bookings.filter(b => b.status === 'completed').forEach((b, idx) => {
     const notes = ['Great walk! Lots of energy today.', 'Played fetch at the park.', 'Calm walk around the block.', 'Refilled water bowl.', 'Met a friend at the dog park!', '', '', ''][Math.floor(Math.random() * 8)];
-    // Generate simulated GPS route for ~40% of checkins
+    // Generate simulated GPS route for ~80% of checkins
     let route = null;
-    if (idx % 3 === 0) {
+    if (idx % 5 !== 0) {
       const baseLat = 43.0389 + (Math.random() - 0.5) * 0.02;
       const baseLng = -87.9065 + (Math.random() - 0.5) * 0.02;
       const numPts = 20 + Math.floor(Math.random() * 30);
@@ -2097,7 +2179,13 @@ function loadSampleData() {
       }
       route = { points: pts, distance: 0.5 + Math.random() * 2.5, duration: 20 + Math.floor(Math.random() * 40) };
     }
-    checkins.push({ id: genId(), bookingId: b.id, clientId: b.clientId, petNames: b.petIds.join(', '), time: b.date + 'T' + b.time + ':00', notes, photos: [], route });
+    // Add sample photos to ~30% of checkins
+    var ciPhotos = [];
+    if (idx % 3 === 0) {
+      var petList = b.petIds;
+      ciPhotos = petList.slice(0, 1).map(function(pn) { return generatePetPhoto(pn); });
+    }
+    checkins.push({ id: genId(), bookingId: b.id, clientId: b.clientId, petNames: b.petIds.join(', '), time: b.date + 'T' + b.time + ':00', notes, photos: ciPhotos, route });
   });
 
   // Sample expenses
@@ -2114,7 +2202,7 @@ function loadSampleData() {
     });
   }
 
-  settings = { bizName: 'PawTracker', ownerName: 'Jordan Rivera', phone: '414-555-9999', email: 'jordan@pawtracker.com', payLink: 'https://venmo.com/jordan-paws', mileageRate: 0.67 };
+  settings = { bizName: 'PawTracker', ownerName: 'Jordan Rivera', phone: '414-555-9999', email: 'jordan@pawtracker.com', payLinks: [{ platform: 'Venmo', url: 'https://venmo.com/jordan-paws' }, { platform: 'PayPal', url: 'https://paypal.me/jordanpaws' }, { platform: 'CashApp', url: 'https://cash.app/$jordanpaws' }], emailProvider: 'gmail', mileageRate: 0.67 };
 
   saveData();
   showToast('🐾 Sample data loaded — explore the app!');
