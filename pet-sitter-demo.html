@@ -981,8 +981,8 @@ function openNewClientModal() {
   html += '<div class="form-section"><div class="form-section-title">🐾 Pet #1</div><div class="form-grid">';
   html += '<div class="form-group"><label>Pet Name *</label><input id="ncPetName"></div>';
   html += '<div class="form-group"><label>Breed</label><input id="ncPetBreed"></div>';
-  html += '<div class="form-group"><label>Weight (lbs)</label><input id="ncPetWeight" type="number"></div>';
-  html += '<div class="form-group"><label>Age</label><input id="ncPetAge" placeholder="e.g. 3 years"></div>';
+  html += '<div class="form-group"><label>Weight (lbs)</label><input id="ncPetWeight" type="number" min="0" step="1"></div>';
+  html += '<div class="form-group"><label>Age (years)</label><input id="ncPetAge" type="number" min="0" step="1" placeholder="e.g. 3"></div>';
   html += '<div class="form-group"><label>Medications</label><input id="ncPetMeds"></div>';
   html += '<div class="form-group"><label>Vet Name</label><input id="ncPetVet"></div>';
   html += '<div class="form-group"><label>Special Notes</label><textarea id="ncPetNotes" rows="2" placeholder="Behavior, allergies, fears..."></textarea></div>';
@@ -1044,7 +1044,7 @@ function openClientDetail(id) {
     html += '</div>';
     const details = [];
     if (p.weight) details.push(p.weight + ' lbs');
-    if (p.age) details.push(p.age);
+    if (p.age) details.push(p.age + (String(p.age).includes('year') ? '' : ' years'));
     if (p.meds) details.push('💊 ' + p.meds);
     if (details.length) html += '<div style="font-size:0.82rem;color:var(--text-light);">' + details.map(esc).join(' · ') + '</div>';
     if (p.notes) html += '<div style="font-size:0.82rem;margin-top:2px;">' + esc(p.notes) + '</div>';
@@ -2065,7 +2065,7 @@ function openClientPortal(clientId) {
     html += '<div style="display:flex;gap:12px;align-items:center;">';
     if (p.photo) html += '<div class="pet-photo-wrap" style="width:48px;height:48px;"><img src="' + p.photo + '" alt="' + esc(p.name) + '"></div>';
     html += '<div><div style="font-weight:700;">' + esc(p.name) + '</div>';
-    html += '<div style="color:var(--text-light);font-size:0.82rem;">' + esc(p.breed || '') + (p.weight ? ' · ' + p.weight + ' lbs' : '') + (p.age ? ' · ' + p.age : '') + '</div></div></div>';
+    html += '<div style="color:var(--text-light);font-size:0.82rem;">' + esc(p.breed || '') + (p.weight ? ' · ' + p.weight + ' lbs' : '') + (p.age ? ' · ' + p.age + (String(p.age).includes('year') ? '' : ' years') : '') + '</div></div></div>';
     html += '</div>';
   });
 
