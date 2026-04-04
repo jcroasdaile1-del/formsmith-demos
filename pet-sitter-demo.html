@@ -367,10 +367,12 @@ input, select, textarea { font-family: inherit; font-size: 0.88rem; }
   .modal-box { width: 98vw; margin: 4px auto; max-height: 94vh; }
   .modal-body { padding: 14px 12px; }
   .modal-footer { flex-wrap: wrap; gap: 6px; }
-  .cal-grid { font-size: 0.7rem; }
+  .cal-grid { font-size: 0.7rem; min-width: 350px; }
+  #calendarArea { overflow-x: auto; -webkit-overflow-scrolling: touch; }
   .cal-day { min-height: 36px; padding: 2px; }
-  .cal-event { font-size: 0.6rem; padding: 1px 3px; }
+  .cal-event { font-size: 0.6rem; padding: 1px 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
   .cal-header h3 { font-size: 1rem; }
+  .cal-day-header { padding: 4px 2px; font-size: 0.6rem; }
   .kpi-card .kpi-value { font-size: 1.3rem; }
   .kpi-card { padding: 12px 10px; }
   .card-header { padding: 10px 12px; font-size: 0.85rem; }
@@ -391,6 +393,12 @@ input, select, textarea { font-family: inherit; font-size: 0.88rem; }
   select { width: 100%; box-sizing: border-box; padding-right: 28px; }
   .btn { padding: 7px 12px; font-size: 0.82rem; }
   .data-table th, .data-table td { padding: 6px 5px; font-size: 0.75rem; }
+  .modal-footer { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+  .modal-footer .btn { justify-content: center; text-align: center; white-space: nowrap; font-size: 0.78rem; padding: 8px 6px; }
+  .svc-table-wrap input { font-size: 0.8rem; }
+  .svc-table-wrap .data-table td { padding: 6px 4px; }
+  .svc-table-wrap input[type="text"] { width: 100% !important; min-width: 0; }
+  .svc-table-wrap input[type="number"] { width: 55px !important; min-width: 0; }
 }
 
 /* ── Demo banner ── */
@@ -1036,7 +1044,7 @@ function openClientDetail(id) {
   footer += '<button class="btn btn-outline" onclick="sendSMS(' + c.id + ')">📱 Text</button>';
   if (c.email) footer += '<button class="btn btn-outline" onclick="sendEmail(' + c.id + ')">✉️ Email</button>';
   if (settings.payLinks && settings.payLinks.length) footer += '<button class="btn btn-outline" onclick="sendPaymentLink(' + c.id + ')">💳 Pay Link</button>';
-  footer += '<button class="btn btn-danger btn-sm" onclick="deleteClient(' + c.id + ')" style="margin-left:auto;">🗑️ Delete</button>';
+  footer += '<button class="btn btn-danger btn-sm" onclick="deleteClient(' + c.id + ')">🗑️ Delete</button>';
   footer += '<button class="btn btn-ghost" onclick="document.getElementById(\'detailModal\').classList.remove(\'show\')">× Close</button>';
 
   document.getElementById('detailModalTitle').textContent = '🐕 ' + c.name;
@@ -1090,16 +1098,7 @@ function sendEmail(clientId) {
   const c = clients.find(cl => cl.id === clientId);
   if (!c || !c.email) { showToast('⚠️ No email'); return; }
   const subject = settings.bizName + ' - Update';
-  const provider = settings.emailProvider || 'default';
-  if (provider === 'gmail') {
-    window.open('https://mail.google.com/mail/?view=cm&fs=1&to=' + encodeURIComponent(c.email) + '&su=' + encodeURIComponent(subject), '_blank');
-  } else if (provider === 'outlook') {
-    window.open('https://outlook.live.com/mail/0/deeplink/compose?to=' + encodeURIComponent(c.email) + '&subject=' + encodeURIComponent(subject), '_blank');
-  } else if (provider === 'yahoo') {
-    window.open('https://compose.mail.yahoo.com/?to=' + encodeURIComponent(c.email) + '&subject=' + encodeURIComponent(subject), '_blank');
-  } else {
-    window.open('mailto:' + c.email + '?subject=' + encodeURIComponent(subject), '_blank');
-  }
+  window.location.href = 'mailto:' + c.email + '?subject=' + encodeURIComponent(subject);
 }
 
 function sendPaymentLink(clientId) {
@@ -1630,14 +1629,14 @@ function renderSettings() {
   document.getElementById('payLinksArea').innerHTML = plHtml;
 
   // Services
-  let html = '<table class="data-table"><thead><tr><th>Service</th><th>Duration</th><th class="num">Price</th><th></th></tr></thead><tbody>';
+  let html = '<div class="svc-table-wrap"><table class="data-table"><thead><tr><th>Service</th><th>Duration</th><th class="num">Price</th><th></th></tr></thead><tbody>';
   services.forEach((s, i) => {
-    html += '<tr><td><input value="' + esc(s.name) + '" onchange="services[' + i + '].name=this.value;saveData();" style="border:1px solid var(--border);padding:4px 8px;border-radius:6px;width:100%;background:var(--card);color:var(--text);"></td>';
+    html += '<tr><td><input type="text" value="' + esc(s.name) + '" onchange="services[' + i + '].name=this.value;saveData();" style="border:1px solid var(--border);padding:4px 8px;border-radius:6px;width:100%;background:var(--card);color:var(--text);"></td>';
     html += '<td><input type="number" value="' + s.duration + '" onchange="services[' + i + '].duration=parseInt(this.value);saveData();" style="border:1px solid var(--border);padding:4px 8px;border-radius:6px;width:70px;background:var(--card);color:var(--text);"> min</td>';
     html += '<td class="num"><input type="number" step="0.01" value="' + s.price + '" onchange="services[' + i + '].price=parseFloat(this.value);saveData();" style="border:1px solid var(--border);padding:4px 8px;border-radius:6px;width:80px;text-align:right;background:var(--card);color:var(--text);"></td>';
     html += '<td><button class="btn btn-sm btn-ghost" onclick="services.splice(' + i + ',1);saveData();renderSettings();">🗑️</button></td></tr>';
   });
-  html += '</tbody></table>';
+  html += '</tbody></table></div>';
   html += '<button class="btn btn-sm btn-outline" style="margin-top:8px;" onclick="services.push({id:genId(),name:\'New Service\',duration:30,price:25});saveData();renderSettings();">+ Add Service</button>';
   document.getElementById('servicesPricingArea').innerHTML = html;
 }
