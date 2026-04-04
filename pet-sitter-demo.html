@@ -794,9 +794,9 @@ function renderDashboard() {
   kpi += '<div class="kpi-card accent"><div class="kpi-label">Month Revenue</div><div class="kpi-value">' + fmt$(monthRevenue) + '</div><div class="kpi-sub">' + monthBookings.length + ' bookings</div></div>';
   kpi += '<div class="kpi-card green"><div class="kpi-label">Active Clients</div><div class="kpi-value">' + activeClients + '</div><div class="kpi-sub">' + totalPets + ' pets total</div></div>';
   kpi += '<div class="kpi-card' + (unpaid > 0 ? ' red' : ' purple') + '"><div class="kpi-label">Unpaid</div><div class="kpi-value">' + fmt$(unpaid) + '</div><div class="kpi-sub">' + invoices.filter(i => i.status === 'unpaid').length + ' invoices</div></div>';
-  var ratedCIs = checkins.filter(function(ci) { return ci.walkRating; });
-  var avgR = ratedCIs.length ? (ratedCIs.reduce(function(s, ci) { return s + ci.walkRating; }, 0) / ratedCIs.length).toFixed(1) : '—';
-  kpi += '<div class="kpi-card purple"><div class="kpi-label">Avg Rating</div><div class="kpi-value">★ ' + avgR + '</div><div class="kpi-sub">' + ratedCIs.length + ' rated walks</div></div>';
+  var ratedClients = clients.filter(function(c) { return c.clientRating; });
+  var avgSat = ratedClients.length ? (ratedClients.reduce(function(s, c) { return s + c.clientRating; }, 0) / ratedClients.length).toFixed(1) : '—';
+  kpi += '<div class="kpi-card purple"><div class="kpi-label">Client Rating</div><div class="kpi-value">★ ' + avgSat + '</div><div class="kpi-sub">' + ratedClients.length + ' of ' + clients.length + ' rated</div></div>';
   kpi += '</div>';
   document.getElementById('dashKpis').innerHTML = kpi;
 
@@ -1028,6 +1028,7 @@ function openClientDetail(id) {
   if (c.address) html += '<div style="font-size:0.82rem;color:var(--text-light);">📍 ' + esc(c.address) + '</div>';
   if (c.notes) html += '<div style="font-size:0.82rem;margin-top:4px;">' + esc(c.notes) + '</div>';
   html += '<div style="margin-top:6px;"><span class="badge badge-green">' + fmt$(revenue) + ' earned</span> <span class="badge badge-blue">' + clientBookings.length + ' bookings</span> ' + cancelRateBadge(id) + '</div>';
+  html += '<div style="margin-top:8px;"><span style="font-size:0.82rem;color:var(--text-light);margin-right:6px;">Client Rating:</span>' + clientRatingHtml(c.id, c.clientRating) + '</div>';
   html += '</div></div>';
 
   // Pets
@@ -1320,7 +1321,24 @@ function openBookingDetail(id) {
 function completeBooking(id) {
   const b = bookings.find(bk => bk.id === id);
   if (!b) return;
+  // Show notes prompt
+  let html = '<div class="form-group"><label>Walk Notes</label><textarea id="completeNotes" rows="3" placeholder="How did the walk go? Any updates for the client?"></textarea></div>';
+  document.getElementById('detailModalTitle').textContent = '📝 Walk Notes';
+  document.getElementById('detailModalBody').innerHTML = html;
+  let footer = '<button class="btn btn-primary" onclick="finishComplete(' + id + ')">Save & Complete</button>';
+  footer += '<button class="btn btn-ghost" onclick="finishComplete(' + id + ', true)">Skip Notes</button>';
+  document.getElementById('detailModalFooter').innerHTML = footer;
+}
+
+function finishComplete(id, skipNotes) {
+  const b = bookings.find(bk => bk.id === id);
+  if (!b) return;
   b.status = 'completed';
+  // Save notes as a check-in
+  var noteText = skipNotes ? '' : (document.getElementById('completeNotes') ? document.getElementById('completeNotes').value.trim() : '');
+  if (noteText) {
+    checkins.push({ id: genId(), bookingId: b.id, clientId: b.clientId, petNames: b.petIds.join(', '), time: new Date().toISOString(), notes: noteText, photos: [], route: null });
+  }
   // Auto-create invoice
   const c = clients.find(cl => cl.id === b.clientId);
   const inv = { id: genId(), clientId: b.clientId, clientName: c ? c.name : '', items: [{ desc: b.service, amount: b.price }], subtotal: b.price, tip: 0, total: b.price, status: 'unpaid', date: todayStr(), sentDate: null, paidDate: null };
@@ -1429,7 +1447,6 @@ function renderCheckins() {
     if (ci.notes) html += '<div class="checkin-notes">' + esc(ci.notes) + '</div>';
     if (ci.route) html += '<div style="display:flex;gap:12px;margin-top:6px;font-size:0.82rem;"><span style="color:var(--primary);font-weight:600;">📍 ' + ci.route.distance.toFixed(2) + ' mi</span><span style="color:var(--text-light);">⏱ ' + ci.route.duration + ' min</span><span style="color:var(--text-light);">' + (ci.route.points ? ci.route.points.length : 0) + ' GPS pts</span></div>';
     if (ci.photos && ci.photos.length) { html += '<div class="checkin-photos">'; ci.photos.forEach(p => html += '<img src="' + p + '" alt="check-in photo" onclick="window.open(this.src)">'); html += '</div>'; }
-    html += '<div style="margin-top:6px;">' + starRatingHtml(ci.id, ci.walkRating) + '</div>';
     html += '</div>';
   });
   if (totalPages > 1) html += buildPaginationBar(sorted.length, checkinPage, totalPages, 'checkinPage', 'renderCheckins');
@@ -2027,8 +2044,6 @@ function openClientPortal(clientId) {
   const totalWalks = clientBookings.length;
   const totalPhotos = clientCheckins.reduce((s, ci) => s + (ci.photos ? ci.photos.length : 0), 0) + c.pets.filter(p => p.photo).length;
   const totalDistance = clientCheckins.reduce((s, ci) => s + (ci.route ? ci.route.distance : 0), 0);
-  const clientRatedCIs = clientCheckins.filter(ci => ci.walkRating);
-  const clientAvgRating = clientRatedCIs.length > 0 ? (clientRatedCIs.reduce((s, ci) => s + ci.walkRating, 0) / clientRatedCIs.length).toFixed(1) : '—';
 
   let html = '<div class="portal-view">';
   html += '<div class="portal-header">';
@@ -2042,7 +2057,6 @@ function openClientPortal(clientId) {
   html += '<div class="kpi-card"><div class="kpi-label">Total Walks</div><div class="kpi-value">' + totalWalks + '</div></div>';
   html += '<div class="kpi-card green"><div class="kpi-label">Distance</div><div class="kpi-value">' + totalDistance.toFixed(1) + ' mi</div></div>';
   html += '<div class="kpi-card accent"><div class="kpi-label">Photos</div><div class="kpi-value">' + totalPhotos + '</div></div>';
-  html += '<div class="kpi-card purple"><div class="kpi-label">Avg Rating</div><div class="kpi-value">★ ' + clientAvgRating + '</div></div>';
   html += '</div>';
 
   // Pets
@@ -2097,6 +2111,7 @@ function sharePortal(clientId) {
     if (clientCheckins[0].notes) msg += ' — ' + clientCheckins[0].notes;
   }
   msg += '\n\n💕 Thank you for choosing ' + (settings.bizName || 'PawTracker') + '!';
+  msg += '\n\n⭐ How did we do? Reply with a rating 1-5 and any feedback!';
 
   if (navigator.share) {
     navigator.share({ title: c.name + '\'s Pet Report Card', text: msg }).catch(() => {});
@@ -2227,25 +2242,29 @@ function loadWeather(lat, lng) {
 }
 
 function rateWalk(checkinId, rating) {
-  var ci = checkins.find(function(c) { return c.id === checkinId; });
-  if (ci) { ci.walkRating = rating; saveData(); showToast('⭐ Rated ' + rating + ' stars'); }
-  renderCheckins();
+  // Removed — internal star rating is no longer used
 }
 
 function starRatingHtml(checkinId, currentRating) {
-  var html = '<div class="star-rating">';
-  for (var i = 1; i <= 5; i++) {
-    html += '<span class="star' + (i <= (currentRating || 0) ? ' filled' : '') + '" onclick="rateWalk(' + checkinId + ',' + i + ')">★</span>';
-  }
-  html += '</div>';
-  return html;
+  return '';
 }
 
 function avgRatingHtml(clientId) {
-  var cis = checkins.filter(function(ci) { return ci.clientId === clientId && ci.walkRating; });
-  if (cis.length === 0) return '';
-  var avg = cis.reduce(function(s, ci) { return s + ci.walkRating; }, 0) / cis.length;
-  return '<span class="avg-rating">★ ' + avg.toFixed(1) + '</span>';
+  return '';
+}
+
+function setClientRating(clientId, rating) {
+  var c = clients.find(function(cl) { return cl.id === clientId; });
+  if (c) { c.clientRating = rating; saveData(); showToast('⭐ Client rated ' + rating + '/5'); }
+}
+
+function clientRatingHtml(clientId, currentRating) {
+  var html = '<div class="star-rating">';
+  for (var i = 1; i <= 5; i++) {
+    html += '<span class="star' + (i <= (currentRating || 0) ? ' filled' : '') + '" onclick="setClientRating(' + clientId + ',' + i + ');openClientDetail(' + clientId + ')">★</span>';
+  }
+  html += '</div>';
+  return html;
 }
 
 /* ══════════════════════════════════════════
@@ -2326,24 +2345,24 @@ function loadSampleData() {
   const ds = d => d.toISOString().slice(0, 10);
 
   clients = [
-    { id: genId(), name: 'Sarah Mitchell', phone: '414-555-0101', email: 'sarah.m@email.com', address: '1234 Maple Ave, Milwaukee, WI', notes: 'Spare key under mat. Ring doorbell twice.', pets: [
+    { id: genId(), name: 'Sarah Mitchell', phone: '414-555-0101', email: 'sarah.m@email.com', address: '1234 Maple Ave, Milwaukee, WI', notes: 'Spare key under mat. Ring doorbell twice.', clientRating: 5, pets: [
       { name: 'Biscuit', breed: 'Golden Retriever', weight: '72', age: '4 years', meds: '', vetName: 'Dr. Palmer', notes: 'Loves tennis balls. Pulls on leash near squirrels.' },
       { name: 'Muffin', breed: 'Pomeranian', weight: '8', age: '6 years', meds: 'Joint supplement daily', vetName: 'Dr. Palmer', notes: 'Senior dog — shorter walks. Prefers grass over pavement.' }
     ]},
-    { id: genId(), name: 'Marcus Chen', phone: '414-555-0202', email: 'mchen92@email.com', address: '567 Oak St, Milwaukee, WI', notes: 'Garage code: 4512', pets: [
+    { id: genId(), name: 'Marcus Chen', phone: '414-555-0202', email: 'mchen92@email.com', address: '567 Oak St, Milwaukee, WI', notes: 'Garage code: 4512', clientRating: 4, pets: [
       { name: 'Luna', breed: 'French Bulldog', weight: '24', age: '2 years', meds: '', vetName: 'Bay View Animal Clinic', notes: 'Overheats easily — no walks above 80°F. Snores like a chainsaw.' }
     ]},
-    { id: genId(), name: 'Jennifer Adams', phone: '414-555-0303', email: 'jen.adams@email.com', address: '890 Elm Dr, Wauwatosa, WI', notes: '', pets: [
+    { id: genId(), name: 'Jennifer Adams', phone: '414-555-0303', email: 'jen.adams@email.com', address: '890 Elm Dr, Wauwatosa, WI', notes: '', clientRating: 5, pets: [
       { name: 'Cooper', breed: 'Labrador Mix', weight: '65', age: '3 years', meds: '', vetName: '', notes: 'High energy — needs full hour walks. Good with other dogs.' },
       { name: 'Pepper', breed: 'Beagle', weight: '28', age: '5 years', meds: 'Apoquel 1x daily for allergies', vetName: 'Tosa Vet', notes: 'Scent-driven. Keep on leash — she will run after smells.' }
     ]},
     { id: genId(), name: 'David Kowalski', phone: '414-555-0404', email: '', address: '321 Pine Rd, Brookfield, WI', notes: 'Text 30 min before arrival.', pets: [
       { name: 'Rex', breed: 'German Shepherd', weight: '88', age: '5 years', meds: 'Glucosamine chew', vetName: 'Brookfield Animal Hospital', notes: 'Protective of house. Say his name when entering. Loves belly rubs once he knows you.' }
     ]},
-    { id: genId(), name: 'Amanda Torres', phone: '414-555-0505', email: 'atorres@email.com', address: '456 Lake Shore, Milwaukee, WI', notes: 'Doorman building — check in at front desk.', pets: [
+    { id: genId(), name: 'Amanda Torres', phone: '414-555-0505', email: 'atorres@email.com', address: '456 Lake Shore, Milwaukee, WI', notes: 'Doorman building — check in at front desk.', clientRating: 5, pets: [
       { name: 'Ziggy', breed: 'Dachshund', weight: '11', age: '7 years', meds: 'Back pain — no jumping', vetName: 'Lakeshore Vet', notes: 'Bad back — carry up/down stairs. No rough play.' }
     ]},
-    { id: genId(), name: 'Mike & Lisa Brennan', phone: '414-555-0606', email: 'brennans@email.com', address: '789 Birch Ln, Greenfield, WI', notes: 'Two-dog household. Walk them together.', pets: [
+    { id: genId(), name: 'Mike & Lisa Brennan', phone: '414-555-0606', email: 'brennans@email.com', address: '789 Birch Ln, Greenfield, WI', notes: 'Two-dog household. Walk them together.', clientRating: 4, pets: [
       { name: 'Tank', breed: 'Pit Bull Mix', weight: '55', age: '4 years', meds: '', vetName: '', notes: 'Sweetest dog ever despite the name. Gentle giant.' },
       { name: 'Noodle', breed: 'Greyhound', weight: '62', age: '6 years', meds: '', vetName: '', notes: 'Ex-racer, adopted. Skittish around loud cars. Fast when startled.' }
     ]},
@@ -2425,8 +2444,7 @@ function loadSampleData() {
     // Generate photos for every check-in using breed-specific portraits
     var c_ci = clients.find(function(cl) { return cl.id === b.clientId; });
     var ciPhotos = b.petIds.slice(0, 2).map(function(pn) { var pet = c_ci ? c_ci.pets.find(function(pp) { return pp.name === pn; }) : null; return generatePetPortrait(pn, pet ? pet.breed : ''); });
-    var walkRating = idx % 4 === 0 ? 5 : idx % 3 === 0 ? 4 : idx % 7 === 0 ? 3 : (Math.random() > 0.25 ? (4 + Math.round(Math.random())) : 0);
-    checkins.push({ id: genId(), bookingId: b.id, clientId: b.clientId, petNames: b.petIds.join(', '), time: b.date + 'T' + b.time + ':00', notes, photos: ciPhotos, route, walkRating: walkRating || undefined });
+    checkins.push({ id: genId(), bookingId: b.id, clientId: b.clientId, petNames: b.petIds.join(', '), time: b.date + 'T' + b.time + ':00', notes, photos: ciPhotos, route });
   });
 
   // Sample expenses
