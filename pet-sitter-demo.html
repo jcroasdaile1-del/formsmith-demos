@@ -334,6 +334,16 @@ input, select, textarea { font-family: inherit; font-size: 0.88rem; }
 .svc-cards { display: none; }
 .cal-more { font-size: 0.7rem; color: var(--text-light); }
 
+/* ── Invoice Cards (hidden on desktop, shown on mobile) ── */
+.inv-cards { display: none; }
+.inv-card-item { background: var(--card); border-radius: var(--radius); border-left: 4px solid var(--primary); box-shadow: var(--shadow); padding: 10px 12px; }
+.inv-card-item .inv-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+.inv-card-item .inv-id { font-weight: 700; font-size: 0.9rem; }
+.inv-card-item .inv-details { font-size: 0.8rem; color: var(--text-light); }
+.inv-card-item .inv-actions { display: flex; gap: 6px; margin-top: 8px; }
+.inv-card-item.paid { border-left-color: var(--green); }
+.inv-card-item.unpaid { border-left-color: #f59e0b; }
+
 /* ── Booking Cards (hidden on desktop, shown on mobile) ── */
 .booking-cards { display: none; }
 .booking-card-item { background: var(--card); border-radius: var(--radius); border-left: 4px solid var(--primary); box-shadow: var(--shadow); padding: 10px 12px; cursor: pointer; }
@@ -422,6 +432,8 @@ input, select, textarea { font-family: inherit; font-size: 0.88rem; }
   .svc-card .svc-del { justify-self: end; }
   .bookings-table-wrap { display: none; }
   .booking-cards { display: flex; flex-direction: column; gap: 8px; }
+  .inv-table-wrap { display: none; }
+  .inv-cards { display: flex; flex-direction: column; gap: 8px; }
 }
 
 /* ── Demo banner ── */
@@ -759,6 +771,7 @@ function switchPage(id) {
   const navBtn = document.querySelector('.nav-item[data-page="' + id + '"]');
   if (navBtn) navBtn.classList.add('active');
   closeMobileSidebar();
+  window.scrollTo(0, 0);
   if (id === 'dashboard') renderDashboard();
   if (id === 'schedule') renderCalendar();
   if (id === 'clients') renderClients();
@@ -1470,7 +1483,7 @@ function renderInvoices() {
   if (invoicePage > totalPages) invoicePage = totalPages;
   const start = (invoicePage - 1) * PAGE_SIZE;
   const pageItems = filtered.slice(start, start + PAGE_SIZE);
-  let html = '<div class="card"><div class="card-body" style="padding:0;overflow-x:auto;"><table class="data-table"><thead><tr><th style="position:sticky;top:0;z-index:2;background:var(--card);">Invoice</th><th style="position:sticky;top:0;z-index:2;background:var(--card);">Client</th><th style="position:sticky;top:0;z-index:2;background:var(--card);">Date</th><th style="position:sticky;top:0;z-index:2;background:var(--card);">Status</th><th class="num" style="position:sticky;top:0;z-index:2;background:var(--card);">Total</th><th style="position:sticky;top:0;z-index:2;background:var(--card);">Actions</th></tr></thead><tbody>';
+  let html = '<div class="inv-table-wrap"><div class="card"><div class="card-body" style="padding:0;overflow-x:auto;"><table class="data-table"><thead><tr><th style="position:sticky;top:0;z-index:2;background:var(--card);">Invoice</th><th style="position:sticky;top:0;z-index:2;background:var(--card);">Client</th><th style="position:sticky;top:0;z-index:2;background:var(--card);">Date</th><th style="position:sticky;top:0;z-index:2;background:var(--card);">Status</th><th class="num" style="position:sticky;top:0;z-index:2;background:var(--card);">Total</th><th style="position:sticky;top:0;z-index:2;background:var(--card);">Actions</th></tr></thead><tbody>';
   pageItems.forEach(inv => {
     html += '<tr><td style="font-weight:600;">#' + String(inv.id).padStart(4, '0') + '</td><td>' + esc(inv.clientName) + '</td><td>' + fmtDate(inv.date) + '</td><td><span class="badge badge-' + (inv.status === 'paid' ? 'green' : 'amber') + '">' + inv.status + '</span></td><td class="num" style="font-weight:700;">' + fmt$(inv.total) + '</td>';
     html += '<td style="display:flex;gap:4px;">';
@@ -1480,7 +1493,19 @@ function renderInvoices() {
     }
     html += '</td></tr>';
   });
-  html += '</tbody></table></div></div>';
+  html += '</tbody></table></div></div></div>';
+  // Mobile cards
+  html += '<div class="inv-cards">';
+  pageItems.forEach(inv => {
+    html += '<div class="inv-card-item ' + inv.status + '">';
+    html += '<div class="inv-top"><span class="inv-id">#' + String(inv.id).padStart(4, '0') + '</span><span class="badge badge-' + (inv.status === 'paid' ? 'green' : 'amber') + '">' + inv.status + '</span></div>';
+    html += '<div class="inv-details">' + esc(inv.clientName) + ' · ' + fmtDate(inv.date) + ' · <strong>' + fmt$(inv.total) + '</strong></div>';
+    if (inv.status === 'unpaid') {
+      html += '<div class="inv-actions"><button class="btn btn-sm btn-primary" onclick="markInvoicePaid(' + inv.id + ')">Mark Paid</button><button class="btn btn-sm btn-outline" onclick="sendInvoice(' + inv.id + ')">Send</button></div>';
+    }
+    html += '</div>';
+  });
+  html += '</div>';
   if (totalPages > 1) html += buildPaginationBar(filtered.length, invoicePage, totalPages, 'invoicePage', 'renderInvoices');
   document.getElementById('invoicesArea').innerHTML = html;
 }
