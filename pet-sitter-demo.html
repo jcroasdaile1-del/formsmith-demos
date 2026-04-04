@@ -274,6 +274,43 @@ input, select, textarea { font-family: inherit; font-size: 0.88rem; }
 .avatar-circle { width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 0.95rem; flex-shrink: 0; letter-spacing: 0.02em; }
 .avatar-circle.lg { width: 56px; height: 56px; font-size: 1.1rem; }
 
+/* ── Route Tracking ── */
+.route-tracker { background: var(--card); border-radius: var(--radius); padding: 16px; border: 2px solid var(--green); margin-bottom: 12px; }
+.route-tracker .route-stats { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 10px; }
+.route-tracker .route-stat { text-align: center; }
+.route-tracker .route-stat .stat-val { font-size: 1.3rem; font-weight: 800; color: var(--primary); }
+.route-tracker .route-stat .stat-label { font-size: 0.72rem; color: var(--text-light); text-transform: uppercase; }
+.pulse-dot { width: 12px; height: 12px; background: var(--green); border-radius: 50%; display: inline-block; animation: pulse 1.5s infinite; }
+@keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(1.3); } }
+
+/* ── Gallery ── */
+.gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; }
+.gallery-item { position: relative; aspect-ratio: 1; border-radius: var(--radius); overflow: hidden; cursor: pointer; background: var(--bg); }
+.gallery-item img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.2s; }
+.gallery-item:hover img { transform: scale(1.05); }
+.gallery-item .gallery-caption { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(transparent, rgba(0,0,0,0.7)); color: white; padding: 6px 8px; font-size: 0.75rem; font-weight: 600; }
+
+/* ── P&L ── */
+.pnl-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+.pnl-table td { padding: 8px 12px; border-bottom: 1px solid var(--border); }
+.pnl-table .pnl-cat { font-weight: 600; }
+.pnl-table .pnl-total td { font-weight: 800; font-size: 1rem; border-top: 2px solid var(--text); }
+.pnl-table .pnl-profit td { font-weight: 800; font-size: 1.1rem; border-top: 3px double var(--primary); }
+.pnl-pos { color: var(--green); }
+.pnl-neg { color: var(--red); }
+
+/* ── Client Portal ── */
+.portal-view { max-width: 600px; margin: 0 auto; padding: 20px; }
+.portal-header { text-align: center; margin-bottom: 20px; }
+.portal-header h1 { font-size: 1.3rem; font-weight: 800; color: var(--primary); }
+.portal-pet-card { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); padding: 16px; margin-bottom: 14px; }
+
+/* ── Cancel badge ── */
+.cancel-rate { display: inline-flex; align-items: center; gap: 4px; font-size: 0.75rem; font-weight: 600; padding: 2px 8px; border-radius: 10px; }
+.cancel-rate.low { background: var(--green-light); color: #065f46; }
+.cancel-rate.mid { background: var(--accent-light); color: #92400e; }
+.cancel-rate.high { background: var(--red-light); color: #991b1b; }
+
 /* ── Two-col layout ── */
 .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 
@@ -327,6 +364,8 @@ input, select, textarea { font-family: inherit; font-size: 0.88rem; }
     <button class="nav-item" data-page="bookings" onclick="switchPage('bookings')"><span class="nav-icon">📋</span><span class="nav-label">Bookings</span></button>
     <button class="nav-item" data-page="checkins" onclick="switchPage('checkins')"><span class="nav-icon">📍</span><span class="nav-label">Check-ins</span></button>
     <button class="nav-item" data-page="invoices" onclick="switchPage('invoices')"><span class="nav-icon">💰</span><span class="nav-label">Invoices</span></button>
+    <button class="nav-item" data-page="profit" onclick="switchPage('profit')"><span class="nav-icon">📈</span><span class="nav-label">Profit & Loss</span></button>
+    <button class="nav-item" data-page="gallery" onclick="switchPage('gallery')"><span class="nav-icon">🖼️</span><span class="nav-label">Pet Gallery</span></button>
     <button class="nav-item" data-page="expenses" onclick="switchPage('expenses')"><span class="nav-icon">🧾</span><span class="nav-label">Expenses</span></button>
     <button class="nav-item" data-page="settings" onclick="switchPage('settings')"><span class="nav-icon">⚙️</span><span class="nav-label">Settings</span></button>
   </nav>
@@ -390,6 +429,7 @@ input, select, textarea { font-family: inherit; font-size: 0.88rem; }
     <span class="pill" onclick="setBookingFilter('upcoming')">Upcoming</span>
     <span class="pill" onclick="setBookingFilter('completed')">Completed</span>
     <span class="pill" onclick="setBookingFilter('cancelled')">Cancelled</span>
+    <span class="pill" onclick="setBookingFilter('no-show')">No-Shows</span>
   </div>
   <div id="bookingsArea"></div>
 </div>
@@ -424,6 +464,37 @@ input, select, textarea { font-family: inherit; font-size: 0.88rem; }
   </div>
   <div id="expenseKpis"></div>
   <div id="expensesArea"></div>
+</div>
+
+<!-- PROFIT & LOSS PAGE -->
+<div class="page-section" id="page-profit">
+  <div class="page-header">
+    <h2>📈 Profit & Loss</h2>
+    <div style="display:flex;gap:8px;">
+      <select id="profitPeriod" onchange="renderProfit()" style="padding:6px 10px;border:1px solid var(--border);border-radius:8px;background:var(--card);color:var(--text);font-size:0.85rem;">
+        <option value="month">This Month</option>
+        <option value="quarter">This Quarter</option>
+        <option value="year">This Year</option>
+        <option value="all">All Time</option>
+      </select>
+    </div>
+  </div>
+  <div id="profitKpis"></div>
+  <div class="two-col" id="profitCharts"></div>
+  <div id="profitBreakdown" style="margin-top:16px;"></div>
+</div>
+
+<!-- PET GALLERY PAGE -->
+<div class="page-section" id="page-gallery">
+  <div class="page-header">
+    <h2>🖼️ Pet Gallery</h2>
+    <div style="display:flex;gap:8px;">
+      <select id="galleryFilter" onchange="renderGallery()" style="padding:6px 10px;border:1px solid var(--border);border-radius:8px;background:var(--card);color:var(--text);font-size:0.85rem;">
+        <option value="all">All Pets</option>
+      </select>
+    </div>
+  </div>
+  <div id="galleryArea"></div>
 </div>
 
 <!-- SETTINGS PAGE -->
@@ -593,6 +664,8 @@ function switchPage(id) {
   if (id === 'bookings') renderBookings();
   if (id === 'checkins') renderCheckins();
   if (id === 'invoices') renderInvoices();
+  if (id === 'profit') renderProfit();
+  if (id === 'gallery') renderGallery();
   if (id === 'expenses') renderExpenses();
   if (id === 'settings') renderSettings();
 }
@@ -650,7 +723,7 @@ function renderDashboard() {
   }
 }
 
-function statusColor(s) { return s === 'completed' ? 'green' : s === 'cancelled' ? 'red' : s === 'confirmed' ? 'blue' : 'amber'; }
+function statusColor(s) { return s === 'completed' ? 'green' : s === 'cancelled' ? 'red' : s === 'no-show' ? 'red' : s === 'confirmed' ? 'blue' : 'amber'; }
 
 function renderWeeklyChart() {
   const canvas = document.getElementById('weeklyChart');
@@ -849,7 +922,7 @@ function openClientDetail(id) {
   html += '<div style="font-size:0.85rem;color:var(--text-light);">' + esc(c.phone || '') + (c.email ? ' · ' + esc(c.email) : '') + '</div>';
   if (c.address) html += '<div style="font-size:0.82rem;color:var(--text-light);">📍 ' + esc(c.address) + '</div>';
   if (c.notes) html += '<div style="font-size:0.82rem;margin-top:4px;">' + esc(c.notes) + '</div>';
-  html += '<div style="margin-top:6px;"><span class="badge badge-green">' + fmt$(revenue) + ' earned</span> <span class="badge badge-blue">' + clientBookings.length + ' bookings</span></div>';
+  html += '<div style="margin-top:6px;"><span class="badge badge-green">' + fmt$(revenue) + ' earned</span> <span class="badge badge-blue">' + clientBookings.length + ' bookings</span> ' + cancelRateBadge(id) + '</div>';
   html += '</div></div>';
 
   // Pets
@@ -885,6 +958,7 @@ function openClientDetail(id) {
 
   // Quick actions
   let footer = '<button class="btn btn-primary" onclick="document.getElementById(\'detailModal\').classList.remove(\'show\');openNewBookingModal(null,' + c.id + ')">+ Book</button>';
+  footer += '<button class="btn btn-outline" onclick="openClientPortal(' + c.id + ')">📋 Report Card</button>';
   footer += '<button class="btn btn-outline" onclick="sendSMS(' + c.id + ')">📱 Text</button>';
   if (c.email) footer += '<button class="btn btn-outline" onclick="sendEmail(' + c.id + ')">✉️ Email</button>';
   footer += '<button class="btn btn-danger btn-sm" onclick="deleteClient(' + c.id + ')" style="margin-left:auto;">🗑️ Delete</button>';
@@ -948,9 +1022,10 @@ function sendEmail(clientId) {
    ══════════════════════════════════════════ */
 function renderBookings() {
   let filtered = bookings;
-  if (bookingFilter === 'upcoming') filtered = bookings.filter(b => b.date >= todayStr() && b.status !== 'cancelled' && b.status !== 'completed');
+  if (bookingFilter === 'upcoming') filtered = bookings.filter(b => b.date >= todayStr() && b.status !== 'cancelled' && b.status !== 'completed' && b.status !== 'no-show');
   else if (bookingFilter === 'completed') filtered = bookings.filter(b => b.status === 'completed');
   else if (bookingFilter === 'cancelled') filtered = bookings.filter(b => b.status === 'cancelled');
+  else if (bookingFilter === 'no-show') filtered = bookings.filter(b => b.status === 'no-show');
   filtered.sort((a, b) => b.date.localeCompare(a.date) || (b.time || '').localeCompare(a.time || ''));
 
   if (filtered.length === 0) {
@@ -1031,15 +1106,15 @@ function saveBooking() {
 
   if (!date) { showToast('⚠️ Date required'); return; }
 
-  const booking = { id: genId(), clientId, petIds, service, date, time, duration, price, notes, status: 'scheduled', recurring };
+  const booking = { id: genId(), clientId, petIds, service, date, time, duration, price, notes, status: 'scheduled', recurring, seriesId: recurring ? 'series_' + Date.now() : null };
   bookings.push(booking);
 
-  // If recurring, generate 12 weeks
+  // If recurring, generate 12 weeks with shared seriesId
   if (recurring) {
     for (let w = 1; w <= 12; w++) {
       const d = new Date(date + 'T12:00:00');
       d.setDate(d.getDate() + w * 7);
-      bookings.push({ id: genId(), clientId, petIds: [...petIds], service, date: d.toISOString().slice(0, 10), time, duration, price, notes, status: 'scheduled', recurring: false });
+      bookings.push({ id: genId(), clientId, petIds: [...petIds], service, date: d.toISOString().slice(0, 10), time, duration, price, notes, status: 'scheduled', recurring: false, seriesId: booking.seriesId });
     }
     showToast('✅ Booking + 12 weekly recurrences created');
   } else {
@@ -1083,10 +1158,14 @@ function openBookingDetail(id) {
   if (b.status === 'scheduled' || b.status === 'confirmed') {
     footer += '<button class="btn btn-primary" onclick="startCheckin(' + b.id + ')">📍 Check In</button>';
     footer += '<button class="btn btn-accent" onclick="completeBooking(' + b.id + ')">✅ Complete</button>';
+    footer += '<button class="btn btn-outline" onclick="markNoShow(' + b.id + ')">🚫 No-Show</button>';
     footer += '<button class="btn btn-danger btn-sm" onclick="cancelBooking(' + b.id + ')">Cancel</button>';
   }
   if (b.status === 'completed') {
     footer += '<button class="btn btn-primary" onclick="document.getElementById(\'detailModal\').classList.remove(\'show\');createInvoiceFromBooking(' + b.id + ')">💰 Create Invoice</button>';
+  }
+  if (b.seriesId) {
+    footer += '<button class="btn btn-outline btn-sm" onclick="cancelSeries(\'' + b.seriesId + '\')">Cancel Series</button>';
   }
   footer += '<button class="btn btn-ghost" onclick="document.getElementById(\'detailModal\').classList.remove(\'show\')">&times; Close</button>';
 
@@ -1119,15 +1198,24 @@ function startCheckin(bookingId) {
   if (!b) return;
   const c = clients.find(cl => cl.id === b.clientId);
   checkinPhotos = [];
+  activeRoute = { points: [], watchId: null, startTime: null, tracking: false };
 
   let html = '<div style="margin-bottom:12px;font-weight:700;">' + esc(b.service) + ' — ' + esc(c ? c.name : '') + '</div>';
+  // GPS Route Tracker
+  html += '<div class="route-tracker" id="routeTracker" style="display:none;">';
+  html += '<div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-weight:700;"><span class="pulse-dot" id="routePulse"></span> GPS Route Tracking</span><button class="btn btn-sm btn-danger" onclick="stopRouteTracking()">⏹ Stop</button></div>';
+  html += '<div class="route-stats"><div class="route-stat"><div class="stat-val" id="routeDistance">0.00</div><div class="stat-label">Miles</div></div>';
+  html += '<div class="route-stat"><div class="stat-val" id="routeDuration">0:00</div><div class="stat-label">Duration</div></div>';
+  html += '<div class="route-stat"><div class="stat-val" id="routePoints">0</div><div class="stat-label">Points</div></div></div>';
+  html += '</div>';
+  html += '<div style="margin-bottom:10px;"><button class="btn btn-sm btn-outline" id="routeStartBtn" onclick="startRouteTracking()" style="background:#d1fae5;color:#065f46;border-color:#10b981;">📍 Start GPS Route Tracking</button></div>';
   html += '<div class="form-group"><label>Notes</label><textarea id="ciNotes" rows="3" placeholder="How did the walk go? Any concerns?"></textarea></div>';
   html += '<div class="form-group" style="margin-top:8px;"><label>📸 Photo</label><div style="display:flex;gap:8px;align-items:center;"><button class="btn btn-sm btn-outline" onclick="document.getElementById(\'ciPhotoInput\').click()">📷 Add Photo</button><span id="ciPhotoCount" style="font-size:0.8rem;color:var(--text-light);"></span></div><div id="ciPhotoPreview" class="checkin-photos" style="margin-top:6px;"></div></div>';
   html += '<div style="margin-top:8px;font-size:0.82rem;color:var(--text-light);">Auto-timestamped at check-in</div>';
 
   let footer = '<button class="btn btn-primary" onclick="saveCheckin(' + bookingId + ')">📍 Save Check-in</button>';
   footer += '<button class="btn btn-outline" onclick="saveCheckin(' + bookingId + ', true)">📍 Save & Share</button>';
-  footer += '<button class="btn btn-ghost" onclick="document.getElementById(\'detailModal\').classList.remove(\'show\')">Cancel</button>';
+  footer += '<button class="btn btn-ghost" onclick="stopRouteTracking();document.getElementById(\'detailModal\').classList.remove(\'show\')">Cancel</button>';
 
   document.getElementById('detailModalTitle').textContent = '📍 Check In';
   document.getElementById('detailModalBody').innerHTML = html;
@@ -1136,9 +1224,11 @@ function startCheckin(bookingId) {
 }
 
 function saveCheckin(bookingId, share) {
+  stopRouteTracking();
   const notes = document.getElementById('ciNotes').value.trim();
   const photos = [...checkinPhotos];
-  const ci = { id: genId(), bookingId, clientId: bookings.find(b => b.id === bookingId).clientId, petNames: '', time: new Date().toISOString(), notes, photos };
+  const route = activeRoute.points.length > 1 ? { points: activeRoute.points, distance: calcRouteDistance(activeRoute.points), duration: activeRoute.startTime ? Math.round((Date.now() - activeRoute.startTime) / 60000) : 0 } : null;
+  const ci = { id: genId(), bookingId, clientId: bookings.find(b => b.id === bookingId).clientId, petNames: '', time: new Date().toISOString(), notes, photos, route };
   checkins.push(ci);
 
   // Mark booking as confirmed/in-progress
@@ -1178,6 +1268,7 @@ function renderCheckins() {
     html += '<div class="checkin-header"><span class="checkin-time">' + new Date(ci.time).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) + '</span><span class="badge badge-blue">' + esc(b ? b.service : '') + '</span></div>';
     html += '<div style="font-weight:600;">' + esc(c ? c.name : '') + '</div>';
     if (ci.notes) html += '<div class="checkin-notes">' + esc(ci.notes) + '</div>';
+    if (ci.route) html += '<div style="display:flex;gap:12px;margin-top:6px;font-size:0.82rem;"><span style="color:var(--primary);font-weight:600;">📍 ' + ci.route.distance.toFixed(2) + ' mi</span><span style="color:var(--text-light);">⏱ ' + ci.route.duration + ' min</span><span style="color:var(--text-light);">' + (ci.route.points ? ci.route.points.length : 0) + ' GPS pts</span></div>';
     if (ci.photos && ci.photos.length) { html += '<div class="checkin-photos">'; ci.photos.forEach(p => html += '<img src="' + p + '" alt="check-in photo" onclick="window.open(this.src)">'); html += '</div>'; }
     html += '</div>';
   });
@@ -1459,6 +1550,364 @@ function exportAllData() {
 }
 
 /* ══════════════════════════════════════════
+   GPS ROUTE TRACKING
+   ══════════════════════════════════════════ */
+let activeRoute = { points: [], watchId: null, startTime: null, tracking: false };
+
+function startRouteTracking() {
+  if (!navigator.geolocation) { showToast('⚠️ GPS not available in this browser'); return; }
+  activeRoute = { points: [], watchId: null, startTime: Date.now(), tracking: true };
+  document.getElementById('routeTracker').style.display = '';
+  document.getElementById('routeStartBtn').style.display = 'none';
+  activeRoute.watchId = navigator.geolocation.watchPosition(
+    function(pos) {
+      activeRoute.points.push({ lat: pos.coords.latitude, lng: pos.coords.longitude, t: Date.now() });
+      const dist = calcRouteDistance(activeRoute.points);
+      const dur = Math.round((Date.now() - activeRoute.startTime) / 60000);
+      const el = document.getElementById('routeDistance'); if (el) el.textContent = dist.toFixed(2);
+      const el2 = document.getElementById('routeDuration'); if (el2) el2.textContent = dur + ':' + String(Math.round((Date.now() - activeRoute.startTime) / 1000) % 60).padStart(2, '0');
+      const el3 = document.getElementById('routePoints'); if (el3) el3.textContent = activeRoute.points.length;
+    },
+    function(err) { showToast('⚠️ GPS error: ' + err.message); },
+    { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 }
+  );
+  showToast('📍 GPS tracking started');
+}
+
+function stopRouteTracking() {
+  if (activeRoute.watchId !== null) {
+    navigator.geolocation.clearWatch(activeRoute.watchId);
+    activeRoute.watchId = null;
+  }
+  activeRoute.tracking = false;
+}
+
+function calcRouteDistance(points) {
+  let total = 0;
+  for (let i = 1; i < points.length; i++) {
+    total += haversine(points[i-1].lat, points[i-1].lng, points[i].lat, points[i].lng);
+  }
+  return total;
+}
+
+function haversine(lat1, lon1, lat2, lon2) {
+  const R = 3958.8; // miles
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon/2) * Math.sin(dLon/2);
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+/* ══════════════════════════════════════════
+   NO-SHOW & CANCELLATION TRACKING
+   ══════════════════════════════════════════ */
+function markNoShow(id) {
+  if (!confirm('Mark this booking as a no-show?')) return;
+  const b = bookings.find(bk => bk.id === id);
+  if (b) { b.status = 'no-show'; saveData(); showToast('🚫 Marked as no-show'); }
+  document.getElementById('detailModal').classList.remove('show');
+  switchPage(document.querySelector('.nav-item.active').dataset.page);
+}
+
+function cancelSeries(seriesId) {
+  const seriesBookings = bookings.filter(b => b.seriesId === seriesId && b.status === 'scheduled');
+  if (seriesBookings.length === 0) { showToast('No upcoming bookings in this series'); return; }
+  if (!confirm('Cancel all ' + seriesBookings.length + ' upcoming bookings in this series?')) return;
+  seriesBookings.forEach(b => { b.status = 'cancelled'; });
+  saveData(); showToast('🗑️ ' + seriesBookings.length + ' bookings cancelled');
+  document.getElementById('detailModal').classList.remove('show');
+  switchPage(document.querySelector('.nav-item.active').dataset.page);
+}
+
+function getClientCancelRate(clientId) {
+  const clientBookings = bookings.filter(b => b.clientId === clientId);
+  if (clientBookings.length === 0) return { rate: 0, cancels: 0, noShows: 0, total: 0 };
+  const cancels = clientBookings.filter(b => b.status === 'cancelled').length;
+  const noShows = clientBookings.filter(b => b.status === 'no-show').length;
+  return { rate: (cancels + noShows) / clientBookings.length, cancels, noShows, total: clientBookings.length };
+}
+
+function cancelRateBadge(clientId) {
+  const cr = getClientCancelRate(clientId);
+  if (cr.total < 3) return '';
+  const pct = Math.round(cr.rate * 100);
+  const cls = pct >= 30 ? 'high' : pct >= 15 ? 'mid' : 'low';
+  const icon = pct >= 30 ? '⚠️' : pct >= 15 ? '🔸' : '✅';
+  return '<span class="cancel-rate ' + cls + '">' + icon + ' ' + pct + '% cancel rate (' + cr.cancels + ' cancelled, ' + cr.noShows + ' no-show)</span>';
+}
+
+/* ══════════════════════════════════════════
+   PROFIT & LOSS
+   ══════════════════════════════════════════ */
+function renderProfit() {
+  const period = document.getElementById('profitPeriod').value;
+  const now = new Date();
+  let startDate;
+  if (period === 'month') { startDate = new Date(now.getFullYear(), now.getMonth(), 1); }
+  else if (period === 'quarter') { startDate = new Date(now.getFullYear(), Math.floor(now.getMonth() / 3) * 3, 1); }
+  else if (period === 'year') { startDate = new Date(now.getFullYear(), 0, 1); }
+  else { startDate = new Date(2000, 0, 1); }
+  const startStr = startDate.toISOString().slice(0, 10);
+
+  const paidInv = invoices.filter(i => i.status === 'paid' && i.date >= startStr);
+  const periodExp = expenses.filter(e => e.date >= startStr);
+  const revenue = paidInv.reduce((s, i) => s + i.total, 0);
+  const tips = paidInv.reduce((s, i) => s + (i.tip || 0), 0);
+  const totalExpenses = periodExp.reduce((s, e) => s + e.amount, 0);
+  const mileageDeduction = periodExp.reduce((s, e) => s + (e.mileage || 0), 0) * settings.mileageRate;
+  const profit = revenue - totalExpenses;
+  const margin = revenue > 0 ? Math.round(profit / revenue * 100) : 0;
+
+  // KPIs
+  let kpi = '<div class="kpi-grid">';
+  kpi += '<div class="kpi-card green"><div class="kpi-label">Revenue</div><div class="kpi-value">' + fmt$(revenue) + '</div><div class="kpi-sub">' + paidInv.length + ' paid invoices · ' + fmt$(tips) + ' in tips</div></div>';
+  kpi += '<div class="kpi-card red"><div class="kpi-label">Expenses</div><div class="kpi-value">' + fmt$(totalExpenses) + '</div><div class="kpi-sub">' + periodExp.length + ' entries</div></div>';
+  kpi += '<div class="kpi-card' + (profit >= 0 ? ' accent' : ' red') + '"><div class="kpi-label">Net Profit</div><div class="kpi-value">' + fmt$(profit) + '</div><div class="kpi-sub">' + margin + '% margin</div></div>';
+  kpi += '<div class="kpi-card purple"><div class="kpi-label">Mileage Deduction</div><div class="kpi-value">' + fmt$(mileageDeduction) + '</div><div class="kpi-sub">' + (periodExp.reduce((s, e) => s + (e.mileage || 0), 0)).toFixed(1) + ' miles</div></div>';
+  kpi += '</div>';
+  document.getElementById('profitKpis').innerHTML = kpi;
+
+  // Charts
+  let ch = '';
+  ch += '<div class="card"><div class="card-header">Monthly Trend</div><div class="card-body"><div class="chart-wrap"><canvas id="profitTrendChart"></canvas></div></div></div>';
+  ch += '<div class="card"><div class="card-header">Expense Categories</div><div class="card-body"><div class="chart-wrap"><canvas id="expenseCatChart"></canvas></div></div></div>';
+  document.getElementById('profitCharts').innerHTML = ch;
+
+  // P&L Breakdown table
+  const svcRevenue = {};
+  paidInv.forEach(i => { i.items.forEach(it => { svcRevenue[it.desc] = (svcRevenue[it.desc] || 0) + it.amount; }); });
+  const expByCat = {};
+  periodExp.forEach(e => { expByCat[e.category] = (expByCat[e.category] || 0) + e.amount; });
+
+  let tbl = '<div class="card"><div class="card-header">P&L Breakdown</div><div class="card-body" style="padding:0;overflow-x:auto;"><table class="pnl-table">';
+  tbl += '<tr class="pnl-cat"><td colspan="2" style="font-weight:700;color:var(--green);padding-top:12px;">REVENUE</td></tr>';
+  Object.entries(svcRevenue).sort((a, b) => b[1] - a[1]).forEach(([svc, amt]) => {
+    tbl += '<tr><td style="padding-left:24px;">' + esc(svc) + '</td><td style="text-align:right;">' + fmt$(amt) + '</td></tr>';
+  });
+  if (tips > 0) tbl += '<tr><td style="padding-left:24px;">Tips</td><td style="text-align:right;">' + fmt$(tips) + '</td></tr>';
+  tbl += '<tr class="pnl-total"><td>Total Revenue</td><td style="text-align:right;">' + fmt$(revenue) + '</td></tr>';
+  tbl += '<tr class="pnl-cat"><td colspan="2" style="font-weight:700;color:var(--red);padding-top:16px;">EXPENSES</td></tr>';
+  Object.entries(expByCat).sort((a, b) => b[1] - a[1]).forEach(([cat, amt]) => {
+    tbl += '<tr><td style="padding-left:24px;">' + esc(cat) + '</td><td style="text-align:right;color:var(--red);">-' + fmt$(amt) + '</td></tr>';
+  });
+  tbl += '<tr class="pnl-total"><td>Total Expenses</td><td style="text-align:right;color:var(--red);">-' + fmt$(totalExpenses) + '</td></tr>';
+  tbl += '<tr class="pnl-profit"><td>NET PROFIT</td><td style="text-align:right;" class="' + (profit >= 0 ? 'pnl-pos' : 'pnl-neg') + '">' + fmt$(profit) + '</td></tr>';
+  tbl += '</table></div></div>';
+  tbl += '<div class="card" style="margin-top:12px;"><div class="card-header">Tax Summary</div><div class="card-body"><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:0.88rem;">';
+  tbl += '<div><div style="color:var(--text-light);font-size:0.78rem;">Gross Income</div><div style="font-weight:700;">' + fmt$(revenue) + '</div></div>';
+  tbl += '<div><div style="color:var(--text-light);font-size:0.78rem;">Business Expenses</div><div style="font-weight:700;color:var(--red);">-' + fmt$(totalExpenses) + '</div></div>';
+  tbl += '<div><div style="color:var(--text-light);font-size:0.78rem;">Mileage Deduction</div><div style="font-weight:700;color:var(--purple);">-' + fmt$(mileageDeduction) + '</div></div>';
+  tbl += '<div><div style="color:var(--text-light);font-size:0.78rem;">Taxable Income (est.)</div><div style="font-weight:700;">' + fmt$(Math.max(0, revenue - totalExpenses - mileageDeduction)) + '</div></div>';
+  tbl += '</div></div></div>';
+  document.getElementById('profitBreakdown').innerHTML = tbl;
+
+  // Render charts
+  renderProfitTrendChart(startStr);
+  renderExpenseCatChart(startStr);
+}
+
+function renderProfitTrendChart(startStr) {
+  const canvas = document.getElementById('profitTrendChart');
+  if (!canvas) return;
+  const months = {};
+  invoices.filter(i => i.status === 'paid' && i.date >= startStr).forEach(i => {
+    const m = i.date.slice(0, 7);
+    months[m] = months[m] || { rev: 0, exp: 0 };
+    months[m].rev += i.total;
+  });
+  expenses.filter(e => e.date >= startStr).forEach(e => {
+    const m = e.date.slice(0, 7);
+    months[m] = months[m] || { rev: 0, exp: 0 };
+    months[m].exp += e.amount;
+  });
+  const sorted = Object.entries(months).sort((a, b) => a[0].localeCompare(b[0]));
+  const labels = sorted.map(([m]) => { const d = new Date(m + '-01'); return d.toLocaleDateString('en-US', { month: 'short' }); });
+  const revData = sorted.map(([, v]) => v.rev);
+  const expData = sorted.map(([, v]) => v.exp);
+  if (canvas._chart) canvas._chart.destroy();
+  canvas._chart = new Chart(canvas, { type: 'bar', data: { labels, datasets: [{ label: 'Revenue', data: revData, backgroundColor: '#10b981', borderRadius: 6 }, { label: 'Expenses', data: expData, backgroundColor: '#ef4444', borderRadius: 6 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } }, scales: { y: { beginAtZero: true, ticks: { callback: v => '$' + v } } } } });
+}
+
+function renderExpenseCatChart(startStr) {
+  const canvas = document.getElementById('expenseCatChart');
+  if (!canvas) return;
+  const cats = {};
+  expenses.filter(e => e.date >= startStr).forEach(e => { cats[e.category] = (cats[e.category] || 0) + e.amount; });
+  const labels = Object.keys(cats); const data = Object.values(cats);
+  const colors = ['#ef4444', '#f97316', '#f59e0b', '#8b5cf6', '#ec4899', '#3b82f6', '#10b981'];
+  if (canvas._chart) canvas._chart.destroy();
+  canvas._chart = new Chart(canvas, { type: 'doughnut', data: { labels, datasets: [{ data, backgroundColor: colors.slice(0, labels.length) }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } } });
+}
+
+/* ══════════════════════════════════════════
+   PET GALLERY
+   ══════════════════════════════════════════ */
+function renderGallery() {
+  // Populate filter
+  const filterSel = document.getElementById('galleryFilter');
+  const curVal = filterSel.value;
+  const allPets = [];
+  clients.forEach(c => c.pets.forEach(p => { if (allPets.indexOf(p.name) === -1) allPets.push(p.name); }));
+  filterSel.innerHTML = '<option value="all">All Pets</option>';
+  allPets.forEach(pn => { filterSel.innerHTML += '<option value="' + esc(pn) + '">' + esc(pn) + '</option>'; });
+  filterSel.value = curVal || 'all';
+
+  // Collect all photos from check-ins + pet profiles
+  const photos = [];
+  checkins.forEach(ci => {
+    const c = clients.find(cl => cl.id === ci.clientId);
+    const b = bookings.find(bk => bk.id === ci.bookingId);
+    const petName = ci.petNames || (b ? b.petIds.join(', ') : '') || (c ? c.pets.map(p => p.name).join(', ') : '');
+    if (ci.photos && ci.photos.length) {
+      ci.photos.forEach(photo => {
+        photos.push({ src: photo, pet: petName, client: c ? c.name : '', date: ci.time, type: 'checkin' });
+      });
+    }
+  });
+  // Pet profile photos
+  clients.forEach(c => {
+    c.pets.forEach(p => {
+      if (p.photo) {
+        photos.push({ src: p.photo, pet: p.name, client: c.name, date: null, type: 'profile' });
+      }
+    });
+  });
+
+  // Filter
+  const filter = filterSel.value;
+  const filtered = filter === 'all' ? photos : photos.filter(p => p.pet.toLowerCase().includes(filter.toLowerCase()));
+
+  if (filtered.length === 0) {
+    document.getElementById('galleryArea').innerHTML = '<div class="empty-state"><h3>No photos yet</h3><p>Photos taken during check-ins and pet profiles will appear here.</p></div>';
+    return;
+  }
+
+  // Group by pet
+  const byPet = {};
+  filtered.forEach(p => {
+    const key = p.pet || 'Unknown';
+    byPet[key] = byPet[key] || [];
+    byPet[key].push(p);
+  });
+
+  let html = '';
+  Object.entries(byPet).forEach(([pet, photos]) => {
+    html += '<div class="card" style="margin-bottom:16px;"><div class="card-header">🐾 ' + esc(pet) + ' <span style="font-weight:400;color:var(--text-light);font-size:0.82rem;">(' + photos.length + ' photo' + (photos.length > 1 ? 's' : '') + ')</span></div>';
+    html += '<div class="card-body"><div class="gallery-grid">';
+    photos.forEach(p => {
+      const caption = p.type === 'profile' ? 'Profile Photo' : new Date(p.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      html += '<div class="gallery-item" onclick="openGalleryLightbox(\'' + p.src.replace(/'/g, "\\'") + '\',\'' + esc(pet) + '\',\'' + esc(caption) + '\')">';
+      html += '<img src="' + p.src + '" alt="' + esc(pet) + '">';
+      html += '<div class="gallery-caption">' + esc(caption) + '</div>';
+      html += '</div>';
+    });
+    html += '</div></div></div>';
+  });
+  document.getElementById('galleryArea').innerHTML = html;
+}
+
+function openGalleryLightbox(src, pet, caption) {
+  let html = '<div style="text-align:center;"><img src="' + src + '" alt="' + esc(pet) + '" style="max-width:100%;max-height:60vh;border-radius:var(--radius);object-fit:contain;"></div>';
+  html += '<div style="text-align:center;margin-top:10px;"><div style="font-weight:700;font-size:1rem;">🐾 ' + esc(pet) + '</div><div style="color:var(--text-light);font-size:0.85rem;">' + esc(caption) + '</div></div>';
+  document.getElementById('detailModalTitle').textContent = '🖼️ Photo';
+  document.getElementById('detailModalBody').innerHTML = html;
+  document.getElementById('detailModalFooter').innerHTML = '<button class="btn btn-ghost" onclick="document.getElementById(\'detailModal\').classList.remove(\'show\')">Close</button>';
+  document.getElementById('detailModal').classList.add('show');
+}
+
+/* ══════════════════════════════════════════
+   CLIENT PORTAL / REPORT CARD
+   ══════════════════════════════════════════ */
+function openClientPortal(clientId) {
+  const c = clients.find(cl => cl.id === clientId);
+  if (!c) return;
+  const clientBookings = bookings.filter(b => b.clientId === clientId && b.status === 'completed').sort((a, b) => b.date.localeCompare(a.date));
+  const clientCheckins = checkins.filter(ci => ci.clientId === clientId).sort((a, b) => new Date(b.time) - new Date(a.time));
+  const revenue = invoices.filter(i => i.clientId === clientId && i.status === 'paid').reduce((s, i) => s + i.total, 0);
+  const totalWalks = clientBookings.length;
+  const totalPhotos = clientCheckins.reduce((s, ci) => s + (ci.photos ? ci.photos.length : 0), 0);
+  const totalDistance = clientCheckins.reduce((s, ci) => s + (ci.route ? ci.route.distance : 0), 0);
+
+  let html = '<div class="portal-view">';
+  html += '<div class="portal-header">';
+  html += avatarHtml(c.name, 'lg');
+  html += '<h1 style="margin-top:10px;">' + esc(c.name) + '\'s Pet Report Card</h1>';
+  html += '<div style="color:var(--text-light);font-size:0.85rem;">by ' + esc(settings.bizName || 'PawTracker') + '</div>';
+  html += '</div>';
+
+  // Stats
+  html += '<div class="kpi-grid" style="margin-bottom:16px;">';
+  html += '<div class="kpi-card"><div class="kpi-label">Total Walks</div><div class="kpi-value">' + totalWalks + '</div></div>';
+  html += '<div class="kpi-card green"><div class="kpi-label">Distance</div><div class="kpi-value">' + totalDistance.toFixed(1) + ' mi</div></div>';
+  html += '<div class="kpi-card accent"><div class="kpi-label">Photos</div><div class="kpi-value">' + totalPhotos + '</div></div>';
+  html += '</div>';
+
+  // Pets
+  c.pets.forEach(p => {
+    html += '<div class="portal-pet-card">';
+    html += '<div style="display:flex;gap:12px;align-items:center;">';
+    if (p.photo) html += '<div class="pet-photo-wrap" style="width:48px;height:48px;"><img src="' + p.photo + '" alt="' + esc(p.name) + '"></div>';
+    html += '<div><div style="font-weight:700;">' + esc(p.name) + '</div>';
+    html += '<div style="color:var(--text-light);font-size:0.82rem;">' + esc(p.breed || '') + (p.weight ? ' · ' + p.weight + ' lbs' : '') + (p.age ? ' · ' + p.age : '') + '</div></div></div>';
+    html += '</div>';
+  });
+
+  // Recent visits
+  if (clientCheckins.length > 0) {
+    html += '<div class="card" style="margin-top:16px;"><div class="card-header">Recent Visits</div><div class="card-body">';
+    clientCheckins.slice(0, 5).forEach(ci => {
+      const b = bookings.find(bk => bk.id === ci.bookingId);
+      html += '<div style="padding:8px 0;border-bottom:1px solid var(--border);">';
+      html += '<div style="display:flex;justify-content:space-between;"><span style="font-weight:600;">' + (b ? esc(b.service) : 'Visit') + '</span><span style="color:var(--text-light);font-size:0.82rem;">' + new Date(ci.time).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + '</span></div>';
+      if (ci.notes) html += '<div style="color:var(--text-light);font-size:0.85rem;margin-top:2px;">' + esc(ci.notes) + '</div>';
+      if (ci.route) html += '<div style="font-size:0.82rem;color:var(--primary);margin-top:2px;">📍 ' + ci.route.distance.toFixed(2) + ' mi · ' + ci.route.duration + ' min</div>';
+      if (ci.photos && ci.photos.length) { html += '<div style="display:flex;gap:6px;margin-top:6px;">'; ci.photos.slice(0, 3).forEach(p => html += '<img src="' + p + '" style="width:48px;height:48px;object-fit:cover;border-radius:6px;">'); html += '</div>'; }
+      html += '</div>';
+    });
+    html += '</div></div>';
+  }
+  html += '</div>';
+
+  document.getElementById('detailModalTitle').textContent = '📋 Report Card';
+  document.getElementById('detailModalBody').innerHTML = html;
+  let footer = '<button class="btn btn-primary" onclick="sharePortal(' + clientId + ')">📤 Share</button>';
+  footer += '<button class="btn btn-ghost" onclick="document.getElementById(\'detailModal\').classList.remove(\'show\')">Close</button>';
+  document.getElementById('detailModalFooter').innerHTML = footer;
+  document.getElementById('detailModal').classList.add('show');
+  document.querySelector('#detailModal .modal-box').scrollTop = 0;
+}
+
+function sharePortal(clientId) {
+  const c = clients.find(cl => cl.id === clientId);
+  if (!c) return;
+  const clientCheckins = checkins.filter(ci => ci.clientId === clientId).sort((a, b) => new Date(b.time) - new Date(a.time));
+  const totalWalks = bookings.filter(b => b.clientId === clientId && b.status === 'completed').length;
+  const totalDistance = clientCheckins.reduce((s, ci) => s + (ci.route ? ci.route.distance : 0), 0);
+
+  let msg = '🐾 ' + esc(c.name) + '\'s Pet Report Card\n';
+  msg += 'from ' + (settings.bizName || 'PawTracker') + '\n\n';
+  msg += '📊 ' + totalWalks + ' walks completed\n';
+  msg += '📍 ' + totalDistance.toFixed(1) + ' miles walked\n\n';
+  c.pets.forEach(p => { msg += '🐕 ' + p.name + (p.breed ? ' (' + p.breed + ')' : '') + '\n'; });
+  if (clientCheckins.length > 0) {
+    msg += '\nLatest: ' + new Date(clientCheckins[0].time).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    if (clientCheckins[0].notes) msg += ' — ' + clientCheckins[0].notes;
+  }
+  msg += '\n\n💕 Thank you for choosing ' + (settings.bizName || 'PawTracker') + '!';
+
+  if (navigator.share) {
+    navigator.share({ title: c.name + '\'s Pet Report Card', text: msg }).catch(() => {});
+  } else if (c.phone) {
+    window.open('sms:' + c.phone + '?body=' + encodeURIComponent(msg), '_blank');
+  } else if (c.email) {
+    window.open('mailto:' + c.email + '?subject=' + encodeURIComponent('Pet Report Card - ' + c.name) + '&body=' + encodeURIComponent(msg), '_blank');
+  } else {
+    // Copy to clipboard
+    navigator.clipboard.writeText(msg).then(() => showToast('📋 Copied to clipboard')).catch(() => showToast('⚠️ Could not share'));
+  }
+}
+
+/* ══════════════════════════════════════════
    PHOTO UPLOADS
    ══════════════════════════════════════════ */
 function handlePetPhotoUpload(input) {
@@ -1599,12 +2048,23 @@ function loadSampleData() {
       const petNames = c.pets.filter(p => p.breed !== 'Cat').map(p => p.name);
       if (petNames.length === 0) continue;
       const svc = services[Math.floor(Math.abs(Math.sin(d * 3 + i * 11)) * Math.min(3, services.length))];
-      const status = d < -1 ? 'completed' : d < 0 ? (Math.random() > 0.3 ? 'completed' : 'cancelled') : d === 0 ? (i < 2 ? 'completed' : 'scheduled') : 'scheduled';
+      const status = d < -1 ? 'completed' : d < 0 ? (Math.random() > 0.3 ? 'completed' : (Math.random() > 0.5 ? 'cancelled' : 'no-show')) : d === 0 ? (i < 2 ? 'completed' : 'scheduled') : 'scheduled';
       bookings.push({
         id: genId(), clientId: ci, petIds: petNames, service: svc.name,
         date: dateStr, time: times[i], duration: svc.duration, price: svc.price,
-        notes: '', status, recurring: false
+        notes: '', status, recurring: false, seriesId: null
       });
+    }
+  }
+
+  // Add a recurring series for first client
+  const seriesId = 'series_sample';
+  const firstClient = clients[0];
+  if (firstClient) {
+    const dogPets = firstClient.pets.filter(p => p.breed !== 'Cat').map(p => p.name);
+    for (let w = 1; w <= 8; w++) {
+      const d = new Date(today); d.setDate(d.getDate() + w * 7);
+      bookings.push({ id: genId(), clientId: firstClient.id, petIds: dogPets, service: '30-min Walk', date: ds(d), time: '09:00', duration: 30, price: 25, notes: 'Standing weekly walk', status: 'scheduled', recurring: w === 1, seriesId });
     }
   }
 
@@ -1623,9 +2083,21 @@ function loadSampleData() {
 
   // Generate checkins
   checkins = [];
-  bookings.filter(b => b.status === 'completed').forEach(b => {
+  bookings.filter(b => b.status === 'completed').forEach((b, idx) => {
     const notes = ['Great walk! Lots of energy today.', 'Played fetch at the park.', 'Calm walk around the block.', 'Refilled water bowl.', 'Met a friend at the dog park!', '', '', ''][Math.floor(Math.random() * 8)];
-    checkins.push({ id: genId(), bookingId: b.id, clientId: b.clientId, petNames: b.petIds.join(', '), time: b.date + 'T' + b.time + ':00', notes, photos: [] });
+    // Generate simulated GPS route for ~40% of checkins
+    let route = null;
+    if (idx % 3 === 0) {
+      const baseLat = 43.0389 + (Math.random() - 0.5) * 0.02;
+      const baseLng = -87.9065 + (Math.random() - 0.5) * 0.02;
+      const numPts = 20 + Math.floor(Math.random() * 30);
+      const pts = [];
+      for (let p = 0; p < numPts; p++) {
+        pts.push({ lat: baseLat + p * 0.0002 * (Math.random() > 0.5 ? 1 : -1) + Math.random() * 0.0005, lng: baseLng + p * 0.0003 + Math.random() * 0.0003, t: Date.now() - (numPts - p) * 15000 });
+      }
+      route = { points: pts, distance: 0.5 + Math.random() * 2.5, duration: 20 + Math.floor(Math.random() * 40) };
+    }
+    checkins.push({ id: genId(), bookingId: b.id, clientId: b.clientId, petNames: b.petIds.join(', '), time: b.date + 'T' + b.time + ':00', notes, photos: [], route });
   });
 
   // Sample expenses
