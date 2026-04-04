@@ -334,6 +334,16 @@ input, select, textarea { font-family: inherit; font-size: 0.88rem; }
 .svc-cards { display: none; }
 .cal-more { font-size: 0.7rem; color: var(--text-light); }
 
+/* ── Booking Cards (hidden on desktop, shown on mobile) ── */
+.booking-cards { display: none; }
+.booking-card-item { background: var(--card); border-radius: var(--radius); border-left: 4px solid var(--primary); box-shadow: var(--shadow); padding: 10px 12px; cursor: pointer; }
+.booking-card-item .bk-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+.booking-card-item .bk-client { font-weight: 700; font-size: 0.9rem; }
+.booking-card-item .bk-details { font-size: 0.8rem; color: var(--text-light); }
+.booking-card-item.completed { border-left-color: var(--green); }
+.booking-card-item.cancelled { border-left-color: var(--red); opacity: 0.7; }
+.booking-card-item.no-show { border-left-color: var(--red); opacity: 0.7; }
+
 /* ── Mobile Hamburger ── */
 .mobile-hamburger { display: none; position: fixed; top: 42px; left: 8px; z-index: 150; width: 40px; height: 40px; border-radius: 50%; background: var(--card); border: 1px solid var(--border); box-shadow: var(--shadow); align-items: center; justify-content: center; font-size: 1.3rem; color: var(--text); cursor: pointer; }
 
@@ -410,6 +420,8 @@ input, select, textarea { font-family: inherit; font-size: 0.88rem; }
   .svc-card .svc-nums { display: flex; gap: 8px; align-items: center; font-size: 0.8rem; }
   .svc-card .svc-nums input { border: 1px solid var(--border); padding: 4px 6px; border-radius: 6px; width: 55px; background: var(--card); color: var(--text); font-size: 0.8rem; text-align: center; }
   .svc-card .svc-del { justify-self: end; }
+  .bookings-table-wrap { display: none; }
+  .booking-cards { display: flex; flex-direction: column; gap: 8px; }
 }
 
 /* ── Demo banner ── */
@@ -1147,13 +1159,26 @@ function renderBookings() {
   if (bookingPage > totalPages) bookingPage = totalPages;
   const start = (bookingPage - 1) * PAGE_SIZE;
   const pageItems = filtered.slice(start, start + PAGE_SIZE);
-  let html = '<div class="card"><div class="card-body" style="padding:0;overflow-x:auto;"><table class="data-table"><thead><tr><th style="position:sticky;top:0;z-index:2;background:var(--card);">Date</th><th style="position:sticky;top:0;z-index:2;background:var(--card);">Time</th><th style="position:sticky;top:0;z-index:2;background:var(--card);">Client</th><th style="position:sticky;top:0;z-index:2;background:var(--card);">Pet(s)</th><th style="position:sticky;top:0;z-index:2;background:var(--card);">Service</th><th style="position:sticky;top:0;z-index:2;background:var(--card);">Status</th><th class="num" style="position:sticky;top:0;z-index:2;background:var(--card);">Price</th></tr></thead><tbody>';
+  // Desktop table
+  let html = '<div class="bookings-table-wrap"><div class="card"><div class="card-body" style="padding:0;overflow-x:auto;"><table class="data-table"><thead><tr><th style="position:sticky;top:0;z-index:2;background:var(--card);">Date</th><th style="position:sticky;top:0;z-index:2;background:var(--card);">Time</th><th style="position:sticky;top:0;z-index:2;background:var(--card);">Client</th><th style="position:sticky;top:0;z-index:2;background:var(--card);">Pet(s)</th><th style="position:sticky;top:0;z-index:2;background:var(--card);">Service</th><th style="position:sticky;top:0;z-index:2;background:var(--card);">Status</th><th class="num" style="position:sticky;top:0;z-index:2;background:var(--card);">Price</th></tr></thead><tbody>';
   pageItems.forEach(b => {
     const c = clients.find(cl => cl.id === b.clientId);
     const petNames = c ? c.pets.filter(p => b.petIds.includes(p.name)).map(p => p.name).join(', ') : '';
     html += '<tr class="clickable-row" onclick="openBookingDetail(' + b.id + ')"><td>' + fmtDate(b.date) + '</td><td>' + fmtTime(b.time) + '</td><td style="font-weight:600;">' + esc(c ? c.name : '') + '</td><td>' + esc(petNames) + '</td><td>' + esc(b.service) + '</td><td><span class="badge badge-' + statusColor(b.status) + '">' + b.status + '</span></td><td class="num">' + fmt$(b.price) + '</td></tr>';
   });
-  html += '</tbody></table></div></div>';
+  html += '</tbody></table></div></div></div>';
+  // Mobile cards
+  html += '<div class="booking-cards">';
+  pageItems.forEach(b => {
+    const c = clients.find(cl => cl.id === b.clientId);
+    const petNames = c ? c.pets.filter(p => b.petIds.includes(p.name)).map(p => p.name).join(', ') : '';
+    html += '<div class="booking-card-item ' + b.status + '" onclick="openBookingDetail(' + b.id + ')">';
+    html += '<div class="bk-top"><span class="bk-client">' + esc(c ? c.name : '') + '</span><span class="badge badge-' + statusColor(b.status) + '">' + b.status + '</span></div>';
+    html += '<div class="bk-details">' + fmtDate(b.date) + ' · ' + fmtTime(b.time) + ' · ' + esc(b.service) + '</div>';
+    html += '<div class="bk-details">🐾 ' + esc(petNames || 'All pets') + ' · <strong>' + fmt$(b.price) + '</strong></div>';
+    html += '</div>';
+  });
+  html += '</div>';
   if (totalPages > 1) html += buildPaginationBar(filtered.length, bookingPage, totalPages, 'bookingPage', 'renderBookings');
   document.getElementById('bookingsArea').innerHTML = html;
 }
