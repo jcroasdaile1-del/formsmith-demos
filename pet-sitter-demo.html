@@ -256,6 +256,20 @@ input, select, textarea { font-family: inherit; font-size: 0.88rem; }
 .page-section { display: none; }
 .page-section.active { display: block; }
 
+/* ── Pagination ── */
+.pagination-bar { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; font-size: 0.82rem; color: var(--text-light); flex-wrap: wrap; gap: 8px; }
+.pagination-bar .page-btns { display: flex; gap: 4px; }
+.pagination-bar .page-btn { padding: 4px 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--card); color: var(--text); cursor: pointer; font-size: 0.8rem; font-weight: 600; }
+.pagination-bar .page-btn:hover { background: var(--primary-light); color: var(--primary); }
+.pagination-bar .page-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+.pagination-bar .page-btn:disabled { opacity: 0.4; cursor: default; }
+
+/* ── Pet Photo ── */
+.pet-photo-wrap { position: relative; width: 72px; height: 72px; border-radius: 50%; overflow: hidden; border: 3px solid var(--border); cursor: pointer; flex-shrink: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; }
+.pet-photo-wrap img { width: 100%; height: 100%; object-fit: cover; }
+.pet-photo-wrap .photo-placeholder { font-size: 2rem; }
+.pet-photo-wrap:hover::after { content: '📷'; position: absolute; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
+
 /* ── Two-col layout ── */
 .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 
@@ -495,6 +509,8 @@ input, select, textarea { font-family: inherit; font-size: 0.88rem; }
 </div>
 
 <div id="toast"></div>
+<input type="file" id="petPhotoInput" accept="image/*" style="display:none" onchange="handlePetPhotoUpload(this)">
+<input type="file" id="ciPhotoInput" accept="image/*" capture="environment" style="display:none" onchange="handleCheckinPhotoUpload(this)">
 
 <script>
 /* ══════════════════════════════════════════
@@ -515,6 +531,9 @@ let invoiceFilter = 'all';
 let editingBookingId = null;
 let editingClientId = null;
 let nextId = 1;
+let checkinPage = 1;
+let invoicePage = 1;
+const PAGE_SIZE = 20;
 
 function genId() { return nextId++; }
 function esc(s) { if (!s) return ''; const d = document.createElement('div'); d.textContent = String(s); return d.innerHTML; }
@@ -740,9 +759,14 @@ function renderClients() {
   filtered.forEach(c => {
     const bookCount = bookings.filter(b => b.clientId === c.id && b.status !== 'cancelled').length;
     const revenue = invoices.filter(i => i.clientId === c.id && i.status === 'paid').reduce((s, i) => s + i.total, 0);
+    const firstPet = c.pets[0];
     html += '<div class="card" style="cursor:pointer;" onclick="openClientDetail(' + c.id + ')">';
     html += '<div class="card-body" style="display:flex;gap:14px;align-items:flex-start;">';
-    html += '<div style="font-size:2rem;">🧑</div>';
+    if (firstPet && firstPet.photo) {
+      html += '<div class="pet-photo-wrap" style="width:48px;height:48px;"><img src="' + firstPet.photo + '" alt="' + esc(firstPet.name) + '"></div>';
+    } else {
+      html += '<div style="font-size:2rem;">🧑</div>';
+    }
     html += '<div style="flex:1;">';
     html += '<div style="font-weight:700;font-size:0.95rem;">' + esc(c.name) + '</div>';
     html += '<div style="font-size:0.82rem;color:var(--text-light);">' + esc(c.phone || '') + (c.email ? ' · ' + esc(c.email) : '') + '</div>';
@@ -774,7 +798,8 @@ function openNewClientModal() {
   html += '<div class="form-group"><label>Age</label><input id="ncPetAge" placeholder="e.g. 3 years"></div>';
   html += '<div class="form-group"><label>Medications</label><input id="ncPetMeds"></div>';
   html += '<div class="form-group"><label>Vet Name</label><input id="ncPetVet"></div>';
-  html += '<div class="form-group" style="grid-column:1/-1;"><label>Special Notes</label><textarea id="ncPetNotes" rows="2" placeholder="Behavior, allergies, fears..."></textarea></div>';
+  html += '<div class="form-group"><label>Special Notes</label><textarea id="ncPetNotes" rows="2" placeholder="Behavior, allergies, fears..."></textarea></div>';
+  html += '<div class="form-group"><label>📷 Pet Photo</label><div style="display:flex;align-items:center;gap:10px;"><div class="pet-photo-wrap" onclick="document.getElementById(\'petPhotoInput\').dataset.target=\'ncPetPhoto\';document.getElementById(\'petPhotoInput\').click()"><span class="photo-placeholder">🐶</span></div><input type="hidden" id="ncPetPhoto"><span style="font-size:0.78rem;color:var(--text-light);">Click to upload</span></div></div>';
   html += '</div></div>';
   document.getElementById('clientModalBody').innerHTML = html;
   document.getElementById('clientModal').classList.add('show');
@@ -790,7 +815,8 @@ function saveClient() {
     age: (document.getElementById('ncPetAge').value || '').trim(),
     meds: (document.getElementById('ncPetMeds').value || '').trim(),
     vetName: (document.getElementById('ncPetVet').value || '').trim(),
-    notes: (document.getElementById('ncPetNotes').value || '').trim()
+    notes: (document.getElementById('ncPetNotes').value || '').trim(),
+    photo: (document.getElementById('ncPetPhoto') || {}).value || ''
   };
   if (editingClientId) {
     const c = clients.find(cl => cl.id === editingClientId);
@@ -1015,14 +1041,14 @@ function openBookingDetail(id) {
 
   let footer = '';
   if (b.status === 'scheduled' || b.status === 'confirmed') {
-    footer += '<button class="btn btn-primary" onclick="startCheckin(' + b.id + ');document.getElementById(\'detailModal\').classList.remove(\'show\');">📍 Check In</button>';
+    footer += '<button class="btn btn-primary" onclick="startCheckin(' + b.id + ')">📍 Check In</button>';
     footer += '<button class="btn btn-accent" onclick="completeBooking(' + b.id + ')">✅ Complete</button>';
     footer += '<button class="btn btn-danger btn-sm" onclick="cancelBooking(' + b.id + ')">Cancel</button>';
   }
   if (b.status === 'completed') {
     footer += '<button class="btn btn-primary" onclick="document.getElementById(\'detailModal\').classList.remove(\'show\');createInvoiceFromBooking(' + b.id + ')">💰 Create Invoice</button>';
   }
-  footer += '<button class="btn btn-ghost" onclick="document.getElementById(\'detailModal\').classList.remove(\'show\')">Close</button>';
+  footer += '<button class="btn btn-ghost" onclick="document.getElementById(\'detailModal\').classList.remove(\'show\')">&times; Close</button>';
 
   document.getElementById('detailModalTitle').textContent = '📋 Booking Details';
   document.getElementById('detailModalBody').innerHTML = html;
@@ -1052,10 +1078,11 @@ function startCheckin(bookingId) {
   const b = bookings.find(bk => bk.id === bookingId);
   if (!b) return;
   const c = clients.find(cl => cl.id === b.clientId);
+  checkinPhotos = [];
 
   let html = '<div style="margin-bottom:12px;font-weight:700;">' + esc(b.service) + ' — ' + esc(c ? c.name : '') + '</div>';
   html += '<div class="form-group"><label>Notes</label><textarea id="ciNotes" rows="3" placeholder="How did the walk go? Any concerns?"></textarea></div>';
-  html += '<div class="form-group" style="margin-top:8px;"><label>📸 Photo (optional)</label><input type="file" id="ciPhoto" accept="image/*" capture="environment"></div>';
+  html += '<div class="form-group" style="margin-top:8px;"><label>📸 Photo</label><div style="display:flex;gap:8px;align-items:center;"><button class="btn btn-sm btn-outline" onclick="document.getElementById(\'ciPhotoInput\').click()">📷 Add Photo</button><span id="ciPhotoCount" style="font-size:0.8rem;color:var(--text-light);"></span></div><div id="ciPhotoPreview" class="checkin-photos" style="margin-top:6px;"></div></div>';
   html += '<div style="margin-top:8px;font-size:0.82rem;color:var(--text-light);">Auto-timestamped at check-in</div>';
 
   let footer = '<button class="btn btn-primary" onclick="saveCheckin(' + bookingId + ')">📍 Save Check-in</button>';
@@ -1070,7 +1097,8 @@ function startCheckin(bookingId) {
 
 function saveCheckin(bookingId, share) {
   const notes = document.getElementById('ciNotes').value.trim();
-  const ci = { id: genId(), bookingId, clientId: bookings.find(b => b.id === bookingId).clientId, petNames: '', time: new Date().toISOString(), notes, photos: [] };
+  const photos = [...checkinPhotos];
+  const ci = { id: genId(), bookingId, clientId: bookings.find(b => b.id === bookingId).clientId, petNames: '', time: new Date().toISOString(), notes, photos };
   checkins.push(ci);
 
   // Mark booking as confirmed/in-progress
@@ -1098,16 +1126,22 @@ function renderCheckins() {
     return;
   }
   const sorted = [...checkins].sort((a, b) => new Date(b.time) - new Date(a.time));
+  const totalPages = Math.ceil(sorted.length / PAGE_SIZE);
+  if (checkinPage > totalPages) checkinPage = totalPages;
+  const start = (checkinPage - 1) * PAGE_SIZE;
+  const pageItems = sorted.slice(start, start + PAGE_SIZE);
   let html = '';
-  sorted.forEach(ci => {
+  pageItems.forEach(ci => {
     const c = clients.find(cl => cl.id === ci.clientId);
     const b = bookings.find(bk => bk.id === ci.bookingId);
     html += '<div class="checkin-card">';
     html += '<div class="checkin-header"><span class="checkin-time">' + new Date(ci.time).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) + '</span><span class="badge badge-blue">' + esc(b ? b.service : '') + '</span></div>';
     html += '<div style="font-weight:600;">' + esc(c ? c.name : '') + '</div>';
     if (ci.notes) html += '<div class="checkin-notes">' + esc(ci.notes) + '</div>';
+    if (ci.photos && ci.photos.length) { html += '<div class="checkin-photos">'; ci.photos.forEach(p => html += '<img src="' + p + '" alt="check-in photo" onclick="window.open(this.src)">'); html += '</div>'; }
     html += '</div>';
   });
+  if (totalPages > 1) html += buildPaginationBar(sorted.length, checkinPage, totalPages, 'checkinPage', 'renderCheckins');
   document.getElementById('checkinsArea').innerHTML = html;
 }
 
@@ -1123,8 +1157,13 @@ function renderInvoices() {
     document.getElementById('invoicesArea').innerHTML = '<div class="empty-state"><h3>No invoices</h3><p>Create invoices from completed bookings.</p></div>';
     return;
   }
+  filtered.sort((a, b) => b.date.localeCompare(a.date));
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+  if (invoicePage > totalPages) invoicePage = totalPages;
+  const start = (invoicePage - 1) * PAGE_SIZE;
+  const pageItems = filtered.slice(start, start + PAGE_SIZE);
   let html = '<div class="card"><div class="card-body" style="padding:0;overflow-x:auto;"><table class="data-table"><thead><tr><th style="position:sticky;top:0;z-index:2;background:var(--card);">Invoice</th><th style="position:sticky;top:0;z-index:2;background:var(--card);">Client</th><th style="position:sticky;top:0;z-index:2;background:var(--card);">Date</th><th style="position:sticky;top:0;z-index:2;background:var(--card);">Status</th><th class="num" style="position:sticky;top:0;z-index:2;background:var(--card);">Total</th><th style="position:sticky;top:0;z-index:2;background:var(--card);">Actions</th></tr></thead><tbody>';
-  filtered.sort((a, b) => b.date.localeCompare(a.date)).forEach(inv => {
+  pageItems.forEach(inv => {
     html += '<tr><td style="font-weight:600;">#' + String(inv.id).padStart(4, '0') + '</td><td>' + esc(inv.clientName) + '</td><td>' + fmtDate(inv.date) + '</td><td><span class="badge badge-' + (inv.status === 'paid' ? 'green' : 'amber') + '">' + inv.status + '</span></td><td class="num" style="font-weight:700;">' + fmt$(inv.total) + '</td>';
     html += '<td style="display:flex;gap:4px;">';
     if (inv.status === 'unpaid') {
@@ -1134,13 +1173,30 @@ function renderInvoices() {
     html += '</td></tr>';
   });
   html += '</tbody></table></div></div>';
+  if (totalPages > 1) html += buildPaginationBar(filtered.length, invoicePage, totalPages, 'invoicePage', 'renderInvoices');
   document.getElementById('invoicesArea').innerHTML = html;
 }
 
 function setInvoiceFilter(f) {
   invoiceFilter = f;
+  invoicePage = 1;
   document.querySelectorAll('#invoiceFilters .pill').forEach(p => p.classList.toggle('active', p.textContent.toLowerCase().includes(f)));
   renderInvoices();
+}
+
+/* ── Shared Pagination Builder ── */
+function buildPaginationBar(total, currentPage, totalPages, pageVar, renderFn) {
+  const start = (currentPage - 1) * PAGE_SIZE + 1;
+  const end = Math.min(currentPage * PAGE_SIZE, total);
+  let html = '<div class="pagination-bar"><span>Showing ' + start + '–' + end + ' of ' + total + '</span><div class="page-btns">';
+  html += '<button class="page-btn" onclick="' + pageVar + '=1;' + renderFn + '()" ' + (currentPage <= 1 ? 'disabled' : '') + '>«</button>';
+  html += '<button class="page-btn" onclick="' + pageVar + '--;' + renderFn + '()" ' + (currentPage <= 1 ? 'disabled' : '') + '>‹</button>';
+  let lo = Math.max(1, currentPage - 2), hi = Math.min(totalPages, currentPage + 2);
+  for (let p = lo; p <= hi; p++) html += '<button class="page-btn' + (p === currentPage ? ' active' : '') + '" onclick="' + pageVar + '=' + p + ';' + renderFn + '()">' + p + '</button>';
+  html += '<button class="page-btn" onclick="' + pageVar + '++;' + renderFn + '()" ' + (currentPage >= totalPages ? 'disabled' : '') + '>›</button>';
+  html += '<button class="page-btn" onclick="' + pageVar + '=' + totalPages + ';' + renderFn + '()" ' + (currentPage >= totalPages ? 'disabled' : '') + '>»</button>';
+  html += '</div></div>';
+  return html;
 }
 
 function openNewInvoiceModal() {
@@ -1360,6 +1416,80 @@ function exportAllData() {
   a.download = 'pawtracker-export-' + todayStr() + '.csv';
   a.click();
   showToast('📤 Data exported');
+}
+
+/* ══════════════════════════════════════════
+   PHOTO UPLOADS
+   ══════════════════════════════════════════ */
+function handlePetPhotoUpload(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    // Resize to max 200x200 for localStorage efficiency
+    const img = new Image();
+    img.onload = function() {
+      const canvas = document.createElement('canvas');
+      const MAX = 200;
+      let w = img.width, h = img.height;
+      if (w > h) { h = Math.round(h * MAX / w); w = MAX; } else { w = Math.round(w * MAX / h); h = MAX; }
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+
+      // Check if this is for the new client form or editing an existing pet
+      const cid = input.dataset.clientId;
+      const pidx = input.dataset.petIdx;
+      if (cid && pidx !== undefined) {
+        const c = clients.find(cl => cl.id === parseInt(cid));
+        if (c && c.pets[parseInt(pidx)]) {
+          c.pets[parseInt(pidx)].photo = dataUrl;
+          saveData();
+          showToast('📷 Photo updated');
+          openClientDetail(parseInt(cid));
+          renderClients();
+        }
+      } else {
+        // New client modal
+        const hidden = document.getElementById('ncPetPhoto');
+        if (hidden) hidden.value = dataUrl;
+        const wrap = hidden ? hidden.closest('.form-group').querySelector('.pet-photo-wrap') : null;
+        if (wrap) wrap.innerHTML = '<img src="' + dataUrl + '" alt="pet photo">';
+      }
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+  input.value = '';
+}
+
+let checkinPhotos = [];
+function handleCheckinPhotoUpload(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const img = new Image();
+    img.onload = function() {
+      const canvas = document.createElement('canvas');
+      const MAX = 300;
+      let w = img.width, h = img.height;
+      if (w > h) { h = Math.round(h * MAX / w); w = MAX; } else { w = Math.round(w * MAX / h); h = MAX; }
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.75);
+      checkinPhotos.push(dataUrl);
+      const preview = document.getElementById('ciPhotoPreview');
+      if (preview) {
+        preview.innerHTML = checkinPhotos.map(p => '<img src="' + p + '" alt="photo" style="width:60px;height:60px;object-fit:cover;border-radius:8px;border:2px solid var(--border);">').join('');
+      }
+      const count = document.getElementById('ciPhotoCount');
+      if (count) count.textContent = checkinPhotos.length + ' photo' + (checkinPhotos.length > 1 ? 's' : '');
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+  input.value = '';
 }
 
 /* ══════════════════════════════════════════
