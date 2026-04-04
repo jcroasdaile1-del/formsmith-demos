@@ -314,6 +314,23 @@ input, select, textarea { font-family: inherit; font-size: 0.88rem; }
 /* ── Two-col layout ── */
 .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 
+/* ── Weather Card ── */
+.weather-card { display: flex; align-items: center; gap: 16px; padding: 16px; background: linear-gradient(135deg, #0d9488, #0f766e); border-radius: var(--radius); color: white; margin-bottom: 16px; }
+.weather-card .weather-icon { font-size: 2.5rem; line-height: 1; }
+.weather-card .weather-temp { font-size: 2rem; font-weight: 800; line-height: 1.1; }
+.weather-card .weather-desc { font-size: 0.85rem; opacity: 0.9; }
+.weather-card .weather-advice { margin-left: auto; font-size: 0.78rem; opacity: 0.85; text-align: right; max-width: 200px; }
+
+/* ── Star Rating ── */
+.star-rating { display: inline-flex; gap: 2px; }
+.star-rating .star { cursor: pointer; font-size: 1.2rem; color: #d1d5db; transition: color 0.15s; }
+.star-rating .star.filled { color: #f59e0b; }
+.star-rating .star:hover { color: #fbbf24; }
+.avg-rating { display: inline-flex; align-items: center; gap: 4px; font-size: 0.82rem; color: #f59e0b; font-weight: 600; }
+
+/* ── Mobile Hamburger ── */
+.mobile-hamburger { display: none; position: fixed; top: 42px; left: 8px; z-index: 150; width: 40px; height: 40px; border-radius: 50%; background: var(--card); border: 1px solid var(--border); box-shadow: var(--shadow); align-items: center; justify-content: center; font-size: 1.3rem; color: var(--text); cursor: pointer; }
+
 /* ── Responsive ── */
 @media (max-width: 800px) {
   .sidebar { width: var(--sidebar-collapsed); }
@@ -324,18 +341,56 @@ input, select, textarea { font-family: inherit; font-size: 0.88rem; }
   .form-grid { grid-template-columns: 1fr; }
   .kpi-grid { grid-template-columns: repeat(2, 1fr); }
   .cal-day { min-height: 50px; }
+  .data-table { font-size: 0.8rem; }
+  .data-table th, .data-table td { padding: 8px 6px; }
+  .modal-box { width: 96vw; max-height: 90vh; }
+  .gallery-grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
+  .day-slot { flex-direction: column; gap: 4px; align-items: flex-start; }
+  .day-slot .slot-time { min-width: auto; }
 }
 @media (max-width: 480px) {
   .kpi-grid { grid-template-columns: 1fr; }
-  .page-header { flex-direction: column; align-items: flex-start; }
+  .page-header { flex-direction: column; align-items: flex-start; gap: 8px; }
 }
 
 /* ── Overlay nav (mobile) ── */
 .sidebar-backdrop { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.3); z-index: 99; }
 @media (max-width: 600px) {
-  .sidebar.mobile-open { width: var(--sidebar-width); z-index: 200; }
+  .mobile-hamburger { display: flex; }
+  .sidebar { width: 0; overflow: hidden; border-right: none; position: fixed; top: 0; left: 0; bottom: 0; transition: width 0.25s; }
+  .sidebar.mobile-open { width: var(--sidebar-width); z-index: 200; overflow: visible; }
   .sidebar.mobile-open .brand-text, .sidebar.mobile-open .nav-label, .sidebar.mobile-open .footer-label { opacity: 1; width: auto; }
   .sidebar-backdrop.show { display: block; }
+  .main-content { margin-left: 0 !important; padding: 12px 10px !important; padding-top: 58px !important; }
+  .page-header h2 { font-size: 1.1rem; }
+  .page-header .subtitle { display: none; }
+  .modal-box { width: 98vw; margin: 4px auto; max-height: 94vh; }
+  .modal-body { padding: 14px 12px; }
+  .modal-footer { flex-wrap: wrap; gap: 6px; }
+  .cal-grid { font-size: 0.7rem; }
+  .cal-day { min-height: 36px; padding: 2px; }
+  .cal-event { font-size: 0.6rem; padding: 1px 3px; }
+  .cal-header h3 { font-size: 1rem; }
+  .kpi-card .kpi-value { font-size: 1.3rem; }
+  .kpi-card { padding: 12px 10px; }
+  .card-header { padding: 10px 12px; font-size: 0.85rem; }
+  .card-body { padding: 12px; }
+  .search-bar input { font-size: 0.85rem; }
+  .checkin-card { padding: 10px; }
+  .pagination-bar { flex-direction: column; gap: 6px; }
+  .portal-view { padding: 12px; }
+  .pnl-table { font-size: 0.78rem; }
+  .pnl-table th, .pnl-table td { padding: 6px 8px; }
+  .weather-card { flex-wrap: wrap; padding: 12px; gap: 10px; }
+  .weather-card .weather-advice { margin-left: 0; text-align: left; max-width: none; }
+  .route-tracker { padding: 10px; }
+  .gallery-grid { grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 8px; }
+  .gallery-caption { font-size: 0.7rem; }
+  .form-group label { font-size: 0.82rem; }
+  .form-group input, .form-group select, .form-group textarea { font-size: 0.85rem; padding: 8px 10px; }
+  select { width: 100%; box-sizing: border-box; padding-right: 28px; }
+  .btn { padding: 7px 12px; font-size: 0.82rem; }
+  .data-table th, .data-table td { padding: 6px 5px; font-size: 0.75rem; }
 }
 
 /* ── Demo banner ── */
@@ -375,6 +430,7 @@ input, select, textarea { font-family: inherit; font-size: 0.88rem; }
   </div>
 </aside>
 <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="closeMobileSidebar()"></div>
+<button class="mobile-hamburger" id="mobileHamburger" onclick="openMobileSidebar()">☰</button>
 
 <!-- ═══════ MAIN CONTENT ═══════ -->
 <div class="main-content">
@@ -387,6 +443,7 @@ input, select, textarea { font-family: inherit; font-size: 0.88rem; }
       <button class="btn btn-primary" onclick="openNewBookingModal()">+ New Booking</button>
     </div>
   </div>
+  <div id="weatherCard"></div>
   <div id="dashKpis"></div>
   <div class="two-col" id="dashCharts"></div>
   <div class="card" style="margin-top:16px;">
@@ -508,7 +565,7 @@ input, select, textarea { font-family: inherit; font-size: 0.88rem; }
         <div class="form-group"><label>Your Name</label><input id="setOwnerName"></div>
         <div class="form-group"><label>Phone</label><input id="setBizPhone"></div>
         <div class="form-group"><label>Email</label><input id="setBizEmail" type="email"></div>
-        <div class="form-group"><label>Email Provider</label><select id="setEmailProvider"><option value="default">Default (mailto:)</option><option value="gmail">Gmail</option><option value="outlook">Outlook</option><option value="yahoo">Yahoo Mail</option></select></div>
+        <div class="form-group"><label>Email Provider</label><select id="setEmailProvider" onchange="settings.emailProvider=this.value;saveData();showToast('📧 Email provider saved')"><option value="default">Default (mailto:)</option><option value="gmail">Gmail</option><option value="outlook">Outlook</option><option value="yahoo">Yahoo Mail</option></select></div>
         <div class="form-group"><label>Mileage Rate ($/mile)</label><input id="setMileageRate" type="number" step="0.01" value="0.67"></div>
       </div>
       <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap;">
@@ -611,6 +668,7 @@ let editingBookingId = null;
 let editingClientId = null;
 let nextId = 1;
 let checkinPage = 1;
+let bookingPage = 1;
 let invoicePage = 1;
 const PAGE_SIZE = 20;
 
@@ -659,6 +717,10 @@ function closeMobileSidebar() {
   document.getElementById('sidebar').classList.remove('mobile-open');
   document.getElementById('sidebarBackdrop').classList.remove('show');
 }
+function openMobileSidebar() {
+  document.getElementById('sidebar').classList.add('mobile-open');
+  document.getElementById('sidebarBackdrop').classList.add('show');
+}
 function switchPage(id) {
   document.querySelectorAll('.page-section').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -701,6 +763,9 @@ function renderDashboard() {
   kpi += '<div class="kpi-card accent"><div class="kpi-label">Month Revenue</div><div class="kpi-value">' + fmt$(monthRevenue) + '</div><div class="kpi-sub">' + monthBookings.length + ' bookings</div></div>';
   kpi += '<div class="kpi-card green"><div class="kpi-label">Active Clients</div><div class="kpi-value">' + activeClients + '</div><div class="kpi-sub">' + totalPets + ' pets total</div></div>';
   kpi += '<div class="kpi-card' + (unpaid > 0 ? ' red' : ' purple') + '"><div class="kpi-label">Unpaid</div><div class="kpi-value">' + fmt$(unpaid) + '</div><div class="kpi-sub">' + invoices.filter(i => i.status === 'unpaid').length + ' invoices</div></div>';
+  var ratedCIs = checkins.filter(function(ci) { return ci.walkRating; });
+  var avgR = ratedCIs.length ? (ratedCIs.reduce(function(s, ci) { return s + ci.walkRating; }, 0) / ratedCIs.length).toFixed(1) : '—';
+  kpi += '<div class="kpi-card purple"><div class="kpi-label">Avg Rating</div><div class="kpi-value">★ ' + avgR + '</div><div class="kpi-sub">' + ratedCIs.length + ' rated walks</div></div>';
   kpi += '</div>';
   document.getElementById('dashKpis').innerHTML = kpi;
 
@@ -729,6 +794,7 @@ function renderDashboard() {
     html += '</div>';
     document.getElementById('dashToday').innerHTML = html;
   }
+  fetchWeather();
 }
 
 function statusColor(s) { return s === 'completed' ? 'green' : s === 'cancelled' ? 'red' : s === 'no-show' ? 'red' : s === 'confirmed' ? 'blue' : 'amber'; }
@@ -1067,18 +1133,24 @@ function renderBookings() {
     document.getElementById('bookingsArea').innerHTML = '<div class="empty-state"><h3>No bookings found</h3><button class="btn btn-primary" onclick="openNewBookingModal()">+ New Booking</button></div>';
     return;
   }
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+  if (bookingPage > totalPages) bookingPage = totalPages;
+  const start = (bookingPage - 1) * PAGE_SIZE;
+  const pageItems = filtered.slice(start, start + PAGE_SIZE);
   let html = '<div class="card"><div class="card-body" style="padding:0;overflow-x:auto;"><table class="data-table"><thead><tr><th style="position:sticky;top:0;z-index:2;background:var(--card);">Date</th><th style="position:sticky;top:0;z-index:2;background:var(--card);">Time</th><th style="position:sticky;top:0;z-index:2;background:var(--card);">Client</th><th style="position:sticky;top:0;z-index:2;background:var(--card);">Pet(s)</th><th style="position:sticky;top:0;z-index:2;background:var(--card);">Service</th><th style="position:sticky;top:0;z-index:2;background:var(--card);">Status</th><th class="num" style="position:sticky;top:0;z-index:2;background:var(--card);">Price</th></tr></thead><tbody>';
-  filtered.forEach(b => {
+  pageItems.forEach(b => {
     const c = clients.find(cl => cl.id === b.clientId);
     const petNames = c ? c.pets.filter(p => b.petIds.includes(p.name)).map(p => p.name).join(', ') : '';
     html += '<tr class="clickable-row" onclick="openBookingDetail(' + b.id + ')"><td>' + fmtDate(b.date) + '</td><td>' + fmtTime(b.time) + '</td><td style="font-weight:600;">' + esc(c ? c.name : '') + '</td><td>' + esc(petNames) + '</td><td>' + esc(b.service) + '</td><td><span class="badge badge-' + statusColor(b.status) + '">' + b.status + '</span></td><td class="num">' + fmt$(b.price) + '</td></tr>';
   });
   html += '</tbody></table></div></div>';
+  if (totalPages > 1) html += buildPaginationBar(filtered.length, bookingPage, totalPages, 'bookingPage', 'renderBookings');
   document.getElementById('bookingsArea').innerHTML = html;
 }
 
 function setBookingFilter(f) {
   bookingFilter = f;
+  bookingPage = 1;
   document.querySelectorAll('#bookingFilters .pill').forEach(p => p.classList.toggle('active', p.textContent.toLowerCase().includes(f)));
   renderBookings();
 }
@@ -1212,9 +1284,19 @@ function openBookingDetail(id) {
 
 function completeBooking(id) {
   const b = bookings.find(bk => bk.id === id);
-  if (b) { b.status = 'completed'; saveData(); showToast('✅ Booking completed'); }
+  if (!b) return;
+  b.status = 'completed';
+  // Auto-create invoice
+  const c = clients.find(cl => cl.id === b.clientId);
+  const inv = { id: genId(), clientId: b.clientId, clientName: c ? c.name : '', items: [{ desc: b.service, amount: b.price }], subtotal: b.price, tip: 0, total: b.price, status: 'unpaid', date: todayStr(), sentDate: null, paidDate: null };
+  invoices.push(inv);
+  saveData();
+  showToast('✅ Completed — Invoice #' + String(inv.id).padStart(4, '0') + ' created');
   document.getElementById('detailModal').classList.remove('show');
   switchPage(document.querySelector('.nav-item.active').dataset.page);
+  setTimeout(function() {
+    if (confirm('Send invoice to ' + (c ? c.name : 'client') + ' for ' + fmt$(b.price) + '?')) { sendInvoice(inv.id); }
+  }, 400);
 }
 
 function cancelBooking(id) {
@@ -1312,6 +1394,7 @@ function renderCheckins() {
     if (ci.notes) html += '<div class="checkin-notes">' + esc(ci.notes) + '</div>';
     if (ci.route) html += '<div style="display:flex;gap:12px;margin-top:6px;font-size:0.82rem;"><span style="color:var(--primary);font-weight:600;">📍 ' + ci.route.distance.toFixed(2) + ' mi</span><span style="color:var(--text-light);">⏱ ' + ci.route.duration + ' min</span><span style="color:var(--text-light);">' + (ci.route.points ? ci.route.points.length : 0) + ' GPS pts</span></div>';
     if (ci.photos && ci.photos.length) { html += '<div class="checkin-photos">'; ci.photos.forEach(p => html += '<img src="' + p + '" alt="check-in photo" onclick="window.open(this.src)">'); html += '</div>'; }
+    html += '<div style="margin-top:6px;">' + starRatingHtml(ci.id, ci.walkRating) + '</div>';
     html += '</div>';
   });
   if (totalPages > 1) html += buildPaginationBar(sorted.length, checkinPage, totalPages, 'checkinPage', 'renderCheckins');
@@ -1897,8 +1980,10 @@ function openClientPortal(clientId) {
   const clientCheckins = checkins.filter(ci => ci.clientId === clientId).sort((a, b) => new Date(b.time) - new Date(a.time));
   const revenue = invoices.filter(i => i.clientId === clientId && i.status === 'paid').reduce((s, i) => s + i.total, 0);
   const totalWalks = clientBookings.length;
-  const totalPhotos = clientCheckins.reduce((s, ci) => s + (ci.photos ? ci.photos.length : 0), 0);
+  const totalPhotos = clientCheckins.reduce((s, ci) => s + (ci.photos ? ci.photos.length : 0), 0) + c.pets.filter(p => p.photo).length;
   const totalDistance = clientCheckins.reduce((s, ci) => s + (ci.route ? ci.route.distance : 0), 0);
+  const clientRatedCIs = clientCheckins.filter(ci => ci.walkRating);
+  const clientAvgRating = clientRatedCIs.length > 0 ? (clientRatedCIs.reduce((s, ci) => s + ci.walkRating, 0) / clientRatedCIs.length).toFixed(1) : '—';
 
   let html = '<div class="portal-view">';
   html += '<div class="portal-header">';
@@ -1912,6 +1997,7 @@ function openClientPortal(clientId) {
   html += '<div class="kpi-card"><div class="kpi-label">Total Walks</div><div class="kpi-value">' + totalWalks + '</div></div>';
   html += '<div class="kpi-card green"><div class="kpi-label">Distance</div><div class="kpi-value">' + totalDistance.toFixed(1) + ' mi</div></div>';
   html += '<div class="kpi-card accent"><div class="kpi-label">Photos</div><div class="kpi-value">' + totalPhotos + '</div></div>';
+  html += '<div class="kpi-card purple"><div class="kpi-label">Avg Rating</div><div class="kpi-value">★ ' + clientAvgRating + '</div></div>';
   html += '</div>';
 
   // Pets
@@ -2054,13 +2140,128 @@ function handleCheckinPhotoUpload(input) {
 }
 
 /* ══════════════════════════════════════════
+   WEATHER & RATING
+   ══════════════════════════════════════════ */
+function weatherCodeToInfo(code) {
+  if (code === 0) return { icon: '☀️', desc: 'Clear sky' };
+  if (code <= 3) return { icon: '⛅', desc: 'Partly cloudy' };
+  if (code <= 48) return { icon: '🌫️', desc: 'Foggy' };
+  if (code <= 57) return { icon: '🌦️', desc: 'Drizzle' };
+  if (code <= 67) return { icon: '🌧️', desc: 'Rainy' };
+  if (code <= 77) return { icon: '🌨️', desc: 'Snowy' };
+  if (code <= 86) return { icon: '🌧️', desc: 'Rain showers' };
+  return { icon: '⛈️', desc: 'Thunderstorm' };
+}
+
+function fetchWeather() {
+  var el = document.getElementById('weatherCard');
+  if (!el) return;
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(function(pos) {
+      loadWeather(pos.coords.latitude, pos.coords.longitude);
+    }, function() {
+      loadWeather(43.0389, -87.9065);
+    }, { timeout: 5000 });
+  } else {
+    loadWeather(43.0389, -87.9065);
+  }
+}
+
+function loadWeather(lat, lng) {
+  fetch('https://api.open-meteo.com/v1/forecast?latitude=' + lat.toFixed(4) + '&longitude=' + lng.toFixed(4) + '&current=temperature_2m,weathercode&temperature_unit=fahrenheit')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (!data.current) return;
+      var temp = Math.round(data.current.temperature_2m);
+      var code = data.current.weathercode;
+      var info = weatherCodeToInfo(code);
+      var advice = temp >= 90 ? '⚠️ Too hot for most dogs — keep walks very short!' : temp >= 80 ? '🥵 Keep walks short & bring water' : temp <= 32 ? '🥶 Bundle up! Watch for ice on sidewalks' : temp <= 45 ? '🧥 Chilly but fine for walks' : '👍 Great conditions for walking!';
+      var el = document.getElementById('weatherCard');
+      if (el) el.innerHTML = '<div class="weather-card"><div class="weather-icon">' + info.icon + '</div><div><div class="weather-temp">' + temp + '°F</div><div class="weather-desc">' + info.desc + '</div></div><div class="weather-advice">' + advice + '</div></div>';
+    }).catch(function() {});
+}
+
+function rateWalk(checkinId, rating) {
+  var ci = checkins.find(function(c) { return c.id === checkinId; });
+  if (ci) { ci.walkRating = rating; saveData(); showToast('⭐ Rated ' + rating + ' stars'); }
+  renderCheckins();
+}
+
+function starRatingHtml(checkinId, currentRating) {
+  var html = '<div class="star-rating">';
+  for (var i = 1; i <= 5; i++) {
+    html += '<span class="star' + (i <= (currentRating || 0) ? ' filled' : '') + '" onclick="rateWalk(' + checkinId + ',' + i + ')">★</span>';
+  }
+  html += '</div>';
+  return html;
+}
+
+function avgRatingHtml(clientId) {
+  var cis = checkins.filter(function(ci) { return ci.clientId === clientId && ci.walkRating; });
+  if (cis.length === 0) return '';
+  var avg = cis.reduce(function(s, ci) { return s + ci.walkRating; }, 0) / cis.length;
+  return '<span class="avg-rating">★ ' + avg.toFixed(1) + '</span>';
+}
+
+/* ══════════════════════════════════════════
    SAMPLE DATA
    ══════════════════════════════════════════ */
-function generatePetPhoto(name) {
-  var pairs = [['#10b981','#047857'],['#3b82f6','#1d4ed8'],['#f59e0b','#b45309'],['#ef4444','#b91c1c'],['#8b5cf6','#6d28d9'],['#ec4899','#be185d'],['#14b8a6','#0f766e'],['#f97316','#c2410c']];
-  var pair = pairs[name.length % pairs.length];
-  var letter = name[0].toUpperCase();
-  return 'data:image/svg+xml;base64,' + btoa('<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="' + pair[0] + '"/><stop offset="100%" stop-color="' + pair[1] + '"/></linearGradient></defs><rect width="200" height="200" fill="url(#g)"/><circle cx="100" cy="65" r="28" fill="rgba(255,255,255,0.25)"/><circle cx="70" cy="40" r="13" fill="rgba(255,255,255,0.25)"/><circle cx="130" cy="40" r="13" fill="rgba(255,255,255,0.25)"/><circle cx="58" cy="65" r="11" fill="rgba(255,255,255,0.25)"/><circle cx="142" cy="65" r="11" fill="rgba(255,255,255,0.25)"/><text x="100" y="160" text-anchor="middle" font-size="44" font-weight="bold" fill="rgba(255,255,255,0.9)" font-family="sans-serif">' + letter + '</text></svg>');
+function generatePetPortrait(name, breed) {
+  var breeds = {
+    'Golden Retriever': {c1:'#F59E0B',c2:'#D97706',fur:'#DAA520',ear:'#B8860B',muz:'#F3E5AB',nose:'#3E2723',earType:'floppy'},
+    'Pomeranian': {c1:'#FB923C',c2:'#EA580C',fur:'#E07020',ear:'#C05010',muz:'#FED7AA',nose:'#3E2723',earType:'pointy'},
+    'French Bulldog': {c1:'#9CA3AF',c2:'#6B7280',fur:'#8B8B8B',ear:'#696969',muz:'#D4D4D4',nose:'#1C1C1C',earType:'bat'},
+    'Labrador Mix': {c1:'#A16207',c2:'#854D0E',fur:'#8B6914',ear:'#6B4C0E',muz:'#D4A76A',nose:'#2C1810',earType:'floppy'},
+    'Beagle': {c1:'#D97706',c2:'#B45309',fur:'#C4892A',ear:'#8B5E2A',muz:'#FFF5EB',nose:'#1C1C1C',earType:'floppy'},
+    'German Shepherd': {c1:'#92400E',c2:'#78350F',fur:'#8B6914',ear:'#4A300A',muz:'#D4A76A',nose:'#1C1C1C',earType:'pointy'},
+    'Dachshund': {c1:'#B91C1C',c2:'#991B1B',fur:'#A0522D',ear:'#8B4513',muz:'#D2B48C',nose:'#2C1810',earType:'floppy'},
+    'Pit Bull Mix': {c1:'#7C3AED',c2:'#6D28D9',fur:'#8B8B8B',ear:'#6B6B6B',muz:'#D4D4D4',nose:'#1C1C1C',earType:'small'},
+    'Greyhound': {c1:'#0EA5E9',c2:'#0284C7',fur:'#A0A0B0',ear:'#808090',muz:'#D0D0D8',nose:'#1C1C1C',earType:'small'},
+    'Shiba Inu': {c1:'#EA580C',c2:'#C2410C',fur:'#E8820C',ear:'#C06A0A',muz:'#FFF5EB',nose:'#1C1C1C',earType:'pointy'},
+    'Cat': {c1:'#8B5CF6',c2:'#7C3AED',fur:'#808080',ear:'#606060',muz:'#E0E0E0',nose:'#FFB6C1',earType:'cat'}
+  };
+  var d = breeds[breed] || {c1:'#10B981',c2:'#059669',fur:'#6B8E6B',ear:'#4A6E4A',muz:'#B8D8B8',nose:'#2C1810',earType:'floppy'};
+  var uid = name.length + (name.charCodeAt(0) || 65);
+  var svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">';
+  svg += '<defs><linearGradient id="g' + uid + '" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="' + d.c1 + '"/><stop offset="100%" stop-color="' + d.c2 + '"/></linearGradient></defs>';
+  svg += '<rect width="200" height="200" rx="16" fill="url(#g' + uid + ')"/>';
+  if (d.earType === 'floppy') {
+    svg += '<ellipse cx="52" cy="72" rx="20" ry="35" fill="' + d.ear + '" transform="rotate(-12,52,72)"/>';
+    svg += '<ellipse cx="148" cy="72" rx="20" ry="35" fill="' + d.ear + '" transform="rotate(12,148,72)"/>';
+  } else if (d.earType === 'pointy') {
+    svg += '<polygon points="58,35 38,80 78,80" fill="' + d.ear + '"/>';
+    svg += '<polygon points="142,35 122,80 162,80" fill="' + d.ear + '"/>';
+  } else if (d.earType === 'bat') {
+    svg += '<ellipse cx="50" cy="52" rx="26" ry="22" fill="' + d.ear + '"/>';
+    svg += '<ellipse cx="150" cy="52" rx="26" ry="22" fill="' + d.ear + '"/>';
+  } else if (d.earType === 'cat') {
+    svg += '<polygon points="55,28 30,78 80,78" fill="' + d.ear + '"/>';
+    svg += '<polygon points="145,28 120,78 170,78" fill="' + d.ear + '"/>';
+    svg += '<polygon points="55,38 40,68 70,68" fill="' + d.fur + '" opacity="0.5"/>';
+    svg += '<polygon points="145,38 130,68 160,68" fill="' + d.fur + '" opacity="0.5"/>';
+  } else {
+    svg += '<ellipse cx="60" cy="62" rx="16" ry="14" fill="' + d.ear + '" transform="rotate(-10,60,62)"/>';
+    svg += '<ellipse cx="140" cy="62" rx="16" ry="14" fill="' + d.ear + '" transform="rotate(10,140,62)"/>';
+  }
+  svg += '<ellipse cx="100" cy="102" rx="50" ry="46" fill="' + d.fur + '"/>';
+  svg += '<ellipse cx="100" cy="118" rx="25" ry="18" fill="' + d.muz + '"/>';
+  svg += '<ellipse cx="78" cy="92" rx="6" ry="7" fill="#2C1810"/>';
+  svg += '<ellipse cx="122" cy="92" rx="6" ry="7" fill="#2C1810"/>';
+  svg += '<ellipse cx="80" cy="90" rx="2" ry="2.5" fill="white" opacity="0.8"/>';
+  svg += '<ellipse cx="124" cy="90" rx="2" ry="2.5" fill="white" opacity="0.8"/>';
+  if (d.earType === 'cat') {
+    svg += '<polygon points="100,108 95,114 105,114" fill="' + d.nose + '"/>';
+    svg += '<line x1="60" y1="110" x2="90" y2="112" stroke="#999" stroke-width="1.5"/>';
+    svg += '<line x1="60" y1="116" x2="90" y2="116" stroke="#999" stroke-width="1.5"/>';
+    svg += '<line x1="110" y1="112" x2="140" y2="110" stroke="#999" stroke-width="1.5"/>';
+    svg += '<line x1="110" y1="116" x2="140" y2="116" stroke="#999" stroke-width="1.5"/>';
+  } else {
+    svg += '<ellipse cx="100" cy="110" rx="9" ry="6" fill="' + d.nose + '"/>';
+    svg += '<path d="M94 118 Q100 127 106 118" stroke="' + d.nose + '" fill="none" stroke-width="1.5"/>';
+  }
+  svg += '<text x="100" y="172" text-anchor="middle" font-size="16" font-weight="bold" fill="white" font-family="sans-serif" opacity="0.9">' + name + '</text>';
+  svg += '</svg>';
+  return 'data:image/svg+xml,' + encodeURIComponent(svg);
 }
 
 function loadSampleData() {
@@ -2108,8 +2309,8 @@ function loadSampleData() {
     ]}
   ];
 
-  // Add pet photos to all pets
-  clients.forEach(function(c) { c.pets.forEach(function(p) { p.photo = generatePetPhoto(p.name); }); });
+  // Add pet photos to all pets using breed-specific portraits
+  clients.forEach(function(c) { c.pets.forEach(function(p) { p.photo = generatePetPortrait(p.name, p.breed); }); });
 
   // Generate bookings (past 2 weeks + upcoming)
   bookings = [];
@@ -2167,25 +2368,20 @@ function loadSampleData() {
   checkins = [];
   bookings.filter(b => b.status === 'completed').forEach((b, idx) => {
     const notes = ['Great walk! Lots of energy today.', 'Played fetch at the park.', 'Calm walk around the block.', 'Refilled water bowl.', 'Met a friend at the dog park!', '', '', ''][Math.floor(Math.random() * 8)];
-    // Generate simulated GPS route for ~80% of checkins
-    let route = null;
-    if (idx % 5 !== 0) {
-      const baseLat = 43.0389 + (Math.random() - 0.5) * 0.02;
-      const baseLng = -87.9065 + (Math.random() - 0.5) * 0.02;
-      const numPts = 20 + Math.floor(Math.random() * 30);
-      const pts = [];
-      for (let p = 0; p < numPts; p++) {
-        pts.push({ lat: baseLat + p * 0.0002 * (Math.random() > 0.5 ? 1 : -1) + Math.random() * 0.0005, lng: baseLng + p * 0.0003 + Math.random() * 0.0003, t: Date.now() - (numPts - p) * 15000 });
-      }
-      route = { points: pts, distance: 0.5 + Math.random() * 2.5, duration: 20 + Math.floor(Math.random() * 40) };
+    // Generate GPS route for every check-in
+    const baseLat = 43.0389 + (Math.random() - 0.5) * 0.02;
+    const baseLng = -87.9065 + (Math.random() - 0.5) * 0.02;
+    const numPts = 20 + Math.floor(Math.random() * 30);
+    const pts = [];
+    for (let p = 0; p < numPts; p++) {
+      pts.push({ lat: baseLat + p * 0.0002 * (Math.random() > 0.5 ? 1 : -1) + Math.random() * 0.0005, lng: baseLng + p * 0.0003 + Math.random() * 0.0003, t: Date.now() - (numPts - p) * 15000 });
     }
-    // Add sample photos to ~30% of checkins
-    var ciPhotos = [];
-    if (idx % 3 === 0) {
-      var petList = b.petIds;
-      ciPhotos = petList.slice(0, 1).map(function(pn) { return generatePetPhoto(pn); });
-    }
-    checkins.push({ id: genId(), bookingId: b.id, clientId: b.clientId, petNames: b.petIds.join(', '), time: b.date + 'T' + b.time + ':00', notes, photos: ciPhotos, route });
+    var route = { points: pts, distance: 0.5 + Math.random() * 2.5, duration: 20 + Math.floor(Math.random() * 40) };
+    // Generate photos for every check-in using breed-specific portraits
+    var c_ci = clients.find(function(cl) { return cl.id === b.clientId; });
+    var ciPhotos = b.petIds.slice(0, 2).map(function(pn) { var pet = c_ci ? c_ci.pets.find(function(pp) { return pp.name === pn; }) : null; return generatePetPortrait(pn, pet ? pet.breed : ''); });
+    var walkRating = idx % 4 === 0 ? 5 : idx % 3 === 0 ? 4 : idx % 7 === 0 ? 3 : (Math.random() > 0.25 ? (4 + Math.round(Math.random())) : 0);
+    checkins.push({ id: genId(), bookingId: b.id, clientId: b.clientId, petNames: b.petIds.join(', '), time: b.date + 'T' + b.time + ':00', notes, photos: ciPhotos, route, walkRating: walkRating || undefined });
   });
 
   // Sample expenses
