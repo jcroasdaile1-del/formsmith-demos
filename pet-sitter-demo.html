@@ -618,6 +618,18 @@ input, select, textarea { font-family: inherit; font-size: 0.88rem; }
     </div>
   </div>
   <div class="card" style="max-width:600px;margin-top:16px;">
+    <div class="card-header">📦 Backup & Restore</div>
+    <div class="card-body">
+      <p style="font-size:0.82rem;color:var(--text-light);margin-bottom:12px;">Your data auto-saves to this device. Download a backup file to keep a copy safe, or restore from a previous backup.</p>
+      <div id="backupStatus" style="font-size:0.82rem;color:var(--text-light);margin-bottom:10px;"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-primary" onclick="downloadBackup()">📥 Download Backup</button>
+        <button class="btn btn-outline" onclick="document.getElementById('restoreFileInput').click()">📤 Restore from Backup</button>
+        <input type="file" id="restoreFileInput" accept=".json" style="display:none" onchange="restoreFromBackup(this)">
+      </div>
+    </div>
+  </div>
+  <div class="card" style="max-width:600px;margin-top:16px;">
     <div class="card-header">💳 Payment Links</div>
     <div class="card-body" id="payLinksArea"></div>
   </div>
@@ -732,6 +744,13 @@ function avatarHtml(name, size) { return '<div class="avatar-circle' + (size ===
 function saveData() {
   const d = { clients, bookings, checkins, invoices, expenses, services, settings, nextId };
   localStorage.setItem('pawtracker_data', JSON.stringify(d));
+  // Auto-backup: keep a rolling backup copy with timestamp
+  try {
+    var backupMeta = { timestamp: new Date().toISOString(), changeCount: (parseInt(localStorage.getItem('pawtracker_changes') || '0')) + 1 };
+    localStorage.setItem('pawtracker_backup', JSON.stringify(d));
+    localStorage.setItem('pawtracker_backup_meta', JSON.stringify(backupMeta));
+    localStorage.setItem('pawtracker_changes', String(backupMeta.changeCount));
+  } catch(e) {}
 }
 function loadData() {
   const raw = localStorage.getItem('pawtracker_data');
@@ -1691,6 +1710,7 @@ function renderSettings() {
   document.getElementById('setBizEmail').value = settings.email || '';
   document.getElementById('setEmailProvider').value = settings.emailProvider || 'default';
   document.getElementById('setMileageRate').value = settings.mileageRate;
+  updateBackupStatus();
 
   // Payment Links
   let plHtml = '';
@@ -1773,6 +1793,57 @@ function exportAllData() {
   a.download = 'pawtracker-export-' + todayStr() + '.csv';
   a.click();
   showToast('📤 Data exported');
+}
+
+function downloadBackup() {
+  const d = { clients, bookings, checkins, invoices, expenses, services, settings, nextId, _backupDate: new Date().toISOString(), _version: 'pawtracker-1.0' };
+  const blob = new Blob([JSON.stringify(d, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'pawtracker-backup-' + todayStr() + '.json';
+  a.click();
+  localStorage.setItem('pawtracker_last_backup', new Date().toISOString());
+  localStorage.setItem('pawtracker_changes', '0');
+  showToast('📥 Backup downloaded');
+  updateBackupStatus();
+}
+
+function restoreFromBackup(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const d = JSON.parse(e.target.result);
+      if (!d.clients || !d.bookings) { showToast('❌ Invalid backup file'); return; }
+      if (!confirm('Restore from backup? This will replace ALL current data with the backup from ' + (d._backupDate ? new Date(d._backupDate).toLocaleString() : 'unknown date') + '.\n\n' + d.clients.length + ' clients, ' + d.bookings.length + ' bookings, ' + d.invoices.length + ' invoices will be loaded.')) return;
+      clients = d.clients || []; bookings = d.bookings || []; checkins = d.checkins || [];
+      invoices = d.invoices || []; expenses = d.expenses || []; services = d.services || [];
+      settings = Object.assign(settings, d.settings || {});
+      if (!settings.payLinks) settings.payLinks = [];
+      nextId = d.nextId || 1;
+      saveData();
+      showToast('✅ Data restored from backup');
+      switchPage('dashboard');
+    } catch(err) { showToast('❌ Could not read backup file'); }
+  };
+  reader.readAsText(file);
+  input.value = '';
+}
+
+function updateBackupStatus() {
+  var el = document.getElementById('backupStatus');
+  if (!el) return;
+  var lastBackup = localStorage.getItem('pawtracker_last_backup');
+  var changes = parseInt(localStorage.getItem('pawtracker_changes') || '0');
+  var html = '';
+  if (lastBackup) {
+    html += '📅 Last backup: ' + new Date(lastBackup).toLocaleString();
+  } else {
+    html += '⚠️ No backup downloaded yet';
+  }
+  html += ' · ' + changes + ' changes since last backup';
+  el.innerHTML = html;
 }
 
 /* ══════════════════════════════════════════
