@@ -180,6 +180,7 @@ input, select, textarea { font-family: inherit; font-size: 0.88rem; }
 /* ── Modal ── */
 .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 200; align-items: center; justify-content: center; }
 .modal-overlay.show { display: flex; }
+body.modal-open { overflow: hidden; position: fixed; width: 100%; }
 .modal-box { background: var(--card); border-radius: var(--radius); width: 92%; max-width: 600px; max-height: 85vh; display: flex; flex-direction: column; box-shadow: var(--shadow-lg); }
 .modal-header { padding: 14px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; font-weight: 700; }
 .modal-body { padding: 20px; overflow-y: auto; flex: 1; min-height: 0; }
@@ -651,57 +652,57 @@ input, select, textarea { font-family: inherit; font-size: 0.88rem; }
 
 <!-- ═══════ MODALS ═══════ -->
 <!-- New Booking Modal -->
-<div class="modal-overlay" id="bookingModal" onclick="if(event.target===this)this.classList.remove('show')">
+<div class="modal-overlay" id="bookingModal" onclick="if(event.target===this)closeModal('bookingModal')">
   <div class="modal-box" style="max-width:550px;">
-    <div class="modal-header"><span>📋 New Booking</span><button class="modal-close" onclick="document.getElementById('bookingModal').classList.remove('show')">&times;</button></div>
+    <div class="modal-header"><span>📋 New Booking</span><button class="modal-close" onclick="closeModal('bookingModal')">&times;</button></div>
     <div class="modal-body" id="bookingModalBody"></div>
     <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="document.getElementById('bookingModal').classList.remove('show')">Cancel</button>
+      <button class="btn btn-ghost" onclick="closeModal('bookingModal')">Cancel</button>
       <button class="btn btn-primary" onclick="saveBooking()">Save Booking</button>
     </div>
   </div>
 </div>
 
 <!-- New Client Modal -->
-<div class="modal-overlay" id="clientModal" onclick="if(event.target===this)this.classList.remove('show')">
+<div class="modal-overlay" id="clientModal" onclick="if(event.target===this)closeModal('clientModal')">
   <div class="modal-box" style="max-width:550px;">
-    <div class="modal-header"><span>🐕 Add Client & Pet</span><button class="modal-close" onclick="document.getElementById('clientModal').classList.remove('show')">&times;</button></div>
+    <div class="modal-header"><span>🐕 Add Client & Pet</span><button class="modal-close" onclick="closeModal('clientModal')">&times;</button></div>
     <div class="modal-body" id="clientModalBody"></div>
     <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="document.getElementById('clientModal').classList.remove('show')">Cancel</button>
+      <button class="btn btn-ghost" onclick="closeModal('clientModal')">Cancel</button>
       <button class="btn btn-primary" onclick="saveClient()">Save Client</button>
     </div>
   </div>
 </div>
 
 <!-- New Invoice Modal -->
-<div class="modal-overlay" id="invoiceModal" onclick="if(event.target===this)this.classList.remove('show')">
+<div class="modal-overlay" id="invoiceModal" onclick="if(event.target===this)closeModal('invoiceModal')">
   <div class="modal-box">
-    <div class="modal-header"><span>💰 Create Invoice</span><button class="modal-close" onclick="document.getElementById('invoiceModal').classList.remove('show')">&times;</button></div>
+    <div class="modal-header"><span>💰 Create Invoice</span><button class="modal-close" onclick="closeModal('invoiceModal')">&times;</button></div>
     <div class="modal-body" id="invoiceModalBody"></div>
     <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="document.getElementById('invoiceModal').classList.remove('show')">Cancel</button>
+      <button class="btn btn-ghost" onclick="closeModal('invoiceModal')">Cancel</button>
       <button class="btn btn-primary" onclick="saveInvoice()">Create Invoice</button>
     </div>
   </div>
 </div>
 
 <!-- New Expense Modal -->
-<div class="modal-overlay" id="expenseModal" onclick="if(event.target===this)this.classList.remove('show')">
+<div class="modal-overlay" id="expenseModal" onclick="if(event.target===this)closeModal('expenseModal')">
   <div class="modal-box" style="max-width:480px;">
-    <div class="modal-header"><span>🧾 Add Expense</span><button class="modal-close" onclick="document.getElementById('expenseModal').classList.remove('show')">&times;</button></div>
+    <div class="modal-header"><span>🧾 Add Expense</span><button class="modal-close" onclick="closeModal('expenseModal')">&times;</button></div>
     <div class="modal-body" id="expenseModalBody"></div>
     <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="document.getElementById('expenseModal').classList.remove('show')">Cancel</button>
+      <button class="btn btn-ghost" onclick="closeModal('expenseModal')">Cancel</button>
       <button class="btn btn-primary" onclick="saveExpense()">Save Expense</button>
     </div>
   </div>
 </div>
 
 <!-- Detail/Check-in Modal -->
-<div class="modal-overlay" id="detailModal" onclick="if(event.target===this)this.classList.remove('show')">
+<div class="modal-overlay" id="detailModal" onclick="if(event.target===this)closeModal('detailModal')">
   <div class="modal-box">
-    <div class="modal-header"><span id="detailModalTitle">Details</span><button class="modal-close" onclick="document.getElementById('detailModal').classList.remove('show')">&times;</button></div>
+    <div class="modal-header"><span id="detailModalTitle">Details</span><button class="modal-close" onclick="closeModal('detailModal')">&times;</button></div>
     <div class="modal-body" id="detailModalBody"></div>
     <div class="modal-footer" id="detailModalFooter"></div>
   </div>
@@ -737,11 +738,17 @@ const PAGE_SIZE = 20;
 
 function genId() { return nextId++; }
 function esc(s) { if (!s) return ''; const d = document.createElement('div'); d.textContent = String(s); return d.innerHTML; }
-function fmt$(n) { return '$' + Number(n || 0).toFixed(2); }
+function fmt$(n) { var v = Math.round(Number(n || 0) * 100) / 100; if (Object.is(v, -0)) v = 0; return (v < 0 ? '-$' + Math.abs(v).toFixed(2) : '$' + v.toFixed(2)); }
 function fmtDate(d) { if (!d) return ''; const dt = new Date(d + 'T00:00:00'); return dt.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' }); }
 function fmtTime(t) { if (!t) return ''; const [h, m] = t.split(':'); const hr = parseInt(h); return (hr > 12 ? hr - 12 : hr || 12) + ':' + m + (hr >= 12 ? 'pm' : 'am'); }
-function todayStr() { return new Date().toISOString().slice(0, 10); }
+function todayStr() { var d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+function isValidEmail(e) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e); }
+function isValidPhone(p) { return /^[\d\s().\-+]{7,}$/.test(p); }
+function roundMoney(n) { return Math.round((parseFloat(n) || 0) * 100) / 100; }
 function showToast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(t._tm); t._tm = setTimeout(() => t.classList.remove('show'), 3000); }
+var _scrollY = 0;
+function openModal(id) { _scrollY = window.scrollY; document.body.classList.add('modal-open'); document.body.style.top = '-' + _scrollY + 'px'; document.getElementById(id).classList.add('show'); var mb = document.getElementById(id).querySelector('.modal-body'); if (mb) mb.scrollTop = 0; }
+function closeModal(id) { document.getElementById(id).classList.remove('show'); document.body.classList.remove('modal-open'); document.body.style.top = ''; window.scrollTo(0, _scrollY); }
 
 const AVATAR_COLORS = ['#ef4444','#f97316','#f59e0b','#10b981','#14b8a6','#3b82f6','#6366f1','#8b5cf6','#ec4899','#e11d48','#059669','#7c3aed'];
 function getInitials(name) { return name.split(' ').filter(w => w && /[a-zA-Z]/.test(w[0])).map(w => w[0]).join('').toUpperCase().slice(0,2); }
@@ -826,7 +833,9 @@ function renderDashboard() {
   const monthBookings = bookings.filter(b => b.date.startsWith(thisMonth) && b.status !== 'cancelled');
   const monthRevenue = invoices.filter(i => i.date.startsWith(thisMonth) && i.status === 'paid').reduce((s, i) => s + i.total, 0);
   const unpaid = invoices.filter(i => i.status === 'unpaid').reduce((s, i) => s + i.total, 0);
-  const activeClients = clients.filter(c => bookings.some(b => b.clientId === c.id && b.status !== 'cancelled')).length;
+  var thirtyDaysAgo = new Date(); thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 90);
+  var cutoff = thirtyDaysAgo.getFullYear() + '-' + String(thirtyDaysAgo.getMonth() + 1).padStart(2, '0') + '-' + String(thirtyDaysAgo.getDate()).padStart(2, '0');
+  const activeClients = clients.filter(c => bookings.some(b => b.clientId === c.id && b.status !== 'cancelled' && b.date >= cutoff)).length;
   const totalPets = clients.reduce((s, c) => s + c.pets.length, 0);
 
   let kpi = '<div class="kpi-grid">';
@@ -876,7 +885,7 @@ function renderWeeklyChart() {
   const labels = []; const data = [];
   for (let i = 6; i >= 0; i--) {
     const d = new Date(); d.setDate(d.getDate() - i);
-    const ds = d.toISOString().slice(0, 10);
+    const ds = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
     labels.push(d.toLocaleDateString('en-US', { weekday: 'short' }));
     data.push(invoices.filter(inv => inv.date === ds && inv.status === 'paid').reduce((s, inv) => s + inv.total, 0));
   }
@@ -943,7 +952,7 @@ function setCalView(v) { calView = v; renderCalendar(); }
 function viewDay(ds) { calDate = new Date(ds + 'T12:00:00'); calView = 'day'; renderCalendar(); }
 
 function renderDayView() {
-  const ds = calDate.toISOString().slice(0, 10);
+  const ds = calDate.getFullYear() + '-' + String(calDate.getMonth() + 1).padStart(2, '0') + '-' + String(calDate.getDate()).padStart(2, '0');
   const dayBookings = bookings.filter(b => b.date === ds).sort((a, b) => (a.time || '').localeCompare(b.time || ''));
 
   let html = '<div class="cal-header"><button class="btn btn-ghost" onclick="calDate.setDate(calDate.getDate()-1);renderCalendar();">◀</button><h3>' + calDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }) + '</h3><button class="btn btn-ghost" onclick="calDate.setDate(calDate.getDate()+1);renderCalendar();">▶</button></div>';
@@ -1029,7 +1038,7 @@ function openNewClientModal() {
   html += '<div class="form-group"><label>📷 Pet Photo</label><div style="display:flex;align-items:center;gap:10px;"><div class="pet-photo-wrap" onclick="document.getElementById(\'petPhotoInput\').dataset.target=\'ncPetPhoto\';document.getElementById(\'petPhotoInput\').click()"><span class="photo-placeholder">🐶</span></div><input type="hidden" id="ncPetPhoto"><span style="font-size:0.78rem;color:var(--text-light);">Click to upload</span></div></div>';
   html += '</div></div>';
   document.getElementById('clientModalBody').innerHTML = html;
-  document.getElementById('clientModal').classList.add('show');
+  openModal('clientModal');
 }
 
 function saveClient() {
@@ -1051,7 +1060,7 @@ function saveClient() {
   } else {
     clients.push({ id: genId(), name, phone: document.getElementById('ncPhone').value.trim(), email: document.getElementById('ncEmail').value.trim(), address: document.getElementById('ncAddress').value.trim(), notes: document.getElementById('ncNotes').value.trim(), pets: [pet] });
   }
-  saveData(); document.getElementById('clientModal').classList.remove('show');
+  saveData(); closeModal('clientModal');
   showToast('✅ Client saved'); renderClients();
 }
 
@@ -1103,18 +1112,18 @@ function openClientDetail(id) {
   }
 
   // Quick actions
-  let footer = '<button class="btn btn-primary" onclick="document.getElementById(\'detailModal\').classList.remove(\'show\');openNewBookingModal(null,' + c.id + ')">+ Book</button>';
+  let footer = '<button class="btn btn-primary" onclick="closeModal(\'detailModal\');openNewBookingModal(null,' + c.id + ')">+ Book</button>';
   footer += '<button class="btn btn-outline" onclick="openClientPortal(' + c.id + ')">📋 Report Card</button>';
   footer += '<button class="btn btn-outline" onclick="sendSMS(' + c.id + ')">📱 Text</button>';
   if (c.email) footer += '<button class="btn btn-outline" onclick="sendEmail(' + c.id + ')">✉️ Email</button>';
   if (settings.payLinks && settings.payLinks.length) footer += '<button class="btn btn-outline" onclick="sendPaymentLink(' + c.id + ')">💳 Pay Link</button>';
   footer += '<button class="btn btn-danger btn-sm" onclick="deleteClient(' + c.id + ')">🗑️ Delete</button>';
-  footer += '<button class="btn btn-ghost" onclick="document.getElementById(\'detailModal\').classList.remove(\'show\')">× Close</button>';
+  footer += '<button class="btn btn-ghost" onclick="closeModal(\'detailModal\')">× Close</button>';
 
   document.getElementById('detailModalTitle').textContent = '🐕 ' + c.name;
   document.getElementById('detailModalBody').innerHTML = html;
   document.getElementById('detailModalFooter').innerHTML = footer;
-  document.getElementById('detailModal').classList.add('show');
+  openModal('detailModal');
 }
 
 function addPetToClient(clientId) {
@@ -1136,7 +1145,7 @@ function deleteClient(clientId) {
   invoices = invoices.filter(i => i.clientId !== clientId);
   checkins = checkins.filter(ci => ci.clientId !== clientId);
   saveData();
-  document.getElementById('detailModal').classList.remove('show');
+  closeModal('detailModal');
   showToast('🗑️ ' + c.name + ' deleted');
   renderClients(); renderDashboard();
 }
@@ -1239,7 +1248,7 @@ function openNewBookingModal(prefillDate, prefillClientId) {
   let html = '<div class="form-grid">';
   html += '<div class="form-group"><label>Client *</label><select id="nbClient" onchange="updatePetCheckboxes()">' + (clients.length ? '<option value="">Select client...</option>' + clientOpts : '<option value="">No clients — add one first</option>') + '</select></div>';
   html += '<div class="form-group"><label>Service *</label><select id="nbService" onchange="updateBookingPrice()">' + (services.length ? svcOpts : '<option>30-min Walk ($25)</option>') + '</select></div>';
-  html += '<div class="form-group"><label>Date *</label><input id="nbDate" type="date" value="' + (prefillDate || todayStr()) + '"></div>';
+  html += '<div class="form-group"><label>Date *</label><input id="nbDate" type="date" value="' + (prefillDate || todayStr()) + '" min="' + todayStr() + '"></div>';
   html += '<div class="form-group"><label>Time</label><input id="nbTime" type="time" value="09:00"></div>';
   html += '<div class="form-group"><label>Duration (min)</label><input id="nbDuration" type="number" value="30" min="15" step="15"></div>';
   html += '<div class="form-group"><label>Price ($)</label><input id="nbPrice" type="number" step="0.01" value="25"></div>';
@@ -1249,7 +1258,7 @@ function openNewBookingModal(prefillDate, prefillClientId) {
   html += '<div class="form-group" style="margin-top:10px;"><label><input type="checkbox" id="nbRecurring"> Recurring weekly</label></div>';
 
   document.getElementById('bookingModalBody').innerHTML = html;
-  document.getElementById('bookingModal').classList.add('show');
+  openModal('bookingModal');
   updatePetCheckboxes();
   updateBookingPrice();
 }
@@ -1287,10 +1296,14 @@ function saveBooking() {
   const time = document.getElementById('nbTime').value;
   if (!time) { showToast('⚠️ Time required'); return; }
   const duration = parseInt(document.getElementById('nbDuration').value) || 30;
-  const price = parseFloat(document.getElementById('nbPrice').value);
+  if (date < todayStr()) { showToast('⚠️ Cannot book in the past'); return; }
+  const price = roundMoney(parseFloat(document.getElementById('nbPrice').value));
   if (!price || price <= 0) { showToast('⚠️ Price must be greater than $0'); return; }
   const notes = document.getElementById('nbNotes').value.trim();
   const recurring = document.getElementById('nbRecurring').checked;
+  // Duplicate check: same client, date, time
+  var dupe = bookings.find(function(bk) { return bk.clientId === clientId && bk.date === date && bk.time === time && bk.status !== 'cancelled'; });
+  if (dupe) { showToast('⚠️ This client already has a booking at ' + fmtTime(time) + ' on ' + fmtDate(date)); return; }
 
   const booking = { id: genId(), clientId, petIds, service, date, time, duration, price, notes, status: 'scheduled', recurring, seriesId: recurring ? 'series_' + Date.now() : null };
   bookings.push(booking);
@@ -1307,7 +1320,7 @@ function saveBooking() {
     showToast('✅ Booking created');
   }
 
-  saveData(); document.getElementById('bookingModal').classList.remove('show');
+  saveData(); closeModal('bookingModal');
   renderBookings(); renderDashboard();
 }
 
@@ -1348,17 +1361,17 @@ function openBookingDetail(id) {
     footer += '<button class="btn btn-danger btn-sm" onclick="cancelBooking(' + b.id + ')">Cancel</button>';
   }
   if (b.status === 'completed') {
-    footer += '<button class="btn btn-primary" onclick="document.getElementById(\'detailModal\').classList.remove(\'show\');createInvoiceFromBooking(' + b.id + ')">💰 Create Invoice</button>';
+    footer += '<button class="btn btn-primary" onclick="closeModal(\'detailModal\');createInvoiceFromBooking(' + b.id + ')">💰 Create Invoice</button>';
   }
   if (b.seriesId) {
     footer += '<button class="btn btn-outline btn-sm" onclick="cancelSeries(\'' + b.seriesId + '\')">Cancel Series</button>';
   }
-  footer += '<button class="btn btn-ghost" onclick="document.getElementById(\'detailModal\').classList.remove(\'show\')">&times; Close</button>';
+  footer += '<button class="btn btn-ghost" onclick="closeModal(\'detailModal\')">&times; Close</button>';
 
   document.getElementById('detailModalTitle').textContent = '📋 Booking Details';
   document.getElementById('detailModalBody').innerHTML = html;
   document.getElementById('detailModalFooter').innerHTML = footer;
-  document.getElementById('detailModal').classList.add('show');
+  openModal('detailModal');
 }
 
 function completeBooking(id) {
@@ -1388,7 +1401,7 @@ function finishComplete(id, skipNotes) {
   invoices.push(inv);
   saveData();
   showToast('✅ Completed — Invoice #' + String(inv.id).padStart(4, '0') + ' created');
-  document.getElementById('detailModal').classList.remove('show');
+  closeModal('detailModal');
   switchPage(document.querySelector('.nav-item.active').dataset.page);
   setTimeout(function() {
     if (confirm('Send invoice to ' + (c ? c.name : 'client') + ' for ' + fmt$(b.price) + '?')) { sendInvoice(inv.id); }
@@ -1399,7 +1412,7 @@ function cancelBooking(id) {
   if (!confirm('Cancel this booking?')) return;
   const b = bookings.find(bk => bk.id === id);
   if (b) { b.status = 'cancelled'; saveData(); showToast('Booking cancelled'); }
-  document.getElementById('detailModal').classList.remove('show');
+  closeModal('detailModal');
   switchPage(document.querySelector('.nav-item.active').dataset.page);
 }
 
@@ -1432,12 +1445,12 @@ function startCheckin(bookingId) {
 
   let footer = '<button class="btn btn-primary" style="background:var(--red);" onclick="saveCheckin(' + bookingId + ')">🏁 End Walk</button>';
   footer += '<button class="btn btn-outline" onclick="saveCheckin(' + bookingId + ', true)">🏁 End & Share</button>';
-  footer += '<button class="btn btn-ghost" onclick="stopRouteTracking();document.getElementById(\'detailModal\').classList.remove(\'show\')">Cancel</button>';
+  footer += '<button class="btn btn-ghost" onclick="stopRouteTracking();closeModal(\'detailModal\')">Cancel</button>';
 
   document.getElementById('detailModalTitle').textContent = '🚶 Walk in Progress';
   document.getElementById('detailModalBody').innerHTML = html;
   document.getElementById('detailModalFooter').innerHTML = footer;
-  document.getElementById('detailModal').classList.add('show');
+  openModal('detailModal');
 
   // Auto-start GPS tracking
   startRouteTracking();
@@ -1456,7 +1469,7 @@ function saveCheckin(bookingId, share) {
   if (b && b.status === 'scheduled') b.status = 'confirmed';
 
   saveData(); showToast('📍 Check-in saved');
-  document.getElementById('detailModal').classList.remove('show');
+  closeModal('detailModal');
 
   if (share) {
     const c = clients.find(cl => cl.id === ci.clientId);
@@ -1467,7 +1480,7 @@ function saveCheckin(bookingId, share) {
       navigator.share({ text: msg }).catch(() => {});
     }
   }
-  renderCheckins();
+  renderCheckins(); renderBookings(); renderDashboard();
 }
 
 function renderCheckins() {
@@ -1585,7 +1598,7 @@ function openNewInvoiceModal() {
   html += '<div class="form-grid" style="margin-top:12px;"><div class="form-group"><label>Tip</label><input id="niTip" type="number" step="0.01" value="0"></div></div>';
 
   document.getElementById('invoiceModalBody').innerHTML = html;
-  document.getElementById('invoiceModal').classList.add('show');
+  openModal('invoiceModal');
 }
 
 let invoiceItemCount = 1;
@@ -1617,7 +1630,7 @@ function saveInvoice() {
   const subtotal = items.reduce((s, it) => s + it.amount, 0);
   invoices.push({ id: genId(), clientId, clientName: c ? c.name : 'Unknown', items, subtotal, tip, total: subtotal + tip, status: 'unpaid', date, sentDate: null, paidDate: null });
   invoiceItemCount = 1;
-  saveData(); document.getElementById('invoiceModal').classList.remove('show');
+  saveData(); closeModal('invoiceModal');
   showToast('💰 Invoice created'); renderInvoices();
 }
 
@@ -1721,7 +1734,7 @@ function openNewExpenseModal() {
   html += '</div>';
   document.getElementById('expenseModalBody').innerHTML = html;
   document.getElementById('expenseModal').querySelector('.modal-footer .btn-primary').setAttribute('onclick', 'saveExpense()');
-  document.getElementById('expenseModal').classList.add('show');
+  openModal('expenseModal');
 }
 
 function saveExpense() {
@@ -1735,7 +1748,7 @@ function saveExpense() {
     amount,
     mileage: parseFloat(document.getElementById('neMileage').value) || 0
   });
-  saveData(); document.getElementById('expenseModal').classList.remove('show');
+  saveData(); closeModal('expenseModal');
   showToast('🧾 Expense saved'); renderExpenses();
 }
 
@@ -1753,7 +1766,7 @@ function editExpense(id) {
   html += '</div>';
   document.getElementById('expenseModalBody').innerHTML = html;
   document.getElementById('expenseModal').querySelector('.modal-footer .btn-primary').setAttribute('onclick', 'updateExpense(' + id + ')');
-  document.getElementById('expenseModal').classList.add('show');
+  openModal('expenseModal');
 }
 
 function updateExpense(id) {
@@ -1766,7 +1779,7 @@ function updateExpense(id) {
   e.description = document.getElementById('neDesc').value.trim();
   e.amount = amount;
   e.mileage = parseFloat(document.getElementById('neMileage').value) || 0;
-  saveData(); document.getElementById('expenseModal').classList.remove('show');
+  saveData(); closeModal('expenseModal');
   document.getElementById('expenseModal').querySelector('.modal-footer .btn-primary').setAttribute('onclick', 'saveExpense()');
   showToast('✅ Expense updated'); renderExpenses();
 }
@@ -2010,7 +2023,7 @@ function markNoShow(id) {
   if (!confirm('Mark this booking as a no-show?')) return;
   const b = bookings.find(bk => bk.id === id);
   if (b) { b.status = 'no-show'; saveData(); showToast('🚫 Marked as no-show'); }
-  document.getElementById('detailModal').classList.remove('show');
+  closeModal('detailModal');
   switchPage(document.querySelector('.nav-item.active').dataset.page);
 }
 
@@ -2020,7 +2033,7 @@ function cancelSeries(seriesId) {
   if (!confirm('Cancel all ' + seriesBookings.length + ' upcoming bookings in this series?')) return;
   seriesBookings.forEach(b => { b.status = 'cancelled'; });
   saveData(); showToast('🗑️ ' + seriesBookings.length + ' bookings cancelled');
-  document.getElementById('detailModal').classList.remove('show');
+  closeModal('detailModal');
   switchPage(document.querySelector('.nav-item.active').dataset.page);
 }
 
@@ -2126,7 +2139,7 @@ function renderProfitTrendChart(startStr) {
     months[m].exp += e.amount;
   });
   const sorted = Object.entries(months).sort((a, b) => a[0].localeCompare(b[0]));
-  const labels = sorted.map(([m]) => { const d = new Date(m + '-01'); return d.toLocaleDateString('en-US', { month: 'short' }); });
+  const labels = sorted.map(([m]) => { const parts = m.split('-'); const d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, 1); return d.toLocaleDateString('en-US', { month: 'short' }); });
   const revData = sorted.map(([, v]) => v.rev);
   const expData = sorted.map(([, v]) => v.exp);
   if (canvas._chart) canvas._chart.destroy();
@@ -2216,8 +2229,8 @@ function openGalleryLightbox(src, pet, caption) {
   html += '<div style="text-align:center;margin-top:10px;"><div style="font-weight:700;font-size:1rem;">🐾 ' + esc(pet) + '</div><div style="color:var(--text-light);font-size:0.85rem;">' + esc(caption) + '</div></div>';
   document.getElementById('detailModalTitle').textContent = '🖼️ Photo';
   document.getElementById('detailModalBody').innerHTML = html;
-  document.getElementById('detailModalFooter').innerHTML = '<button class="btn btn-ghost" onclick="document.getElementById(\'detailModal\').classList.remove(\'show\')">Close</button>';
-  document.getElementById('detailModal').classList.add('show');
+  document.getElementById('detailModalFooter').innerHTML = '<button class="btn btn-ghost" onclick="closeModal(\'detailModal\')">Close</button>';
+  openModal('detailModal');
 }
 
 /* ══════════════════════════════════════════
@@ -2276,10 +2289,9 @@ function openClientPortal(clientId) {
   document.getElementById('detailModalTitle').textContent = '📋 Report Card';
   document.getElementById('detailModalBody').innerHTML = html;
   let footer = '<button class="btn btn-primary" onclick="sharePortal(' + clientId + ')">📤 Share</button>';
-  footer += '<button class="btn btn-ghost" onclick="document.getElementById(\'detailModal\').classList.remove(\'show\')">Close</button>';
+  footer += '<button class="btn btn-ghost" onclick="closeModal(\'detailModal\')">Close</button>';
   document.getElementById('detailModalFooter').innerHTML = footer;
-  document.getElementById('detailModal').classList.add('show');
-  document.querySelector('#detailModal .modal-box').scrollTop = 0;
+  openModal('detailModal');
 }
 
 function sharePortal(clientId) {
@@ -2678,7 +2690,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Escape closes modals
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') document.querySelectorAll('.modal-overlay.show').forEach(m => m.classList.remove('show'));
+  if (e.key === 'Escape') document.querySelectorAll('.modal-overlay.show').forEach(m => closeModal(m.id));
 });
 </script>
 </body>
