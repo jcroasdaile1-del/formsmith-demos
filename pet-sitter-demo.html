@@ -343,6 +343,10 @@ input, select, textarea { font-family: inherit; font-size: 0.88rem; }
 .inv-card-item .inv-actions { display: flex; gap: 6px; margin-top: 8px; }
 .inv-card-item.paid { border-left-color: var(--green); }
 .inv-card-item.unpaid { border-left-color: #f59e0b; }
+.inv-card-item.voided { border-left-color: var(--danger); opacity: 0.7; }
+
+/* ── Expense Cards (hidden on desktop, shown on mobile) ── */
+.exp-cards { display: none; }
 
 /* ── Booking Cards (hidden on desktop, shown on mobile) ── */
 .booking-cards { display: none; }
@@ -434,6 +438,9 @@ input, select, textarea { font-family: inherit; font-size: 0.88rem; }
   .booking-cards { display: flex; flex-direction: column; gap: 8px; }
   .inv-table-wrap { display: none; }
   .inv-cards { display: flex; flex-direction: column; gap: 8px; }
+  .exp-table-wrap { display: none; }
+  .exp-cards { display: flex; flex-direction: column; gap: 8px; }
+  .exp-cards + div { margin-top: 8px; }
 }
 
 /* ── Demo banner ── */
@@ -552,6 +559,7 @@ input, select, textarea { font-family: inherit; font-size: 0.88rem; }
     <span class="pill active" onclick="setInvoiceFilter('all')">All</span>
     <span class="pill" onclick="setInvoiceFilter('unpaid')">Unpaid</span>
     <span class="pill" onclick="setInvoiceFilter('paid')">Paid</span>
+    <span class="pill" onclick="setInvoiceFilter('voided')">Voided</span>
   </div>
   <div id="invoicesArea"></div>
 </div>
@@ -1271,15 +1279,18 @@ function saveBooking() {
   if (!clientId) { showToast('⚠️ Select a client'); return; }
   const petCbs = document.querySelectorAll('.nb-pet-cb:checked');
   const petIds = Array.from(petCbs).map(cb => cb.value);
-  const service = document.getElementById('nbService').value || '30-min Walk';
+  if (petIds.length === 0) { showToast('⚠️ Select at least one pet'); return; }
+  const service = document.getElementById('nbService').value;
+  if (!service) { showToast('⚠️ Select a service'); return; }
   const date = document.getElementById('nbDate').value;
+  if (!date) { showToast('⚠️ Date required'); return; }
   const time = document.getElementById('nbTime').value;
+  if (!time) { showToast('⚠️ Time required'); return; }
   const duration = parseInt(document.getElementById('nbDuration').value) || 30;
-  const price = parseFloat(document.getElementById('nbPrice').value) || 0;
+  const price = parseFloat(document.getElementById('nbPrice').value);
+  if (!price || price <= 0) { showToast('⚠️ Price must be greater than $0'); return; }
   const notes = document.getElementById('nbNotes').value.trim();
   const recurring = document.getElementById('nbRecurring').checked;
-
-  if (!date) { showToast('⚠️ Date required'); return; }
 
   const booking = { id: genId(), clientId, petIds, service, date, time, duration, price, notes, status: 'scheduled', recurring, seriesId: recurring ? 'series_' + Date.now() : null };
   bookings.push(booking);
@@ -1492,6 +1503,7 @@ function renderInvoices() {
   let filtered = invoices;
   if (invoiceFilter === 'unpaid') filtered = invoices.filter(i => i.status === 'unpaid');
   else if (invoiceFilter === 'paid') filtered = invoices.filter(i => i.status === 'paid');
+  else if (invoiceFilter === 'voided') filtered = invoices.filter(i => i.status === 'voided');
 
   if (filtered.length === 0) {
     document.getElementById('invoicesArea').innerHTML = '<div class="empty-state"><h3>No invoices</h3><p>Create invoices from completed bookings.</p></div>';
@@ -1504,11 +1516,15 @@ function renderInvoices() {
   const pageItems = filtered.slice(start, start + PAGE_SIZE);
   let html = '<div class="inv-table-wrap"><div class="card"><div class="card-body" style="padding:0;overflow-x:auto;"><table class="data-table"><thead><tr><th style="position:sticky;top:0;z-index:2;background:var(--card);">Invoice</th><th style="position:sticky;top:0;z-index:2;background:var(--card);">Client</th><th style="position:sticky;top:0;z-index:2;background:var(--card);">Date</th><th style="position:sticky;top:0;z-index:2;background:var(--card);">Status</th><th class="num" style="position:sticky;top:0;z-index:2;background:var(--card);">Total</th><th style="position:sticky;top:0;z-index:2;background:var(--card);">Actions</th></tr></thead><tbody>';
   pageItems.forEach(inv => {
-    html += '<tr><td style="font-weight:600;">#' + String(inv.id).padStart(4, '0') + '</td><td>' + esc(inv.clientName) + '</td><td>' + fmtDate(inv.date) + '</td><td><span class="badge badge-' + (inv.status === 'paid' ? 'green' : 'amber') + '">' + inv.status + '</span></td><td class="num" style="font-weight:700;">' + fmt$(inv.total) + '</td>';
-    html += '<td style="display:flex;gap:4px;">';
+    html += '<tr><td style="font-weight:600;">#' + String(inv.id).padStart(4, '0') + '</td><td>' + esc(inv.clientName) + '</td><td>' + fmtDate(inv.date) + '</td><td><span class="badge badge-' + (inv.status === 'paid' ? 'green' : inv.status === 'voided' ? 'red' : 'amber') + '">' + inv.status + '</span></td><td class="num" style="font-weight:700;">' + fmt$(inv.total) + '</td>';
+    html += '<td style="display:flex;gap:4px;flex-wrap:wrap;">';
     if (inv.status === 'unpaid') {
       html += '<button class="btn btn-sm btn-primary" onclick="markInvoicePaid(' + inv.id + ')">Mark Paid</button>';
       html += '<button class="btn btn-sm btn-outline" onclick="sendInvoice(' + inv.id + ')">Send</button>';
+      html += '<button class="btn btn-sm btn-outline" style="color:var(--danger);" onclick="voidInvoice(' + inv.id + ')">Void</button>';
+    }
+    if (inv.status !== 'voided') {
+      html += '<button class="btn btn-sm btn-outline" style="color:var(--danger);" onclick="deleteInvoice(' + inv.id + ')">Delete</button>';
     }
     html += '</td></tr>';
   });
@@ -1517,11 +1533,17 @@ function renderInvoices() {
   html += '<div class="inv-cards">';
   pageItems.forEach(inv => {
     html += '<div class="inv-card-item ' + inv.status + '">';
-    html += '<div class="inv-top"><span class="inv-id">#' + String(inv.id).padStart(4, '0') + '</span><span class="badge badge-' + (inv.status === 'paid' ? 'green' : 'amber') + '">' + inv.status + '</span></div>';
+    html += '<div class="inv-top"><span class="inv-id">#' + String(inv.id).padStart(4, '0') + '</span><span class="badge badge-' + (inv.status === 'paid' ? 'green' : inv.status === 'voided' ? 'red' : 'amber') + '">' + inv.status + '</span></div>';
     html += '<div class="inv-details">' + esc(inv.clientName) + ' · ' + fmtDate(inv.date) + ' · <strong>' + fmt$(inv.total) + '</strong></div>';
+    html += '<div class="inv-actions">';
     if (inv.status === 'unpaid') {
-      html += '<div class="inv-actions"><button class="btn btn-sm btn-primary" onclick="markInvoicePaid(' + inv.id + ')">Mark Paid</button><button class="btn btn-sm btn-outline" onclick="sendInvoice(' + inv.id + ')">Send</button></div>';
+      html += '<button class="btn btn-sm btn-primary" onclick="markInvoicePaid(' + inv.id + ')">Mark Paid</button><button class="btn btn-sm btn-outline" onclick="sendInvoice(' + inv.id + ')">Send</button>';
+      html += '<button class="btn btn-sm btn-outline" style="color:var(--danger);" onclick="voidInvoice(' + inv.id + ')">Void</button>';
     }
+    if (inv.status !== 'voided') {
+      html += '<button class="btn btn-sm btn-outline" style="color:var(--danger);" onclick="deleteInvoice(' + inv.id + ')">Delete</button>';
+    }
+    html += '</div>';
     html += '</div>';
   });
   html += '</div>';
@@ -1578,18 +1600,20 @@ function addInvoiceItem() {
 
 function saveInvoice() {
   const clientId = parseInt(document.getElementById('niClient').value);
+  if (!clientId) { showToast('⚠️ Select a client'); return; }
   const c = clients.find(cl => cl.id === clientId);
   const date = document.getElementById('niDate').value;
+  if (!date) { showToast('⚠️ Date required'); return; }
   const tip = parseFloat(document.getElementById('niTip').value) || 0;
   const items = [];
   for (let i = 0; i < invoiceItemCount + 1; i++) {
     const desc = document.getElementById('niDesc' + i);
     const amt = document.getElementById('niAmt' + i);
-    if (desc && amt && desc.value && parseFloat(amt.value)) {
+    if (desc && amt && desc.value.trim() && parseFloat(amt.value) > 0) {
       items.push({ desc: desc.value.trim(), amount: parseFloat(amt.value) });
     }
   }
-  if (items.length === 0) { showToast('⚠️ Add at least one line item'); return; }
+  if (items.length === 0) { showToast('⚠️ Add at least one line item with a description and amount'); return; }
   const subtotal = items.reduce((s, it) => s + it.amount, 0);
   invoices.push({ id: genId(), clientId, clientName: c ? c.name : 'Unknown', items, subtotal, tip, total: subtotal + tip, status: 'unpaid', date, sentDate: null, paidDate: null });
   invoiceItemCount = 1;
@@ -1608,7 +1632,9 @@ function createInvoiceFromBooking(bookingId) {
 
 function markInvoicePaid(id) {
   const inv = invoices.find(i => i.id === id);
-  if (inv) { inv.status = 'paid'; inv.paidDate = todayStr(); saveData(); showToast('✅ Marked as paid'); renderInvoices(); renderDashboard(); }
+  if (!inv) return;
+  if (!confirm('Mark invoice #' + String(inv.id).padStart(4, '0') + ' (' + fmt$(inv.total) + ') as paid?')) return;
+  inv.status = 'paid'; inv.paidDate = todayStr(); saveData(); showToast('✅ Marked as paid'); renderInvoices(); renderDashboard();
 }
 
 function sendInvoice(id) {
@@ -1631,6 +1657,21 @@ function sendInvoice(id) {
   inv.sentDate = todayStr(); saveData(); showToast('📤 Invoice sent');
 }
 
+function deleteInvoice(id) {
+  const inv = invoices.find(i => i.id === id);
+  if (!inv) return;
+  if (!confirm('Delete invoice #' + String(inv.id).padStart(4, '0') + ' for ' + esc(inv.clientName) + ' (' + fmt$(inv.total) + ')? This cannot be undone.')) return;
+  invoices = invoices.filter(i => i.id !== id);
+  saveData(); showToast('🗑️ Invoice deleted'); renderInvoices(); renderDashboard();
+}
+
+function voidInvoice(id) {
+  const inv = invoices.find(i => i.id === id);
+  if (!inv) return;
+  if (!confirm('Void invoice #' + String(inv.id).padStart(4, '0') + '? This will mark it as voided and exclude it from your finances.')) return;
+  inv.status = 'voided'; saveData(); showToast('⛔ Invoice voided'); renderInvoices(); renderDashboard();
+}
+
 /* ══════════════════════════════════════════
    EXPENSES
    ══════════════════════════════════════════ */
@@ -1651,11 +1692,21 @@ function renderExpenses() {
     document.getElementById('expensesArea').innerHTML = '<div class="empty-state"><h3>No expenses tracked</h3><p>Track treats, supplies, gas, and mileage.</p><button class="btn btn-primary" onclick="openNewExpenseModal()">+ Add Expense</button></div>';
     return;
   }
-  let html = '<div class="card"><div class="card-body" style="padding:0;overflow-x:auto;"><table class="data-table"><thead><tr><th style="position:sticky;top:0;z-index:2;background:var(--card);">Date</th><th style="position:sticky;top:0;z-index:2;background:var(--card);">Category</th><th style="position:sticky;top:0;z-index:2;background:var(--card);">Description</th><th class="num" style="position:sticky;top:0;z-index:2;background:var(--card);">Amount</th><th class="num" style="position:sticky;top:0;z-index:2;background:var(--card);">Mileage</th></tr></thead><tbody>';
-  [...expenses].sort((a, b) => b.date.localeCompare(a.date)).forEach(e => {
-    html += '<tr><td>' + fmtDate(e.date) + '</td><td><span class="badge badge-purple">' + esc(e.category) + '</span></td><td>' + esc(e.description) + '</td><td class="num">' + fmt$(e.amount) + '</td><td class="num">' + (e.mileage ? e.mileage + ' mi' : '—') + '</td></tr>';
+  const sorted = [...expenses].sort((a, b) => b.date.localeCompare(a.date));
+  let html = '<div class="exp-table-wrap"><div class="card"><div class="card-body" style="padding:0;overflow-x:auto;"><table class="data-table"><thead><tr><th style="position:sticky;top:0;z-index:2;background:var(--card);">Date</th><th style="position:sticky;top:0;z-index:2;background:var(--card);">Category</th><th style="position:sticky;top:0;z-index:2;background:var(--card);">Description</th><th class="num" style="position:sticky;top:0;z-index:2;background:var(--card);">Amount</th><th class="num" style="position:sticky;top:0;z-index:2;background:var(--card);">Mileage</th><th style="position:sticky;top:0;z-index:2;background:var(--card);">Actions</th></tr></thead><tbody>';
+  sorted.forEach(e => {
+    html += '<tr><td>' + fmtDate(e.date) + '</td><td><span class="badge badge-purple">' + esc(e.category) + '</span></td><td>' + esc(e.description) + '</td><td class="num">' + fmt$(e.amount) + '</td><td class="num">' + (e.mileage ? e.mileage + ' mi' : '—') + '</td>';
+    html += '<td style="display:flex;gap:4px;"><button class="btn btn-sm btn-outline" onclick="editExpense(' + e.id + ')">Edit</button><button class="btn btn-sm btn-outline" style="color:var(--danger);" onclick="deleteExpense(' + e.id + ')">Delete</button></td></tr>';
   });
-  html += '</tbody></table></div></div>';
+  html += '</tbody></table></div></div></div>';
+  // Mobile expense cards
+  html += '<div class="exp-cards">';
+  sorted.forEach(e => {
+    html += '<div class="inv-card-item"><div class="inv-top"><span class="badge badge-purple">' + esc(e.category) + '</span><span class="num" style="font-weight:700;">' + fmt$(e.amount) + '</span></div>';
+    html += '<div class="inv-details">' + fmtDate(e.date) + (e.description ? ' · ' + esc(e.description) : '') + (e.mileage ? ' · ' + e.mileage + ' mi' : '') + '</div>';
+    html += '<div class="inv-actions"><button class="btn btn-sm btn-outline" onclick="editExpense(' + e.id + ')">Edit</button><button class="btn btn-sm btn-outline" style="color:var(--danger);" onclick="deleteExpense(' + e.id + ')">Delete</button></div></div>';
+  });
+  html += '</div>';
   html += '<div style="margin-top:12px;"><button class="btn btn-outline" onclick="exportExpenses()">📤 Export CSV</button></div>';
   document.getElementById('expensesArea').innerHTML = html;
 }
@@ -1669,6 +1720,7 @@ function openNewExpenseModal() {
   html += '<div class="form-group"><label>Mileage (optional)</label><input id="neMileage" type="number" step="0.1" placeholder="miles driven"></div>';
   html += '</div>';
   document.getElementById('expenseModalBody').innerHTML = html;
+  document.getElementById('expenseModal').querySelector('.modal-footer .btn-primary').setAttribute('onclick', 'saveExpense()');
   document.getElementById('expenseModal').classList.add('show');
 }
 
@@ -1685,6 +1737,46 @@ function saveExpense() {
   });
   saveData(); document.getElementById('expenseModal').classList.remove('show');
   showToast('🧾 Expense saved'); renderExpenses();
+}
+
+function editExpense(id) {
+  var e = expenses.find(function(ex) { return ex.id === id; });
+  if (!e) return;
+  var html = '<div class="form-grid">';
+  html += '<div class="form-group"><label>Date</label><input id="neDate" type="date" value="' + e.date + '"></div>';
+  html += '<div class="form-group"><label>Category</label><select id="neCategory">';
+  ['Gas/Fuel','Supplies','Treats','Equipment','Insurance','Marketing','Other'].forEach(function(cat) { html += '<option' + (e.category === cat ? ' selected' : '') + '>' + cat + '</option>'; });
+  html += '</select></div>';
+  html += '<div class="form-group" style="grid-column:1/-1;"><label>Description</label><input id="neDesc" value="' + esc(e.description || '') + '"></div>';
+  html += '<div class="form-group"><label>Amount ($)</label><input id="neAmt" type="number" step="0.01" value="' + e.amount + '"></div>';
+  html += '<div class="form-group"><label>Mileage (optional)</label><input id="neMileage" type="number" step="0.1" value="' + (e.mileage || '') + '"></div>';
+  html += '</div>';
+  document.getElementById('expenseModalBody').innerHTML = html;
+  document.getElementById('expenseModal').querySelector('.modal-footer .btn-primary').setAttribute('onclick', 'updateExpense(' + id + ')');
+  document.getElementById('expenseModal').classList.add('show');
+}
+
+function updateExpense(id) {
+  var e = expenses.find(function(ex) { return ex.id === id; });
+  if (!e) return;
+  var amount = parseFloat(document.getElementById('neAmt').value) || 0;
+  if (amount <= 0) { showToast('⚠️ Enter an amount'); return; }
+  e.date = document.getElementById('neDate').value || todayStr();
+  e.category = document.getElementById('neCategory').value;
+  e.description = document.getElementById('neDesc').value.trim();
+  e.amount = amount;
+  e.mileage = parseFloat(document.getElementById('neMileage').value) || 0;
+  saveData(); document.getElementById('expenseModal').classList.remove('show');
+  document.getElementById('expenseModal').querySelector('.modal-footer .btn-primary').setAttribute('onclick', 'saveExpense()');
+  showToast('✅ Expense updated'); renderExpenses();
+}
+
+function deleteExpense(id) {
+  var e = expenses.find(function(ex) { return ex.id === id; });
+  if (!e) return;
+  if (!confirm('Delete expense "' + (e.description || e.category) + '" for ' + fmt$(e.amount) + '?')) return;
+  expenses = expenses.filter(function(ex) { return ex.id !== id; });
+  saveData(); showToast('🗑️ Expense deleted'); renderExpenses();
 }
 
 function exportExpenses() {
