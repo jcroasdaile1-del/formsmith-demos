@@ -2389,7 +2389,7 @@ function loadSampleData() {
   if (teams.length > 0 && !confirm('This will replace all current data. Continue?')) return;
   config = {
     leagueName: 'Buckskin Bowmen', season: '2026 Summer', numBrackets: 4,
-    qualWeeks: 3, targets: 28, ptsPerTarget: 10, handicapPct: 80,
+    qualWeeks: 2, bracketPlayWeeks: 11, targets: 28, ptsPerTarget: 10, handicapPct: 80,
     archersPerTeam: 3, startDate: '2026-06-01', bracketsLocked: false
   };
   teams = [
@@ -2434,7 +2434,7 @@ function loadSampleData() {
     { id: 39, name: 'Team Frey', archers: ['Art Frey', 'Joel Frey', 'Russ Pfeiffer'], bracket: null },
     { id: 40, name: 'Team Lange', archers: ['Earl Lange', 'Clint Lange', 'Norm Sauer'], bracket: null },
   ];
-  // Qualifying scores (3 weeks) for all 40 teams — realistic archery scores (out of 280 max)
+  // Scores for 3 weeks (2 qualifying + 1 bracket play) for all 40 teams — realistic archery scores (out of 280 max)
   scores = {
     1: { 1:[270,262,262], 2:[254,247,264], 3:[265,258,258], 4:[267,247,240], 5:[243,268,235], 6:[270,256,239], 7:[251,252,216], 8:[263,245,252], 9:[254,240,248], 10:[246,158,240],
          11:[269,274,258], 12:[238,232,241], 13:[263,268,273], 14:[248,255,261], 15:[235,239,244], 16:[263,256,252], 17:[242,238,235], 18:[252,238,236], 19:[258,248,242], 20:[273,265,258],
@@ -2453,7 +2453,7 @@ function loadSampleData() {
   loadConfigUI();
   renderTeams();
   renderDashboard();
-  showToast('📋 40 teams loaded with 3 weeks of qualifying scores');
+  showToast('📋 40 teams loaded with 2 weeks of qualifying scores');
 }
 
 /* ══════════════════════════════════════════
