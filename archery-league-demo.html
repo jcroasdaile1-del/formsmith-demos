@@ -489,7 +489,8 @@ body.dark-mode .config-editing-banner { background: #422006; border-color: #d977
         <div class="field-group"><label>League Name</label><input type="text" id="cfg-leagueName" value="Buckskin Bowmen" disabled></div>
         <div class="field-group"><label>Season</label><input type="text" id="cfg-season" value="2026 Summer" disabled></div>
         <div class="field-group"><label>Number of Brackets</label><select id="cfg-numBrackets" disabled><option>2</option><option>3</option><option selected>4</option><option>5</option></select></div>
-        <div class="field-group"><label>Qualifying Weeks</label><select id="cfg-qualWeeks" disabled><option>2</option><option selected>3</option><option>4</option></select></div>
+        <div class="field-group"><label>Qualifying Weeks</label><select id="cfg-qualWeeks" disabled><option selected>2</option><option>3</option><option>4</option></select></div>
+        <div class="field-group"><label>Bracket Play Weeks</label><input type="number" id="cfg-bracketPlayWeeks" value="10" min="1" max="52" disabled></div>
         <div class="field-group"><label>Targets per Round</label><input type="number" id="cfg-targets" value="28" disabled></div>
         <div class="field-group"><label>Points per Target</label><input type="number" id="cfg-ptsPerTarget" value="10" disabled></div>
         <div class="field-group"><label>Handicap %</label><input type="number" id="cfg-handicapPct" value="80" min="0" max="100" disabled></div>
@@ -541,6 +542,7 @@ body.dark-mode .config-editing-banner { background: #422006; border-color: #d977
 <div class="tab-content" id="tab-schedule">
   <div class="sample-banner"><strong>📅 Schedule</strong> — Auto-generated round-robin schedule. Last weeks are seeded by current standings.</div>
   <div class="bracket-tabs" id="scheduleBracketTabs"></div>
+  <div id="schedulePagination" style="display:flex;gap:6px;align-items:center;margin-bottom:12px;flex-wrap:wrap;"></div>
   <div id="scheduleArea"></div>
 </div>
 
@@ -692,8 +694,14 @@ body.dark-mode .config-editing-banner { background: #422006; border-color: #d977
   <div class="modal-box" style="max-width:700px;">
     <div class="modal-header"><h3>🏹 Assign Divisions</h3><button class="modal-close" onclick="closeBracketModal()">&times;</button></div>
     <div class="modal-body" style="max-height:70vh;overflow-y:auto;">
-      <p style="color:var(--text-light);font-size:0.85rem;margin-bottom:12px;">Teams are ranked by qualifying average. Choose a division split, then adjust individual teams if needed.</p>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;" id="bracketPresets"></div>
+      <p style="color:var(--text-light);font-size:0.85rem;margin-bottom:12px;">Teams are ranked by qualifying average. Use presets or customize division count and sizes freely.</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;" id="bracketPresets"></div>
+      <div id="bracketCustomControls" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px;padding:10px 14px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);">
+        <span style="font-size:0.82rem;font-weight:600;color:var(--text-light);">Custom:</span>
+        <button class="btn btn-sm" style="background:var(--danger-light);color:#991b1b;border:1px solid #fca5a5;font-size:0.78rem;padding:4px 10px;" onclick="removeBracketDivision()">− Remove Division</button>
+        <button class="btn btn-sm" style="background:var(--primary-light);color:var(--primary-dark);border:1px solid var(--primary);font-size:0.78rem;padding:4px 10px;" onclick="addBracketDivision()">+ Add Division</button>
+        <button class="btn btn-sm" style="background:var(--primary-light);color:var(--primary-dark);border:1px solid var(--primary);font-size:0.78rem;padding:4px 10px;" onclick="redistributeTeams()">↻ Redistribute Evenly</button>
+      </div>
       <div id="bracketAssignBody"></div>
     </div>
     <div style="display:flex;gap:10px;justify-content:flex-end;padding:16px 20px;border-top:1px solid var(--border);">
@@ -711,7 +719,8 @@ let config = {
   leagueName: 'Buckskin Bowmen',
   season: '2026 Summer',
   numBrackets: 4,
-  qualWeeks: 3,
+  qualWeeks: 2,
+  bracketPlayWeeks: 10,
   targets: 28,
   ptsPerTarget: 10,
   handicapPct: 80,
@@ -768,6 +777,7 @@ function saveConfig() {
   config.season = document.getElementById('cfg-season').value;
   config.numBrackets = parseInt(document.getElementById('cfg-numBrackets').value);
   config.qualWeeks = parseInt(document.getElementById('cfg-qualWeeks').value);
+  config.bracketPlayWeeks = parseInt(document.getElementById('cfg-bracketPlayWeeks').value) || 10;
   config.targets = parseInt(document.getElementById('cfg-targets').value) || 28;
   config.ptsPerTarget = parseInt(document.getElementById('cfg-ptsPerTarget').value) || 10;
   config.handicapPct = parseInt(document.getElementById('cfg-handicapPct').value) || 80;
@@ -826,6 +836,7 @@ function loadConfigUI() {
   document.getElementById('cfg-season').value = config.season;
   document.getElementById('cfg-numBrackets').value = config.numBrackets;
   document.getElementById('cfg-qualWeeks').value = config.qualWeeks;
+  document.getElementById('cfg-bracketPlayWeeks').value = config.bracketPlayWeeks || 10;
   document.getElementById('cfg-targets').value = config.targets;
   document.getElementById('cfg-ptsPerTarget').value = config.ptsPerTarget;
   document.getElementById('cfg-handicapPct').value = config.handicapPct;
@@ -836,11 +847,9 @@ function loadConfigUI() {
 function getPerfectScore() { return config.targets * config.ptsPerTarget; }
 
 function getTotalSeasonWeeks() {
+  var bpWeeks = config.bracketPlayWeeks || 10;
   if (!config.bracketsLocked || Object.keys(schedule).length === 0) return config.qualWeeks;
-  const brackets = Object.keys(schedule);
-  if (brackets.length === 0) return config.qualWeeks;
-  const maxWeek = Math.max(...Object.values(schedule).flat().map(m => m.week));
-  return maxWeek;
+  return config.qualWeeks + bpWeeks;
 }
 
 /* ══════════════════════════════════════════
@@ -1133,6 +1142,60 @@ function moveBracketTeam(teamId, newBracket) {
   renderBracketAssignBody();
 }
 
+function addBracketDivision() {
+  // Find the next unused letter label
+  var usedLabels = [];
+  bracketDraft.forEach(function(t) { if (t.bracket && usedLabels.indexOf(t.bracket) === -1) usedLabels.push(t.bracket); });
+  usedLabels.sort();
+  var allLabels = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+  var newLabel = null;
+  for (var i = 0; i < allLabels.length; i++) {
+    if (usedLabels.indexOf(allLabels[i]) === -1) { newLabel = allLabels[i]; break; }
+  }
+  if (!newLabel) { showToast('⚠️ Maximum divisions reached'); return; }
+  // Move the last team from the largest division into the new division
+  var groups = {};
+  bracketDraft.forEach(function(t) { if (t.bracket) { if (!groups[t.bracket]) groups[t.bracket] = []; groups[t.bracket].push(t); } });
+  var largest = null, largestCount = 0;
+  Object.keys(groups).forEach(function(b) { if (groups[b].length > largestCount) { largest = b; largestCount = groups[b].length; } });
+  if (largest && largestCount > 1) {
+    var lastTeam = groups[largest][groups[largest].length - 1];
+    lastTeam.bracket = newLabel;
+  }
+  // Clear preset highlight
+  document.querySelectorAll('.bracket-preset-btn').forEach(function(btn) {
+    btn.style.background = 'var(--primary-light)';
+    btn.style.color = 'var(--primary-dark)';
+  });
+  renderBracketAssignBody();
+}
+
+function removeBracketDivision() {
+  var usedLabels = [];
+  bracketDraft.forEach(function(t) { if (t.bracket && usedLabels.indexOf(t.bracket) === -1) usedLabels.push(t.bracket); });
+  usedLabels.sort();
+  if (usedLabels.length <= 1) { showToast('⚠️ Need at least 1 division'); return; }
+  // Remove the last division, move its teams to the previous one
+  var removedLabel = usedLabels[usedLabels.length - 1];
+  var targetLabel = usedLabels[usedLabels.length - 2];
+  bracketDraft.forEach(function(t) { if (t.bracket === removedLabel) t.bracket = targetLabel; });
+  // Clear preset highlight
+  document.querySelectorAll('.bracket-preset-btn').forEach(function(btn) {
+    btn.style.background = 'var(--primary-light)';
+    btn.style.color = 'var(--primary-dark)';
+  });
+  renderBracketAssignBody();
+}
+
+function redistributeTeams() {
+  var usedLabels = [];
+  bracketDraft.forEach(function(t) { if (t.bracket && usedLabels.indexOf(t.bracket) === -1) usedLabels.push(t.bracket); });
+  usedLabels.sort();
+  var numDiv = usedLabels.length;
+  if (numDiv < 1) return;
+  applyBracketSplit(numDiv);
+}
+
 function confirmBracketAssignment() {
   // Validate: every team must have a bracket
   var unassigned = bracketDraft.filter(function(t) { return !t.bracket; });
@@ -1234,6 +1297,7 @@ function fillPhantomScores(week) {
    ══════════════════════════════════════════ */
 function generateSchedule() {
   schedule = {};
+  var bpWeeks = config.bracketPlayWeeks || 10;
   const bracketLabels = [...new Set(teams.map(t => t.bracket).filter(Boolean))].sort();
   bracketLabels.forEach(bracket => {
     var bracketTeams = teams.filter(t => t.bracket === bracket);
@@ -1252,9 +1316,11 @@ function generateSchedule() {
     var ids = odds.concat(evens);
     if (ids.length % 2 !== 0) ids.push(-1); // bye
     var numRounds = ids.length - 1;
+    // Cap regular-season rounds to bracketPlayWeeks
+    var maxRegRounds = Math.min(numRounds, bpWeeks);
     var matchups = [];
     var half = ids.length / 2;
-    for (var round = 0; round < numRounds; round++) {
+    for (var round = 0; round < maxRegRounds; round++) {
       for (var i = 0; i < half; i++) {
         var a = ids[i], b = ids[ids.length - 1 - i];
         if (a !== -1 && b !== -1) {
@@ -1264,12 +1330,6 @@ function generateSchedule() {
       // Rotate: fix first, rotate rest
       var last = ids.pop();
       ids.splice(1, 0, last);
-    }
-    // Add playoff weeks
-    var playoffStart = config.qualWeeks + numRounds + 1;
-    var totalWeeks = config.qualWeeks + numRounds + Math.max(1, Math.floor(n / 2));
-    for (var w = playoffStart; w <= totalWeeks; w++) {
-      matchups.push({ week: w, teamA: null, teamB: null, playoff: true });
     }
     schedule[bracket] = matchups;
   });
@@ -1891,11 +1951,16 @@ function renderBracketStandings(bracket) {
 /* ══════════════════════════════════════════
    RENDER: SCHEDULE
    ══════════════════════════════════════════ */
+var schedPage = 1;
+var SCHED_WEEKS_PER_PAGE = 3;
+
 function renderScheduleTab() {
   const area = document.getElementById('scheduleArea');
   const tabsEl = document.getElementById('scheduleBracketTabs');
+  const pagEl = document.getElementById('schedulePagination');
   if (!config.bracketsLocked) {
     tabsEl.innerHTML = '';
+    pagEl.innerHTML = '';
     area.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text-light);">Lock brackets to generate the schedule.</div>';
     return;
   }
@@ -1911,15 +1976,30 @@ function renderScheduleTab() {
 
 function selectScheduleBracket(b) {
   document.querySelectorAll('#scheduleBracketTabs .bracket-tab').forEach(t => t.classList.toggle('active', t.dataset.bracket === b));
+  schedPage = 1;
   renderBracketSchedule(b);
+}
+
+function goSchedPage(p) {
+  schedPage = p;
+  var activeBracket = document.querySelector('#scheduleBracketTabs .bracket-tab.active');
+  var bracket = activeBracket ? activeBracket.dataset.bracket : 'A';
+  renderBracketSchedule(bracket);
 }
 
 function renderBracketSchedule(bracket) {
   const area = document.getElementById('scheduleArea');
-  if (!schedule[bracket]) { area.innerHTML = ''; return; }
+  const pagEl = document.getElementById('schedulePagination');
+  if (!schedule[bracket]) { area.innerHTML = ''; pagEl.innerHTML = ''; return; }
   const weeks = [...new Set(schedule[bracket].map(m => m.week))].sort((a, b) => a - b);
+  var totalPages = Math.ceil(weeks.length / SCHED_WEEKS_PER_PAGE);
+  if (totalPages < 1) totalPages = 1;
+  if (schedPage > totalPages) schedPage = totalPages;
+  if (schedPage < 1) schedPage = 1;
+  var startIdx = (schedPage - 1) * SCHED_WEEKS_PER_PAGE;
+  var pageWeeks = weeks.slice(startIdx, startIdx + SCHED_WEEKS_PER_PAGE);
   let html = '';
-  weeks.forEach(w => {
+  pageWeeks.forEach(w => {
     const matchups = getWeekMatchups(bracket, w);
     const isPlayoff = matchups.some(m => m.playoff);
     html += '<div class="dash-card" style="margin-bottom:14px;"><div class="dash-card-header"><h3>Week ' + w + (isPlayoff ? ' (Playoff)' : '') + '</h3></div>';
@@ -1940,6 +2020,15 @@ function renderBracketSchedule(bracket) {
     html += '</tbody></table></div></div>';
   });
   area.innerHTML = html;
+  // Pagination controls
+  if (totalPages <= 1) { pagEl.innerHTML = '<span style="font-size:0.78rem;color:var(--text-light);">Showing all ' + weeks.length + ' weeks</span>'; return; }
+  var pg = '<button class="btn btn-outline btn-sm" onclick="goSchedPage(' + (schedPage - 1) + ')"' + (schedPage === 1 ? ' disabled style="opacity:0.4;cursor:not-allowed;"' : '') + '>◀ Prev</button>';
+  for (var p = 1; p <= totalPages; p++) {
+    pg += '<button class="btn btn-sm' + (p === schedPage ? ' btn-primary' : ' btn-outline') + '" onclick="goSchedPage(' + p + ')" style="min-width:32px;">' + p + '</button>';
+  }
+  pg += '<button class="btn btn-outline btn-sm" onclick="goSchedPage(' + (schedPage + 1) + ')"' + (schedPage === totalPages ? ' disabled style="opacity:0.4;cursor:not-allowed;"' : '') + '>Next ▶</button>';
+  pg += '<span style="font-size:0.78rem;color:var(--text-light);margin-left:8px;">Weeks ' + pageWeeks[0] + '–' + pageWeeks[pageWeeks.length - 1] + ' of ' + weeks.length + ' bracket weeks</span>';
+  pagEl.innerHTML = pg;
 }
 
 /* ══════════════════════════════════════════

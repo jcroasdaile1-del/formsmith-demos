@@ -17,15 +17,9 @@ function getPerfectScore() {
 }
 
 function getTotalSeasonWeeks() {
+  var bpWeeks = config.bracketPlayWeeks || 10;
   if (!config.bracketsLocked) return config.qualWeeks;
-  const brackets = [...new Set(teams.map(t => t.bracket).filter(Boolean))];
-  let maxWeeks = config.qualWeeks;
-  brackets.forEach(b => {
-    const weeks = [...new Set((schedule[b] || []).map(m => m.week))];
-    const max = weeks.length > 0 ? Math.max(...weeks) : 0;
-    if (max > maxWeeks) maxWeeks = max;
-  });
-  return maxWeeks;
+  return config.qualWeeks + bpWeeks;
 }
 
 function getTeamQualAvg(teamId) {
@@ -73,6 +67,7 @@ function lockBrackets() {
 
 function generateSchedule() {
   schedule = {};
+  var bpWeeks = config.bracketPlayWeeks || 10;
   var bracketLabels = [...new Set(teams.map(t => t.bracket).filter(Boolean))].sort();
   bracketLabels.forEach(function(bracket) {
     var bracketTeams = teams.filter(function(t) { return t.bracket === bracket; });
@@ -80,10 +75,10 @@ function generateSchedule() {
     if (n < 2) { schedule[bracket] = []; return; }
     // Sort by qualifying average (best first) for balanced schedule
     bracketTeams.sort(function(a, b) { return getTeamQualAvg(b.id) - getTeamQualAvg(a.id); });
-    // Snake fold: odds go front, evens reversed go back
+    // Snake fold: even indices go to odds, odd indices go to evens (reversed)
     var odds = [], evens = [];
     for (var si = 0; si < bracketTeams.length; si++) {
-      if (si % 2 === 1) odds.push(bracketTeams[si]);
+      if (si % 2 === 0) odds.push(bracketTeams[si]);
       else evens.push(bracketTeams[si]);
     }
     evens.reverse();
@@ -91,9 +86,10 @@ function generateSchedule() {
     var ids = folded.map(function(t) { return t.id; });
     if (ids.length % 2 !== 0) ids.push(-1);
     var numRounds = ids.length - 1;
+    var maxRegRounds = Math.min(numRounds, bpWeeks);
     var matchups = [];
     var half = ids.length / 2;
-    for (var round = 0; round < numRounds; round++) {
+    for (var round = 0; round < maxRegRounds; round++) {
       for (var i = 0; i < half; i++) {
         var a = ids[i], b = ids[ids.length - 1 - i];
         if (a !== -1 && b !== -1) {
@@ -102,11 +98,6 @@ function generateSchedule() {
       }
       var last = ids.pop();
       ids.splice(1, 0, last);
-    }
-    var playoffStart = config.qualWeeks + numRounds + 1;
-    var totalWeeks = config.qualWeeks + numRounds + Math.max(1, Math.floor(n / 2));
-    for (var w = playoffStart; w <= totalWeeks; w++) {
-      matchups.push({ week: w, teamA: null, teamB: null, playoff: true });
     }
     schedule[bracket] = matchups;
   });
@@ -245,6 +236,7 @@ function generateSeason(seasonNum, numTeams, numBrackets, qualWeeks, archersPerT
     season: 'Season ' + seasonNum,
     numBrackets: numBrackets,
     qualWeeks: qualWeeks,
+    bracketPlayWeeks: 20,
     targets: 28,
     ptsPerTarget: 10,
     handicapPct: 80,
@@ -566,9 +558,9 @@ function testStandingsAccumulation(seasonNum) {
       const actualGames = Math.round(totalGames); // should be integer
       // Each team plays n-1 games in round-robin (or fewer with byes/missing scores)
       const maxGames = bracketTeams.length - 1;
-      assert(actualGames <= maxGames + 10, // +10 for playoffs
+      assert(actualGames <= maxGames,
         `Season ${seasonNum}, Bracket ${b}: ${s.name} played reasonable number of games`,
-        `games=${actualGames}, maxExpected=${maxGames + 10}`);
+        `games=${actualGames}, maxExpected=${maxGames}`);
     }
 
     // Verify standings are sorted correctly
@@ -682,21 +674,15 @@ function testScheduleWeekNumbering(seasonNum) {
         `starts at ${regWeeks[0]}`);
 
       const nEven = n % 2 === 0 ? n : n + 1;
-      const expectedRounds = nEven - 1;
+      const fullRounds = nEven - 1;
+      const bpWeeks = config.bracketPlayWeeks || 20;
+      const expectedRounds = Math.min(fullRounds, bpWeeks);
       assert(regWeeks.length === expectedRounds,
         `Season ${seasonNum}, Bracket ${b}: ${expectedRounds} round-robin rounds`,
         `got ${regWeeks.length}`);
     }
 
-    // Playoffs come after regular season
-    if (playoffMatchups.length > 0) {
-      const playoffWeeks = [...new Set(playoffMatchups.map(m => m.week))].sort((a, b) => a - b);
-      if (regWeeks.length > 0) {
-        assert(playoffWeeks[0] > regWeeks[regWeeks.length - 1],
-          `Season ${seasonNum}, Bracket ${b}: Playoffs start after regular season`,
-          `playoff week ${playoffWeeks[0]} vs last regular ${regWeeks[regWeeks.length - 1]}`);
-      }
-    }
+    // No playoff matchups expected (removed playoffs)
   }
 }
 
@@ -739,7 +725,7 @@ function testEdgeCases() {
   // Edge case 1: Team with no scores
   config = {
     leagueName: 'Edge Test', season: 'S1', numBrackets: 1,
-    qualWeeks: 3, targets: 28, ptsPerTarget: 10, handicapPct: 80,
+    qualWeeks: 3, bracketPlayWeeks: 20, targets: 28, ptsPerTarget: 10, handicapPct: 80,
     archersPerTeam: 3, startDate: '2026-01-01', bracketsLocked: false
   };
   teams = [
@@ -789,7 +775,7 @@ function testEdgeCases() {
   // Edge case 5: 2-team bracket (minimum)
   config = {
     leagueName: 'Edge', season: 'S1', numBrackets: 1,
-    qualWeeks: 1, targets: 28, ptsPerTarget: 10, handicapPct: 80,
+    qualWeeks: 1, bracketPlayWeeks: 20, targets: 28, ptsPerTarget: 10, handicapPct: 80,
     archersPerTeam: 3, startDate: '2026-01-01', bracketsLocked: false
   };
   teams = [
@@ -808,7 +794,7 @@ function testEdgeCases() {
   // Edge case 6: Odd number of teams in bracket
   config = {
     leagueName: 'Edge', season: 'S1', numBrackets: 1,
-    qualWeeks: 1, targets: 28, ptsPerTarget: 10, handicapPct: 80,
+    qualWeeks: 1, bracketPlayWeeks: 20, targets: 28, ptsPerTarget: 10, handicapPct: 80,
     archersPerTeam: 3, startDate: '2026-01-01', bracketsLocked: false
   };
   teams = [];
@@ -848,7 +834,7 @@ function testWinPctSortBug() {
   // Set up a scenario where the bug causes incorrect ranking
   config = {
     leagueName: 'WinPct Bug Test', season: 'S1', numBrackets: 1,
-    qualWeeks: 1, targets: 28, ptsPerTarget: 10, handicapPct: 80,
+    qualWeeks: 1, bracketPlayWeeks: 20, targets: 28, ptsPerTarget: 10, handicapPct: 80,
     archersPerTeam: 3, startDate: '2026-01-01', bracketsLocked: true
   };
 
@@ -953,7 +939,7 @@ function testSubstituteScoreAttribution() {
 
   config = {
     leagueName: 'Sub Test', season: 'S1', numBrackets: 1,
-    qualWeeks: 2, targets: 28, ptsPerTarget: 10, handicapPct: 80,
+    qualWeeks: 2, bracketPlayWeeks: 20, targets: 28, ptsPerTarget: 10, handicapPct: 80,
     archersPerTeam: 3, startDate: '2026-01-01', bracketsLocked: false
   };
   teams = [{ id: 1, name: 'Team A', archers: ['Dave', 'Mike', 'Tom'], bracket: null }];
