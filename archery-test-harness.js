@@ -42,7 +42,8 @@ function getTeamQualAvg(teamId) {
 
 function getTeamRunningAvg(teamId, upToWeek) {
   let totalScore = 0, count = 0;
-  for (let w = 1; w <= upToWeek; w++) {
+  var startW = Math.max(1, upToWeek - 2);
+  for (let w = startW; w <= upToWeek; w++) {
     if (scores[w] && scores[w][teamId]) {
       const s = scores[w][teamId];
       const sum = s.reduce((a, b) => a + (b || 0), 0);
@@ -72,29 +73,39 @@ function lockBrackets() {
 
 function generateSchedule() {
   schedule = {};
-  const bracketLabels = [...new Set(teams.map(t => t.bracket).filter(Boolean))].sort();
-  bracketLabels.forEach(bracket => {
-    const bracketTeams = teams.filter(t => t.bracket === bracket).map(t => t.id);
-    const n = bracketTeams.length;
+  var bracketLabels = [...new Set(teams.map(t => t.bracket).filter(Boolean))].sort();
+  bracketLabels.forEach(function(bracket) {
+    var bracketTeams = teams.filter(function(t) { return t.bracket === bracket; });
+    var n = bracketTeams.length;
     if (n < 2) { schedule[bracket] = []; return; }
-    const ids = bracketTeams.slice();
+    // Sort by qualifying average (best first) for balanced schedule
+    bracketTeams.sort(function(a, b) { return getTeamQualAvg(b.id) - getTeamQualAvg(a.id); });
+    // Snake fold: odds go front, evens reversed go back
+    var odds = [], evens = [];
+    for (var si = 0; si < bracketTeams.length; si++) {
+      if (si % 2 === 1) odds.push(bracketTeams[si]);
+      else evens.push(bracketTeams[si]);
+    }
+    evens.reverse();
+    var folded = odds.concat(evens);
+    var ids = folded.map(function(t) { return t.id; });
     if (ids.length % 2 !== 0) ids.push(-1);
-    const numRounds = ids.length - 1;
-    const matchups = [];
-    const half = ids.length / 2;
-    for (let round = 0; round < numRounds; round++) {
-      for (let i = 0; i < half; i++) {
-        const a = ids[i], b = ids[ids.length - 1 - i];
+    var numRounds = ids.length - 1;
+    var matchups = [];
+    var half = ids.length / 2;
+    for (var round = 0; round < numRounds; round++) {
+      for (var i = 0; i < half; i++) {
+        var a = ids[i], b = ids[ids.length - 1 - i];
         if (a !== -1 && b !== -1) {
           matchups.push({ week: config.qualWeeks + 1 + round, teamA: a, teamB: b });
         }
       }
-      const last = ids.pop();
+      var last = ids.pop();
       ids.splice(1, 0, last);
     }
-    const playoffStart = config.qualWeeks + numRounds + 1;
-    const totalWeeks = config.qualWeeks + numRounds + Math.max(1, Math.floor(n / 2));
-    for (let w = playoffStart; w <= totalWeeks; w++) {
+    var playoffStart = config.qualWeeks + numRounds + 1;
+    var totalWeeks = config.qualWeeks + numRounds + Math.max(1, Math.floor(n / 2));
+    for (var w = playoffStart; w <= totalWeeks; w++) {
       matchups.push({ week: w, teamA: null, teamB: null, playoff: true });
     }
     schedule[bracket] = matchups;
@@ -130,7 +141,7 @@ function getWeekMatchups(bracket, week) {
 function calcMatchResult(teamA_id, teamB_id, week) {
   const rawA = getTeamWeekScore(teamA_id, week);
   const rawB = getTeamWeekScore(teamB_id, week);
-  if (rawA === 0 && rawB === 0) return null;
+  if (rawA === 0 || rawB === 0) return null;
   const avgA = getTeamRunningAvg(teamA_id, week - 1) || rawA;
   const avgB = getTeamRunningAvg(teamB_id, week - 1) || rawB;
   const pct = config.handicapPct / 100;
@@ -308,7 +319,8 @@ function testRunningAverages(seasonNum) {
   for (const t of sampleTeams) {
     for (const upTo of allWeeks) {
       let totalScore = 0, count = 0;
-      for (let w = 1; w <= upTo; w++) {
+      const startW = Math.max(1, upTo - 2);
+      for (let w = startW; w <= upTo; w++) {
         if (scores[w] && scores[w][t.id]) {
           const sum = scores[w][t.id].reduce((a, b) => a + (b || 0), 0);
           if (sum > 0) { totalScore += sum; count++; }
@@ -750,15 +762,8 @@ function testEdgeCases() {
   // Edge case 3: One team has scores, other doesn't
   scores = { 1: { 1: [250, 240, 230] } };
   const result2 = calcMatchResult(1, 2, 1);
-  // rawA > 0, rawB === 0, so result should exist (rawA > 0 || rawB > 0 → not both 0... wait)
-  // The check is: if (rawA === 0 && rawB === 0) return null;
-  // So if rawA > 0 and rawB === 0, it should return a result
-  assert(result2 !== null, 'Edge: calcMatchResult with one team having scores returns result');
-  if (result2) {
-    assert(result2.rawA === 720, 'Edge: rawA correct when B has no scores', `got ${result2.rawA}`);
-    assert(result2.rawB === 0, 'Edge: rawB is 0', `got ${result2.rawB}`);
-    assert(result2.resultA === 'WIN', 'Edge: Team with scores wins against team with 0');
-  }
+  // rawA > 0, rawB === 0 → return null (don't compute result with missing scores)
+  assert(result2 === null, 'Edge: calcMatchResult returns null when one team has 0 scores');
 
   // Edge case 4: Exact tie (same raw scores, same averages)
   scores = {
