@@ -1369,6 +1369,8 @@ function getWeekMatchups(bracket, week) {
    HANDICAP & RESULTS
    ══════════════════════════════════════════ */
 function calcMatchResult(teamA_id, teamB_id, week) {
+  // Ensure phantom teams have scores filled for this week
+  if (isPhantomTeam(teamA_id) || isPhantomTeam(teamB_id)) fillPhantomScores(week);
   const rawA = getTeamWeekScore(teamA_id, week);
   const rawB = getTeamWeekScore(teamB_id, week);
   if (rawA === 0 || rawB === 0) return null; // no scores entered for at least one team
