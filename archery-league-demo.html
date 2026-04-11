@@ -1636,13 +1636,13 @@ function renderScoreEntry() {
     if (locked) html += '<div class="submitted-bar">Week ' + week + ' scores submitted<button class="btn btn-outline btn-sm" style="margin-left:auto;" onclick="unsubmitWeek(' + week + ')">✏️ Edit Scores</button></div>';
     html += '<h3 style="margin-bottom:4px;">🎯 Qualifying — Week ' + week + '</h3><p style="font-size:0.85rem;color:var(--text-light);margin-bottom:12px;">Enter individual scores for all teams. No matchups during qualifying.</p>';
     // Toolbar: search + progress
-    const scoredCount = teams.filter(t => scores[week] && scores[week][t.id] && scores[week][t.id].some(v => v > 0)).length;
+    const realTeams = teams.filter(t => !t.phantom);
+    const scoredCount = realTeams.filter(t => scores[week] && scores[week][t.id] && scores[week][t.id].some(v => v > 0)).length;
     html += '<div class="qual-toolbar">';
     html += '<input class="qual-search" type="text" placeholder="Search teams..." value="' + esc(qualTeamFilter) + '" oninput="filterQualTeams(this.value)">';
-    html += '<span style="font-size:0.82rem;color:var(--text-light);">' + scoredCount + '/' + teams.length + ' scored</span>';
+    html += '<span style="font-size:0.82rem;color:var(--text-light);">' + scoredCount + '/' + realTeams.length + ' scored</span>';
     html += '</div>';
     // Build table
-    const realTeams = teams.filter(t => !t.phantom);
     const filteredTeams = qualTeamFilter ? realTeams.filter(t => t.name.toLowerCase().includes(qualTeamFilter)) : realTeams;
     const archerCount = config.archersPerTeam || 3;
     html += '<div class="score-entry-wrap"><div class="table-scroll">';
@@ -1758,9 +1758,10 @@ function setScore(teamId, week, archerIdx, val) {
     const cells = rows[teamIdx].querySelectorAll('td');
     cells[cells.length - 1].textContent = total > 0 ? total : '—';
     // Update scored count in toolbar
-    const scoredCount = teams.filter(t => scores[week] && scores[week][t.id] && scores[week][t.id].some(v => v > 0)).length;
+    const realTeamsForCount = teams.filter(t => !t.phantom);
+    const scoredCount = realTeamsForCount.filter(t => scores[week] && scores[week][t.id] && scores[week][t.id].some(v => v > 0)).length;
     const countSpan = area.querySelector('.qual-toolbar span');
-    if (countSpan) countSpan.textContent = scoredCount + '/' + teams.length + ' scored';
+    if (countSpan) countSpan.textContent = scoredCount + '/' + realTeamsForCount.length + ' scored';
   }
 }
 
