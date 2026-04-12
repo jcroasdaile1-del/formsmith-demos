@@ -781,7 +781,20 @@ function renderJobs() {
   if (jobFilter === 'upcoming') filtered = jobs.filter(j=>j.date>=todayStr()&&j.status!=='cancelled'&&j.status!=='completed');
   else if (jobFilter === 'completed') filtered = jobs.filter(j=>j.status==='completed');
   else if (jobFilter === 'cancelled') filtered = jobs.filter(j=>j.status==='cancelled');
-  filtered = filtered.sort((a,b)=>b.date.localeCompare(a.date)||(b.time||'').localeCompare(a.time||''));
+  if (jobFilter === 'upcoming') {
+    filtered = filtered.sort((a,b)=>a.date.localeCompare(b.date)||(a.time||'').localeCompare(b.time||''));
+  } else if (jobFilter === 'all') {
+    const td = todayStr();
+    filtered = filtered.sort((a,b)=>{
+      const da = Math.abs(a.date.localeCompare(td)), db = Math.abs(b.date.localeCompare(td));
+      if (a.date >= td && b.date < td) return -1;
+      if (a.date < td && b.date >= td) return 1;
+      if (a.date >= td && b.date >= td) return a.date.localeCompare(b.date)||(a.time||'').localeCompare(b.time||'');
+      return b.date.localeCompare(a.date)||(b.time||'').localeCompare(a.time||'');
+    });
+  } else {
+    filtered = filtered.sort((a,b)=>b.date.localeCompare(a.date)||(b.time||'').localeCompare(a.time||''));
+  }
 
   if (filtered.length === 0) { document.getElementById('jobsArea').innerHTML = '<div class="empty-state"><h3>No jobs found</h3><button class="btn btn-primary" onclick="openNewJobModal()">+ New Job</button></div>'; return; }
   const totalPages = Math.ceil(filtered.length / JOBS_PER_PAGE);
