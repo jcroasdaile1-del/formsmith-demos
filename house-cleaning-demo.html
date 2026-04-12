@@ -187,9 +187,9 @@ input, select, textarea { font-family: inherit; font-size: 0.88rem; }
 /* ── Calendar ── */
 .cal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
 .cal-header h3 { font-size: 1rem; font-weight: 700; }
-.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; background: var(--border); border-radius: var(--radius); overflow: hidden; }
+.cal-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 1px; background: var(--border); border-radius: var(--radius); overflow: hidden; }
 .cal-day-header { background: var(--primary); color: white; text-align: center; padding: 6px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; }
-.cal-day { background: var(--card); min-height: 80px; padding: 4px 6px; font-size: 0.78rem; cursor: pointer; position: relative; }
+.cal-day { background: var(--card); min-height: 80px; padding: 4px 6px; font-size: 0.78rem; cursor: pointer; position: relative; overflow: hidden; }
 .cal-day:hover { background: var(--primary-light); }
 .cal-day.today { background: var(--primary-light); font-weight: 700; }
 .cal-day.other-month { color: var(--text-light); opacity: 0.5; }
@@ -273,7 +273,16 @@ input, select, textarea { font-family: inherit; font-size: 0.88rem; }
   .card { border-radius: 8px; }
   .card-header { padding: 10px 12px; font-size: 0.85rem; }
   .card-body { padding: 10px; }
-  .data-table th, .data-table td { padding: 6px 5px; font-size: 0.73rem; white-space: nowrap; }
+  .data-table th, .data-table td { padding: 6px 5px; font-size: 0.73rem; }
+  /* Responsive table → card layout on mobile */
+  .data-table.mobile-cards { border-collapse: separate; border-spacing: 0 10px; }
+  .data-table.mobile-cards thead { display: none; }
+  .data-table.mobile-cards tr { display: block; background: var(--card); border-radius: 10px; padding: 10px 14px; box-shadow: 0 1px 4px rgba(0,0,0,0.07); border: 1px solid var(--border); }
+  .data-table.mobile-cards td { display: flex; justify-content: space-between; align-items: center; padding: 3px 0; border: none; font-size: 0.82rem; }
+  .data-table.mobile-cards td::before { content: attr(data-label); font-weight: 700; font-size: 0.72rem; text-transform: uppercase; color: var(--text-light); letter-spacing: 0.03em; margin-right: 8px; white-space: nowrap; }
+  .data-table.mobile-cards td.num { text-align: right; }
+  .data-table.mobile-cards td.card-actions { justify-content: flex-start; gap: 6px; padding-top: 6px; border-top: 1px solid var(--border); margin-top: 4px; }
+  .data-table.mobile-cards td.card-actions::before { display: none; }
   .btn { padding: 7px 12px; font-size: 0.82rem; }
   .btn-sm { padding: 4px 8px; font-size: 0.75rem; }
   .job-card { padding: 10px; margin-bottom: 8px; }
@@ -452,6 +461,7 @@ body.modal-open { overflow: hidden; }
   <button data-page="clients" onclick="switchPage('clients')"><span class="mnav-icon">🏠</span>Clients</button>
   <button data-page="jobs" onclick="switchPage('jobs')"><span class="mnav-icon">📋</span>Jobs</button>
   <button data-page="invoices" onclick="switchPage('invoices')"><span class="mnav-icon">💰</span>Invoices</button>
+  <button data-page="expenses" onclick="switchPage('expenses')"><span class="mnav-icon">💸</span>Expenses</button>
   <button data-page="settings" onclick="switchPage('settings')"><span class="mnav-icon">⚙️</span>More</button>
 </nav>
 
@@ -632,7 +642,9 @@ function renderCalendar() {
 
   let html = '<div class="cal-header"><button class="btn btn-ghost" onclick="calNav(-1)">◀</button><h3>' + calDate.toLocaleDateString('en-US',{month:'long',year:'numeric'}) + '</h3><button class="btn btn-ghost" onclick="calNav(1)">▶</button></div>';
   html += '<div class="cal-grid">';
-  ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].forEach(d => html += '<div class="cal-day-header">' + d + '</div>');
+  const calMobile = window.innerWidth <= 480;
+  const dayLabels = calMobile ? ['S','M','T','W','T','F','S'] : ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  dayLabels.forEach(d => html += '<div class="cal-day-header">' + d + '</div>');
   const prevDays = new Date(year, month, 0).getDate();
   for (let i = firstDay - 1; i >= 0; i--) html += '<div class="cal-day other-month"><div class="day-num">' + (prevDays - i) + '</div></div>';
   for (let d = 1; d <= daysInMonth; d++) {
@@ -803,11 +815,21 @@ function renderJobs() {
   const start = jobPage * JOBS_PER_PAGE;
   const paged = filtered.slice(start, start + JOBS_PER_PAGE);
 
-  let html = '<div class="card"><div class="card-body" style="padding:0;overflow-x:auto;"><table class="data-table"><thead><tr><th style="position:sticky;top:0;z-index:2;background:var(--card);">Date</th><th style="position:sticky;top:0;z-index:2;background:var(--card);">Time</th><th style="position:sticky;top:0;z-index:2;background:var(--card);">Client</th><th style="position:sticky;top:0;z-index:2;background:var(--card);">Property</th><th style="position:sticky;top:0;z-index:2;background:var(--card);">Service</th><th style="position:sticky;top:0;z-index:2;background:var(--card);">Status</th><th class="num" style="position:sticky;top:0;z-index:2;background:var(--card);">Price</th></tr></thead><tbody>';
+  const isMobile = window.innerWidth <= 480;
+  let html = '<div class="card"><div class="card-body" style="padding:0;'+(isMobile?'':'overflow-x:auto;')+'"><table class="data-table'+(isMobile?' mobile-cards':'')+'">';
+  if (!isMobile) html += '<thead><tr><th style="position:sticky;top:0;z-index:2;background:var(--card);">Date</th><th style="position:sticky;top:0;z-index:2;background:var(--card);">Time</th><th style="position:sticky;top:0;z-index:2;background:var(--card);">Client</th><th style="position:sticky;top:0;z-index:2;background:var(--card);">Property</th><th style="position:sticky;top:0;z-index:2;background:var(--card);">Service</th><th style="position:sticky;top:0;z-index:2;background:var(--card);">Status</th><th class="num" style="position:sticky;top:0;z-index:2;background:var(--card);">Price</th></tr></thead>';
+  html += '<tbody>';
   paged.forEach(j => {
     const c = clients.find(cl=>cl.id===j.clientId);
     const pAddr = c && c.properties[j.propertyIdx] ? c.properties[j.propertyIdx].address : '';
-    html += '<tr class="clickable-row" onclick="openJobDetail('+j.id+')"><td>'+fmtDate(j.date)+'</td><td>'+fmtTime(j.time)+'</td><td style="font-weight:600;">'+esc(c?c.name:'')+'</td><td style="font-size:0.82rem;">'+esc(pAddr)+'</td><td>'+esc(j.service)+'</td><td><span class="badge badge-'+statusColor(j.status)+'">'+j.status+'</span></td><td class="num">'+fmt$(j.price)+'</td></tr>';
+    html += '<tr class="clickable-row" onclick="openJobDetail('+j.id+')">';
+    html += '<td data-label="Date">'+fmtDate(j.date)+'</td>';
+    html += '<td data-label="Time">'+fmtTime(j.time)+'</td>';
+    html += '<td data-label="Client" style="font-weight:600;">'+esc(c?c.name:'')+'</td>';
+    html += '<td data-label="Property" style="font-size:0.82rem;">'+esc(pAddr)+'</td>';
+    html += '<td data-label="Service">'+esc(j.service)+'</td>';
+    html += '<td data-label="Status"><span class="badge badge-'+statusColor(j.status)+'">'+j.status+'</span></td>';
+    html += '<td data-label="Price" class="num">'+fmt$(j.price)+'</td></tr>';
   });
   html += '</tbody></table></div></div>';
   if (totalPages > 1) {
@@ -1062,10 +1084,18 @@ function renderInvoices() {
   if (invoiceFilter==='unpaid') filtered=invoices.filter(i=>i.status==='unpaid');
   else if (invoiceFilter==='paid') filtered=invoices.filter(i=>i.status==='paid');
   if (filtered.length===0) { document.getElementById('invoicesArea').innerHTML='<div class="empty-state"><h3>No invoices</h3></div>'; return; }
-  let html = '<div class="card"><div class="card-body" style="padding:0;overflow-x:auto;"><table class="data-table"><thead><tr><th style="position:sticky;top:0;z-index:2;background:var(--card);">Invoice</th><th style="position:sticky;top:0;z-index:2;background:var(--card);">Client</th><th style="position:sticky;top:0;z-index:2;background:var(--card);">Date</th><th style="position:sticky;top:0;z-index:2;background:var(--card);">Status</th><th class="num" style="position:sticky;top:0;z-index:2;background:var(--card);">Total</th><th style="position:sticky;top:0;z-index:2;background:var(--card);">Actions</th></tr></thead><tbody>';
+  const isMobile = window.innerWidth <= 480;
+  let html = '<div class="card"><div class="card-body" style="padding:0;'+(isMobile?'':'overflow-x:auto;')+'"><table class="data-table'+(isMobile?' mobile-cards':'')+'">';
+  if (!isMobile) html += '<thead><tr><th style="position:sticky;top:0;z-index:2;background:var(--card);">Invoice</th><th style="position:sticky;top:0;z-index:2;background:var(--card);">Client</th><th style="position:sticky;top:0;z-index:2;background:var(--card);">Date</th><th style="position:sticky;top:0;z-index:2;background:var(--card);">Status</th><th class="num" style="position:sticky;top:0;z-index:2;background:var(--card);">Total</th><th style="position:sticky;top:0;z-index:2;background:var(--card);">Actions</th></tr></thead>';
+  html += '<tbody>';
   filtered.sort((a,b)=>b.date.localeCompare(a.date)).forEach(inv => {
-    html += '<tr><td style="font-weight:600;">#'+String(inv.id).padStart(4,'0')+'</td><td>'+esc(inv.clientName)+'</td><td>'+fmtDate(inv.date)+'</td><td><span class="badge badge-'+(inv.status==='paid'?'green':'amber')+'">'+inv.status+'</span></td><td class="num" style="font-weight:700;">'+fmt$(inv.total)+'</td>';
-    html += '<td style="display:flex;gap:4px;">';
+    html += '<tr>';
+    html += '<td data-label="Invoice" style="font-weight:600;">#'+String(inv.id).padStart(4,'0')+'</td>';
+    html += '<td data-label="Client">'+esc(inv.clientName)+'</td>';
+    html += '<td data-label="Date">'+fmtDate(inv.date)+'</td>';
+    html += '<td data-label="Status"><span class="badge badge-'+(inv.status==='paid'?'green':'amber')+'">'+inv.status+'</span></td>';
+    html += '<td data-label="Total" class="num" style="font-weight:700;">'+fmt$(inv.total)+'</td>';
+    html += '<td class="card-actions"' + (isMobile?'':' style="display:flex;gap:4px;"') + '>';
     if (inv.status==='unpaid') { html += '<button class="btn btn-sm btn-primary" onclick="markInvoicePaid('+inv.id+')">Paid</button><button class="btn btn-sm btn-outline" onclick="sendInvoice('+inv.id+')">Send</button>'; }
     html += '</td></tr>';
   });
