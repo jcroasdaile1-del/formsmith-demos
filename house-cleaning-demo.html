@@ -111,7 +111,8 @@ input, select, textarea { font-family: inherit; font-size: 0.88rem; }
 
 /* ── KPIs ── */
 .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 20px; }
-.kpi-card { background: var(--card); border-radius: var(--radius); padding: 16px 18px; box-shadow: var(--shadow); border-left: 4px solid var(--primary); }
+.kpi-card { background: var(--card); border-radius: var(--radius); padding: 16px 18px; box-shadow: var(--shadow); border-left: 4px solid var(--primary); transition: transform 0.15s, box-shadow 0.15s; }
+.kpi-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
 .kpi-card .kpi-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-light); font-weight: 600; }
 .kpi-card .kpi-value { font-size: 1.6rem; font-weight: 800; color: var(--primary); margin: 4px 0 2px; }
 .kpi-card .kpi-sub { font-size: 0.78rem; color: var(--text-light); }
@@ -246,32 +247,46 @@ input, select, textarea { font-family: inherit; font-size: 0.88rem; }
   input, select, textarea { font-size: 16px !important; }
 }
 @media (max-width: 480px) {
-  .kpi-grid { grid-template-columns: 1fr; }
-  .page-header { flex-direction: column; align-items: flex-start; }
+  .sidebar { width: 0; border: none; }
+  .sidebar-toggle { display: none !important; }
+  .main-content { margin-left: 0 !important; padding: 12px 8px; }
+  .kpi-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .kpi-card { padding: 10px 12px; }
+  .kpi-card .kpi-value { font-size: 1.2rem; }
+  .kpi-card .kpi-sub { font-size: 0.72rem; }
+  .page-header { flex-direction: column; align-items: stretch; }
+  .page-header h2 { font-size: 1.1rem; }
   .page-header .btn { width: 100%; justify-content: center; }
-  .main-content { padding: 12px 8px; }
-  .kpi-card { padding: 12px 14px; }
-  .kpi-card .kpi-value { font-size: 1.3rem; }
-  .cal-day { min-height: 40px; padding: 2px 3px; }
-  .cal-day .day-num { font-size: 0.7rem; }
-  .cal-event { font-size: 0.6rem; padding: 0 3px; }
-  .cal-day-header { font-size: 0.65rem; padding: 4px; }
+  .cal-day { min-height: 38px; padding: 2px 2px; }
+  .cal-day .day-num { font-size: 0.68rem; }
+  .cal-event { font-size: 0.58rem; padding: 0 2px; }
+  .cal-day-header { font-size: 0.6rem; padding: 3px 2px; }
   .modal-box { width: 100%; max-width: 100%; border-radius: 12px 12px 0 0; max-height: 92vh; }
-  .modal-header { padding: 12px 14px; }
+  .modal-header { padding: 12px 14px; font-size: 0.9rem; }
   .modal-body { padding: 12px; }
-  .modal-footer { padding: 10px 14px; flex-wrap: wrap; }
-  .modal-footer .btn { flex: 1; min-width: 0; justify-content: center; }
+  .modal-footer { padding: 10px 12px; flex-wrap: wrap; }
+  .modal-footer .btn { flex: 1; min-width: 0; justify-content: center; font-size: 0.8rem; }
   .search-bar { flex-direction: column; }
   .search-bar input { width: 100%; }
   .pill-filters { gap: 4px; }
   .pill { padding: 4px 10px; font-size: 0.75rem; }
-  .card-header { padding: 10px 14px; font-size: 0.88rem; }
+  .card { border-radius: 8px; }
+  .card-header { padding: 10px 12px; font-size: 0.85rem; }
   .card-body { padding: 10px; }
-  .data-table th, .data-table td { padding: 6px 6px; font-size: 0.75rem; white-space: nowrap; }
+  .data-table th, .data-table td { padding: 6px 5px; font-size: 0.73rem; white-space: nowrap; }
   .btn { padding: 7px 12px; font-size: 0.82rem; }
-  .job-card { padding: 12px; }
-  .prop-badge { font-size: 0.72rem; padding: 2px 8px; }
-  .demo-banner { font-size: 0.75rem; padding: 6px 10px; }
+  .btn-sm { padding: 4px 8px; font-size: 0.75rem; }
+  .job-card { padding: 10px; margin-bottom: 8px; }
+  .job-card .job-title { font-size: 0.88rem; }
+  .job-card .job-meta { font-size: 0.78rem; }
+  .prop-badge { font-size: 0.7rem; padding: 2px 6px; }
+  .demo-banner { font-size: 0.72rem; padding: 6px 8px; }
+  .two-col { gap: 10px; }
+  .form-section-title { font-size: 0.85rem; }
+  .form-group label { font-size: 0.72rem; }
+  .checklist li { padding: 6px 8px; font-size: 0.82rem; }
+  .empty-state { padding: 24px 12px; }
+  .empty-state h3 { font-size: 1rem; }
   select { padding-right: 26px !important; }
 }
 /* ── Body scroll lock when modal open ── */
@@ -284,6 +299,25 @@ body.modal-open { overflow: hidden; }
   position: sticky; top: 0; z-index: 50;
 }
 .demo-banner a { color: var(--amber-light); text-decoration: underline; }
+
+/* ── Mobile Bottom Nav ── */
+.mobile-nav { display: none; }
+@media (max-width: 480px) {
+  .mobile-nav {
+    display: flex; position: fixed; bottom: 0; left: 0; right: 0;
+    background: var(--card); border-top: 1px solid var(--border);
+    z-index: 150; justify-content: space-around; padding: 4px 0 env(safe-area-inset-bottom, 4px);
+    box-shadow: 0 -2px 8px rgba(0,0,0,0.08);
+  }
+  .mobile-nav button {
+    background: none; border: none; display: flex; flex-direction: column;
+    align-items: center; gap: 1px; padding: 6px 4px; font-size: 0.6rem;
+    color: var(--text-light); font-weight: 600; cursor: pointer; min-width: 0; flex: 1;
+  }
+  .mobile-nav button .mnav-icon { font-size: 1.15rem; }
+  .mobile-nav button.active { color: var(--primary); }
+  .main-content { padding-bottom: 70px; }
+}
 </style>
 </head>
 <body>
@@ -394,7 +428,7 @@ body.modal-open { overflow: hidden; }
         <div class="form-group"><label>Your Name</label><input id="setOwnerName"></div>
         <div class="form-group"><label>Phone</label><input id="setBizPhone"></div>
         <div class="form-group"><label>Email</label><input id="setBizEmail" type="email"></div>
-        <div class="form-group"><label>Payment Link</label><input id="setPayLink" placeholder="https://venmo.com/yourname"></div>
+        <div class="form-group" style="grid-column:1/-1;"><label>Payment Link</label><input id="setPayLink" placeholder="https://venmo.com/yourname"></div>
         <div class="form-group"><label>Mileage Rate ($/mi)</label><input id="setMileageRate" type="number" step="0.01" value="0.67"></div>
       </div>
       <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap;">
@@ -405,11 +439,21 @@ body.modal-open { overflow: hidden; }
   </div>
   <div class="card" style="max-width:600px;margin-top:16px;">
     <div class="card-header">Services & Pricing</div>
-    <div class="card-body" id="servicesPricingArea"></div>
+    <div class="card-body" style="overflow-x:auto;" id="servicesPricingArea"></div>
   </div>
 </div>
 
 </div><!-- /main-content -->
+
+<!-- ═══════ MOBILE NAV ═══════ -->
+<nav class="mobile-nav" id="mobileNav">
+  <button data-page="dashboard" onclick="switchPage('dashboard')"><span class="mnav-icon">📊</span>Home</button>
+  <button data-page="schedule" onclick="switchPage('schedule')"><span class="mnav-icon">📅</span>Schedule</button>
+  <button data-page="clients" onclick="switchPage('clients')"><span class="mnav-icon">🏠</span>Clients</button>
+  <button data-page="jobs" onclick="switchPage('jobs')"><span class="mnav-icon">📋</span>Jobs</button>
+  <button data-page="invoices" onclick="switchPage('invoices')"><span class="mnav-icon">💰</span>Invoices</button>
+  <button data-page="settings" onclick="switchPage('settings')"><span class="mnav-icon">⚙️</span>More</button>
+</nav>
 
 <!-- ═══════ MODALS ═══════ -->
 <div class="modal-overlay" id="jobModal" onclick="if(event.target===this)closeModal('jobModal')">
@@ -476,6 +520,8 @@ let settings = { bizName: 'CleanSlate', ownerName: '', phone: '', email: '', pay
 
 let calView = 'month', calDate = new Date();
 let jobFilter = 'all', invoiceFilter = 'all';
+let jobPage = 0;
+const JOBS_PER_PAGE = 20;
 let nextId = 1;
 
 function genId() { return nextId++; }
@@ -504,6 +550,7 @@ function switchPage(id) {
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById('page-' + id).classList.add('active');
   const nb = document.querySelector('.nav-item[data-page="' + id + '"]'); if (nb) nb.classList.add('active');
+  document.querySelectorAll('#mobileNav button').forEach(b => b.classList.toggle('active', b.dataset.page === id));
   if (id === 'dashboard') renderDashboard();
   if (id === 'schedule') renderCalendar();
   if (id === 'clients') renderClients();
@@ -528,11 +575,11 @@ function renderDashboard() {
   const activeClients = clients.filter(c => jobs.some(j => j.clientId === c.id && j.status !== 'cancelled')).length;
 
   let kpi = '<div class="kpi-grid">';
-  kpi += '<div class="kpi-card"><div class="kpi-label">Today\'s Jobs</div><div class="kpi-value">' + todayJobs.length + '</div><div class="kpi-sub">' + todayJobs.filter(j => j.status === 'completed').length + ' done</div></div>';
-  kpi += '<div class="kpi-card accent"><div class="kpi-label">Month Revenue</div><div class="kpi-value">' + fmt$(monthRev) + '</div><div class="kpi-sub">' + monthJobs.length + ' jobs</div></div>';
-  kpi += '<div class="kpi-card green"><div class="kpi-label">Active Clients</div><div class="kpi-value">' + activeClients + '</div><div class="kpi-sub">' + clients.reduce((s,c)=>s+c.properties.length,0) + ' properties</div></div>';
-  kpi += '<div class="kpi-card' + (unpaid > 0 ? ' red' : ' purple') + '"><div class="kpi-label">Unpaid</div><div class="kpi-value">' + fmt$(unpaid) + '</div><div class="kpi-sub">' + invoices.filter(i=>i.status==='unpaid').length + ' invoices</div></div>';
-  kpi += '<div class="kpi-card amber"><div class="kpi-label">Month Expenses</div><div class="kpi-value">' + fmt$(monthExp) + '</div><div class="kpi-sub">Net: ' + fmt$(monthRev - monthExp) + '</div></div>';
+  kpi += '<div class="kpi-card" style="cursor:pointer;" onclick="switchPage(\'schedule\')"><div class="kpi-label">Today\'s Jobs</div><div class="kpi-value">' + todayJobs.length + '</div><div class="kpi-sub">' + todayJobs.filter(j => j.status === 'completed').length + ' done</div></div>';
+  kpi += '<div class="kpi-card accent" style="cursor:pointer;" onclick="switchPage(\'invoices\');setInvoiceFilter(\'paid\')"><div class="kpi-label">Month Revenue</div><div class="kpi-value">' + fmt$(monthRev) + '</div><div class="kpi-sub">' + monthJobs.length + ' jobs</div></div>';
+  kpi += '<div class="kpi-card green" style="cursor:pointer;" onclick="switchPage(\'clients\')"><div class="kpi-label">Active Clients</div><div class="kpi-value">' + activeClients + '</div><div class="kpi-sub">' + clients.reduce((s,c)=>s+c.properties.length,0) + ' properties</div></div>';
+  kpi += '<div class="kpi-card' + (unpaid > 0 ? ' red' : ' purple') + '" style="cursor:pointer;" onclick="switchPage(\'invoices\');setInvoiceFilter(\'unpaid\')"><div class="kpi-label">Unpaid</div><div class="kpi-value">' + fmt$(unpaid) + '</div><div class="kpi-sub">' + invoices.filter(i=>i.status==='unpaid').length + ' invoices</div></div>';
+  kpi += '<div class="kpi-card amber" style="cursor:pointer;" onclick="switchPage(\'expenses\')"><div class="kpi-label">Month Expenses</div><div class="kpi-value">' + fmt$(monthExp) + '</div><div class="kpi-sub">Net: ' + fmt$(monthRev - monthExp) + '</div></div>';
   kpi += '</div>';
   document.getElementById('dashKpis').innerHTML = kpi;
 
@@ -632,7 +679,7 @@ function renderClients() {
   const q = (document.getElementById('clientSearch')||{}).value||'';
   const filtered = q ? clients.filter(c => c.name.toLowerCase().includes(q.toLowerCase()) || c.properties.some(p => p.address.toLowerCase().includes(q.toLowerCase()))) : clients;
   if (filtered.length === 0) { document.getElementById('clientsArea').innerHTML = '<div class="empty-state"><h3>No clients yet</h3><button class="btn btn-primary" onclick="openNewClientModal()">+ Add Client</button></div>'; return; }
-  let html = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:14px;">';
+  let html = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,340px),1fr));gap:14px;">';
   filtered.forEach(c => {
     const jobCount = jobs.filter(j=>j.clientId===c.id&&j.status!=='cancelled').length;
     const rev = invoices.filter(i=>i.clientId===c.id&&i.status==='paid').reduce((s,i)=>s+i.total,0);
@@ -709,9 +756,9 @@ function openClientDetail(id) {
     html += '</tbody></table>';
   }
 
-  let footer = '<button class="btn btn-primary" onclick="document.getElementById(\'detailModal\').classList.remove(\'show\');openNewJobModal(null,'+c.id+')">+ Book Job</button>';
+  let footer = '<button class="btn btn-primary" onclick="closeModal(\'detailModal\');openNewJobModal(null,'+c.id+')">+ Book Job</button>';
   if (c.phone) footer += '<button class="btn btn-outline" onclick="window.open(\'sms:'+c.phone+'\',\'_blank\')">📱 Text</button>';
-  footer += '<button class="btn btn-ghost" onclick="document.getElementById(\'detailModal\').classList.remove(\'show\')">Close</button>';
+  footer += '<button class="btn btn-ghost" onclick="closeModal(\'detailModal\')">Close</button>';
 
   document.getElementById('detailModalTitle').textContent = '🏠 ' + c.name;
   document.getElementById('detailModalBody').innerHTML = html;
@@ -737,18 +784,33 @@ function renderJobs() {
   filtered = filtered.sort((a,b)=>b.date.localeCompare(a.date)||(b.time||'').localeCompare(a.time||''));
 
   if (filtered.length === 0) { document.getElementById('jobsArea').innerHTML = '<div class="empty-state"><h3>No jobs found</h3><button class="btn btn-primary" onclick="openNewJobModal()">+ New Job</button></div>'; return; }
+  const totalPages = Math.ceil(filtered.length / JOBS_PER_PAGE);
+  if (jobPage >= totalPages) jobPage = totalPages - 1;
+  if (jobPage < 0) jobPage = 0;
+  const start = jobPage * JOBS_PER_PAGE;
+  const paged = filtered.slice(start, start + JOBS_PER_PAGE);
+
   let html = '<div class="card"><div class="card-body" style="padding:0;overflow-x:auto;"><table class="data-table"><thead><tr><th style="position:sticky;top:0;z-index:2;background:var(--card);">Date</th><th style="position:sticky;top:0;z-index:2;background:var(--card);">Time</th><th style="position:sticky;top:0;z-index:2;background:var(--card);">Client</th><th style="position:sticky;top:0;z-index:2;background:var(--card);">Property</th><th style="position:sticky;top:0;z-index:2;background:var(--card);">Service</th><th style="position:sticky;top:0;z-index:2;background:var(--card);">Status</th><th class="num" style="position:sticky;top:0;z-index:2;background:var(--card);">Price</th></tr></thead><tbody>';
-  filtered.forEach(j => {
+  paged.forEach(j => {
     const c = clients.find(cl=>cl.id===j.clientId);
     const pAddr = c && c.properties[j.propertyIdx] ? c.properties[j.propertyIdx].address : '';
     html += '<tr class="clickable-row" onclick="openJobDetail('+j.id+')"><td>'+fmtDate(j.date)+'</td><td>'+fmtTime(j.time)+'</td><td style="font-weight:600;">'+esc(c?c.name:'')+'</td><td style="font-size:0.82rem;">'+esc(pAddr)+'</td><td>'+esc(j.service)+'</td><td><span class="badge badge-'+statusColor(j.status)+'">'+j.status+'</span></td><td class="num">'+fmt$(j.price)+'</td></tr>';
   });
   html += '</tbody></table></div></div>';
+  if (totalPages > 1) {
+    html += '<div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-top:12px;">';
+    html += '<button class="btn btn-sm btn-ghost" onclick="jobPage=0;renderJobs();"' + (jobPage===0?' disabled':'') + '>&laquo;</button>';
+    html += '<button class="btn btn-sm btn-ghost" onclick="jobPage--;renderJobs();"' + (jobPage===0?' disabled':'') + '>&lsaquo; Prev</button>';
+    html += '<span style="font-size:0.85rem;font-weight:600;color:var(--text-light);">Page ' + (jobPage+1) + ' of ' + totalPages + ' &nbsp;(' + filtered.length + ' jobs)</span>';
+    html += '<button class="btn btn-sm btn-ghost" onclick="jobPage++;renderJobs();"' + (jobPage>=totalPages-1?' disabled':'') + '>Next &rsaquo;</button>';
+    html += '<button class="btn btn-sm btn-ghost" onclick="jobPage='+(totalPages-1)+';renderJobs();"' + (jobPage>=totalPages-1?' disabled':'') + '>&raquo;</button>';
+    html += '</div>';
+  }
   document.getElementById('jobsArea').innerHTML = html;
 }
 
 function setJobFilter(f) {
-  jobFilter = f;
+  jobFilter = f; jobPage = 0;
   document.querySelectorAll('#jobFilters .pill').forEach(p => p.classList.toggle('active', p.textContent.toLowerCase().includes(f)));
   renderJobs();
 }
@@ -835,7 +897,7 @@ function openJobDetail(id) {
     });
     html += '</ul>';
     const done = j.checklistProgress.filter(i => i.done).length;
-    html += '<div style="font-size:0.82rem;color:var(--text-light);margin-top:6px;">' + done + '/' + j.checklistProgress.length + ' tasks completed</div>';
+    html += '<div id="clCounter" style="font-size:0.82rem;color:var(--text-light);margin-top:6px;">' + done + '/' + j.checklistProgress.length + ' tasks completed</div>';
   }
 
   let footer = '';
@@ -847,7 +909,7 @@ function openJobDetail(id) {
     footer += '<button class="btn btn-primary" onclick="closeModal(\'detailModal\');createInvoiceFromJob('+j.id+')">💰 Invoice</button>';
     if (c && c.phone) footer += '<button class="btn btn-outline" onclick="shareCompletion('+j.id+')">📱 Notify</button>';
   }
-  footer += '<button class="btn btn-ghost" onclick="document.getElementById(\'detailModal\').classList.remove(\'show\')">Close</button>';
+  footer += '<button class="btn btn-ghost" onclick="closeModal(\'detailModal\')">Close</button>';
 
   document.getElementById('detailModalTitle').textContent = '📋 Job Details';
   document.getElementById('detailModalBody').innerHTML = html;
@@ -857,7 +919,14 @@ function openJobDetail(id) {
 
 function toggleChecklistItem(jobId, idx, checked) {
   const j = jobs.find(jb=>jb.id===jobId);
-  if (j && j.checklistProgress[idx] !== undefined) { j.checklistProgress[idx].done = checked; saveData(); }
+  if (j && j.checklistProgress[idx] !== undefined) {
+    j.checklistProgress[idx].done = checked; saveData();
+    const li = event.target.closest('li');
+    const span = li && li.querySelector('span');
+    if (span) { if (checked) span.classList.add('task-done'); else span.classList.remove('task-done'); }
+    const counter = document.getElementById('clCounter');
+    if (counter) { const done = j.checklistProgress.filter(i=>i.done).length; counter.textContent = done + '/' + j.checklistProgress.length + ' tasks completed'; }
+  }
 }
 function completeJob(id) {
   const j = jobs.find(jb=>jb.id===id); if (j) { j.status='completed'; saveData(); showToast('✅ Job completed'); }
@@ -882,7 +951,7 @@ function shareCompletion(id) {
    ══════════════════════════════════════════ */
 function renderChecklists() {
   if (checklists.length === 0) { document.getElementById('checklistsArea').innerHTML = '<div class="empty-state"><h3>No checklists yet</h3><p>Create reusable room-by-room cleaning templates.</p><button class="btn btn-primary" onclick="openNewChecklistModal()">+ New Template</button></div>'; return; }
-  let html = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;">';
+  let html = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:14px;">';
   checklists.forEach(cl => {
     const totalTasks = cl.rooms.reduce((s,r)=>s+r.tasks.length,0);
     html += '<div class="card"><div class="card-header">' + esc(cl.name) + '<button class="btn btn-sm btn-ghost" onclick="editChecklist('+cl.id+')">✏️</button></div>';
