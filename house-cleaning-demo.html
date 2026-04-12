@@ -238,11 +238,44 @@ input, select, textarea { font-family: inherit; font-size: 0.88rem; }
   .form-grid { grid-template-columns: 1fr; }
   .kpi-grid { grid-template-columns: repeat(2, 1fr); }
   .cal-day { min-height: 50px; }
+  .data-table th, .data-table td { padding: 8px 8px; font-size: 0.8rem; }
+  .modal-box { width: 96%; max-height: 90vh; }
+  .modal-body { padding: 14px; }
+  .chart-wrap { height: 180px; }
+  .card-body { padding: 14px; }
+  input, select, textarea { font-size: 16px !important; }
 }
 @media (max-width: 480px) {
   .kpi-grid { grid-template-columns: 1fr; }
   .page-header { flex-direction: column; align-items: flex-start; }
+  .page-header .btn { width: 100%; justify-content: center; }
+  .main-content { padding: 12px 8px; }
+  .kpi-card { padding: 12px 14px; }
+  .kpi-card .kpi-value { font-size: 1.3rem; }
+  .cal-day { min-height: 40px; padding: 2px 3px; }
+  .cal-day .day-num { font-size: 0.7rem; }
+  .cal-event { font-size: 0.6rem; padding: 0 3px; }
+  .cal-day-header { font-size: 0.65rem; padding: 4px; }
+  .modal-box { width: 100%; max-width: 100%; border-radius: 12px 12px 0 0; max-height: 92vh; }
+  .modal-header { padding: 12px 14px; }
+  .modal-body { padding: 12px; }
+  .modal-footer { padding: 10px 14px; flex-wrap: wrap; }
+  .modal-footer .btn { flex: 1; min-width: 0; justify-content: center; }
+  .search-bar { flex-direction: column; }
+  .search-bar input { width: 100%; }
+  .pill-filters { gap: 4px; }
+  .pill { padding: 4px 10px; font-size: 0.75rem; }
+  .card-header { padding: 10px 14px; font-size: 0.88rem; }
+  .card-body { padding: 10px; }
+  .data-table th, .data-table td { padding: 6px 6px; font-size: 0.75rem; white-space: nowrap; }
+  .btn { padding: 7px 12px; font-size: 0.82rem; }
+  .job-card { padding: 12px; }
+  .prop-badge { font-size: 0.72rem; padding: 2px 8px; }
+  .demo-banner { font-size: 0.75rem; padding: 6px 10px; }
+  select { padding-right: 26px !important; }
 }
+/* ── Body scroll lock when modal open ── */
+body.modal-open { overflow: hidden; }
 
 /* ── Demo banner ── */
 .demo-banner {
@@ -379,49 +412,49 @@ input, select, textarea { font-family: inherit; font-size: 0.88rem; }
 </div><!-- /main-content -->
 
 <!-- ═══════ MODALS ═══════ -->
-<div class="modal-overlay" id="jobModal" onclick="if(event.target===this)this.classList.remove('show')">
+<div class="modal-overlay" id="jobModal" onclick="if(event.target===this)closeModal('jobModal')">
   <div class="modal-box" style="max-width:560px;">
-    <div class="modal-header"><span id="jobModalTitle">📋 New Job</span><button class="modal-close" onclick="document.getElementById('jobModal').classList.remove('show')">&times;</button></div>
+    <div class="modal-header"><span id="jobModalTitle">📋 New Job</span><button class="modal-close" onclick="closeModal('jobModal')">&times;</button></div>
     <div class="modal-body" id="jobModalBody"></div>
-    <div class="modal-footer"><button class="btn btn-ghost" onclick="document.getElementById('jobModal').classList.remove('show')">Cancel</button><button class="btn btn-primary" onclick="saveJob()">Save Job</button></div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('jobModal')">Cancel</button><button class="btn btn-primary" onclick="saveJob()">Save Job</button></div>
   </div>
 </div>
 
-<div class="modal-overlay" id="clientModal" onclick="if(event.target===this)this.classList.remove('show')">
+<div class="modal-overlay" id="clientModal" onclick="if(event.target===this)closeModal('clientModal')">
   <div class="modal-box" style="max-width:560px;">
-    <div class="modal-header"><span>🏠 Add Client & Property</span><button class="modal-close" onclick="document.getElementById('clientModal').classList.remove('show')">&times;</button></div>
+    <div class="modal-header"><span>🏠 Add Client & Property</span><button class="modal-close" onclick="closeModal('clientModal')">&times;</button></div>
     <div class="modal-body" id="clientModalBody"></div>
-    <div class="modal-footer"><button class="btn btn-ghost" onclick="document.getElementById('clientModal').classList.remove('show')">Cancel</button><button class="btn btn-primary" onclick="saveClient()">Save Client</button></div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('clientModal')">Cancel</button><button class="btn btn-primary" onclick="saveClient()">Save Client</button></div>
   </div>
 </div>
 
-<div class="modal-overlay" id="invoiceModal" onclick="if(event.target===this)this.classList.remove('show')">
+<div class="modal-overlay" id="invoiceModal" onclick="if(event.target===this)closeModal('invoiceModal')">
   <div class="modal-box">
-    <div class="modal-header"><span>💰 Create Invoice</span><button class="modal-close" onclick="document.getElementById('invoiceModal').classList.remove('show')">&times;</button></div>
+    <div class="modal-header"><span>💰 Create Invoice</span><button class="modal-close" onclick="closeModal('invoiceModal')">&times;</button></div>
     <div class="modal-body" id="invoiceModalBody"></div>
-    <div class="modal-footer"><button class="btn btn-ghost" onclick="document.getElementById('invoiceModal').classList.remove('show')">Cancel</button><button class="btn btn-primary" onclick="saveInvoice()">Create Invoice</button></div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('invoiceModal')">Cancel</button><button class="btn btn-primary" onclick="saveInvoice()">Create Invoice</button></div>
   </div>
 </div>
 
-<div class="modal-overlay" id="expenseModal" onclick="if(event.target===this)this.classList.remove('show')">
+<div class="modal-overlay" id="expenseModal" onclick="if(event.target===this)closeModal('expenseModal')">
   <div class="modal-box" style="max-width:480px;">
-    <div class="modal-header"><span>🧾 Add Expense</span><button class="modal-close" onclick="document.getElementById('expenseModal').classList.remove('show')">&times;</button></div>
+    <div class="modal-header"><span>🧾 Add Expense</span><button class="modal-close" onclick="closeModal('expenseModal')">&times;</button></div>
     <div class="modal-body" id="expenseModalBody"></div>
-    <div class="modal-footer"><button class="btn btn-ghost" onclick="document.getElementById('expenseModal').classList.remove('show')">Cancel</button><button class="btn btn-primary" onclick="saveExpense()">Save</button></div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('expenseModal')">Cancel</button><button class="btn btn-primary" onclick="saveExpense()">Save</button></div>
   </div>
 </div>
 
-<div class="modal-overlay" id="checklistModal" onclick="if(event.target===this)this.classList.remove('show')">
+<div class="modal-overlay" id="checklistModal" onclick="if(event.target===this)closeModal('checklistModal')">
   <div class="modal-box" style="max-width:500px;">
-    <div class="modal-header"><span>✅ Checklist Template</span><button class="modal-close" onclick="document.getElementById('checklistModal').classList.remove('show')">&times;</button></div>
+    <div class="modal-header"><span>✅ Checklist Template</span><button class="modal-close" onclick="closeModal('checklistModal')">&times;</button></div>
     <div class="modal-body" id="checklistModalBody"></div>
-    <div class="modal-footer"><button class="btn btn-ghost" onclick="document.getElementById('checklistModal').classList.remove('show')">Cancel</button><button class="btn btn-primary" onclick="saveChecklist()">Save Template</button></div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('checklistModal')">Cancel</button><button class="btn btn-primary" onclick="saveChecklist()">Save Template</button></div>
   </div>
 </div>
 
-<div class="modal-overlay" id="detailModal" onclick="if(event.target===this)this.classList.remove('show')">
+<div class="modal-overlay" id="detailModal" onclick="if(event.target===this)closeModal('detailModal')">
   <div class="modal-box">
-    <div class="modal-header"><span id="detailModalTitle">Details</span><button class="modal-close" onclick="document.getElementById('detailModal').classList.remove('show')">&times;</button></div>
+    <div class="modal-header"><span id="detailModalTitle">Details</span><button class="modal-close" onclick="closeModal('detailModal')">&times;</button></div>
     <div class="modal-body" id="detailModalBody"></div>
     <div class="modal-footer" id="detailModalFooter"></div>
   </div>
@@ -450,9 +483,11 @@ function esc(s) { if (!s) return ''; const d = document.createElement('div'); d.
 function fmt$(n) { return '$' + Number(n || 0).toFixed(2); }
 function fmtDate(d) { if (!d) return ''; const dt = new Date(d + 'T00:00:00'); return dt.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' }); }
 function fmtTime(t) { if (!t) return ''; const [h, m] = t.split(':'); const hr = parseInt(h); return (hr > 12 ? hr - 12 : hr || 12) + ':' + m + (hr >= 12 ? 'pm' : 'am'); }
-function todayStr() { return new Date().toISOString().slice(0, 10); }
+function todayStr() { const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
 function showToast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(t._tm); t._tm = setTimeout(() => t.classList.remove('show'), 3000); }
 function statusColor(s) { return s === 'completed' ? 'green' : s === 'cancelled' ? 'red' : s === 'confirmed' ? 'blue' : 'amber'; }
+function openModal(id) { const m=document.getElementById(id); m.classList.add('show'); document.body.classList.add('modal-open'); const box=m.querySelector('.modal-box'); if(box)box.scrollTop=0; const body=m.querySelector('.modal-body'); if(body)body.scrollTop=0; }
+function closeModal(id) { document.getElementById(id).classList.remove('show'); if(!document.querySelector('.modal-overlay.show'))document.body.classList.remove('modal-open'); }
 
 function saveData() { localStorage.setItem('cleanslate_data', JSON.stringify({ clients, jobs, invoices, expenses, checklists, services, settings, nextId })); }
 function loadData() {
@@ -525,7 +560,7 @@ function renderDashboard() {
 function renderWeeklyChart() {
   const canvas = document.getElementById('weeklyChart'); if (!canvas) return;
   const labels = [], data = [];
-  for (let i = 6; i >= 0; i--) { const d = new Date(); d.setDate(d.getDate()-i); const ds = d.toISOString().slice(0,10); labels.push(d.toLocaleDateString('en-US',{weekday:'short'})); data.push(invoices.filter(inv=>inv.date===ds&&inv.status==='paid').reduce((s,inv)=>s+inv.total,0)); }
+  for (let i = 6; i >= 0; i--) { const d = new Date(); d.setDate(d.getDate()-i); const ds = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); labels.push(d.toLocaleDateString('en-US',{weekday:'short'})); data.push(invoices.filter(inv=>inv.date===ds&&inv.status==='paid').reduce((s,inv)=>s+inv.total,0)); }
   if (canvas._chart) canvas._chart.destroy();
   canvas._chart = new Chart(canvas, { type: 'bar', data: { labels, datasets: [{ label: 'Revenue', data, backgroundColor: '#2563eb', borderRadius: 6 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { callback: v => '$' + v } } } } });
 }
@@ -572,7 +607,7 @@ function setCalView(v) { calView = v; renderCalendar(); }
 function viewDay(ds) { calDate = new Date(ds+'T12:00:00'); calView = 'day'; renderCalendar(); }
 
 function renderDayView() {
-  const ds = calDate.toISOString().slice(0,10);
+  const ds = calDate.getFullYear()+'-'+String(calDate.getMonth()+1).padStart(2,'0')+'-'+String(calDate.getDate()).padStart(2,'0');
   const dayJobs = jobs.filter(j => j.date === ds).sort((a,b)=>(a.time||'').localeCompare(b.time||''));
   let html = '<div class="cal-header"><button class="btn btn-ghost" onclick="calDate.setDate(calDate.getDate()-1);renderCalendar();">◀</button><h3>' + calDate.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'}) + '</h3><button class="btn btn-ghost" onclick="calDate.setDate(calDate.getDate()+1);renderCalendar();">▶</button></div>';
   if (dayJobs.length === 0) {
@@ -632,7 +667,7 @@ function openNewClientModal() {
   html += '<div class="form-group" style="grid-column:1/-1;"><label>Special Notes</label><textarea id="ncNotes" rows="2" placeholder="Pets, allergies, areas to avoid..."></textarea></div>';
   html += '</div></div>';
   document.getElementById('clientModalBody').innerHTML = html;
-  document.getElementById('clientModal').classList.add('show');
+  openModal('clientModal');
 }
 
 function saveClient() {
@@ -640,7 +675,7 @@ function saveClient() {
   if (!name) { showToast('⚠️ Name required'); return; }
   const prop = { address: (document.getElementById('ncAddr').value||'').trim(), type: document.getElementById('ncType').value, sqft: document.getElementById('ncSqft').value||'', bedrooms: document.getElementById('ncBed').value||'', bathrooms: document.getElementById('ncBath').value||'', accessNotes: (document.getElementById('ncAccess').value||'').trim(), specialNotes: (document.getElementById('ncNotes').value||'').trim() };
   clients.push({ id: genId(), name, phone: (document.getElementById('ncPhone').value||'').trim(), email: (document.getElementById('ncEmail').value||'').trim(), properties: [prop] });
-  saveData(); document.getElementById('clientModal').classList.remove('show');
+  saveData(); closeModal('clientModal');
   showToast('✅ Client saved'); renderClients();
 }
 
@@ -681,7 +716,7 @@ function openClientDetail(id) {
   document.getElementById('detailModalTitle').textContent = '🏠 ' + c.name;
   document.getElementById('detailModalBody').innerHTML = html;
   document.getElementById('detailModalFooter').innerHTML = footer;
-  document.getElementById('detailModal').classList.add('show');
+  openModal('detailModal');
 }
 
 function addPropertyToClient(cid) {
@@ -734,11 +769,11 @@ function openNewJobModal(prefillDate, prefillClientId) {
   html += '<div class="form-group"><label>Checklist</label><select id="njChecklist"><option value="">None</option>'+clOpts+'</select></div>';
   html += '</div>';
   html += '<div class="form-group" style="margin-top:10px;"><label>Notes</label><textarea id="njNotes" rows="2"></textarea></div>';
-  html += '<div class="form-group" style="margin-top:10px;"><label><input type="checkbox" id="njRecurring"> Recurring (weekly × 12)</label></div>';
+  html += '<label style="display:flex;align-items:center;gap:8px;margin-top:10px;font-size:0.88rem;font-weight:500;cursor:pointer;"><input type="checkbox" id="njRecurring" style="width:18px;height:18px;accent-color:var(--primary);flex-shrink:0;"> Recurring (weekly × 12)</label>';
 
   document.getElementById('jobModalBody').innerHTML = html;
   document.getElementById('jobModalTitle').textContent = '📋 New Job';
-  document.getElementById('jobModal').classList.add('show');
+  openModal('jobModal');
   updatePropertySelect(); updateJobPrice();
 }
 
@@ -764,10 +799,10 @@ function saveJob() {
   const job = { id: genId(), clientId, propertyIdx: parseInt(document.getElementById('njProperty').value)||0, service: document.getElementById('njService').value||'Standard Clean', date, time: document.getElementById('njTime').value, duration: parseInt(document.getElementById('njDuration').value)||120, price: parseFloat(document.getElementById('njPrice').value)||0, notes: document.getElementById('njNotes').value.trim(), status: 'scheduled', recurring: document.getElementById('njRecurring').checked, checklistId: parseInt(document.getElementById('njChecklist').value)||null, checklistProgress: [] };
   jobs.push(job);
   if (job.recurring) {
-    for (let w=1;w<=12;w++) { const d=new Date(date+'T12:00:00'); d.setDate(d.getDate()+w*7); jobs.push({...job, id:genId(), date:d.toISOString().slice(0,10), recurring:false, checklistProgress:[]}); }
+    for (let w=1;w<=12;w++) { const d=new Date(date+'T12:00:00'); d.setDate(d.getDate()+w*7); jobs.push({...job, id:genId(), date:d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'), recurring:false, checklistProgress:[]}); }
     showToast('✅ Job + 12 weekly recurrences');
   } else { showToast('✅ Job created'); }
-  saveData(); document.getElementById('jobModal').classList.remove('show');
+  saveData(); closeModal('jobModal');
   renderJobs(); renderDashboard();
 }
 
@@ -809,7 +844,7 @@ function openJobDetail(id) {
     footer += '<button class="btn btn-danger btn-sm" onclick="cancelJob('+j.id+')">Cancel</button>';
   }
   if (j.status === 'completed') {
-    footer += '<button class="btn btn-primary" onclick="document.getElementById(\'detailModal\').classList.remove(\'show\');createInvoiceFromJob('+j.id+')">💰 Invoice</button>';
+    footer += '<button class="btn btn-primary" onclick="closeModal(\'detailModal\');createInvoiceFromJob('+j.id+')">💰 Invoice</button>';
     if (c && c.phone) footer += '<button class="btn btn-outline" onclick="shareCompletion('+j.id+')">📱 Notify</button>';
   }
   footer += '<button class="btn btn-ghost" onclick="document.getElementById(\'detailModal\').classList.remove(\'show\')">Close</button>';
@@ -817,7 +852,7 @@ function openJobDetail(id) {
   document.getElementById('detailModalTitle').textContent = '📋 Job Details';
   document.getElementById('detailModalBody').innerHTML = html;
   document.getElementById('detailModalFooter').innerHTML = footer;
-  document.getElementById('detailModal').classList.add('show');
+  openModal('detailModal');
 }
 
 function toggleChecklistItem(jobId, idx, checked) {
@@ -826,13 +861,13 @@ function toggleChecklistItem(jobId, idx, checked) {
 }
 function completeJob(id) {
   const j = jobs.find(jb=>jb.id===id); if (j) { j.status='completed'; saveData(); showToast('✅ Job completed'); }
-  document.getElementById('detailModal').classList.remove('show');
+  closeModal('detailModal');
   switchPage(document.querySelector('.nav-item.active').dataset.page);
 }
 function cancelJob(id) {
   if (!confirm('Cancel this job?')) return;
   const j = jobs.find(jb=>jb.id===id); if (j) { j.status='cancelled'; saveData(); showToast('Job cancelled'); }
-  document.getElementById('detailModal').classList.remove('show');
+  closeModal('detailModal');
   switchPage(document.querySelector('.nav-item.active').dataset.page);
 }
 function shareCompletion(id) {
@@ -874,7 +909,7 @@ function openNewChecklistModal() {
   addChecklistRoom('Bathroom', ['Scrub toilet','Clean shower/tub','Wipe mirror','Mop floor']);
   addChecklistRoom('Living Areas', ['Vacuum/sweep floors','Dust surfaces','Empty trash']);
   addChecklistRoom('Bedrooms', ['Make beds','Vacuum','Dust nightstands']);
-  document.getElementById('checklistModal').classList.add('show');
+  openModal('checklistModal');
 }
 
 let clRoomCount = 0;
@@ -900,7 +935,7 @@ function saveChecklist() {
   if (rooms.length === 0) { showToast('⚠️ Add at least one room'); return; }
   checklists.push({ id: genId(), name, rooms });
   clRoomCount = 0;
-  saveData(); document.getElementById('checklistModal').classList.remove('show');
+  saveData(); closeModal('checklistModal');
   showToast('✅ Checklist saved'); renderChecklists();
 }
 
@@ -911,7 +946,7 @@ function editChecklist(id) {
   cl.rooms.forEach(r => addChecklistRoom(r.name, r.tasks));
   // Remove old and save with same ID
   const origSave = saveChecklist;
-  document.getElementById('checklistModal').classList.add('show');
+  openModal('checklistModal');
 }
 
 /* ══════════════════════════════════════════
@@ -944,7 +979,7 @@ function openNewInvoiceModal() {
   html += '<button class="btn btn-sm btn-ghost" style="margin-top:6px;" onclick="addInvoiceItem()">+ Add Line</button></div>';
   html += '<div class="form-grid" style="margin-top:12px;"><div class="form-group"><label>Tip</label><input id="niTip" type="number" step="0.01" value="0"></div></div>';
   document.getElementById('invoiceModalBody').innerHTML = html;
-  document.getElementById('invoiceModal').classList.add('show');
+  openModal('invoiceModal');
 }
 let invoiceItemCount=1;
 function addInvoiceItem(){const idx=invoiceItemCount++;const d=document.createElement('div');d.className='form-grid';d.style.cssText='grid-template-columns:2fr 1fr;margin-top:6px;';d.innerHTML='<input id="niDesc'+idx+'" placeholder="Description"><input id="niAmt'+idx+'" type="number" step="0.01" placeholder="Amount">';document.getElementById('niItems').appendChild(d);}
@@ -955,7 +990,7 @@ function saveInvoice() {
   if(!items.length){showToast('⚠️ Add a line item');return;}
   const sub=items.reduce((s,it)=>s+it.amount,0);const tip=parseFloat(document.getElementById('niTip').value)||0;
   invoices.push({id:genId(),clientId:cid,clientName:c?c.name:'Unknown',items,subtotal:sub,tip,total:sub+tip,status:'unpaid',date:document.getElementById('niDate').value||todayStr(),paidDate:null});
-  invoiceItemCount=1;saveData();document.getElementById('invoiceModal').classList.remove('show');showToast('💰 Invoice created');renderInvoices();
+  invoiceItemCount=1;saveData();closeModal('invoiceModal');showToast('💰 Invoice created');renderInvoices();
 }
 function createInvoiceFromJob(jid){const j=jobs.find(jb=>jb.id===jid);if(!j)return;const c=clients.find(cl=>cl.id===j.clientId);invoices.push({id:genId(),clientId:j.clientId,clientName:c?c.name:'',items:[{desc:j.service,amount:j.price}],subtotal:j.price,tip:0,total:j.price,status:'unpaid',date:j.date,paidDate:null});saveData();showToast('💰 Invoice created');switchPage('invoices');}
 function markInvoicePaid(id){const inv=invoices.find(i=>i.id===id);if(inv){inv.status='paid';inv.paidDate=todayStr();saveData();showToast('✅ Paid');renderInvoices();renderDashboard();}}
@@ -994,12 +1029,12 @@ function openNewExpenseModal(){
   html+='<div class="form-group" style="grid-column:1/-1;"><label>Description</label><input id="neDesc"></div>';
   html+='<div class="form-group"><label>Amount ($)</label><input id="neAmt" type="number" step="0.01"></div>';
   html+='<div class="form-group"><label>Mileage (miles)</label><input id="neMileage" type="number" step="0.1"></div></div>';
-  document.getElementById('expenseModalBody').innerHTML=html;document.getElementById('expenseModal').classList.add('show');
+  document.getElementById('expenseModalBody').innerHTML=html;openModal('expenseModal');
 }
 function saveExpense(){
   const amt=parseFloat(document.getElementById('neAmt').value)||0;if(amt<=0){showToast('⚠️ Enter amount');return;}
   expenses.push({id:genId(),date:document.getElementById('neDate').value||todayStr(),category:document.getElementById('neCategory').value,description:(document.getElementById('neDesc').value||'').trim(),amount:amt,mileage:parseFloat(document.getElementById('neMileage').value)||0});
-  saveData();document.getElementById('expenseModal').classList.remove('show');showToast('🧾 Saved');renderExpenses();
+  saveData();closeModal('expenseModal');showToast('🧾 Saved');renderExpenses();
 }
 function exportExpenses(){
   let csv='Date,Category,Description,Amount,Mileage,Mileage Deduction\n';
@@ -1069,7 +1104,7 @@ function loadSampleData(){
     {id:genId(),name:'Post-Construction Clean',duration:300,price:350}
   ];
 
-  const today=new Date();const ds=d=>d.toISOString().slice(0,10);
+  const today=new Date();const ds=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 
   clients=[
     {id:genId(),name:'Emily Watson',phone:'414-555-1001',email:'emily.w@email.com',properties:[
@@ -1167,7 +1202,7 @@ document.addEventListener('DOMContentLoaded',function(){
   }
   switchPage('dashboard');
 });
-document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.modal-overlay.show').forEach(m=>m.classList.remove('show'));});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){document.querySelectorAll('.modal-overlay.show').forEach(m=>m.classList.remove('show'));document.body.classList.remove('modal-open');}});
 </script>
 </body>
 </html>
