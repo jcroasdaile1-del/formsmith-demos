@@ -916,11 +916,12 @@ function openJobDetail(id) {
   let footer = '';
   if (j.status === 'scheduled' || j.status === 'confirmed') {
     footer += '<button class="btn btn-accent" onclick="completeJob('+j.id+')">✅ Complete</button>';
+    if (c) footer += '<button class="btn btn-primary" onclick="sendPaymentLink('+j.id+')">💰 Send Invoice</button>';
     footer += '<button class="btn btn-danger btn-sm" onclick="cancelJob('+j.id+')">Cancel</button>';
   }
   if (j.status === 'completed') {
-    footer += '<button class="btn btn-primary" onclick="closeModal(\'detailModal\');createInvoiceFromJob('+j.id+')">💰 Invoice</button>';
-    if (settings.payLink && c) footer += '<button class="btn btn-outline" onclick="sendPaymentLink('+j.id+')">💳 Payment Link</button>';
+    if (c) footer += '<button class="btn btn-primary" onclick="sendPaymentLink('+j.id+')">💰 Send Invoice</button>';
+    footer += '<button class="btn btn-outline" onclick="closeModal(\'detailModal\');createInvoiceFromJob('+j.id+')">📋 Create Invoice</button>';
     if (c && c.phone) footer += '<button class="btn btn-outline" onclick="shareCompletion('+j.id+')">📱 Notify</button>';
   }
   footer += '<button class="btn btn-ghost" onclick="closeModal(\'detailModal\')">Close</button>';
@@ -943,7 +944,9 @@ function toggleChecklistItem(jobId, idx, checked) {
   }
 }
 function completeJob(id) {
-  const j = jobs.find(jb=>jb.id===id); if (j) { j.status='completed'; saveData(); showToast('✅ Job completed'); }
+  const j = jobs.find(jb=>jb.id===id); if (!j) return;
+  if (j.date > todayStr()) { showToast('⚠️ Cannot complete a future job'); return; }
+  j.status='completed'; saveData(); showToast('✅ Job completed');
   closeModal('detailModal');
   switchPage(document.querySelector('.nav-item.active').dataset.page);
 }
@@ -962,8 +965,9 @@ function shareCompletion(id) {
 function sendPaymentLink(jobId) {
   const j = jobs.find(jb=>jb.id===jobId); if (!j) return;
   const c = clients.find(cl=>cl.id===j.clientId);
-  let msg = 'Hi ' + (c?c.name.split(' ')[0]:'') + '! Here\'s your payment for ' + j.service + ': ' + fmt$(j.price);
-  if (settings.payLink) msg += '\n\nPay here: ' + settings.payLink;
+  let msg = 'Hi ' + (c?c.name.split(' ')[0]:'') + '! Your ' + j.service + ' is complete — everything looks great!';
+  msg += '\n\nTotal: ' + fmt$(j.price);
+  if (settings.payLink) msg += '\nPay here: ' + settings.payLink;
   msg += '\n\nThank you! — ' + settings.bizName;
   if (c && c.phone) window.open('sms:'+c.phone+'?body='+encodeURIComponent(msg),'_blank');
   else if (c && c.email) window.open('mailto:'+c.email+'?subject='+encodeURIComponent('Payment for '+j.service)+'&body='+encodeURIComponent(msg),'_blank');
