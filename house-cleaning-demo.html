@@ -246,6 +246,7 @@ input, select, textarea { font-family: inherit; font-size: 0.88rem; }
   .card-body { padding: 14px; }
   input, select, textarea { font-size: 16px !important; }
 }
+.svc-cards { display: none; }
 @media (max-width: 480px) {
   .sidebar { width: 0; border: none; }
   .sidebar-toggle { display: none !important; }
@@ -263,17 +264,6 @@ input, select, textarea { font-family: inherit; font-size: 0.88rem; }
   .cal-day-header { font-size: 0.6rem; padding: 3px 2px; }
   .modal-overlay.show { align-items: flex-end; }
   .modal-box { width: 100%; max-width: 100%; border-radius: 12px 12px 0 0; max-height: 92vh; }
-  .modal-header { padding: 12px 14px; font-size: 0.9rem; }
-  .modal-body { padding: 12px; }
-  .modal-footer { padding: 10px 12px; flex-wrap: wrap; }
-  .modal-footer .btn { flex: 1; min-width: 0; justify-content: center; font-size: 0.8rem; }
-  .svc-table-wrap { display: none; }
-  .svc-cards { display: flex; flex-direction: column; gap: 10px; }
-  .svc-card { display: grid; grid-template-columns: 1fr auto; gap: 6px 10px; padding: 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--card); align-items: center; }
-  .svc-card input[type="text"] { grid-column: 1 / -1; width: 100%; border: 1px solid var(--border); padding: 6px 8px; border-radius: 6px; font-size: 0.85rem; background: var(--card); color: var(--text); box-sizing: border-box; }
-  .svc-card .svc-nums { display: flex; gap: 8px; align-items: center; font-size: 0.8rem; }
-  .svc-card .svc-nums input { border: 1px solid var(--border); padding: 4px 6px; border-radius: 6px; width: 55px; background: var(--card); color: var(--text); font-size: 0.8rem; text-align: center; }
-  .svc-card .svc-del { justify-self: end; }
   .search-bar { flex-direction: column; }
   .search-bar input { width: 100%; }
   .pill-filters { gap: 4px; }
@@ -305,10 +295,20 @@ input, select, textarea { font-family: inherit; font-size: 0.88rem; }
   .empty-state { padding: 24px 12px; }
   .empty-state h3 { font-size: 1rem; }
   select { padding-right: 26px !important; }
+  .modal-header { padding: 12px 14px; font-size: 0.9rem; }
+  .modal-body { padding: 12px; }
+  .modal-footer { padding: 10px 12px; flex-wrap: wrap; }
+  .modal-footer .btn { flex: 1; min-width: 0; justify-content: center; font-size: 0.8rem; }
+  .svc-table-wrap { display: none; }
+  .svc-cards { display: flex; flex-direction: column; gap: 10px; }
+  .svc-card { display: grid; grid-template-columns: 1fr auto; gap: 6px 10px; padding: 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--card); align-items: center; }
+  .svc-card input[type="text"] { grid-column: 1 / -1; width: 100%; border: 1px solid var(--border); padding: 6px 8px; border-radius: 6px; font-size: 0.85rem; background: var(--card); color: var(--text); box-sizing: border-box; }
+  .svc-card .svc-nums { display: flex; gap: 8px; align-items: center; font-size: 0.8rem; }
+  .svc-card .svc-nums input { border: 1px solid var(--border); padding: 4px 6px; border-radius: 6px; width: 55px; background: var(--card); color: var(--text); font-size: 0.8rem; text-align: center; }
+  .svc-card .svc-del { justify-self: end; }
 }
 /* ── Body scroll lock when modal open ── */
 body.modal-open { overflow: hidden; position: fixed; width: 100%; }
-.svc-cards { display: none; }
 
 /* ── Demo banner ── */
 .demo-banner {
