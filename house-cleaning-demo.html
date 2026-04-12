@@ -291,14 +291,19 @@ input, select, textarea { font-family: inherit; font-size: 0.88rem; }
   .two-col { gap: 10px; }
   .form-section-title { font-size: 0.85rem; }
   .form-group label { font-size: 0.72rem; }
+  .form-grid { gap: 6px; grid-template-columns: 1fr 1fr; }
+  .form-group { gap: 2px; }
+  .form-group input, .form-group select, .form-group textarea { padding: 6px 10px; font-size: 0.85rem; }
+  .form-group textarea { min-height: 36px; }
+  .form-group.full-width { grid-column: 1 / -1; }
+  .modal-body { padding: 10px 12px; }
+  .modal-header { padding: 8px 14px; font-size: 0.88rem; }
+  .modal-footer { padding: 8px 12px; flex-wrap: wrap; }
+  .modal-footer .btn { flex: 1; min-width: 0; justify-content: center; font-size: 0.8rem; padding: 8px 10px; }
   .checklist li { padding: 6px 8px; font-size: 0.82rem; }
   .empty-state { padding: 24px 12px; }
   .empty-state h3 { font-size: 1rem; }
   select { padding-right: 26px !important; }
-  .modal-header { padding: 12px 14px; font-size: 0.9rem; }
-  .modal-body { padding: 12px; }
-  .modal-footer { padding: 10px 12px; flex-wrap: wrap; }
-  .modal-footer .btn { flex: 1; min-width: 0; justify-content: center; font-size: 0.8rem; }
   .svc-table-wrap { display: none; }
   .svc-cards { display: flex; flex-direction: column; gap: 10px; }
   .svc-card { display: grid; grid-template-columns: 1fr auto; gap: 6px 10px; padding: 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--card); align-items: center; }
@@ -866,17 +871,17 @@ function openNewJobModal(prefillDate, prefillClientId) {
   const clOpts = checklists.map(cl => '<option value="'+cl.id+'">'+esc(cl.name)+'</option>').join('');
 
   let html = '<div class="form-grid">';
-  html += '<div class="form-group"><label>Client *</label><select id="njClient" onchange="updatePropertySelect()">'+(clients.length?'<option value="">Select...</option>'+clientOpts:'<option>No clients</option>')+'</select></div>';
-  html += '<div class="form-group"><label>Property</label><select id="njProperty"></select></div>';
-  html += '<div class="form-group"><label>Service *</label><select id="njService" onchange="updateJobPrice()">'+(services.length?svcOpts:'<option>Standard Clean ($120)</option>')+'</select></div>';
+  html += '<div class="form-group full-width"><label>Client *</label><select id="njClient" onchange="updatePropertySelect()">'+(clients.length?'<option value="">Select...</option>'+clientOpts:'<option>No clients</option>')+'</select></div>';
+  html += '<div class="form-group full-width"><label>Property</label><select id="njProperty"></select></div>';
+  html += '<div class="form-group full-width"><label>Service *</label><select id="njService" onchange="updateJobPrice()">'+(services.length?svcOpts:'<option>Standard Clean ($120)</option>')+'</select></div>';
   html += '<div class="form-group"><label>Date *</label><input id="njDate" type="date" value="'+(prefillDate||todayStr())+'"></div>';
   html += '<div class="form-group"><label>Time</label><input id="njTime" type="time" value="09:00"></div>';
   html += '<div class="form-group"><label>Duration (min)</label><input id="njDuration" type="number" value="120" min="30" step="30"></div>';
   html += '<div class="form-group"><label>Price ($)</label><input id="njPrice" type="number" step="0.01" value="120"></div>';
-  html += '<div class="form-group"><label>Checklist</label><select id="njChecklist"><option value="">None</option>'+clOpts+'</select></div>';
+  html += '<div class="form-group full-width"><label>Checklist</label><select id="njChecklist"><option value="">None</option>'+clOpts+'</select></div>';
   html += '</div>';
-  html += '<div class="form-group" style="margin-top:10px;"><label>Notes</label><textarea id="njNotes" rows="2"></textarea></div>';
-  html += '<label style="display:flex;align-items:center;gap:8px;margin-top:10px;font-size:0.88rem;font-weight:500;cursor:pointer;"><input type="checkbox" id="njRecurring" style="width:18px;height:18px;accent-color:var(--primary);flex-shrink:0;"> Recurring (weekly × 12)</label>';
+  html += '<div class="form-group full-width" style="margin-top:6px;"><label>Notes</label><textarea id="njNotes" rows="1"></textarea></div>';
+  html += '<label style="display:flex;align-items:center;gap:8px;margin-top:6px;font-size:0.82rem;font-weight:500;cursor:pointer;"><input type="checkbox" id="njRecurring" style="width:16px;height:16px;accent-color:var(--primary);flex-shrink:0;"> Recurring (weekly × 12)</label>';
 
   document.getElementById('jobModalBody').innerHTML = html;
   document.getElementById('jobModalTitle').textContent = '📋 New Job';
