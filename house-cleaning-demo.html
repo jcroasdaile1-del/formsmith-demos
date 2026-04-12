@@ -37,10 +37,11 @@
 }
 
 body.dark-mode {
-  --text: #e5e7eb; --text-light: #9ca3af; --border: #374151;
+  --text: #e5e7eb; --text-light: #9ca3af; --border: #4b5563;
   --bg: #111827; --card: #1f2937; --shadow: 0 1px 3px rgba(0,0,0,0.3);
   --primary-light: #1e3a5f; --accent-light: #064e3b; --red-light: #450a0a;
   --green-light: #064e3b; --purple-light: #2e1065; --amber-light: #451a03;
+  --green: #34d399; --amber: #fbbf24; --red: #f87171; --purple: #a78bfa;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -130,7 +131,7 @@ input, select, textarea { font-family: inherit; font-size: 0.88rem; }
 .btn-accent { background: var(--accent); color: white; }
 .btn-danger { background: var(--red); color: white; }
 .btn-sm { padding: 5px 10px; font-size: 0.8rem; }
-.btn-ghost { background: #e0e7ff; border: 1px solid #c7d2fe; color: var(--primary); padding: 6px 10px; border-radius: 6px; }
+.btn-ghost { background: var(--primary-light); border: 1px solid var(--border); color: var(--primary); padding: 6px 10px; border-radius: 6px; }
 .btn-ghost:hover { background: var(--primary); color: white; }
 
 /* ── Tables ── */
@@ -158,10 +159,10 @@ input, select, textarea { font-family: inherit; font-size: 0.88rem; }
 
 /* ── Badges ── */
 .badge { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; }
-.badge-green { background: var(--green-light); color: #065f46; }
-.badge-amber { background: var(--amber-light); color: #92400e; }
-.badge-red { background: var(--red-light); color: #991b1b; }
-.badge-purple { background: var(--purple-light); color: #5b21b6; }
+.badge-green { background: var(--green-light); color: var(--green); }
+.badge-amber { background: var(--amber-light); color: var(--amber); }
+.badge-red { background: var(--red-light); color: var(--red); }
+.badge-purple { background: var(--purple-light); color: var(--purple); }
 .badge-blue { background: var(--primary-light); color: var(--primary-dark); }
 
 /* ── Modal ── */
@@ -461,6 +462,15 @@ body.modal-open { overflow: hidden; position: fixed; width: 100%; top: 0; left: 
     </div>
   </div>
   <div class="card" style="max-width:600px;margin-top:16px;">
+    <div class="card-header">Appearance</div>
+    <div class="card-body">
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <div><strong>Dark Mode</strong><br><span style="font-size:0.82rem;color:var(--text-light);">Switch between light and dark theme</span></div>
+        <button class="btn btn-outline" onclick="toggleDarkMode()" id="darkModeToggleBtn">🌙 Toggle</button>
+      </div>
+    </div>
+  </div>
+  <div class="card" style="max-width:600px;margin-top:16px;">
     <div class="card-header">Services & Pricing</div>
     <div class="card-body" style="overflow-x:auto;" id="servicesPricingArea"></div>
   </div>
@@ -571,6 +581,7 @@ function loadData() {
    ══════════════════════════════════════════ */
 function toggleSidebar() { document.getElementById('sidebar').classList.toggle('collapsed'); localStorage.setItem('cs_sidebar', document.getElementById('sidebar').classList.contains('collapsed') ? '1' : '0'); }
 function switchPage(id) {
+  window.scrollTo(0, 0);
   document.querySelectorAll('.page-section').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById('page-' + id).classList.add('active');
@@ -887,8 +898,8 @@ function openNewJobModal(prefillDate, prefillClientId) {
   html += '<div class="form-group full-width"><label>Client *</label><select id="njClient" onchange="updatePropertySelect()">'+(clients.length?'<option value="">Select...</option>'+clientOpts:'<option>No clients</option>')+'</select></div>';
   html += '<div class="form-group full-width"><label>Property</label><select id="njProperty"></select></div>';
   html += '<div class="form-group full-width"><label>Service *</label><select id="njService" onchange="updateJobPrice()">'+(services.length?svcOpts:'<option>Standard Clean ($120)</option>')+'</select></div>';
-  html += '<div class="form-group"><label>Date *</label><input id="njDate" type="date" value="'+(prefillDate||todayStr())+'" min="'+todayStr()+'"></div>';
-  html += '<div class="form-group"><label>Time</label><select id="njTime">' + timeOptions('09:00') + '</select></div>';
+  html += '<div class="form-group full-width"><label>Date *</label><input id="njDate" type="date" value="'+(prefillDate||todayStr())+'" min="'+todayStr()+'"></div>';
+  html += '<div class="form-group full-width"><label>Time</label><select id="njTime">' + timeOptions('09:00') + '</select></div>';
   html += '<div class="form-group"><label>Duration (min)</label><input id="njDuration" type="number" value="120" min="15" step="15" inputmode="numeric" pattern="[0-9]*"></div>';
   html += '<div class="form-group"><label>Price ($)</label><input id="njPrice" type="number" step="0.01" value="120" min="0" inputmode="decimal"></div>';
   html += '<div class="form-group full-width"><label>Checklist</label><select id="njChecklist"><option value="">None</option>'+clOpts+'</select></div>';
