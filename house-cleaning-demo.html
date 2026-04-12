@@ -145,7 +145,7 @@ input, select, textarea { font-family: inherit; font-size: 0.88rem; }
 
 /* ── Forms ── */
 .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
-.form-group { display: flex; flex-direction: column; gap: 4px; }
+.form-group { display: flex; flex-direction: column; gap: 4px; min-width: 0; overflow: hidden; }
 .form-group label { font-size: 0.78rem; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.03em; }
 .form-group input, .form-group select, .form-group textarea {
   padding: 9px 12px; border: 1px solid var(--border); border-radius: 8px;
@@ -574,6 +574,7 @@ function fmt$(n) { return '$' + Number(n || 0).toFixed(2); }
 function fmtDate(d) { if (!d) return ''; const dt = new Date(d + 'T00:00:00'); return dt.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' }); }
 function fmtTime(t) { if (!t) return ''; const [h, m] = t.split(':'); const hr = parseInt(h); return (hr > 12 ? hr - 12 : hr || 12) + ':' + m + (hr >= 12 ? 'pm' : 'am'); }
 function todayStr() { const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function enforceDateMin(el) { if (el.value < todayStr()) { el.value = todayStr(); showToast('⚠️ Past dates are not allowed'); } }
 function showToast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(t._tm); t._tm = setTimeout(() => t.classList.remove('show'), 3000); }
 function statusColor(s) { return s === 'completed' ? 'green' : s === 'cancelled' ? 'red' : s === 'confirmed' ? 'blue' : 'amber'; }
 function openModal(id) { document.body.dataset.scrollY=window.scrollY; const m=document.getElementById(id); m.classList.add('show'); document.body.classList.add('modal-open'); document.body.style.top='-'+document.body.dataset.scrollY+'px'; const box=m.querySelector('.modal-box'); if(box)box.scrollTop=0; const body=m.querySelector('.modal-body'); if(body)body.scrollTop=0; }
@@ -907,7 +908,7 @@ function openNewJobModal(prefillDate, prefillClientId) {
   html += '<div class="form-group full-width"><label>Client *</label><select id="njClient" onchange="updatePropertySelect()">'+(clients.length?'<option value="">Select...</option>'+clientOpts:'<option>No clients</option>')+'</select></div>';
   html += '<div class="form-group full-width"><label>Property</label><select id="njProperty"></select></div>';
   html += '<div class="form-group full-width"><label>Service *</label><select id="njService" onchange="updateJobPrice()">'+(services.length?svcOpts:'<option>Standard Clean ($120)</option>')+'</select></div>';
-  html += '<div class="form-group"><label>Date *</label><input id="njDate" type="date" value="'+(prefillDate||todayStr())+'" min="'+todayStr()+'"></div>';
+  html += '<div class="form-group"><label>Date *</label><input id="njDate" type="date" value="'+(prefillDate||todayStr())+'" min="'+todayStr()+'" onchange="enforceDateMin(this)"></div>';
   html += '<div class="form-group"><label>Time</label><select id="njTime">' + timeOptions('09:00') + '</select></div>';
   html += '<div class="form-group"><label>Duration (min)</label><input id="njDuration" type="number" value="120" min="15" step="15" inputmode="numeric" pattern="[0-9]*"></div>';
   html += '<div class="form-group"><label>Price ($)</label><input id="njPrice" type="number" step="0.01" value="120" min="0" inputmode="decimal"></div>';
@@ -1161,7 +1162,7 @@ function openNewInvoiceModal() {
   const clientOpts = clients.map(c=>'<option value="'+c.id+'">'+esc(c.name)+'</option>').join('');
   let html = '<div class="form-grid">';
   html += '<div class="form-group"><label>Client</label><select id="niClient">'+(clients.length?'<option value="">Select...</option>'+clientOpts:'<option>No clients</option>')+'</select></div>';
-  html += '<div class="form-group"><label>Date</label><input id="niDate" type="date" value="'+todayStr()+'" min="'+todayStr()+'"></div>';
+  html += '<div class="form-group"><label>Date</label><input id="niDate" type="date" value="'+todayStr()+'" min="'+todayStr()+'" onchange="enforceDateMin(this)"></div>';
   html += '</div><div style="margin-top:12px;"><div style="font-size:0.78rem;font-weight:600;color:var(--text-light);text-transform:uppercase;margin-bottom:6px;">Line Items</div>';
   html += '<div id="niItems"><div class="inv-line-item"><input id="niDesc0" placeholder="Description" value="House Cleaning"><input id="niAmt0" type="number" step="0.01" min="0" placeholder="Amount" value="120" inputmode="decimal"></div></div>';
   html += '<button class="btn btn-sm btn-ghost" style="margin-top:6px;" onclick="addInvoiceItem()">+ Add Line</button></div>';
@@ -1213,7 +1214,7 @@ function renderExpenses() {
 
 function openNewExpenseModal(){
   let html='<div class="form-grid">';
-  html+='<div class="form-group"><label>Date</label><input id="neDate" type="date" value="'+todayStr()+'" min="'+todayStr()+'"></div>';
+  html+='<div class="form-group"><label>Date</label><input id="neDate" type="date" value="'+todayStr()+'" min="'+todayStr()+'" onchange="enforceDateMin(this)"></div>';
   html+='<div class="form-group"><label>Category</label><select id="neCategory"><option>Gas/Fuel</option><option>Cleaning Supplies</option><option>Equipment</option><option>Insurance</option><option>Marketing</option><option>Vehicle Maintenance</option><option>Other</option></select></div>';
   html+='<div class="form-group full-width"><label>Description</label><input id="neDesc"></div>';
   html+='<div class="form-group"><label>Amount ($)</label><input id="neAmt" type="number" step="0.01" min="0" inputmode="decimal"></div>';
