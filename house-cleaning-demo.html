@@ -155,7 +155,7 @@ input, select, textarea { font-family: inherit; font-size: 0.88rem; }
 .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,0.12); }
 .form-group textarea { resize: vertical; min-height: 70px; }
 .form-group select { padding-right: 28px; }
-input[type="date"] { min-width: 0; max-width: 100%; }
+input[type="date"] { min-width: 0; max-width: 100%; -webkit-appearance: textfield; appearance: textfield; text-align: left; }
 .inv-line-item { display: flex; gap: 8px; }
 .inv-line-item + .inv-line-item { margin-top: 6px; }
 .inv-line-item input:first-child { flex: 2; }
@@ -301,7 +301,7 @@ body.dark-mode #toast { background: #e5e7eb; color: #111827; }
   .two-col { gap: 10px; }
   .form-section-title { font-size: 0.85rem; }
   .form-group label { font-size: 0.72rem; }
-  .form-grid { gap: 6px; grid-template-columns: 1fr 1fr; }
+  .form-grid { gap: 6px; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
   .form-group { gap: 2px; }
   .form-group input, .form-group select, .form-group textarea { padding: 6px 10px; font-size: 0.85rem; }
   .form-group textarea { min-height: 36px; }
