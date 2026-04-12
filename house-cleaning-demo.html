@@ -39,8 +39,9 @@
 body.dark-mode {
   --text: #e5e7eb; --text-light: #9ca3af; --border: #4b5563;
   --bg: #111827; --card: #1f2937; --shadow: 0 1px 3px rgba(0,0,0,0.3);
-  --primary-light: #1e3a5f; --accent-light: #064e3b; --red-light: #450a0a;
-  --green-light: #064e3b; --purple-light: #2e1065; --amber-light: #451a03;
+  --primary-light: #1e3a5f; --primary-dark: #60a5fa;
+  --accent-light: #0f4a3a; --red-light: #5c1a1a; --green-light: #0f4a3a;
+  --purple-light: #3b1d70; --amber-light: #5c3a10;
   --green: #34d399; --amber: #fbbf24; --red: #f87171; --purple: #a78bfa;
 }
 
@@ -154,6 +155,7 @@ input, select, textarea { font-family: inherit; font-size: 0.88rem; }
 .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,0.12); }
 .form-group textarea { resize: vertical; min-height: 70px; }
 .form-group select { padding-right: 28px; }
+input[type="date"] { min-width: 0; max-width: 100%; }
 .inv-line-item { display: flex; gap: 8px; }
 .inv-line-item + .inv-line-item { margin-top: 6px; }
 .inv-line-item input:first-child { flex: 2; }
@@ -181,7 +183,8 @@ input, select, textarea { font-family: inherit; font-size: 0.88rem; }
 .modal-close { background: none; border: none; font-size: 1.4rem; color: var(--text-light); cursor: pointer; padding: 0 4px; }
 
 /* ── Toast ── */
-#toast { position: fixed; bottom: 20px; right: 20px; background: var(--text); color: white; padding: 12px 20px; border-radius: 10px; font-size: 0.88rem; font-weight: 500; z-index: 300; transform: translateY(80px); opacity: 0; transition: all 0.3s ease; pointer-events: none; max-width: 360px; }
+#toast { position: fixed; bottom: 20px; right: 20px; background: #1e293b; color: white; padding: 12px 20px; border-radius: 10px; font-size: 0.88rem; font-weight: 500; z-index: 300; transform: translateY(80px); opacity: 0; transition: all 0.3s ease; pointer-events: none; max-width: 360px; }
+body.dark-mode #toast { background: #e5e7eb; color: #111827; }
 #toast.show { transform: translateY(0); opacity: 1; }
 
 /* ── Checklist ── */
@@ -303,7 +306,7 @@ input, select, textarea { font-family: inherit; font-size: 0.88rem; }
   .form-group input, .form-group select, .form-group textarea { padding: 6px 10px; font-size: 0.85rem; }
   .form-group textarea { min-height: 36px; }
   .form-group.full-width { grid-column: 1 / -1; }
-  .modal-body { padding: 10px 12px; }
+  .modal-body { padding: 10px 12px; overflow-x: hidden; }
   .modal-header { padding: 8px 14px; font-size: 0.88rem; }
   .modal-footer { padding: 8px 12px; flex-wrap: wrap; }
   .modal-footer .btn { flex: 1; min-width: 0; justify-content: center; font-size: 0.8rem; padding: 8px 10px; }
@@ -328,7 +331,7 @@ body.modal-open { overflow: hidden; position: fixed; width: 100%; top: 0; left: 
   color: white; text-align: center; padding: 8px 16px; font-size: 0.82rem; font-weight: 600;
   position: sticky; top: 0; z-index: 50;
 }
-.demo-banner a { color: var(--amber-light); text-decoration: underline; }
+.demo-banner a { color: #fef3c7; text-decoration: underline; }
 
 /* ── Mobile Bottom Nav ── */
 .mobile-nav { display: none; }
@@ -1158,7 +1161,7 @@ function openNewInvoiceModal() {
   const clientOpts = clients.map(c=>'<option value="'+c.id+'">'+esc(c.name)+'</option>').join('');
   let html = '<div class="form-grid">';
   html += '<div class="form-group full-width"><label>Client</label><select id="niClient">'+(clients.length?'<option value="">Select...</option>'+clientOpts:'<option>No clients</option>')+'</select></div>';
-  html += '<div class="form-group full-width"><label>Date</label><input id="niDate" type="date" value="'+todayStr()+'"></div>';
+  html += '<div class="form-group full-width"><label>Date</label><input id="niDate" type="date" value="'+todayStr()+'" min="'+todayStr()+'"></div>';
   html += '</div><div style="margin-top:12px;"><div style="font-size:0.78rem;font-weight:600;color:var(--text-light);text-transform:uppercase;margin-bottom:6px;">Line Items</div>';
   html += '<div id="niItems"><div class="inv-line-item"><input id="niDesc0" placeholder="Description" value="House Cleaning"><input id="niAmt0" type="number" step="0.01" min="0" placeholder="Amount" value="120" inputmode="decimal"></div></div>';
   html += '<button class="btn btn-sm btn-ghost" style="margin-top:6px;" onclick="addInvoiceItem()">+ Add Line</button></div>';
@@ -1209,7 +1212,7 @@ function renderExpenses() {
 
 function openNewExpenseModal(){
   let html='<div class="form-grid">';
-  html+='<div class="form-group full-width"><label>Date</label><input id="neDate" type="date" value="'+todayStr()+'"></div>';
+  html+='<div class="form-group full-width"><label>Date</label><input id="neDate" type="date" value="'+todayStr()+'" min="'+todayStr()+'"></div>';
   html+='<div class="form-group full-width"><label>Category</label><select id="neCategory"><option>Gas/Fuel</option><option>Cleaning Supplies</option><option>Equipment</option><option>Insurance</option><option>Marketing</option><option>Vehicle Maintenance</option><option>Other</option></select></div>';
   html+='<div class="form-group full-width"><label>Description</label><input id="neDesc"></div>';
   html+='<div class="form-group"><label>Amount ($)</label><input id="neAmt" type="number" step="0.01" min="0" inputmode="decimal"></div>';
