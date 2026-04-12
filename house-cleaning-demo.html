@@ -261,11 +261,19 @@ input, select, textarea { font-family: inherit; font-size: 0.88rem; }
   .cal-day .day-num { font-size: 0.68rem; }
   .cal-event { font-size: 0.58rem; padding: 0 2px; }
   .cal-day-header { font-size: 0.6rem; padding: 3px 2px; }
+  .modal-overlay.show { align-items: flex-end; }
   .modal-box { width: 100%; max-width: 100%; border-radius: 12px 12px 0 0; max-height: 92vh; }
   .modal-header { padding: 12px 14px; font-size: 0.9rem; }
   .modal-body { padding: 12px; }
   .modal-footer { padding: 10px 12px; flex-wrap: wrap; }
   .modal-footer .btn { flex: 1; min-width: 0; justify-content: center; font-size: 0.8rem; }
+  .svc-table-wrap { display: none; }
+  .svc-cards { display: flex; flex-direction: column; gap: 10px; }
+  .svc-card { display: grid; grid-template-columns: 1fr auto; gap: 6px 10px; padding: 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--card); align-items: center; }
+  .svc-card input[type="text"] { grid-column: 1 / -1; width: 100%; border: 1px solid var(--border); padding: 6px 8px; border-radius: 6px; font-size: 0.85rem; background: var(--card); color: var(--text); box-sizing: border-box; }
+  .svc-card .svc-nums { display: flex; gap: 8px; align-items: center; font-size: 0.8rem; }
+  .svc-card .svc-nums input { border: 1px solid var(--border); padding: 4px 6px; border-radius: 6px; width: 55px; background: var(--card); color: var(--text); font-size: 0.8rem; text-align: center; }
+  .svc-card .svc-del { justify-self: end; }
   .search-bar { flex-direction: column; }
   .search-bar input { width: 100%; }
   .pill-filters { gap: 4px; }
@@ -299,7 +307,8 @@ input, select, textarea { font-family: inherit; font-size: 0.88rem; }
   select { padding-right: 26px !important; }
 }
 /* ── Body scroll lock when modal open ── */
-body.modal-open { overflow: hidden; }
+body.modal-open { overflow: hidden; position: fixed; width: 100%; }
+.svc-cards { display: none; }
 
 /* ── Demo banner ── */
 .demo-banner {
@@ -462,6 +471,7 @@ body.modal-open { overflow: hidden; }
   <button data-page="jobs" onclick="switchPage('jobs')"><span class="mnav-icon">📋</span>Jobs</button>
   <button data-page="invoices" onclick="switchPage('invoices')"><span class="mnav-icon">💰</span>Invoices</button>
   <button data-page="expenses" onclick="switchPage('expenses')"><span class="mnav-icon">💸</span>Expenses</button>
+  <button data-page="checklists" onclick="switchPage('checklists')"><span class="mnav-icon">✅</span>Lists</button>
   <button data-page="settings" onclick="switchPage('settings')"><span class="mnav-icon">⚙️</span>More</button>
 </nav>
 
@@ -1188,14 +1198,24 @@ function renderSettings(){
   document.getElementById('setPayLink').value=settings.payLink||'';
   document.getElementById('setMileageRate').value=settings.mileageRate;
 
-  let html='<table class="data-table"><thead><tr><th>Service</th><th>Duration</th><th class="num">Price</th><th></th></tr></thead><tbody>';
+  let html='<div class="svc-table-wrap"><table class="data-table"><thead><tr><th>Service</th><th>Duration</th><th class="num">Price</th><th></th></tr></thead><tbody>';
   services.forEach((s,i)=>{
     html+='<tr><td><input value="'+esc(s.name)+'" onchange="services['+i+'].name=this.value;saveData();" style="border:1px solid var(--border);padding:4px 8px;border-radius:6px;width:100%;background:var(--card);color:var(--text);"></td>';
     html+='<td><input type="number" value="'+s.duration+'" onchange="services['+i+'].duration=parseInt(this.value);saveData();" style="border:1px solid var(--border);padding:4px 8px;border-radius:6px;width:70px;background:var(--card);color:var(--text);"> min</td>';
     html+='<td class="num"><input type="number" step="0.01" value="'+s.price+'" onchange="services['+i+'].price=parseFloat(this.value);saveData();" style="border:1px solid var(--border);padding:4px 8px;border-radius:6px;width:80px;text-align:right;background:var(--card);color:var(--text);"></td>';
     html+='<td><button class="btn btn-sm btn-ghost" onclick="services.splice('+i+',1);saveData();renderSettings();">🗑️</button></td></tr>';
   });
-  html+='</tbody></table><button class="btn btn-sm btn-outline" style="margin-top:8px;" onclick="services.push({id:genId(),name:\'New Service\',duration:120,price:100});saveData();renderSettings();">+ Add Service</button>';
+  html+='</tbody></table></div>';
+  html+='<div class="svc-cards">';
+  services.forEach((s,i)=>{
+    html+='<div class="svc-card">';
+    html+='<input type="text" value="'+esc(s.name)+'" onchange="services['+i+'].name=this.value;saveData();">';
+    html+='<div class="svc-nums"><span>⏱</span><input type="number" value="'+s.duration+'" onchange="services['+i+'].duration=parseInt(this.value);saveData();"> min <span>$</span><input type="number" step="0.01" value="'+s.price+'" onchange="services['+i+'].price=parseFloat(this.value);saveData();"></div>';
+    html+='<button class="btn btn-sm btn-ghost svc-del" onclick="services.splice('+i+',1);saveData();renderSettings();">🗑️</button>';
+    html+='</div>';
+  });
+  html+='</div>';
+  html+='<button class="btn btn-sm btn-outline" style="margin-top:8px;" onclick="services.push({id:genId(),name:\'New Service\',duration:120,price:100});saveData();renderSettings();">+ Add Service</button>';
   document.getElementById('servicesPricingArea').innerHTML=html;
 }
 function saveSettings(){
