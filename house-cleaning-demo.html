@@ -920,6 +920,7 @@ function openJobDetail(id) {
   }
   if (j.status === 'completed') {
     footer += '<button class="btn btn-primary" onclick="closeModal(\'detailModal\');createInvoiceFromJob('+j.id+')">💰 Invoice</button>';
+    if (settings.payLink && c) footer += '<button class="btn btn-outline" onclick="sendPaymentLink('+j.id+')">💳 Payment Link</button>';
     if (c && c.phone) footer += '<button class="btn btn-outline" onclick="shareCompletion('+j.id+')">📱 Notify</button>';
   }
   footer += '<button class="btn btn-ghost" onclick="closeModal(\'detailModal\')">Close</button>';
@@ -958,6 +959,17 @@ function shareCompletion(id) {
   const msg = 'Hi ' + (c?c.name.split(' ')[0]:'') + '! Your cleaning is complete. Everything looks great! — ' + settings.bizName;
   if (c && c.phone) window.open('sms:'+c.phone+'?body='+encodeURIComponent(msg),'_blank');
 }
+function sendPaymentLink(jobId) {
+  const j = jobs.find(jb=>jb.id===jobId); if (!j) return;
+  const c = clients.find(cl=>cl.id===j.clientId);
+  let msg = 'Hi ' + (c?c.name.split(' ')[0]:'') + '! Here\'s your payment for ' + j.service + ': ' + fmt$(j.price);
+  if (settings.payLink) msg += '\n\nPay here: ' + settings.payLink;
+  msg += '\n\nThank you! — ' + settings.bizName;
+  if (c && c.phone) window.open('sms:'+c.phone+'?body='+encodeURIComponent(msg),'_blank');
+  else if (c && c.email) window.open('mailto:'+c.email+'?subject='+encodeURIComponent('Payment for '+j.service)+'&body='+encodeURIComponent(msg),'_blank');
+  else { navigator.clipboard.writeText(msg).then(()=>showToast('📋 Payment link copied')).catch(()=>{}); return; }
+  showToast('📤 Payment link sent');
+}
 
 /* ══════════════════════════════════════════
    CHECKLISTS
@@ -983,6 +995,7 @@ function renderChecklists() {
 }
 
 function openNewChecklistModal() {
+  editingChecklistId = null;
   let html = '<div class="form-group"><label>Template Name *</label><input id="clName" placeholder="e.g. Standard Clean, Deep Clean"></div>';
   html += '<div id="clRooms" style="margin-top:12px;"></div>';
   html += '<button class="btn btn-sm btn-outline" style="margin-top:8px;" onclick="addChecklistRoom()">+ Add Room</button>';
@@ -995,6 +1008,7 @@ function openNewChecklistModal() {
 }
 
 let clRoomCount = 0;
+let editingChecklistId = null;
 function addChecklistRoom(name, tasks) {
   const idx = clRoomCount++;
   const div = document.createElement('div');
@@ -1015,7 +1029,13 @@ function saveChecklist() {
     }
   }
   if (rooms.length === 0) { showToast('⚠️ Add at least one room'); return; }
-  checklists.push({ id: genId(), name, rooms });
+  if (editingChecklistId) {
+    const existing = checklists.find(c=>c.id===editingChecklistId);
+    if (existing) { existing.name = name; existing.rooms = rooms; }
+    editingChecklistId = null;
+  } else {
+    checklists.push({ id: genId(), name, rooms });
+  }
   clRoomCount = 0;
   saveData(); closeModal('checklistModal');
   showToast('✅ Checklist saved'); renderChecklists();
@@ -1023,11 +1043,10 @@ function saveChecklist() {
 
 function editChecklist(id) {
   const cl = checklists.find(c=>c.id===id); if (!cl) return;
+  editingChecklistId = id;
   clRoomCount = 0;
   document.getElementById('checklistModalBody').innerHTML = '<div class="form-group"><label>Template Name *</label><input id="clName" value="'+esc(cl.name)+'"></div><div id="clRooms" style="margin-top:12px;"></div><button class="btn btn-sm btn-outline" style="margin-top:8px;" onclick="addChecklistRoom()">+ Add Room</button>';
   cl.rooms.forEach(r => addChecklistRoom(r.name, r.tasks));
-  // Remove old and save with same ID
-  const origSave = saveChecklist;
   openModal('checklistModal');
 }
 
