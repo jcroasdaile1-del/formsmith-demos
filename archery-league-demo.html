@@ -63,9 +63,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 .tab-btn.active { color: #86efac; border-bottom-color: #86efac; }
 
 /* ── Tab Content ── */
-.tab-content { display: none; padding: 24px; max-width: 1200px; margin: 0 auto; position: relative; }
+.tab-content { display: none; padding: 24px; max-width: 1200px; margin: 0 auto; position: relative; overflow: hidden; }
 .tab-content.active { display: block; }
-.tab-content::before { content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 340px; height: 340px; background-image: var(--logo-url); background-size: contain; background-repeat: no-repeat; background-position: center; opacity: 0.04; pointer-events: none; z-index: 0; }
+.tab-content::before { content: ''; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 520px; height: 520px; background-image: var(--logo-url); background-size: contain; background-repeat: no-repeat; background-position: center; opacity: 0.07; pointer-events: none; z-index: 0; }
 .tab-content > * { position: relative; z-index: 1; }
 
 /* ── Banner ── */
@@ -289,7 +289,7 @@ body.dark-mode {
   --shadow-lg: 0 4px 12px rgba(0,0,0,0.4);
 }
 body.dark-mode .app-header { background: linear-gradient(135deg, #0c1f0f 0%, #0f2918 50%, #14381f 100%); }
-body.dark-mode .tab-content::before { filter: invert(1); opacity: 0.06; }
+body.dark-mode .tab-content::before { filter: invert(1); opacity: 0.09; }
 body.dark-mode .sample-banner { background: linear-gradient(135deg, #064e3b 0%, #065f46 100%); border-color: #059669; color: #d1fae5; }
 body.dark-mode .sample-banner strong { color: #6ee7b7; }
 body.dark-mode .score-input { background: #374151; color: #e5e7eb; border-color: #4b5563; }
