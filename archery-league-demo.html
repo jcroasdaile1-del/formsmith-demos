@@ -70,6 +70,12 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 
 /* ── Banner ── */
 .sample-banner { background: linear-gradient(135deg, var(--primary-light) 0%, #bbf7d0 100%); border: 1px solid var(--primary); border-radius: var(--radius); padding: 12px 20px; margin-bottom: 20px; font-size: 0.85rem; color: #14532d; display: flex; align-items: center; gap: 10px; }
+.sample-banner .banner-logo { height: 22px; width: 22px; object-fit: contain; flex-shrink: 0; }
+
+/* ── App Footer ── */
+.app-footer { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 18px 24px; border-top: 1px solid var(--border); color: var(--text-light); font-size: 0.78rem; margin-top: 8px; }
+.app-footer img { height: 28px; width: 28px; object-fit: contain; opacity: 0.5; }
+.app-footer span { opacity: 0.7; }
 .sample-banner strong { color: #166534; }
 
 /* ── Buttons ── */
@@ -272,7 +278,7 @@ body:has(.modal-overlay.show) { overflow: hidden; }
 
 /* ── Print Styles ── */
 @media print {
-  .app-header, .sample-banner, .btn, .tab-bar, .bracket-tabs, .no-print { display: none !important; }
+  .app-header, .sample-banner, .btn, .tab-bar, .bracket-tabs, .no-print, .app-footer { display: none !important; }
   .tab-content { display: block !important; padding: 0; }
   .tab-content::before { display: none !important; }
   .tab-content:not(.print-target) { display: none !important; }
@@ -292,6 +298,8 @@ body.dark-mode .app-header { background: linear-gradient(135deg, #0c1f0f 0%, #0f
 body.dark-mode .tab-content::before { filter: invert(1); opacity: 0.09; }
 body.dark-mode .sample-banner { background: linear-gradient(135deg, #064e3b 0%, #065f46 100%); border-color: #059669; color: #d1fae5; }
 body.dark-mode .sample-banner strong { color: #6ee7b7; }
+body.dark-mode .sample-banner .banner-logo { filter: invert(1); }
+body.dark-mode .app-footer img { filter: invert(1); }
 body.dark-mode .score-input { background: #374151; color: #e5e7eb; border-color: #4b5563; }
 body.dark-mode .qual-search { background: #374151; color: #e5e7eb; border-color: #4b5563; }
 body.dark-mode .score-entry-table th { background: #1f2937; color: #9ca3af; border-color: #374151; }
@@ -457,7 +465,7 @@ body.dark-mode .config-editing-banner { background: #422006; border-color: #d977
 
 <!-- ═══════ DASHBOARD TAB ═══════ -->
 <div class="tab-content active" id="tab-dashboard">
-  <div class="sample-banner"><strong>🏹 Buckskin Bowmen</strong> — Manage brackets, enter scores, auto-calculate handicaps, and print weekly standings. Load sample data to explore.</div>
+  <div class="sample-banner"><img class="banner-logo" id="bannerLogoDash" alt=""><strong>Buckskin Bowmen</strong> — Manage brackets, enter scores, auto-calculate handicaps, and print weekly standings. Load sample data to explore.</div>
   <div class="kpi-grid" id="dashKpi"></div>
   <div class="dash-grid">
     <div class="dash-card"><div class="dash-card-header"><h3>📈 Avg Scores by Bracket</h3></div><div class="dash-card-body"><div class="chart-wrap"><canvas id="chartBracketAvg"></canvas></div></div></div>
@@ -481,7 +489,7 @@ body.dark-mode .config-editing-banner { background: #422006; border-color: #d977
 
 <!-- ═══════ TEAMS TAB ═══════ -->
 <div class="tab-content" id="tab-teams">
-  <div class="sample-banner"><strong>👥 Teams</strong> — Add teams with 3 archers each. After qualifying weeks, lock brackets to start the season schedule.</div>
+  <div class="sample-banner"><img class="banner-logo" id="bannerLogoTeams" alt=""><strong>👥 Teams</strong> — Add teams with 3 archers each. After qualifying weeks, lock brackets to start the season schedule.</div>
   <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
     <button class="btn btn-primary" onclick="addTeamModal()">＋ Add Team</button>
     <button class="btn btn-accent" onclick="openImportWizard()">📥 Import Teams</button>
@@ -526,7 +534,7 @@ body.dark-mode .config-editing-banner { background: #422006; border-color: #d977
 
 <!-- ═══════ SCORES TAB ═══════ -->
 <div class="tab-content" id="tab-scores">
-  <div class="sample-banner"><strong>🎯 Score Entry</strong> — Select a week, then enter individual scores for each matchup. Handicaps and results calculate automatically.</div>
+  <div class="sample-banner"><img class="banner-logo" id="bannerLogoScores" alt=""><strong>🎯 Score Entry</strong> — Select a week, then enter individual scores for each matchup. Handicaps and results calculate automatically.</div>
   <div style="display:flex;gap:10px;align-items:center;margin-bottom:16px;flex-wrap:wrap;">
     <label style="font-weight:600;font-size:0.88rem;">Week:</label>
     <button class="week-nav-btn" id="weekPrev" onclick="changeWeek(-1)" title="Previous week">◀</button>
@@ -542,14 +550,14 @@ body.dark-mode .config-editing-banner { background: #422006; border-color: #d977
 
 <!-- ═══════ STANDINGS TAB ═══════ -->
 <div class="tab-content" id="tab-standings">
-  <div class="sample-banner"><strong>🏆 Standings</strong> — Division standings with W/L/T records, win percentage, and games back. Updated live as scores are entered.</div>
+  <div class="sample-banner"><img class="banner-logo" id="bannerLogoStand" alt=""><strong>🏆 Standings</strong> — Division standings with W/L/T records, win percentage, and games back. Updated live as scores are entered.</div>
   <div class="bracket-tabs" id="standingsBracketTabs"></div>
   <div id="standingsArea"></div>
 </div>
 
 <!-- ═══════ SCHEDULE TAB ═══════ -->
 <div class="tab-content" id="tab-schedule">
-  <div class="sample-banner"><strong>📅 Schedule</strong> — Auto-generated round-robin schedule. Last weeks are seeded by current standings.</div>
+  <div class="sample-banner"><img class="banner-logo" id="bannerLogoSched" alt=""><strong>📅 Schedule</strong> — Auto-generated round-robin schedule. Last weeks are seeded by current standings.</div>
   <div class="bracket-tabs" id="scheduleBracketTabs"></div>
   <div id="schedulePagination" style="display:flex;gap:6px;align-items:center;margin-bottom:12px;flex-wrap:wrap;"></div>
   <div id="scheduleArea"></div>
@@ -557,7 +565,7 @@ body.dark-mode .config-editing-banner { background: #422006; border-color: #d977
 
 <!-- ═══════ STATS TAB ═══════ -->
 <div class="tab-content" id="tab-stats">
-  <div class="sample-banner"><strong>📈 Individual Stats</strong> — Individual archer averages across all weeks. Click column headers to sort.</div>
+  <div class="sample-banner"><img class="banner-logo" id="bannerLogoStats" alt=""><strong>📈 Individual Stats</strong> — Individual archer averages across all weeks. Click column headers to sort.</div>
   <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
     <button class="btn btn-primary btn-sm" onclick="openTrendModal()">📉 Trend Charts</button>
     <button class="btn btn-accent btn-sm" onclick="openH2HModal()">⚔️ Head-to-Head</button>
@@ -3016,10 +3024,25 @@ function showStreakDetail() {
 document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('headerLogo').src = LOGO_URI;
   document.documentElement.style.setProperty('--logo-url', 'url(' + LOGO_URI + ')');
+  // Set banner logos
+  ['bannerLogoDash','bannerLogoTeams','bannerLogoScores','bannerLogoStand','bannerLogoSched','bannerLogoStats'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.src = LOGO_URI;
+  });
+  // Set footer logo
+  var footerLogo = document.getElementById('footerLogo');
+  if (footerLogo) footerLogo.src = LOGO_URI;
   loadDarkMode();
   loadConfigUI();
   renderDashboard();
 });
 </script>
+
+<!-- ═══════ APP FOOTER ═══════ -->
+<div class="app-footer">
+  <img id="footerLogo" alt="Buckskin Bowmen">
+  <span>Buckskin Bowmen League Manager &bull; Built with Formsmith</span>
+</div>
+
 </body>
 </html>
