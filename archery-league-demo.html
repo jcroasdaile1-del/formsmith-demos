@@ -356,23 +356,16 @@ body.dark-mode .faq-q:hover { color: #4ade80; }
 
 /* ── Trend Modal ── */
 .trend-modal-box { max-width: 900px; }
-.trend-controls { display: flex; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; align-items: center; }
-.trend-controls select, .trend-controls input { padding: 7px 12px; border-radius: 8px; border: 1px solid var(--border); font-size: 0.82rem; font-family: inherit; background: var(--card); color: var(--text); }
-.trend-controls input { flex: 1; min-width: 140px; }
-body.dark-mode .trend-controls select, body.dark-mode .trend-controls input { background: #374151; color: #e5e7eb; border-color: #4b5563; }
-.trend-team-group { margin-bottom: 10px; }
-.trend-team-label { font-size: 0.75rem; font-weight: 700; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; padding-left: 2px; }
-.trend-selected-bar { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; min-height: 32px; padding: 8px 12px; background: var(--bg); border-radius: var(--radius); border: 1px dashed var(--border); }
-.trend-selected-bar:empty::before { content: 'Click shooters below to compare (max 6)'; font-size: 0.78rem; color: var(--text-light); }
-.trend-selected-chip { padding: 4px 10px; border-radius: 16px; font-size: 0.75rem; font-weight: 600; background: var(--primary); color: white; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; }
+.trend-controls { display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; align-items: center; }
+.trend-controls select { padding: 8px 14px; border-radius: 8px; border: 1px solid var(--border); font-size: 0.85rem; font-family: inherit; background: var(--card); color: var(--text); min-width: 180px; }
+body.dark-mode .trend-controls select { background: #374151; color: #e5e7eb; border-color: #4b5563; }
+.trend-selected-bar { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; min-height: 34px; padding: 8px 12px; background: var(--bg); border-radius: var(--radius); border: 1px dashed var(--border); align-items: center; }
+.trend-selected-bar:empty::before { content: 'Select a team and shooter below to compare (max 6)'; font-size: 0.8rem; color: var(--text-light); }
+.trend-selected-chip { padding: 5px 12px; border-radius: 16px; font-size: 0.78rem; font-weight: 600; background: var(--primary); color: white; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; }
 .trend-selected-chip:hover { opacity: 0.85; }
 .trend-selected-chip .remove-x { font-size: 0.85rem; opacity: 0.7; }
-.trend-archer-list { max-height: 260px; overflow-y: auto; padding: 4px 0; }
+.trend-selected-chip .chip-team { font-weight: 400; opacity: 0.8; font-size: 0.68rem; }
 .trend-chart-wrap { height: 300px; position: relative; margin-bottom: 16px; }
-.trend-selector { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
-.trend-chip { padding: 5px 14px; border-radius: 20px; font-size: 0.78rem; font-weight: 600; cursor: pointer; border: 1px solid var(--border); background: var(--card); color: var(--text); transition: all 0.15s; }
-.trend-chip:hover { border-color: var(--primary); }
-.trend-chip.active { background: var(--primary); color: white; border-color: var(--primary); }
 
 /* ── H2H Modal ── */
 .h2h-selectors { display: flex; gap: 12px; align-items: center; margin-bottom: 16px; flex-wrap: wrap; }
@@ -705,10 +698,10 @@ body.dark-mode .config-editing-banner { background: #422006; border-color: #d977
     <div class="modal-body">
       <div class="trend-selected-bar" id="trendSelectedBar"></div>
       <div class="trend-controls">
-        <select id="trendTeamFilter" onchange="filterTrendArchers()"><option value="">All Teams</option></select>
-        <input type="text" id="trendSearch" placeholder="Search shooter name..." oninput="filterTrendArchers()">
+        <select id="trendTeamSelect" onchange="onTrendTeamChange()"><option value="">Select Team...</option></select>
+        <select id="trendArcherSel" disabled><option value="">Select Shooter...</option></select>
+        <button class="btn btn-primary btn-sm" id="trendAddBtn" onclick="addTrendArcher()" disabled>+ Add</button>
       </div>
-      <div class="trend-archer-list" id="trendArcherSelect"></div>
       <div class="trend-chart-wrap"><canvas id="trendChart"></canvas></div>
     </div>
   </div>
@@ -2599,41 +2592,47 @@ function buildTrendArcherSelector() {
     Object.values(scores).forEach(ws => { if (ws[t.id] && ws[t.id][ai] > 0) hasScores = true; });
     if (hasScores) allTrendArchers.push({ name, team: t.name, teamId: t.id, idx: ai });
   }));
-  // Populate team filter dropdown
+  // Populate team dropdown
   var teamNames = [...new Set(allTrendArchers.map(a => a.team))].sort();
-  document.getElementById('trendTeamFilter').innerHTML = '<option value="">All Teams</option>' + teamNames.map(n => '<option value="' + esc(n) + '">' + esc(n) + '</option>').join('');
-  document.getElementById('trendSearch').value = '';
-  filterTrendArchers();
+  document.getElementById('trendTeamSelect').innerHTML = '<option value="">Select Team...</option>' + teamNames.map(n => '<option value="' + esc(n) + '">' + esc(n) + '</option>').join('');
+  document.getElementById('trendArcherSel').innerHTML = '<option value="">Select Shooter...</option>';
+  document.getElementById('trendArcherSel').disabled = true;
+  document.getElementById('trendAddBtn').disabled = true;
+  renderSelectedBar();
 }
 
-function filterTrendArchers() {
-  var teamFilter = document.getElementById('trendTeamFilter').value;
-  var search = document.getElementById('trendSearch').value.toLowerCase().trim();
-  var filtered = allTrendArchers.filter(function(a) {
-    if (teamFilter && a.team !== teamFilter) return false;
-    if (search && a.name.toLowerCase().indexOf(search) === -1 && a.team.toLowerCase().indexOf(search) === -1) return false;
-    return true;
-  });
-  // Group by team
-  var grouped = {};
-  filtered.forEach(function(a) {
-    if (!grouped[a.team]) grouped[a.team] = [];
-    grouped[a.team].push(a);
-  });
-  var container = document.getElementById('trendArcherSelect');
-  var html = '';
-  Object.keys(grouped).sort().forEach(function(team) {
-    html += '<div class="trend-team-group"><div class="trend-team-label">' + esc(team) + '</div><div style="display:flex;gap:6px;flex-wrap:wrap;">';
-    grouped[team].sort(function(a, b) { return a.name.localeCompare(b.name); }).forEach(function(a) {
-      var key = a.teamId + '-' + a.idx;
-      var isActive = selectedTrendArchers.indexOf(key) >= 0 ? ' active' : '';
-      html += '<span class="trend-chip' + isActive + '" data-key="' + key + '" onclick="toggleTrendArcher(this,\'' + key + '\')">' + esc(a.name) + '</span>';
-    });
-    html += '</div></div>';
-  });
-  if (!html) html = '<div style="text-align:center;padding:20px;color:var(--text-light);">No shooters match your filter</div>';
-  container.innerHTML = html;
+function onTrendTeamChange() {
+  var teamName = document.getElementById('trendTeamSelect').value;
+  var archerSel = document.getElementById('trendArcherSel');
+  var addBtn = document.getElementById('trendAddBtn');
+  if (!teamName) {
+    archerSel.innerHTML = '<option value="">Select Shooter...</option>';
+    archerSel.disabled = true;
+    addBtn.disabled = true;
+    return;
+  }
+  var archers = allTrendArchers.filter(function(a) { return a.team === teamName; }).sort(function(a, b) { return a.name.localeCompare(b.name); });
+  archerSel.innerHTML = '<option value="">Select Shooter...</option>' + archers.map(function(a) {
+    var key = a.teamId + '-' + a.idx;
+    var already = selectedTrendArchers.indexOf(key) >= 0;
+    return '<option value="' + key + '"' + (already ? ' disabled style="color:var(--text-light);"' : '') + '>' + esc(a.name) + (already ? ' (added)' : '') + '</option>';
+  }).join('');
+  archerSel.disabled = false;
+  addBtn.disabled = true;
+  archerSel.onchange = function() { addBtn.disabled = !archerSel.value; };
+}
+
+function addTrendArcher() {
+  var archerSel = document.getElementById('trendArcherSel');
+  var key = archerSel.value;
+  if (!key) return;
+  if (selectedTrendArchers.length >= 6) { showToast('Max 6 archers at a time'); return; }
+  if (selectedTrendArchers.indexOf(key) >= 0) { showToast('Already added'); return; }
+  selectedTrendArchers.push(key);
   renderSelectedBar();
+  renderTrendChart();
+  // Refresh archer dropdown to mark as added
+  onTrendTeamChange();
 }
 
 function renderSelectedBar() {
@@ -2644,27 +2643,18 @@ function renderSelectedBar() {
     var tid = parseInt(parts[0]), ai = parseInt(parts[1]);
     var team = teams.find(function(t) { return t.id === tid; });
     var name = team ? (team.archers[ai] || 'Unknown') : 'Unknown';
-    return '<span class="trend-selected-chip" onclick="deselectTrendArcher(\'' + key + '\')">' + esc(name) + ' <span class="remove-x">✕</span></span>';
+    var teamName = team ? team.name : '';
+    return '<span class="trend-selected-chip" onclick="deselectTrendArcher(\'' + key + '\')">' + esc(name) + ' <span class="chip-team">' + esc(teamName) + '</span><span class="remove-x">✕</span></span>';
   }).join('');
 }
 
 function deselectTrendArcher(key) {
   var idx = selectedTrendArchers.indexOf(key);
   if (idx >= 0) selectedTrendArchers.splice(idx, 1);
-  // Update chip state
-  document.querySelectorAll('#trendArcherSelect .trend-chip').forEach(function(el) {
-    if (el.dataset.key === key) el.classList.remove('active');
-  });
   renderSelectedBar();
   renderTrendChart();
-}
-
-function toggleTrendArcher(el, key) {
-  const idx = selectedTrendArchers.indexOf(key);
-  if (idx >= 0) { selectedTrendArchers.splice(idx, 1); el.classList.remove('active'); }
-  else { if (selectedTrendArchers.length >= 6) { showToast('Max 6 archers at a time'); return; } selectedTrendArchers.push(key); el.classList.add('active'); }
-  renderSelectedBar();
-  renderTrendChart();
+  // Refresh archer dropdown to un-mark
+  onTrendTeamChange();
 }
 
 function renderTrendChart() {
