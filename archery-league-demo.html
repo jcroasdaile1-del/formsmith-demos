@@ -356,6 +356,18 @@ body.dark-mode .faq-q:hover { color: #4ade80; }
 
 /* ── Trend Modal ── */
 .trend-modal-box { max-width: 900px; }
+.trend-controls { display: flex; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; align-items: center; }
+.trend-controls select, .trend-controls input { padding: 7px 12px; border-radius: 8px; border: 1px solid var(--border); font-size: 0.82rem; font-family: inherit; background: var(--card); color: var(--text); }
+.trend-controls input { flex: 1; min-width: 140px; }
+body.dark-mode .trend-controls select, body.dark-mode .trend-controls input { background: #374151; color: #e5e7eb; border-color: #4b5563; }
+.trend-team-group { margin-bottom: 10px; }
+.trend-team-label { font-size: 0.75rem; font-weight: 700; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; padding-left: 2px; }
+.trend-selected-bar { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; min-height: 32px; padding: 8px 12px; background: var(--bg); border-radius: var(--radius); border: 1px dashed var(--border); }
+.trend-selected-bar:empty::before { content: 'Click shooters below to compare (max 6)'; font-size: 0.78rem; color: var(--text-light); }
+.trend-selected-chip { padding: 4px 10px; border-radius: 16px; font-size: 0.75rem; font-weight: 600; background: var(--primary); color: white; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; }
+.trend-selected-chip:hover { opacity: 0.85; }
+.trend-selected-chip .remove-x { font-size: 0.85rem; opacity: 0.7; }
+.trend-archer-list { max-height: 260px; overflow-y: auto; padding: 4px 0; }
 .trend-chart-wrap { height: 300px; position: relative; margin-bottom: 16px; }
 .trend-selector { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
 .trend-chip { padding: 5px 14px; border-radius: 20px; font-size: 0.78rem; font-weight: 600; cursor: pointer; border: 1px solid var(--border); background: var(--card); color: var(--text); transition: all 0.15s; }
@@ -691,7 +703,12 @@ body.dark-mode .config-editing-banner { background: #422006; border-color: #d977
   <div class="modal-box trend-modal-box">
     <div class="modal-header"><h3>📉 Shooter Performance Trends</h3><button class="modal-close" onclick="closeTrendModal()">&times;</button></div>
     <div class="modal-body">
-      <div class="trend-selector" id="trendArcherSelect"></div>
+      <div class="trend-selected-bar" id="trendSelectedBar"></div>
+      <div class="trend-controls">
+        <select id="trendTeamFilter" onchange="filterTrendArchers()"><option value="">All Teams</option></select>
+        <input type="text" id="trendSearch" placeholder="Search shooter name..." oninput="filterTrendArchers()">
+      </div>
+      <div class="trend-archer-list" id="trendArcherSelect"></div>
       <div class="trend-chart-wrap"><canvas id="trendChart"></canvas></div>
     </div>
   </div>
@@ -2591,30 +2608,80 @@ function closeTrendModal() {
   if (trendChartInstance) { trendChartInstance.destroy(); trendChartInstance = null; }
 }
 
+var allTrendArchers = [];
+
 function buildTrendArcherSelector() {
-  const container = document.getElementById('trendArcherSelect');
-  const archers = [];
+  allTrendArchers = [];
   teams.forEach(t => t.archers.forEach((name, ai) => {
     let hasScores = false;
     Object.values(scores).forEach(ws => { if (ws[t.id] && ws[t.id][ai] > 0) hasScores = true; });
-    if (hasScores) archers.push({ name, team: t.name, teamId: t.id, idx: ai });
+    if (hasScores) allTrendArchers.push({ name, team: t.name, teamId: t.id, idx: ai });
   }));
-  archers.sort((a, b) => a.name.localeCompare(b.name));
-  container.innerHTML = archers.map(a => {
-    const key = a.teamId + '-' + a.idx;
-    return '<span class="trend-chip" data-key="' + key + '" onclick="toggleTrendArcher(this,\'' + key + '\')">' + esc(a.name) + ' <span style="font-size:0.65rem;opacity:.7;">(' + esc(a.team) + ')</span></span>';
+  // Populate team filter dropdown
+  var teamNames = [...new Set(allTrendArchers.map(a => a.team))].sort();
+  document.getElementById('trendTeamFilter').innerHTML = '<option value="">All Teams</option>' + teamNames.map(n => '<option value="' + esc(n) + '">' + esc(n) + '</option>').join('');
+  document.getElementById('trendSearch').value = '';
+  filterTrendArchers();
+}
+
+function filterTrendArchers() {
+  var teamFilter = document.getElementById('trendTeamFilter').value;
+  var search = document.getElementById('trendSearch').value.toLowerCase().trim();
+  var filtered = allTrendArchers.filter(function(a) {
+    if (teamFilter && a.team !== teamFilter) return false;
+    if (search && a.name.toLowerCase().indexOf(search) === -1 && a.team.toLowerCase().indexOf(search) === -1) return false;
+    return true;
+  });
+  // Group by team
+  var grouped = {};
+  filtered.forEach(function(a) {
+    if (!grouped[a.team]) grouped[a.team] = [];
+    grouped[a.team].push(a);
+  });
+  var container = document.getElementById('trendArcherSelect');
+  var html = '';
+  Object.keys(grouped).sort().forEach(function(team) {
+    html += '<div class="trend-team-group"><div class="trend-team-label">' + esc(team) + '</div><div style="display:flex;gap:6px;flex-wrap:wrap;">';
+    grouped[team].sort(function(a, b) { return a.name.localeCompare(b.name); }).forEach(function(a) {
+      var key = a.teamId + '-' + a.idx;
+      var isActive = selectedTrendArchers.indexOf(key) >= 0 ? ' active' : '';
+      html += '<span class="trend-chip' + isActive + '" data-key="' + key + '" onclick="toggleTrendArcher(this,\'' + key + '\')">' + esc(a.name) + '</span>';
+    });
+    html += '</div></div>';
+  });
+  if (!html) html = '<div style="text-align:center;padding:20px;color:var(--text-light);">No shooters match your filter</div>';
+  container.innerHTML = html;
+  renderSelectedBar();
+}
+
+function renderSelectedBar() {
+  var bar = document.getElementById('trendSelectedBar');
+  if (selectedTrendArchers.length === 0) { bar.innerHTML = ''; return; }
+  bar.innerHTML = selectedTrendArchers.map(function(key) {
+    var parts = key.split('-');
+    var tid = parseInt(parts[0]), ai = parseInt(parts[1]);
+    var team = teams.find(function(t) { return t.id === tid; });
+    var name = team ? (team.archers[ai] || 'Unknown') : 'Unknown';
+    return '<span class="trend-selected-chip" onclick="deselectTrendArcher(\'' + key + '\')">' + esc(name) + ' <span class="remove-x">✕</span></span>';
   }).join('');
-  // Auto-select first 3
-  const chips = container.querySelectorAll('.trend-chip');
-  for (let i = 0; i < Math.min(3, chips.length); i++) {
-    toggleTrendArcher(chips[i], chips[i].dataset.key);
-  }
+}
+
+function deselectTrendArcher(key) {
+  var idx = selectedTrendArchers.indexOf(key);
+  if (idx >= 0) selectedTrendArchers.splice(idx, 1);
+  // Update chip state
+  document.querySelectorAll('#trendArcherSelect .trend-chip').forEach(function(el) {
+    if (el.dataset.key === key) el.classList.remove('active');
+  });
+  renderSelectedBar();
+  renderTrendChart();
 }
 
 function toggleTrendArcher(el, key) {
   const idx = selectedTrendArchers.indexOf(key);
   if (idx >= 0) { selectedTrendArchers.splice(idx, 1); el.classList.remove('active'); }
   else { if (selectedTrendArchers.length >= 6) { showToast('Max 6 archers at a time'); return; } selectedTrendArchers.push(key); el.classList.add('active'); }
+  renderSelectedBar();
   renderTrendChart();
 }
 
@@ -2729,7 +2796,7 @@ function renderH2H() {
       const hcA = isFlipped ? r.hcpB : r.hcpA, hcB = isFlipped ? r.hcpA : r.hcpB;
       const adjA = isFlipped ? r.adjB : r.adjA, adjB = isFlipped ? r.adjA : r.adjB;
       const resA = isFlipped ? r.resultB : r.resultA;
-      const badge = resA === 'WIN' ? 'badge-green' : resA === 'LOSS' ? 'badge-red' : 'badge-amber';
+      const badge = resA === 'TIE' ? 'badge-amber' : 'badge-green';
       const label = resA === 'WIN' ? esc(tA.name) : resA === 'LOSS' ? esc(tB.name) : 'Tie';
       html += '<tr><td>Week ' + m.week + '</td><td class="num" style="font-weight:700;">' + rawA + '</td><td class="num">+' + hcA + '</td><td class="num" style="font-weight:700;">' + adjA + '</td><td style="text-align:center"><span class="badge ' + badge + '">' + label + '</span></td><td class="num" style="font-weight:700;">' + rawB + '</td><td class="num">+' + hcB + '</td><td class="num" style="font-weight:700;">' + adjB + '</td></tr>';
     });
