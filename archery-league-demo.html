@@ -1180,15 +1180,17 @@ function showBracketStep1() {
     for (var di = 0; di < d; di++) sizes.push(base + (di < remainder ? 1 : 0));
     var sizeLabel = sizes.join(' + ');
     var recommended = d === config.numBrackets;
-    html += '<button onclick="selectDivisionCount(' + d + ')" class="bracket-div-pick' + (recommended ? ' recommended' : '') + '" style="';
-    html += 'display:flex;flex-direction:column;align-items:center;padding:14px 10px;border-radius:var(--radius);border:2px solid ' + (recommended ? 'var(--primary)' : 'var(--border)') + ';';
-    html += 'background:' + (recommended ? 'var(--primary-light)' : 'var(--card)') + ';cursor:pointer;transition:all 0.15s;box-shadow:var(--shadow);font-family:inherit;">';
-    html += '<span style="font-size:1.6rem;font-weight:800;color:' + (recommended ? 'var(--primary)' : 'var(--text)') + ';">' + d + '</span>';
-    html += '<span style="font-size:0.72rem;font-weight:600;color:var(--text-light);margin-top:2px;">divisions</span>';
+    var hasOdd = sizes.some(function(s) { return s % 2 !== 0; });
     var unevenSplit = sizes.some(function(s) { return s < Math.max.apply(null, sizes); });
-    html += '<span style="font-size:0.68rem;color:var(--text-light);margin-top:4px;">(' + sizeLabel + ')</span>';
-    if (unevenSplit) html += '<span style="font-size:0.6rem;color:var(--accent);margin-top:3px;">⚠️ uneven split — bye teams added</span>';
-    if (recommended) html += '<span style="font-size:0.62rem;font-weight:700;color:var(--primary);margin-top:4px;text-transform:uppercase;letter-spacing:0.5px;">⚙️ Current Setting</span>';
+    html += '<button onclick="selectDivisionCount(' + d + ')" class="bracket-div-pick' + (recommended ? ' recommended' : '') + '" style="';
+    html += 'display:flex;flex-direction:column;align-items:center;padding:16px 12px;border-radius:var(--radius);border:2px solid ' + (recommended ? 'var(--primary)' : 'var(--border)') + ';';
+    html += 'background:' + (recommended ? 'var(--primary-light)' : 'var(--card)') + ';cursor:pointer;transition:all 0.15s;box-shadow:var(--shadow);font-family:inherit;">';
+    html += '<span style="font-size:1.8rem;font-weight:800;color:' + (recommended ? 'var(--primary)' : 'var(--text)') + ';">' + d + '</span>';
+    html += '<span style="font-size:0.88rem;font-weight:600;color:var(--text-light);margin-top:2px;">divisions</span>';
+    html += '<span style="font-size:0.82rem;color:var(--text-light);margin-top:6px;">(' + sizeLabel + ')</span>';
+    var phantomCount = sizes.filter(function(s) { return s % 2 !== 0 || s < Math.max.apply(null, sizes); }).length;
+    if (phantomCount > 0) html += '<span style="font-size:0.75rem;color:var(--accent);margin-top:4px;">👻 ' + phantomCount + ' phantom team' + (phantomCount > 1 ? 's' : '') + ' added</span>';
+    if (recommended) html += '<span style="font-size:0.78rem;font-weight:700;color:var(--primary);margin-top:5px;text-transform:uppercase;letter-spacing:0.5px;">⚙️ Current Setting</span>';
     html += '</button>';
   }
   grid.innerHTML = html;
@@ -1238,11 +1240,11 @@ function renderBracketSummaryBar() {
   labels.forEach(function(label) {
     var g = groups[label];
     var avg = g.count > 0 ? (g.totalAvg / g.count).toFixed(0) : '—';
-    var needsBye = g.count < maxCount;
+    var needsPhantom = g.count < maxCount || g.count % 2 !== 0;
     html += '<div style="flex:1;min-width:80px;background:var(--primary-light);border:1px solid var(--primary);border-radius:var(--radius);padding:8px 12px;text-align:center;">';
     html += '<div style="font-weight:800;font-size:1rem;color:var(--primary-dark);">Div ' + esc(label) + '</div>';
     html += '<div style="font-size:0.75rem;color:var(--text-light);">' + g.count + ' teams · Avg ' + avg + '</div>';
-    if (needsBye) html += '<div style="font-size:0.68rem;color:var(--accent);margin-top:3px;">👻 bye team added</div>';
+    if (needsPhantom) html += '<div style="font-size:0.75rem;color:var(--accent);margin-top:3px;">👻 phantom team added</div>';
     html += '</div>';
   });
   bar.innerHTML = html;
@@ -1367,9 +1369,9 @@ function confirmBracketAssignment() {
   usedBrackets.forEach(function(b) { divCounts[b] = 0; });
   bracketDraft.forEach(function(t) { if (t.bracket) divCounts[t.bracket]++; });
   var maxSize = Math.max.apply(null, usedBrackets.map(function(b) { return divCounts[b]; }));
-  var smallDivs = usedBrackets.filter(function(b) { return divCounts[b] < maxSize; });
-  if (smallDivs.length > 0) {
-    addPhantomTeams(smallDivs);
+  var phantomDivs = usedBrackets.filter(function(b) { return divCounts[b] < maxSize || divCounts[b] % 2 !== 0; });
+  if (phantomDivs.length > 0) {
+    addPhantomTeams(phantomDivs);
   }
 
   config.bracketsLocked = true;
@@ -1381,8 +1383,8 @@ function confirmBracketAssignment() {
   if (sel) { sel.value = String(config.qualWeeks + 1); }
   renderScoreTab();
   var toastMsg = '🔒 Divisions locked — ' + usedBrackets.length + ' divisions, schedule generated!';
-  if (smallDivs.length > 0) {
-    toastMsg += '\n👻 Bye teams added to Div ' + smallDivs.join(', ') + ' to even out matchups.';
+  if (phantomDivs.length > 0) {
+    toastMsg += '\n👻 Phantom teams added to Div ' + phantomDivs.join(', ') + ' to even out matchups.';
   }
   showToast(toastMsg);
 }
