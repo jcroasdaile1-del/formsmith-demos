@@ -67,9 +67,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 .tab-content.active { display: block; }
 
 /* ── Side Gutter Logos ── */
-.gutter-logo { position: fixed; width: 200px; height: 200px; object-fit: contain; opacity: 0.22; pointer-events: none; z-index: 0; top: 50%; transform: translateY(-50%); }
-.gutter-logo-left { left: calc((100vw - 1200px) / 4 - 100px); }
-.gutter-logo-right { right: calc((100vw - 1200px) / 4 - 100px); }
+.gutter-logo { position: fixed; width: 300px; height: 300px; object-fit: contain; opacity: 0.22; pointer-events: none; z-index: 0; top: 50%; transform: translateY(-50%); }
+.gutter-logo-left { left: calc((100vw - 1200px) / 4 - 150px); }
+.gutter-logo-right { right: calc((100vw - 1200px) / 4 - 150px); }
 @media (max-width: 1500px) { .gutter-logo { display: none; } }
 
 /* ── Banner ── */
@@ -1279,22 +1279,6 @@ function confirmBracketAssignment() {
   var unassigned = bracketDraft.filter(function(t) { return !t.bracket; });
   if (unassigned.length > 0) { showToast('⚠️ ' + unassigned.length + ' teams have no division assigned'); return; }
 
-  // Check for divisions with odd team counts — offer phantom team
-  var groups = {};
-  bracketDraft.forEach(function(t) {
-    if (!groups[t.bracket]) groups[t.bracket] = 0;
-    groups[t.bracket]++;
-  });
-  var oddDivisions = [];
-  Object.keys(groups).forEach(function(b) { if (groups[b] % 2 !== 0) oddDivisions.push(b); });
-
-  if (oddDivisions.length > 0) {
-    var msg = 'Division' + (oddDivisions.length > 1 ? 's ' : ' ') + oddDivisions.join(', ') + ' ha' + (oddDivisions.length > 1 ? 've' : 's') + ' an odd number of teams.\n\nAdd a phantom (bye) team to each? The phantom team uses the division average score for handicap purposes.';
-    if (confirm(msg)) {
-      addPhantomTeams(oddDivisions);
-    }
-  }
-
   // Apply bracket assignments to actual teams
   bracketDraft.forEach(function(d) {
     var team = teams.find(function(t) { return t.id === d.teamId; });
@@ -1817,6 +1801,17 @@ function renderScoreEntry() {
       html += '</div>';
     });
   }
+  // Show bye teams for this bracket/week (teams with no matchup)
+  var bracketTeamsThisWeek = teams.filter(function(t) { return t.bracket === selectedBracket && !t.phantom; });
+  var matchedIds = [];
+  matchups.forEach(function(m) { if (m.teamA) matchedIds.push(m.teamA); if (m.teamB) matchedIds.push(m.teamB); });
+  var byeTeams = bracketTeamsThisWeek.filter(function(t) { return matchedIds.indexOf(t.id) === -1; });
+  if (byeTeams.length > 0) {
+    html += '<div style="margin-top:16px;padding:14px 18px;background:var(--bg);border:1px dashed var(--border);border-radius:var(--radius);color:var(--text-light);font-size:0.88rem;">';
+    html += '<strong>BYE this week:</strong> ';
+    html += byeTeams.map(function(t) { return esc(t.name); }).join(', ');
+    html += '</div>';
+  }
   if (!html) html = '<div style="text-align:center;padding:30px;color:var(--text-light);">No matchups for this week. Lock brackets on the Teams tab to generate the schedule.</div>';
   else if (!locked) html += buildSubmitBar(week);
   area.innerHTML = html;
@@ -2111,7 +2106,16 @@ function renderBracketSchedule(bracket) {
       }
       html += '<tr><td style="font-weight:600;">' + esc(tA ? tA.name : '?') + '</td><td class="num">' + rawAhtml + '</td><td class="num">' + hcAhtml + '</td><td class="num">' + adjAhtml + '</td><td style="text-align:center;color:var(--text-light);">vs</td><td style="font-weight:600;">' + esc(tB ? tB.name : '?') + '</td><td class="num">' + rawBhtml + '</td><td class="num">' + hcBhtml + '</td><td class="num">' + adjBhtml + '</td><td style="text-align:center;">' + resultHtml + '</td></tr>';
     });
-    html += '</tbody></table></div></div>';
+    html += '</tbody></table></div>';
+    // Show bye teams for this bracket/week
+    var bracketTeamsThisWeek = teams.filter(function(t) { return t.bracket === bracket && !t.phantom; });
+    var schedMatchedIds = [];
+    matchups.forEach(function(m) { if (m.teamA) schedMatchedIds.push(m.teamA); if (m.teamB) schedMatchedIds.push(m.teamB); });
+    var schedByeTeams = bracketTeamsThisWeek.filter(function(t) { return schedMatchedIds.indexOf(t.id) === -1; });
+    if (schedByeTeams.length > 0) {
+      html += '<div style="padding:8px 16px;font-size:0.82rem;color:var(--text-light);border-top:1px dashed var(--border);"><strong>BYE:</strong> ' + schedByeTeams.map(function(t) { return esc(t.name); }).join(', ') + '</div>';
+    }
+    html += '</div>';
   });
   area.innerHTML = html;
   // Pagination controls
