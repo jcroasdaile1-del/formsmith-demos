@@ -67,9 +67,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 .tab-content.active { display: block; }
 
 /* ── Side Gutter Logos ── */
-.gutter-logo { position: fixed; width: 300px; height: 300px; object-fit: contain; opacity: 0.22; pointer-events: none; z-index: 0; top: 50%; transform: translateY(-50%); }
-.gutter-logo-left { left: calc((100vw - 1200px) / 4 - 150px); }
-.gutter-logo-right { right: calc((100vw - 1200px) / 4 - 150px); }
+.gutter-logo { position: fixed; width: calc((100vw - 1200px) / 2 - 40px); height: calc(100vh - 80px); max-width: 600px; object-fit: contain; opacity: 0.22; pointer-events: none; z-index: 0; top: 50%; transform: translateY(-50%); }
+.gutter-logo-left { left: 20px; }
+.gutter-logo-right { right: 20px; }
 @media (max-width: 1500px) { .gutter-logo { display: none; } }
 
 /* ── Banner ── */
@@ -1185,10 +1185,10 @@ function showBracketStep1() {
     html += 'background:' + (recommended ? 'var(--primary-light)' : 'var(--card)') + ';cursor:pointer;transition:all 0.15s;box-shadow:var(--shadow);font-family:inherit;">';
     html += '<span style="font-size:1.6rem;font-weight:800;color:' + (recommended ? 'var(--primary)' : 'var(--text)') + ';">' + d + '</span>';
     html += '<span style="font-size:0.72rem;font-weight:600;color:var(--text-light);margin-top:2px;">divisions</span>';
-    var needsPhantom = sizes.some(function(s) { return s < Math.max.apply(null, sizes) || s % 2 !== 0; });
+    var unevenSplit = sizes.some(function(s) { return s < Math.max.apply(null, sizes); });
     html += '<span style="font-size:0.68rem;color:var(--text-light);margin-top:4px;">(' + sizeLabel + ')</span>';
-    if (needsPhantom) html += '<span style="font-size:0.6rem;color:var(--accent);margin-top:3px;">👻 bye teams needed</span>';
-    if (recommended) html += '<span style="font-size:0.62rem;font-weight:700;color:var(--primary);margin-top:4px;text-transform:uppercase;letter-spacing:0.5px;">★ Recommended</span>';
+    if (unevenSplit) html += '<span style="font-size:0.6rem;color:var(--accent);margin-top:3px;">⚠️ uneven split — bye teams added</span>';
+    if (recommended) html += '<span style="font-size:0.62rem;font-weight:700;color:var(--primary);margin-top:4px;text-transform:uppercase;letter-spacing:0.5px;">⚙️ Current Setting</span>';
     html += '</button>';
   }
   grid.innerHTML = html;
@@ -1238,7 +1238,7 @@ function renderBracketSummaryBar() {
   labels.forEach(function(label) {
     var g = groups[label];
     var avg = g.count > 0 ? (g.totalAvg / g.count).toFixed(0) : '—';
-    var needsBye = g.count < maxCount || g.count % 2 !== 0;
+    var needsBye = g.count < maxCount;
     html += '<div style="flex:1;min-width:80px;background:var(--primary-light);border:1px solid var(--primary);border-radius:var(--radius);padding:8px 12px;text-align:center;">';
     html += '<div style="font-weight:800;font-size:1rem;color:var(--primary-dark);">Div ' + esc(label) + '</div>';
     html += '<div style="font-size:0.75rem;color:var(--text-light);">' + g.count + ' teams · Avg ' + avg + '</div>';
@@ -1368,10 +1368,6 @@ function confirmBracketAssignment() {
   bracketDraft.forEach(function(t) { if (t.bracket) divCounts[t.bracket]++; });
   var maxSize = Math.max.apply(null, usedBrackets.map(function(b) { return divCounts[b]; }));
   var smallDivs = usedBrackets.filter(function(b) { return divCounts[b] < maxSize; });
-  // Also add phantom if any division has odd number of teams (need even for round-robin pairing)
-  usedBrackets.forEach(function(b) {
-    if (divCounts[b] % 2 !== 0 && smallDivs.indexOf(b) === -1) smallDivs.push(b);
-  });
   if (smallDivs.length > 0) {
     addPhantomTeams(smallDivs);
   }
