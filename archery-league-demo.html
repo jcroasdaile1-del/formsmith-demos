@@ -560,6 +560,18 @@ body.dark-mode .config-editing-banner { background: #422006; border-color: #d977
     <div class="dash-card-header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;"><h3>📋 Team Roster (<span id="teamCount">0</span> teams)</h3><div id="teamBulkActions" style="display:none;gap:8px;"><button class="btn btn-outline btn-sm" onclick="editSelectedTeam()">✏️ Edit</button> <button class="btn btn-sm" style="background:var(--danger-light);color:#991b1b;border:1px solid #fca5a5;" onclick="deleteSelectedTeams()">🗑️ Delete</button></div></div>
     <div class="dash-card-body" style="padding:0;overflow-x:auto;"><table class="data-table" id="teamTable"><thead><tr><th style="width:36px;"><input type="checkbox" id="teamSelectAll" onchange="toggleAllTeams(this.checked)"></th><th>#</th><th>Team Name</th><th>Archer 1</th><th>Archer 2</th><th>Archer 3</th><th>Bracket</th><th>Qual. Avg</th></tr></thead><tbody id="teamBody"></tbody></table></div>
   </div>
+  <!-- Free Agents Pool -->
+  <div class="dash-card" style="margin-top:16px;">
+    <div class="dash-card-header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+      <h3>🏹 Free Agents (<span id="freeAgentCount">0</span>)</h3>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-primary btn-sm" onclick="addFreeAgentModal()">＋ Add Archer</button>
+        <button class="btn btn-accent btn-sm" id="btnAutoAssign" onclick="autoAssignFreeAgents()" style="display:none;">🔀 Auto-Assign to Teams</button>
+      </div>
+    </div>
+    <p style="font-size:0.82rem;color:var(--text-light);margin:0 0 8px 0;padding:0 16px;">Individual archers not yet assigned to a team. Add them here and use Auto-Assign to build teams, or drag them into teams manually.</p>
+    <div class="dash-card-body" style="padding:0;overflow-x:auto;"><table class="data-table" id="freeAgentTable"><thead><tr><th>#</th><th>Name</th><th>Phone</th><th>Email</th><th>Actions</th></tr></thead><tbody id="freeAgentBody"><tr><td colspan="5" style="text-align:center;padding:20px;color:var(--text-light);">No free agents. Add individual archers who haven't been assigned to a team yet.</td></tr></tbody></table></div>
+  </div>
 </div>
 
 <!-- ═══════ SCORES TAB ═══════ -->
@@ -650,15 +662,13 @@ body.dark-mode .config-editing-banner { background: #422006; border-color: #d977
 
 <!-- ═══════ ADD/EDIT TEAM MODAL ═══════ -->
 <div class="modal-overlay" id="teamModal" onclick="if(event.target===this)closeTeamModal()">
-  <div class="modal-box" style="max-width:500px;">
+  <div class="modal-box" style="max-width:600px;">
     <div class="modal-header"><h3 id="teamModalTitle">Add Team</h3><button class="modal-close" onclick="closeTeamModal()">&times;</button></div>
     <div class="modal-body">
       <div class="field-grid" style="grid-template-columns:1fr;">
-        <div class="field-group"><label>Team Name</label><input type="text" id="tm-name" placeholder="e.g. Team Grisar"></div>
-        <div class="field-group"><label>Archer 1</label><input type="text" id="tm-a1"></div>
-        <div class="field-group"><label>Archer 2</label><input type="text" id="tm-a2"></div>
-        <div class="field-group"><label>Archer 3</label><input type="text" id="tm-a3"></div>
+        <div class="field-group"><label>Team Name</label><input type="text" id="tm-name" placeholder="e.g. Team 1 or Team Grisar"></div>
       </div>
+      <div id="tm-archer-rows"></div>
       <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px;">
         <button class="btn btn-outline" onclick="closeTeamModal()">Cancel</button>
         <button class="btn btn-primary" onclick="saveTeam()">💾 Save Team</button>
@@ -818,18 +828,35 @@ let submittedWeeks = {}; // submittedWeeks[weekNum] = true (locked after submit)
 let qualTeamFilter = '';
 let editingTeamIdx = null;
 let previewTeams = [];
+let previewFreeAgents = [];
 
 const IMPORT_FIELDS = [
-  { key: 'teamName', label: 'Team Name' },
+  { key: 'teamName', label: 'Team Name / Number' },
   { key: 'archer1', label: 'Archer 1' },
   { key: 'archer2', label: 'Archer 2' },
   { key: 'archer3', label: 'Archer 3' },
+  { key: 'phone1', label: 'Phone 1' },
+  { key: 'email1', label: 'Email 1' },
+  { key: 'phone2', label: 'Phone 2' },
+  { key: 'email2', label: 'Email 2' },
+  { key: 'phone3', label: 'Phone 3' },
+  { key: 'email3', label: 'Email 3' },
+  { key: 'singles', label: 'Free Agent Name' },
+  { key: 'singlesEmail', label: 'Free Agent Email' },
 ];
 const IMPORT_ALIASES = {
-  teamName: ['team name', 'team', 'name', 'squad', 'group'],
-  archer1: ['archer 1', 'archer1', 'shooter 1', 'shooter1', 'member 1', 'member1', 'player 1', 'player1', 'name 1', 'name1'],
+  teamName: ['team name', 'team', 'name', 'squad', 'group', 'team number', 'team #', 'team no'],
+  archer1: ['archer 1', 'archer1', 'shooter 1', 'shooter1', 'member 1', 'member1', 'player 1', 'player1', 'name 1', 'name1', 'archer'],
   archer2: ['archer 2', 'archer2', 'shooter 2', 'shooter2', 'member 2', 'member2', 'player 2', 'player2', 'name 2', 'name2'],
   archer3: ['archer 3', 'archer3', 'shooter 3', 'shooter3', 'member 3', 'member3', 'player 3', 'player3', 'name 3', 'name3'],
+  phone1: ['phone', 'phone #', 'phone1', 'phone 1', 'tel', 'mobile'],
+  email1: ['email', 'e-mail', 'email1', 'email 1', 'e-mail 1'],
+  phone2: ['phone 2', 'phone2'],
+  email2: ['email 2', 'email2', 'e-mail 2'],
+  phone3: ['phone 3', 'phone3'],
+  email3: ['email 3', 'email3', 'e-mail 3'],
+  singles: ['singles', 'single', 'free agent', 'individual'],
+  singlesEmail: ['singles email', 'singles e-mail', 'free agent email'],
 };
 let importHeaders = [], importRows = [], importMapping = {};
 
@@ -995,8 +1022,15 @@ function renderTeams() {
   body.innerHTML = teams.map((t, i) => {
     const avg = getTeamQualAvg(t.id);
     const phantomStyle = t.phantom ? ' style="opacity:0.55;font-style:italic;"' : '';
+    const c = t.contacts || [];
     return '<tr' + phantomStyle + '><td><input type="checkbox" class="team-check" data-idx="' + i + '" onchange="updateTeamBulkActions()"></td><td>' + (i + 1) + '</td><td style="font-weight:600;">' + (t.phantom ? '👻 ' : '') + esc(t.name) + '</td>' +
-      t.archers.map(a => '<td>' + esc(a) + '</td>').join('') +
+      t.archers.map(function(a, ai) {
+        var ci = c[ai];
+        var tip = '';
+        if (ci && (ci.phone || ci.email)) tip = ' title="' + esc((ci.phone || '') + (ci.phone && ci.email ? ' | ' : '') + (ci.email || '')) + '"';
+        var icon = (ci && (ci.phone || ci.email)) ? ' <span style="opacity:0.5;font-size:0.72rem;cursor:help;"' + tip + '>📇</span>' : '';
+        return '<td>' + esc(a) + icon + '</td>';
+      }).join('') +
       (t.archers.length < 3 ? '<td></td>'.repeat(3 - t.archers.length) : '') +
       '<td>' + (t.bracket ? '<span class="badge badge-green">' + esc(t.bracket) + '</span>' : '<span class="badge badge-gray">—</span>') + '</td>' +
       '<td class="num">' + (avg > 0 ? avg.toFixed(1) : '—') + '</td></tr>';
@@ -1007,13 +1041,29 @@ function renderTeams() {
   document.getElementById('btnLockBrackets').textContent = config.bracketsLocked ? '🔓 Unlock Brackets' : '🔒 Lock Brackets';
 }
 
+function buildArcherRows(count, team) {
+  var wrap = document.getElementById('tm-archer-rows');
+  var html = '';
+  for (var i = 0; i < count; i++) {
+    var a = team ? (team.archers[i] || '') : '';
+    var c = team && team.contacts && team.contacts[i] ? team.contacts[i] : {};
+    html += '<div style="border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px;margin-top:10px;">';
+    html += '<div style="font-weight:600;font-size:0.82rem;color:var(--text-light);margin-bottom:6px;">Archer ' + (i + 1) + '</div>';
+    html += '<div class="field-grid" style="grid-template-columns:1fr;gap:6px;">';
+    html += '<input type="text" class="field-input tm-archer-name" placeholder="Name" value="' + esc(a) + '">';
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">';
+    html += '<input type="text" class="field-input tm-archer-phone" placeholder="Phone" value="' + esc(c.phone || '') + '">';
+    html += '<input type="email" class="field-input tm-archer-email" placeholder="Email" value="' + esc(c.email || '') + '">';
+    html += '</div></div></div>';
+  }
+  wrap.innerHTML = html;
+}
+
 function addTeamModal() {
   editingTeamIdx = null;
   document.getElementById('teamModalTitle').textContent = 'Add Team';
   document.getElementById('tm-name').value = '';
-  document.getElementById('tm-a1').value = '';
-  document.getElementById('tm-a2').value = '';
-  document.getElementById('tm-a3').value = '';
+  buildArcherRows(config.archersPerTeam || 3, null);
   document.getElementById('teamModal').classList.add('show');
 }
 
@@ -1022,9 +1072,7 @@ function editTeam(idx) {
   const t = teams[idx];
   document.getElementById('teamModalTitle').textContent = 'Edit Team';
   document.getElementById('tm-name').value = t.name;
-  document.getElementById('tm-a1').value = t.archers[0] || '';
-  document.getElementById('tm-a2').value = t.archers[1] || '';
-  document.getElementById('tm-a3').value = t.archers[2] || '';
+  buildArcherRows(Math.max(config.archersPerTeam || 3, t.archers.length), t);
   document.getElementById('teamModal').classList.add('show');
 }
 
@@ -1032,19 +1080,28 @@ function closeTeamModal() { document.getElementById('teamModal').classList.remov
 
 function saveTeam() {
   const name = document.getElementById('tm-name').value.trim();
-  const a1 = document.getElementById('tm-a1').value.trim();
-  const a2 = document.getElementById('tm-a2').value.trim();
-  const a3 = document.getElementById('tm-a3').value.trim();
+  var nameEls = document.querySelectorAll('.tm-archer-name');
+  var phoneEls = document.querySelectorAll('.tm-archer-phone');
+  var emailEls = document.querySelectorAll('.tm-archer-email');
+  var archers = [];
+  var contacts = [];
+  for (var i = 0; i < nameEls.length; i++) {
+    var n = nameEls[i].value.trim();
+    if (n) {
+      archers.push(n);
+      contacts.push({ phone: phoneEls[i].value.trim(), email: emailEls[i].value.trim() });
+    }
+  }
   if (!name) { showToast('⚠️ Team name required'); return; }
-  if (!a1) { showToast('⚠️ At least one archer required'); return; }
-  const archers = [a1, a2, a3].filter(Boolean);
+  if (archers.length === 0) { showToast('⚠️ At least one archer required'); return; }
   if (editingTeamIdx !== null) {
     teams[editingTeamIdx].name = name;
     teams[editingTeamIdx].archers = archers;
+    teams[editingTeamIdx].contacts = contacts;
     showToast('✏️ Team updated');
   } else {
     const id = teams.length > 0 ? Math.max(...teams.map(t => t.id)) + 1 : 1;
-    teams.push({ id, name, archers, bracket: null });
+    teams.push({ id, name, archers, contacts, bracket: null });
     showToast('➕ Team ' + name + ' added');
   }
   closeTeamModal();
@@ -1091,6 +1148,111 @@ function deleteSelectedTeams() {
   sel.sort((a, b) => b - a).forEach(i => teams.splice(i, 1));
   renderTeams();
   showToast('🗑️ ' + sel.length + ' team' + (sel.length > 1 ? 's' : '') + ' deleted');
+}
+
+/* ══════════════════════════════════════════
+   FREE AGENTS POOL
+   ══════════════════════════════════════════ */
+var freeAgents = []; // { name, phone, email }
+
+function renderFreeAgents() {
+  var body = document.getElementById('freeAgentBody');
+  document.getElementById('freeAgentCount').textContent = freeAgents.length;
+  var btn = document.getElementById('btnAutoAssign');
+  if (btn) btn.style.display = freeAgents.length > 0 ? '' : 'none';
+  if (freeAgents.length === 0) {
+    body.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--text-light);">No free agents. Add individual archers who haven\'t been assigned to a team yet.</td></tr>';
+    return;
+  }
+  body.innerHTML = freeAgents.map(function(fa, i) {
+    return '<tr><td>' + (i + 1) + '</td><td style="font-weight:600;">' + esc(fa.name) + '</td><td>' + esc(fa.phone || '') + '</td><td>' + esc(fa.email || '') + '</td>' +
+      '<td><button class="btn btn-sm" style="background:var(--danger-light);color:#991b1b;border:1px solid #fca5a5;font-size:0.72rem;padding:2px 8px;" onclick="removeFreeAgent(' + i + ')">✕</button></td></tr>';
+  }).join('');
+}
+
+function addFreeAgentModal() {
+  appPrompt('Enter archer name:', function(name) {
+    if (!name || !name.trim()) return;
+    freeAgents.push({ name: name.trim(), phone: '', email: '' });
+    renderFreeAgents();
+    showToast('🏹 ' + name.trim() + ' added to free agents');
+    // Offer to add contact info
+    editFreeAgent(freeAgents.length - 1);
+  }, 'Add Free Agent');
+}
+
+function editFreeAgent(idx) {
+  var fa = freeAgents[idx];
+  // Use a small inline modal approach — reuse team modal with single archer
+  editingTeamIdx = null;
+  document.getElementById('teamModalTitle').textContent = 'Edit Free Agent — ' + fa.name;
+  document.getElementById('tm-name').value = '(Free Agent)';
+  document.getElementById('tm-name').closest('.field-grid').style.display = 'none';
+  var wrap = document.getElementById('tm-archer-rows');
+  wrap.innerHTML = '<div style="border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px;margin-top:10px;">' +
+    '<div style="font-weight:600;font-size:0.82rem;color:var(--text-light);margin-bottom:6px;">' + esc(fa.name) + '</div>' +
+    '<div class="field-grid" style="grid-template-columns:1fr;gap:6px;">' +
+    '<input type="text" class="field-input" id="fa-phone" placeholder="Phone" value="' + esc(fa.phone || '') + '">' +
+    '<input type="email" class="field-input" id="fa-email" placeholder="Email" value="' + esc(fa.email || '') + '">' +
+    '</div></div>';
+  // Override save button
+  var saveBtn = document.querySelector('#teamModal .btn-primary');
+  saveBtn.setAttribute('onclick', 'saveFreeAgentContact(' + idx + ')');
+  document.getElementById('teamModal').classList.add('show');
+}
+
+function saveFreeAgentContact(idx) {
+  freeAgents[idx].phone = document.getElementById('fa-phone').value.trim();
+  freeAgents[idx].email = document.getElementById('fa-email').value.trim();
+  document.getElementById('teamModal').classList.remove('show');
+  // Restore normal modal behavior
+  document.getElementById('tm-name').closest('.field-grid').style.display = '';
+  document.querySelector('#teamModal .btn-primary').setAttribute('onclick', 'saveTeam()');
+  renderFreeAgents();
+  showToast('✏️ Contact info updated');
+}
+
+function removeFreeAgent(idx) {
+  freeAgents.splice(idx, 1);
+  renderFreeAgents();
+  showToast('✕ Archer removed from free agents');
+}
+
+function autoAssignFreeAgents() {
+  if (freeAgents.length === 0) { showToast('⚠️ No free agents to assign'); return; }
+  var perTeam = config.archersPerTeam || 3;
+  // Find teams that need archers
+  var incomplete = teams.filter(function(t) { return !t.phantom && t.archers.length < perTeam; });
+  var assigned = 0;
+  // First fill incomplete teams
+  while (freeAgents.length > 0 && incomplete.length > 0) {
+    var t = incomplete[0];
+    var fa = freeAgents.shift();
+    t.archers.push(fa.name);
+    if (!t.contacts) t.contacts = [];
+    t.contacts.push({ phone: fa.phone || '', email: fa.email || '' });
+    assigned++;
+    if (t.archers.length >= perTeam) incomplete.shift();
+  }
+  // Then create new teams from remaining free agents
+  var newTeams = 0;
+  while (freeAgents.length > 0) {
+    var nextId = teams.length > 0 ? Math.max.apply(null, teams.map(function(t) { return t.id; })) + 1 : 1;
+    var teamArchers = [];
+    var teamContacts = [];
+    for (var i = 0; i < perTeam && freeAgents.length > 0; i++) {
+      var fa2 = freeAgents.shift();
+      teamArchers.push(fa2.name);
+      teamContacts.push({ phone: fa2.phone || '', email: fa2.email || '' });
+    }
+    teams.push({ id: nextId, name: 'Team ' + nextId, archers: teamArchers, contacts: teamContacts, bracket: null });
+    newTeams++;
+  }
+  renderTeams();
+  renderFreeAgents();
+  var msg = '🔀 ' + assigned + ' archer' + (assigned !== 1 ? 's' : '') + ' assigned to existing teams';
+  if (newTeams > 0) msg += ', ' + newTeams + ' new team' + (newTeams !== 1 ? 's' : '') + ' created';
+  showToast(msg);
 }
 
 /* ══════════════════════════════════════════
@@ -1460,7 +1622,6 @@ function generateSchedule() {
     // Sort by qualifying average (best first) for balanced scheduling
     bracketTeams.sort(function(a, b) { return getTeamQualAvg(b.id) - getTeamQualAvg(a.id); });
     // Snake-fold: place odd-ranked at start, even-ranked at end (reversed)
-    // This makes circle method pair strength-adjacent teams in round 1
     var odds = [], evens = [];
     for (var si = 0; si < bracketTeams.length; si++) {
       if (si % 2 === 0) odds.push(bracketTeams[si].id);
@@ -1468,22 +1629,29 @@ function generateSchedule() {
     }
     evens.reverse();
     var ids = odds.concat(evens);
-    if (ids.length % 2 !== 0) ids.push(-1); // bye
+    if (ids.length % 2 !== 0) ids.push(-1); // bye placeholder (shouldn't happen with phantoms)
     var numRounds = ids.length - 1;
-    // Cap regular-season rounds to bracketPlayWeeks
-    var maxRegRounds = Math.min(numRounds, bpWeeks);
-    var matchups = [];
+    // Build one full round-robin cycle of pairings
+    var cyclePairings = []; // array of arrays of {teamA, teamB}
     var half = ids.length / 2;
-    for (var round = 0; round < maxRegRounds; round++) {
+    for (var round = 0; round < numRounds; round++) {
+      var roundPairs = [];
       for (var i = 0; i < half; i++) {
         var a = ids[i], b = ids[ids.length - 1 - i];
-        if (a !== -1 && b !== -1) {
-          matchups.push({ week: config.qualWeeks + 1 + round, teamA: a, teamB: b });
-        }
+        if (a !== -1 && b !== -1) roundPairs.push({ teamA: a, teamB: b });
       }
+      cyclePairings.push(roundPairs);
       // Rotate: fix first, rotate rest
       var last = ids.pop();
       ids.splice(1, 0, last);
+    }
+    // Fill all bracket play weeks, cycling through the round-robin
+    var matchups = [];
+    for (var w = 0; w < bpWeeks; w++) {
+      var pairs = cyclePairings[w % cyclePairings.length];
+      pairs.forEach(function(p) {
+        matchups.push({ week: config.qualWeeks + 1 + w, teamA: p.teamA, teamB: p.teamB });
+      });
     }
     schedule[bracket] = matchups;
   });
@@ -2058,9 +2226,11 @@ function clearSeasonStep2() {
   schedule = {};
   substitutes = {};
   submittedWeeks = {};
+  freeAgents = [];
   config.bracketsLocked = false;
   loadConfigUI();
   renderTeams();
+  renderFreeAgents();
   renderDashboard();
   showToast('🗑️ Season cleared — backup was downloaded automatically');
 }
@@ -2469,47 +2639,121 @@ function buildImportMapping() {
 
 function buildImportPreview() {
   previewTeams = [];
-  importRows.forEach(row => {
-    const rec = {};
-    Object.entries(importMapping).forEach(([colIdx, fieldKey]) => {
-      if (fieldKey && row[parseInt(colIdx)] !== undefined) rec[fieldKey] = row[parseInt(colIdx)].trim();
-    });
-    if (rec.teamName || rec.archer1) {
-      previewTeams.push({
-        name: rec.teamName || ('Team ' + (previewTeams.length + 1)),
-        archers: [rec.archer1, rec.archer2, rec.archer3].filter(Boolean)
+  previewFreeAgents = [];
+  // Detect format: one-row-per-team (teamName + archer1/2/3) or multi-row (teamNumber + archer per row)
+  var hasTeamCol = false, hasMultiArcher = false, hasSinglesCol = false;
+  Object.entries(importMapping).forEach(function(e) {
+    if (e[1] === 'teamName') hasTeamCol = true;
+    if (e[1] === 'archer2' || e[1] === 'archer3') hasMultiArcher = true;
+    if (e[1] === 'singles') hasSinglesCol = true;
+  });
+  // Find column indices
+  var colOf = {};
+  Object.entries(importMapping).forEach(function(e) { if (e[1]) colOf[e[1]] = parseInt(e[0]); });
+
+  if (hasMultiArcher || !hasTeamCol) {
+    // Standard one-row-per-team format
+    importRows.forEach(function(row) {
+      var rec = {};
+      Object.entries(importMapping).forEach(function(e) {
+        if (e[1] && row[parseInt(e[0])] !== undefined) rec[e[1]] = row[parseInt(e[0])].trim();
       });
-    }
+      if (rec.teamName || rec.archer1) {
+        previewTeams.push({
+          name: rec.teamName || ('Team ' + (previewTeams.length + 1)),
+          archers: [rec.archer1, rec.archer2, rec.archer3].filter(Boolean),
+          contacts: [
+            { phone: rec.phone1 || '', email: rec.email1 || '' },
+            { phone: rec.phone2 || '', email: rec.email2 || '' },
+            { phone: rec.phone3 || '', email: rec.email3 || '' },
+          ]
+        });
+      }
+      // Also check for singles in same row (separate columns)
+      if (rec.singles) {
+        previewFreeAgents.push({ name: rec.singles.trim(), phone: '', email: rec.singlesEmail || '' });
+      }
+    });
+  } else {
+    // Multi-row-per-team format (like the Sample.xlsx): team number in col A, one archer per row
+    var currentTeam = null;
+    importRows.forEach(function(row) {
+      var teamVal = colOf.teamName !== undefined ? (row[colOf.teamName] || '').trim() : '';
+      var archerVal = colOf.archer1 !== undefined ? (row[colOf.archer1] || '').trim() : '';
+      var phoneVal = colOf.phone1 !== undefined ? (row[colOf.phone1] || '').trim() : '';
+      var emailVal = colOf.email1 !== undefined ? (row[colOf.email1] || '').trim() : '';
+      if (teamVal && !isNaN(parseInt(teamVal))) {
+        // New team row
+        currentTeam = { name: 'Team ' + teamVal, archers: [], contacts: [] };
+        previewTeams.push(currentTeam);
+      }
+      if (currentTeam && archerVal) {
+        currentTeam.archers.push(archerVal);
+        currentTeam.contacts.push({ phone: phoneVal, email: emailVal });
+      }
+      // Check for singles data in this row
+      var singlesVal = colOf.singles !== undefined ? (row[colOf.singles] || '').trim() : '';
+      var singlesEmailVal = colOf.singlesEmail !== undefined ? (row[colOf.singlesEmail] || '').trim() : '';
+      if (singlesVal) {
+        previewFreeAgents.push({ name: singlesVal, phone: '', email: singlesEmailVal });
+      }
+    });
+  }
+
+  var wrap = document.getElementById('importPreviewWrap');
+  var html = '<table class="preview-table"><thead><tr><th>Team Name</th><th>Archer 1</th><th>Archer 2</th><th>Archer 3</th></tr></thead><tbody>';
+  previewTeams.slice(0, 20).forEach(function(t) {
+    html += '<tr><td>' + esc(t.name) + '</td>' + [0, 1, 2].map(function(i) { return '<td>' + esc(t.archers[i] || '') + '</td>'; }).join('') + '</tr>';
   });
-  const wrap = document.getElementById('importPreviewWrap');
-  let html = '<table class="preview-table"><thead><tr><th>Team Name</th><th>Archer 1</th><th>Archer 2</th><th>Archer 3</th></tr></thead><tbody>';
-  previewTeams.slice(0, 20).forEach(t => {
-    html += '<tr><td>' + esc(t.name) + '</td>' + [0, 1, 2].map(i => '<td>' + esc(t.archers[i] || '') + '</td>').join('') + '</tr>';
-  });
+  if (previewTeams.length > 20) html += '<tr><td colspan="4" style="text-align:center;color:var(--text-light);">... and ' + (previewTeams.length - 20) + ' more</td></tr>';
   html += '</tbody></table>';
+  if (previewFreeAgents.length > 0) {
+    html += '<div style="margin-top:12px;font-weight:600;font-size:0.88rem;">🏹 Free Agents / Singles (' + previewFreeAgents.length + ')</div>';
+    html += '<table class="preview-table"><thead><tr><th>Name</th><th>Email</th></tr></thead><tbody>';
+    previewFreeAgents.forEach(function(fa) {
+      html += '<tr><td>' + esc(fa.name) + '</td><td>' + esc(fa.email || '') + '</td></tr>';
+    });
+    html += '</tbody></table>';
+  }
   wrap.innerHTML = html;
-  document.getElementById('importTeamCount').textContent = previewTeams.length;
+  document.getElementById('importTeamCount').textContent = previewTeams.length + (previewFreeAgents.length ? ' + ' + previewFreeAgents.length + ' free agents' : '');
 }
 
 function doTeamImport() {
   let nextId = teams.length > 0 ? Math.max(...teams.map(t => t.id)) + 1 : 1;
   previewTeams.forEach(pt => {
-    teams.push({ id: nextId++, name: pt.name, archers: pt.archers, bracket: null });
+    teams.push({ id: nextId++, name: pt.name, archers: pt.archers, contacts: pt.contacts || [], bracket: null });
   });
-  document.getElementById('importDoneMsg').textContent = previewTeams.length + ' teams imported!';
+  if (previewFreeAgents && previewFreeAgents.length > 0) {
+    previewFreeAgents.forEach(fa => freeAgents.push({ name: fa.name, phone: fa.phone || '', email: fa.email || '' }));
+  }
+  var msg = previewTeams.length + ' teams imported';
+  if (previewFreeAgents && previewFreeAgents.length > 0) msg += ' + ' + previewFreeAgents.length + ' free agents';
+  document.getElementById('importDoneMsg').textContent = msg + '!';
   goImportStep(4);
   renderTeams();
-  showToast('✅ ' + previewTeams.length + ' teams imported');
+  renderFreeAgents();
+  showToast('✅ ' + msg);
 }
 
 /* ══════════════════════════════════════════
    EXPORT
    ══════════════════════════════════════════ */
 function exportTeamsCSV() {
-  if (teams.length === 0) { showToast('⚠️ No teams to export'); return; }
-  const headers = ['Team Name', 'Archer 1', 'Archer 2', 'Archer 3', 'Bracket'];
-  const rows = teams.map(t => [t.name, t.archers[0] || '', t.archers[1] || '', t.archers[2] || '', t.bracket || ''].map(v => '"' + v.replace(/"/g, '""') + '"'));
-  const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+  if (teams.length === 0 && freeAgents.length === 0) { showToast('⚠️ No teams to export'); return; }
+  const headers = ['Team Name', 'Archer 1', 'Phone 1', 'Email 1', 'Archer 2', 'Phone 2', 'Email 2', 'Archer 3', 'Phone 3', 'Email 3', 'Bracket'];
+  const rows = teams.map(t => {
+    const c = t.contacts || [];
+    return [t.name, t.archers[0] || '', (c[0] && c[0].phone) || '', (c[0] && c[0].email) || '',
+      t.archers[1] || '', (c[1] && c[1].phone) || '', (c[1] && c[1].email) || '',
+      t.archers[2] || '', (c[2] && c[2].phone) || '', (c[2] && c[2].email) || '',
+      t.bracket || ''].map(v => '"' + String(v).replace(/"/g, '""') + '"');
+  });
+  var csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+  if (freeAgents.length > 0) {
+    csv += '\n\nFree Agents\nName,Phone,Email\n';
+    csv += freeAgents.map(fa => [fa.name, fa.phone || '', fa.email || ''].map(v => '"' + String(v).replace(/"/g, '""') + '"').join(',')).join('\n');
+  }
   const blob = new Blob([csv], { type: 'text/csv' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a'); a.href = url; a.download = 'teams-export.csv'; a.click();
@@ -2521,7 +2765,7 @@ function exportTeamsCSV() {
    BACKUP / RESTORE
    ══════════════════════════════════════════ */
 function backupData() {
-  const data = { version: 2, date: new Date().toISOString(), config, teams, scores, schedule, substitutes, submittedWeeks };
+  const data = { version: 3, date: new Date().toISOString(), config, teams, scores, schedule, substitutes, submittedWeeks, freeAgents };
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a'); a.href = url; a.download = 'archery-league-backup-' + new Date().toISOString().slice(0, 10) + '.json'; a.click();
@@ -2542,8 +2786,10 @@ function restoreData(event) {
       if (d.schedule) schedule = d.schedule;
       if (d.substitutes) substitutes = d.substitutes;
       if (d.submittedWeeks) submittedWeeks = d.submittedWeeks;
+      if (d.freeAgents) freeAgents = d.freeAgents;
       loadConfigUI();
       renderTeams();
+      renderFreeAgents();
       renderDashboard();
       showToast('📂 Backup restored — ' + teams.length + ' teams loaded');
     } catch (err) { showToast('⚠️ Invalid backup file'); }
@@ -2563,12 +2809,12 @@ function loadSampleData() {
     archersPerTeam: 3, startDate: '2026-06-01', bracketsLocked: false
   };
   teams = [
-    { id: 1, name: 'Team Grisar', archers: ['Dave Grisar', 'Tyler Grisar', 'Matt Esselmann'], bracket: null },
-    { id: 2, name: 'Team Schultz', archers: ['Guy Schultz', 'Kurt Zirtzlaff', 'Josh Hafemeister'], bracket: null },
-    { id: 3, name: 'Team Moder', archers: ['Dustin Moder', 'Jacob Lewin', 'Patrick Fridholm'], bracket: null },
-    { id: 4, name: 'Team Barron', archers: ['Jesse Barron', 'Tom Dierringer', 'Jack Mueller'], bracket: null },
-    { id: 5, name: 'Team Speirs', archers: ['Mark Speirs', 'Brandon Speirs', 'Steve Bohn'], bracket: null },
-    { id: 6, name: 'Team Haas', archers: ['Dennis Haas', 'Terri Haas', 'Ben Haas'], bracket: null },
+    { id: 1, name: 'Team Grisar', archers: ['Dave Grisar', 'Tyler Grisar', 'Matt Esselmann'], contacts: [{phone:'920-555-0101',email:'dgrisar@example.com'},{phone:'920-555-0102',email:''},{phone:'',email:'messelmann@example.com'}], bracket: null },
+    { id: 2, name: 'Team Schultz', archers: ['Guy Schultz', 'Kurt Zirtzlaff', 'Josh Hafemeister'], contacts: [{phone:'920-555-0201',email:'gschultz@example.com'},{phone:'',email:''},{phone:'920-555-0203',email:''}], bracket: null },
+    { id: 3, name: 'Team Moder', archers: ['Dustin Moder', 'Jacob Lewin', 'Patrick Fridholm'], contacts: [{phone:'920-555-0301',email:''},{phone:'',email:'jlewin@example.com'},{phone:'',email:''}], bracket: null },
+    { id: 4, name: 'Team Barron', archers: ['Jesse Barron', 'Tom Dierringer', 'Jack Mueller'], contacts: [{phone:'',email:'jbarron@example.com'},{phone:'920-555-0402',email:''},{phone:'',email:''}], bracket: null },
+    { id: 5, name: 'Team Speirs', archers: ['Mark Speirs', 'Brandon Speirs', 'Steve Bohn'], contacts: [{phone:'920-555-0501',email:'mspeirs@example.com'},{phone:'920-555-0502',email:''},{phone:'',email:'sbohn@example.com'}], bracket: null },
+    { id: 6, name: 'Team Haas', archers: ['Dennis Haas', 'Terri Haas', 'Ben Haas'], contacts: [{phone:'920-555-0601',email:'dhaas@example.com'},{phone:'920-555-0602',email:''},{phone:'920-555-0603',email:''}], bracket: null },
     { id: 7, name: 'Team Streim', archers: ['Matt Streim', 'Derrick Malcore', 'Christian Bilgo'], bracket: null },
     { id: 8, name: 'Team Harwood', archers: ['Tom Harwood', 'John Knepel Sr.', 'John Knepel Jr.'], bracket: null },
     { id: 9, name: 'Team Krombach', archers: ['Ryan Krombach', 'Andy Harrigan', 'Mike Janz'], bracket: null },
@@ -2619,10 +2865,16 @@ function loadSampleData() {
          31:[248,242,240], 32:[240,232,230], 33:[260,254,246], 34:[260,256,250], 35:[226,220,222], 36:[242,238,234], 37:[250,250,248], 38:[236,230,224], 39:[248,242,240] },
   };
   schedule = {};
+  freeAgents = [
+    { name: 'Steve Augustin', phone: '', email: 'saugustin@example.com' },
+    { name: 'Matt Reindl', phone: '', email: 'mreindl@example.com' },
+    { name: 'Davian Welch', phone: '', email: 'dwelch@example.com' },
+  ];
   loadConfigUI();
   renderTeams();
+  renderFreeAgents();
   renderDashboard();
-  showToast('📋 39 teams loaded with 2 weeks of qualifying scores — lock brackets to see phantom team handling');
+  showToast('📋 39 teams + 3 free agents loaded with 2 weeks of qualifying scores — lock brackets to see phantom team handling');
 }
 
 /* ══════════════════════════════════════════
