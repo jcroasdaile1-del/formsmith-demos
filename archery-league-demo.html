@@ -1768,14 +1768,15 @@ function renderScoreTab() {
 function populateWeekSelect() {
   const sel = document.getElementById('weekSelect');
   const totalWeeks = getTotalSeasonWeeks();
-  const current = sel.value;
-  sel.innerHTML = '';
+  const current = sel.value || '1';
+  let html = '';
   for (let w = 1; w <= Math.max(totalWeeks, config.qualWeeks); w++) {
     const label = w <= config.qualWeeks ? 'Week ' + w + ' (Qualifying)' : 'Week ' + w;
     const submitted = submittedWeeks[w] ? ' ✓' : '';
-    sel.innerHTML += '<option value="' + w + '"' + (String(w) === current ? ' selected' : '') + '>' + label + submitted + '</option>';
+    html += '<option value="' + w + '">' + label + submitted + '</option>';
   }
-  if (!current) sel.value = '1';
+  sel.innerHTML = html;
+  sel.value = current;
 }
 
 function renderScoreEntry() {
