@@ -2258,53 +2258,29 @@ function printWeek() {
     });
     body += '</tbody></table>';
   } else {
-    // Bracket play — show matchups with handicaps
+    // Bracket play — show scores only (same format as qualifying, grouped by bracket)
     const brackets = [...new Set(teams.map(t => t.bracket).filter(Boolean))].sort();
     brackets.forEach(b => {
-      const matchups = getWeekMatchups(b, week);
-      if (matchups.length === 0) return;
-      body += '<h2>Bracket ' + esc(b) + ' — Week ' + week + ' Results</h2>';
-      matchups.forEach(m => {
-        if (!m.teamA || !m.teamB) return;
-        const tA = teams.find(t => t.id === m.teamA);
-        const tB = teams.find(t => t.id === m.teamB);
-        if (!tA || !tB) return;
-        const sA = (scores[week] && scores[week][tA.id]) || [];
-        const sB = (scores[week] && scores[week][tB.id]) || [];
-        const result = calcMatchResult(tA.id, tB.id, week);
-        body += '<div class="matchup"><div class="matchup-title">' + esc(tA.name) + ' <span class="vs">vs</span> ' + esc(tB.name) + '</div>';
-        body += '<table><thead><tr><th>' + esc(tA.name) + '</th><th class="r">Score</th><th style="width:30px"></th><th>' + esc(tB.name) + '</th><th class="r">Score</th></tr></thead><tbody>';
-        const maxArch = Math.max(tA.archers.length, tB.archers.length);
-        for (let ai = 0; ai < maxArch; ai++) {
-          body += '<tr><td>' + esc(getArcherName(tA.id, ai, week)) + (isSubstitute(tA.id, ai, week) ? ' <em style="font-size:0.7rem;color:#92400e;">(SUB)</em>' : '') + '</td><td class="r">' + (sA[ai] || '—') + '</td><td></td><td>' + esc(getArcherName(tB.id, ai, week)) + (isSubstitute(tB.id, ai, week) ? ' <em style="font-size:0.7rem;color:#92400e;">(SUB)</em>' : '') + '</td><td class="r">' + (sB[ai] || '—') + '</td></tr>';
+      const bracketTeams = teams.filter(t => t.bracket === b && !t.phantom);
+      if (bracketTeams.length === 0) return;
+      body += '<h2>Bracket ' + esc(b) + ' — Week ' + week + ' Scores</h2>';
+      body += '<table><thead><tr><th>Team</th>';
+      for (let ai = 0; ai < config.archersPerTeam; ai++) body += '<th class="r">Archer ' + (ai+1) + '</th>';
+      body += '<th class="r">Total</th></tr></thead><tbody>';
+      const rows = bracketTeams.map(t => {
+        const s = (scores[week] && scores[week][t.id]) || [];
+        const total = s.reduce((a, b) => a + (b || 0), 0);
+        return { name: t.name, archers: t.archers, scores: s, total, id: t.id };
+      }).sort((a, b) => b.total - a.total);
+      rows.forEach((r, i) => {
+        body += '<tr' + (i < 3 ? ' class="top"' : '') + '><td class="bold">' + esc(r.name) + '</td>';
+        for (let ai = 0; ai < config.archersPerTeam; ai++) {
+          const v = r.scores[ai] || 0;
+          body += '<td class="r">' + (v > 0 ? v : '—') + '</td>';
         }
-        body += '</tbody></table>';
-        if (result) {
-          body += '<table class="totals"><tbody>';
-          body += '<tr><td>Raw Score</td><td class="r bold">' + result.rawA + '</td><td style="width:30px"></td><td>Raw Score</td><td class="r bold">' + result.rawB + '</td></tr>';
-          body += '<tr><td>Handicap</td><td class="r">+' + result.hcpA + '</td><td></td><td>Handicap</td><td class="r">+' + result.hcpB + '</td></tr>';
-          body += '<tr class="total-row"><td>Adjusted Total</td><td class="r bold">' + result.adjA + '</td><td></td><td>Adjusted Total</td><td class="r bold">' + result.adjB + '</td></tr>';
-          const rLabel = result.resultA === 'WIN' ? esc(tA.name) + ' WINS' : result.resultA === 'LOSS' ? esc(tB.name) + ' WINS' : 'TIE';
-          body += '</tbody></table>';
-          body += '<div class="result-tag ' + (result.resultA === 'TIE' ? 'tie' : 'win') + '">' + rLabel + '</div>';
-        }
-        body += '</div>';
+        body += '<td class="r bold">' + r.total + '</td></tr>';
       });
-      // Standings for this bracket
-      const standings = calcBracketStandings(b, week);
-      if (standings.length > 0) {
-        body += '<h3 style="margin-top:20px;">Bracket ' + esc(b) + ' Standings (Through Week ' + week + ')</h3>';
-        body += '<table><thead><tr><th>#</th><th>Team</th><th class="r">W</th><th class="r">L</th><th class="r">T</th><th class="r">Win%</th><th class="r">GB</th></tr></thead><tbody>';
-        const topW = standings[0].wins;
-        standings.forEach((s, i) => {
-          const actualW = s.wins - 0.5 * s.ties;
-          const games = actualW + s.losses + s.ties;
-          const pct = games > 0 ? (actualW / games * 100).toFixed(1) : '—';
-          const gb = (topW - s.wins).toFixed(1);
-          body += '<tr' + (i < 3 ? ' class="top"' : '') + '><td>' + (i+1) + '</td><td class="bold">' + esc(s.name) + '</td><td class="r">' + actualW + '</td><td class="r">' + s.losses + '</td><td class="r">' + s.ties + '</td><td class="r">' + pct + '%</td><td class="r">' + gb + '</td></tr>';
-        });
-        body += '</tbody></table>';
-      }
+      body += '</tbody></table>';
     });
   }
 
