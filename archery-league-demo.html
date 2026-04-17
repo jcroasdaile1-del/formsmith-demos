@@ -63,10 +63,14 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 .tab-btn.active { color: #86efac; border-bottom-color: #86efac; }
 
 /* ── Tab Content ── */
-.tab-content { display: none; padding: 24px; max-width: 1200px; margin: 0 auto; position: relative; overflow: hidden; }
+.tab-content { display: none; padding: 24px; max-width: 1200px; margin: 0 auto; position: relative; }
 .tab-content.active { display: block; }
-.tab-content::before { content: ''; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 520px; height: 520px; background-image: var(--logo-url); background-size: contain; background-repeat: no-repeat; background-position: center; opacity: 0.07; pointer-events: none; z-index: 0; }
-.tab-content > * { position: relative; z-index: 1; }
+
+/* ── Side Gutter Logos ── */
+.gutter-logo { position: fixed; width: 120px; height: 120px; object-fit: contain; opacity: 0.08; pointer-events: none; z-index: 0; top: 50%; transform: translateY(-50%); }
+.gutter-logo-left { left: calc((100vw - 1200px) / 4 - 60px); }
+.gutter-logo-right { right: calc((100vw - 1200px) / 4 - 60px); }
+@media (max-width: 1400px) { .gutter-logo { display: none; } }
 
 /* ── Banner ── */
 .sample-banner { background: linear-gradient(135deg, var(--primary-light) 0%, #bbf7d0 100%); border: 1px solid var(--primary); border-radius: var(--radius); padding: 12px 20px; margin-bottom: 20px; font-size: 0.85rem; color: #14532d; display: flex; align-items: center; gap: 10px; }
@@ -287,7 +291,7 @@ body:has(.modal-overlay.show) { overflow: hidden; }
 @media print {
   .app-header, .sample-banner, .hero-banner, .btn, .tab-bar, .bracket-tabs, .no-print, .app-footer { display: none !important; }
   .tab-content { display: block !important; padding: 0; }
-  .tab-content::before { display: none !important; }
+  .gutter-logo { display: none !important; }
   .tab-content:not(.print-target) { display: none !important; }
   body { background: white; }
   .dash-card, .form-section { box-shadow: none; border: 1px solid #ccc; }
@@ -302,7 +306,7 @@ body.dark-mode {
   --shadow-lg: 0 4px 12px rgba(0,0,0,0.4);
 }
 body.dark-mode .app-header { background: linear-gradient(135deg, #0c1f0f 0%, #0f2918 50%, #14381f 100%); }
-body.dark-mode .tab-content::before { filter: invert(1); opacity: 0.09; }
+body.dark-mode .gutter-logo { filter: invert(1); opacity: 0.12; }
 body.dark-mode .sample-banner { background: linear-gradient(135deg, #064e3b 0%, #065f46 100%); border-color: #059669; color: #d1fae5; }
 body.dark-mode .sample-banner strong { color: #6ee7b7; }
 body.dark-mode .sample-banner .banner-logo { filter: invert(1); }
@@ -3044,7 +3048,14 @@ function showStreakDetail() {
    ══════════════════════════════════════════ */
 document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('headerLogo').src = LOGO_URI;
-  document.documentElement.style.setProperty('--logo-url', 'url(' + LOGO_URI + ')');
+  // Create side gutter logos
+  ['left', 'right'].forEach(function(side) {
+    var img = document.createElement('img');
+    img.className = 'gutter-logo gutter-logo-' + side;
+    img.src = LOGO_URI;
+    img.alt = '';
+    document.body.appendChild(img);
+  });
   // Set hero logo
   var heroLogo = document.getElementById('heroLogo');
   if (heroLogo) heroLogo.src = LOGO_URI;
