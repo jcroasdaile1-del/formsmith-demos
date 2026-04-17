@@ -13,6 +13,7 @@
   gtag('config', 'G-Q2Q1R2DXVF');
 </script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script>document.addEventListener('DOMContentLoaded',function(){if(window.Chart)Chart.defaults.devicePixelRatio=window.devicePixelRatio||2;});</script>
 <style>
 /* ══════════════════════════════════════════
@@ -163,6 +164,15 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 .badge-purple { background: var(--purple-light); color: var(--purple); }
 .badge-gray { background: #f3f4f6; color: #6b7280; }
 .badge-teal { background: var(--teal-light); color: #0f766e; }
+
+/* ── Contact expand ── */
+.btn-contact-expand { background: none; border: 1px solid var(--border); border-radius: 6px; padding: 1px 6px; font-size: 0.7rem; cursor: pointer; margin-left: 6px; vertical-align: middle; line-height: 1; }
+.btn-contact-expand:hover { background: var(--bg); }
+.contact-detail-row td { padding: 8px 12px !important; background: var(--bg); }
+.contact-detail-grid { display: flex; gap: 12px; flex-wrap: wrap; }
+.contact-card-inline { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; font-size: 0.82rem; min-width: 160px; }
+.contact-card-inline strong { display: block; font-size: 0.8rem; margin-bottom: 3px; }
+.contact-card-inline div { color: var(--text-light); font-size: 0.78rem; margin-top: 2px; }
 
 /* ── Qualifying Compact Cards ── */
 .qual-toolbar { display: flex; gap: 10px; align-items: center; margin-bottom: 14px; flex-wrap: wrap; }
@@ -349,6 +359,9 @@ body.dark-mode .preview-table th { background: #374151; }
 body.dark-mode .badge-gray { background: #374151; color: #9ca3af; }
 body.dark-mode .file-info { background: #064e3b; border-color: #059669; color: #6ee7b7; }
 body.dark-mode .faq-q:hover { color: #4ade80; }
+body.dark-mode .btn-contact-expand { border-color: #4b5563; color: #9ca3af; }
+body.dark-mode .btn-contact-expand:hover { background: #374151; }
+body.dark-mode .contact-card-inline { background: #374151; border-color: #4b5563; }
 
 /* ── Dark Mode Toggle ── */
 .dark-toggle { background: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.25); border-radius: 8px; padding: 6px 10px; font-size: 1rem; cursor: pointer; line-height: 1; font-family: inherit; }
@@ -637,8 +650,8 @@ body.dark-mode .config-editing-banner { background: #422006; border-color: #d977
       </div>
       <div class="wizard-panel active" id="wizStep1">
         <h2 style="font-size:1.2rem;margin-bottom:6px;">Upload Your File</h2>
-        <p style="color:var(--text-light);font-size:0.88rem;margin-bottom:20px;">CSV with team name, archer names. One row per team or one row per archer.</p>
-        <div class="upload-area"><div class="upload-icon">📁</div><p><strong>Drag & drop</strong> or <strong>click to browse</strong></p><input type="file" accept=".csv,.tsv,.txt" onchange="handleImportFile(event)"></div>
+        <p style="color:var(--text-light);font-size:0.88rem;margin-bottom:20px;">Excel (.xlsx) or CSV with team name, archer names. One row per team or one row per archer.</p>
+        <div class="upload-area"><div class="upload-icon">📁</div><p><strong>Drag & drop</strong> or <strong>click to browse</strong></p><input type="file" accept=".csv,.tsv,.txt,.xlsx,.xls" onchange="handleImportFile(event)"></div>
         <div class="file-info" id="importFileInfo"></div>
       </div>
       <div class="wizard-panel" id="wizStep2">
@@ -666,7 +679,7 @@ body.dark-mode .config-editing-banner { background: #422006; border-color: #d977
     <div class="modal-header"><h3 id="teamModalTitle">Add Team</h3><button class="modal-close" onclick="closeTeamModal()">&times;</button></div>
     <div class="modal-body">
       <div class="field-grid" style="grid-template-columns:1fr;">
-        <div class="field-group"><label>Team Name</label><input type="text" id="tm-name" placeholder="e.g. Team 1 or Team Grisar"></div>
+        <div class="field-group"><label>Team #</label><input type="text" id="tm-name" readonly style="background:var(--bg);font-weight:700;font-size:1.1rem;"></div>
       </div>
       <div id="tm-archer-rows"></div>
       <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px;">
@@ -1023,22 +1036,38 @@ function renderTeams() {
     const avg = getTeamQualAvg(t.id);
     const phantomStyle = t.phantom ? ' style="opacity:0.55;font-style:italic;"' : '';
     const c = t.contacts || [];
-    return '<tr' + phantomStyle + '><td><input type="checkbox" class="team-check" data-idx="' + i + '" onchange="updateTeamBulkActions()"></td><td>' + (i + 1) + '</td><td style="font-weight:600;">' + (t.phantom ? '👻 ' : '') + esc(t.name) + '</td>' +
-      t.archers.map(function(a, ai) {
-        var ci = c[ai];
-        var tip = '';
-        if (ci && (ci.phone || ci.email)) tip = ' title="' + esc((ci.phone || '') + (ci.phone && ci.email ? ' | ' : '') + (ci.email || '')) + '"';
-        var icon = (ci && (ci.phone || ci.email)) ? ' <span style="opacity:0.5;font-size:0.72rem;cursor:help;"' + tip + '>📇</span>' : '';
-        return '<td>' + esc(a) + icon + '</td>';
-      }).join('') +
+    var hasContacts = c.some(function(ci) { return ci && (ci.phone || ci.email); });
+    var expandBtn = hasContacts ? ' <button class="btn-contact-expand" onclick="event.stopPropagation();toggleTeamContacts(' + i + ')" title="View contact info">📇</button>' : '';
+    var contactRow = '';
+    if (hasContacts) {
+      contactRow = '<tr class="contact-detail-row" id="team-contacts-' + i + '" style="display:none;"><td></td><td colspan="7"><div class="contact-detail-grid">' +
+        t.archers.map(function(a, ai) {
+          var ci = c[ai];
+          if (!ci || (!ci.phone && !ci.email)) return '';
+          return '<div class="contact-card-inline"><strong>' + esc(a) + '</strong>' +
+            (ci.phone ? '<div>📞 ' + esc(ci.phone) + '</div>' : '') +
+            (ci.email ? '<div>✉️ ' + esc(ci.email) + '</div>' : '') +
+            '</div>';
+        }).join('') +
+        '</div></td></tr>';
+    }
+    return '<tr' + phantomStyle + ' style="cursor:pointer;' + (t.phantom ? 'opacity:0.55;font-style:italic;' : '') + '" onclick="editTeam(' + i + ')">' +
+      '<td onclick="event.stopPropagation()"><input type="checkbox" class="team-check" data-idx="' + i + '" onchange="updateTeamBulkActions()"></td><td>' + (i + 1) + '</td><td style="font-weight:600;">' + (t.phantom ? '👻 ' : '') + esc(t.name) + expandBtn + '</td>' +
+      t.archers.map(function(a) { return '<td>' + esc(a) + '</td>'; }).join('') +
       (t.archers.length < 3 ? '<td></td>'.repeat(3 - t.archers.length) : '') +
       '<td>' + (t.bracket ? '<span class="badge badge-green">' + esc(t.bracket) + '</span>' : '<span class="badge badge-gray">—</span>') + '</td>' +
-      '<td class="num">' + (avg > 0 ? avg.toFixed(1) : '—') + '</td></tr>';
+      '<td class="num">' + (avg > 0 ? avg.toFixed(1) : '—') + '</td></tr>' + contactRow;
   }).join('');
   document.getElementById('teamSelectAll').checked = false;
   updateTeamBulkActions();
   // Update lock button
   document.getElementById('btnLockBrackets').textContent = config.bracketsLocked ? '🔓 Unlock Brackets' : '🔒 Lock Brackets';
+}
+
+function toggleTeamContacts(idx) {
+  var row = document.getElementById('team-contacts-' + idx);
+  if (!row) return;
+  row.style.display = row.style.display === 'none' ? '' : 'none';
 }
 
 function buildArcherRows(count, team) {
@@ -1059,10 +1088,19 @@ function buildArcherRows(count, team) {
   wrap.innerHTML = html;
 }
 
+function getNextTeamNumber() {
+  var max = 0;
+  teams.forEach(function(t) {
+    var m = t.name.match(/^Team\s+(\d+)$/i);
+    if (m) max = Math.max(max, parseInt(m[1]));
+  });
+  return max + 1;
+}
+
 function addTeamModal() {
   editingTeamIdx = null;
   document.getElementById('teamModalTitle').textContent = 'Add Team';
-  document.getElementById('tm-name').value = '';
+  document.getElementById('tm-name').value = 'Team ' + getNextTeamNumber();
   buildArcherRows(config.archersPerTeam || 3, null);
   document.getElementById('teamModal').classList.add('show');
 }
@@ -1092,7 +1130,7 @@ function saveTeam() {
       contacts.push({ phone: phoneEls[i].value.trim(), email: emailEls[i].value.trim() });
     }
   }
-  if (!name) { showToast('⚠️ Team name required'); return; }
+  if (!name) name = 'Team ' + getNextTeamNumber();
   if (archers.length === 0) { showToast('⚠️ At least one archer required'); return; }
   if (editingTeamIdx !== null) {
     teams[editingTeamIdx].name = name;
@@ -2582,20 +2620,43 @@ function closeImportWizard() { document.getElementById('importModal').classList.
 function handleImportFile(event) {
   const file = event.target.files[0];
   if (!file) return;
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    const text = e.target.result;
-    const delim = text.includes('\t') ? '\t' : ',';
-    const lines = text.split(/\r?\n/).filter(l => l.trim());
-    if (lines.length < 2) { showToast('⚠️ File appears empty'); return; }
-    importHeaders = parseCSVLine(lines[0], delim);
-    importRows = lines.slice(1).map(l => parseCSVLine(l, delim));
-    const fi = document.getElementById('importFileInfo');
-    fi.textContent = '✅ ' + file.name + ' — ' + importRows.length + ' rows, ' + importHeaders.length + ' columns';
-    fi.classList.add('visible');
-    goImportStep(2);
-  };
-  reader.readAsText(file);
+  var isExcel = /\.xlsx?$/i.test(file.name);
+  if (isExcel) {
+    if (typeof XLSX === 'undefined') { showToast('⚠️ Excel library not loaded — try CSV instead'); return; }
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        var wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+        var ws = wb.Sheets[wb.SheetNames[0]];
+        var json = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+        if (json.length < 2) { showToast('⚠️ Worksheet appears empty'); return; }
+        importHeaders = json[0].map(function(h) { return String(h).trim(); });
+        importRows = json.slice(1).map(function(row) {
+          return row.map(function(c) { return String(c == null ? '' : c).trim(); });
+        }).filter(function(row) { return row.some(function(c) { return c !== ''; }); });
+        var fi = document.getElementById('importFileInfo');
+        fi.textContent = '✅ ' + file.name + ' — ' + importRows.length + ' rows, ' + importHeaders.length + ' columns';
+        fi.classList.add('visible');
+        goImportStep(2);
+      } catch (err) { showToast('⚠️ Could not read Excel file: ' + err.message); }
+    };
+    reader.readAsArrayBuffer(file);
+  } else {
+    var reader2 = new FileReader();
+    reader2.onload = function(e) {
+      var text = e.target.result;
+      var delim = text.includes('\t') ? '\t' : ',';
+      var lines = text.split(/\r?\n/).filter(function(l) { return l.trim(); });
+      if (lines.length < 2) { showToast('⚠️ File appears empty'); return; }
+      importHeaders = parseCSVLine(lines[0], delim);
+      importRows = lines.slice(1).map(function(l) { return parseCSVLine(l, delim); });
+      var fi = document.getElementById('importFileInfo');
+      fi.textContent = '✅ ' + file.name + ' — ' + importRows.length + ' rows, ' + importHeaders.length + ' columns';
+      fi.classList.add('visible');
+      goImportStep(2);
+    };
+    reader2.readAsText(file);
+  }
 }
 
 function parseCSVLine(line, delim) {
