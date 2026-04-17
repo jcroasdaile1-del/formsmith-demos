@@ -1311,6 +1311,10 @@ function confirmBracketAssignment() {
   generateSchedule();
   renderTeams();
   closeBracketModal();
+  // Advance score tab to first bracket play week
+  var sel = document.getElementById('weekSelect');
+  if (sel) { sel.value = String(config.qualWeeks + 1); }
+  renderScoreTab();
   showToast('🔒 Divisions locked — ' + usedBrackets.length + ' divisions, schedule generated!');
 }
 
@@ -1745,7 +1749,7 @@ function renderScoreEntry() {
     const allQualSubmitted = Array.from({length: config.qualWeeks}, (_, i) => i + 1).every(w => submittedWeeks[w]);
     if (allQualSubmitted && !config.bracketsLocked) {
       html += '</div>';
-      html += '<div class="bracket-prompt"><h4>Qualifying Complete</h4><p>All ' + config.qualWeeks + ' qualifying weeks are submitted. Lock brackets to generate the schedule and start bracket play.</p><button class="btn btn-primary" onclick="lockBrackets(); switchTab(\'scores\');">Lock Brackets & Start Season</button></div>';
+      html += '<div class="bracket-prompt"><h4>Qualifying Complete</h4><p>All ' + config.qualWeeks + ' qualifying weeks are submitted. Lock brackets to generate the schedule and start bracket play.</p><button class="btn btn-primary" onclick="lockBrackets()">Lock Brackets & Start Season</button></div>';
     } else if (!locked) {
       html += buildSubmitBar(week);
       html += '</div>';
@@ -1927,6 +1931,8 @@ function submitWeekScores(week) {
   }
   if (!confirm(msg)) return;
   submittedWeeks[week] = true;
+  // Rebuild week dropdown so new weeks (if any) appear and ✓ marks update
+  populateWeekSelect();
   // Auto-advance to next week if available
   const sel = document.getElementById('weekSelect');
   const totalWeeks = Math.max(getTotalSeasonWeeks(), config.qualWeeks);
