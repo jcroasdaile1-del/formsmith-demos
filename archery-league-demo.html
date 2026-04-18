@@ -1272,7 +1272,10 @@ function removeFreeAgent(idx) {
 function assignFreeAgentToTeam(idx) {
   var fa = freeAgents[idx];
   if (teams.length === 0) { showToast('⚠️ No teams to assign to'); return; }
-  var opts = teams.filter(function(t) { return !t.phantom; }).map(function(t) {
+  var perTeam = config.archersPerTeam || 3;
+  var incomplete = teams.filter(function(t) { return !t.phantom && t.archers.length < perTeam; });
+  if (incomplete.length === 0) { showToast('⚠️ All teams already have ' + perTeam + ' archers'); return; }
+  var opts = incomplete.map(function(t) {
     return '<option value="' + t.id + '">Team ' + esc(t.name) + ' (' + t.archers.length + ' archers)</option>';
   }).join('');
   var html = '<div style="text-align:left;">' +
