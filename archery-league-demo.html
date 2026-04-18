@@ -543,20 +543,7 @@ body.dark-mode .config-editing-banner { background: #422006; border-color: #d977
     <button class="btn btn-purple" onclick="lockBrackets()" id="btnLockBrackets">🔒 Lock Brackets</button>
     <button class="btn btn-warning" onclick="loadSampleData()">📋 Load Sample Data</button>
     <button class="btn btn-sm" style="background:#fef3c7;color:#92400e;border:1px solid #fbbf24;" onclick="openSubModal()">🔄 Assign Sub</button>
-  </div>
-  <div class="form-section" id="seasonSetup">
-    <div class="section-header" onclick="toggleSection(this)"><span class="section-label">📋 Season Setup</span><span class="chevron">▼</span></div>
-    <div class="section-body">
-      <div class="field-grid">
-        <div class="field-group"><label>League Name</label><input type="text" id="cfg-leagueName" value="Buckskin Bowmen"></div>
-        <div class="field-group"><label>Season</label><input type="text" id="cfg-season" value="2026 Summer"></div>
-        <div class="field-group"><label>Start Date</label><input type="date" id="cfg-startDate" value="2026-06-01"></div>
-        <div class="field-group"><label>Number of Divisions</label><select id="cfg-numBrackets"><option>2</option><option>3</option><option selected>4</option><option>5</option></select></div>
-      </div>
-      <div class="config-actions">
-        <button class="btn btn-primary btn-sm" onclick="saveSeasonSetup()">💾 Save</button>
-      </div>
-    </div>
+    <button class="btn btn-sm" style="background:var(--accent-light);color:#1e40af;border:1px solid #93c5fd;" onclick="openSeasonSetup()">📋 Season Setup</button>
   </div>
   <div class="dash-card">
     <div class="dash-card-header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;"><h3>📋 Team Roster (<span id="teamCount">0</span> teams)</h3><div id="teamBulkActions" style="display:none;gap:8px;"><button class="btn btn-outline btn-sm" onclick="editSelectedTeam()">✏️ Edit</button> <button class="btn btn-sm" style="background:var(--danger-light);color:#991b1b;border:1px solid #fca5a5;" onclick="deleteSelectedTeams()">🗑️ Delete</button></div></div>
@@ -704,6 +691,25 @@ body.dark-mode .config-editing-banner { background: #422006; border-color: #d977
       <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px;">
         <button class="btn btn-outline" onclick="closeTeamModal()">Cancel</button>
         <button class="btn btn-primary" onclick="saveTeam()">💾 Save Team</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ SEASON SETUP MODAL ═══════ -->
+<div class="modal-overlay" id="seasonSetupModal" onclick="if(event.target===this)closeSeasonSetup()">
+  <div class="modal-box" style="max-width:520px;">
+    <div class="modal-header"><h3>📋 Season Setup</h3><button class="modal-close" onclick="closeSeasonSetup()">&times;</button></div>
+    <div class="modal-body">
+      <div class="field-grid" style="grid-template-columns:1fr 1fr;">
+        <div class="field-group" style="grid-column:1/-1;"><label>League Name</label><input type="text" id="cfg-leagueName" value="Buckskin Bowmen"></div>
+        <div class="field-group"><label>Season</label><input type="text" id="cfg-season" value="2026 Summer"></div>
+        <div class="field-group"><label>Start Date</label><input type="date" id="cfg-startDate" value="2026-06-01"></div>
+        <div class="field-group"><label>Number of Divisions</label><select id="cfg-numBrackets"><option>2</option><option>3</option><option selected>4</option><option>5</option></select></div>
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px;">
+        <button class="btn btn-outline" onclick="closeSeasonSetup()">Cancel</button>
+        <button class="btn btn-primary" onclick="saveSeasonSetup()">💾 Save Season</button>
       </div>
     </div>
   </div>
@@ -913,6 +919,14 @@ function switchTab(tabName) {
 /* ══════════════════════════════════════════
    CONFIG — Season Setup (Teams tab) + Settings (Settings tab)
    ══════════════════════════════════════════ */
+function openSeasonSetup() {
+  loadConfigUI();
+  document.getElementById('seasonSetupModal').classList.add('show');
+}
+function closeSeasonSetup() {
+  document.getElementById('seasonSetupModal').classList.remove('show');
+}
+
 function saveSeasonSetup() {
   config.leagueName = (document.getElementById('cfg-leagueName').value || '').trim() || config.leagueName;
   config.season = (document.getElementById('cfg-season').value || '').trim() || config.season;
@@ -921,12 +935,14 @@ function saveSeasonSetup() {
   if (config.bracketsLocked && newBrackets !== config.numBrackets) {
     appConfirm('Brackets are locked. Changing the number of divisions could cause issues with the current schedule.\n\nSave anyway?', function() {
       config.numBrackets = newBrackets;
+      closeSeasonSetup();
       showToast('💾 Season setup saved');
       try { renderDashboard(); } catch(e) { console.error('renderDashboard error:', e); }
     }, '⚠️ Brackets Locked');
     return;
   }
   config.numBrackets = newBrackets;
+  closeSeasonSetup();
   showToast('💾 Season setup saved');
   try { renderDashboard(); } catch(e) { console.error('renderDashboard error:', e); }
 }
@@ -956,11 +972,12 @@ function doSaveSettings() {
 }
 
 function loadConfigUI() {
-  // Season Setup (Teams tab)
-  document.getElementById('cfg-leagueName').value = config.leagueName;
-  document.getElementById('cfg-season').value = config.season;
-  document.getElementById('cfg-startDate').value = config.startDate;
-  document.getElementById('cfg-numBrackets').value = config.numBrackets;
+  // Season Setup (modal)
+  var el;
+  el = document.getElementById('cfg-leagueName'); if (el) el.value = config.leagueName;
+  el = document.getElementById('cfg-season'); if (el) el.value = config.season;
+  el = document.getElementById('cfg-startDate'); if (el) el.value = config.startDate;
+  el = document.getElementById('cfg-numBrackets'); if (el) el.value = config.numBrackets;
   // Settings (Settings tab)
   loadSettingsUI();
 }
