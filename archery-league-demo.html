@@ -579,8 +579,9 @@ body.dark-mode .config-editing-banner { background: #422006; border-color: #d977
   <div class="dash-card" style="margin-top:16px;">
     <div class="dash-card-header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
       <h3>🏹 Free Agents (<span id="freeAgentCount">0</span>)</h3>
-      <div style="display:flex;gap:8px;">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
         <button class="btn btn-primary btn-sm" onclick="addFreeAgentModal()">＋ Add Archer</button>
+        <button class="btn btn-sm" id="btnCreateTeamFA" onclick="createTeamFromFreeAgents()" style="display:none;background:var(--success-light,#dcfce7);color:#166534;border:1px solid #86efac;font-size:0.78rem;">👥 Create Team</button>
         <button class="btn btn-accent btn-sm" id="btnAutoAssign" onclick="autoAssignFreeAgents()" style="display:none;">🔀 Auto-Assign to Teams</button>
       </div>
     </div>
@@ -913,8 +914,13 @@ let configSnapshot = null;
 function editConfig() {
   // Warn if brackets are locked — some changes are dangerous
   if (config.bracketsLocked) {
-    if (!confirm('⚠️ Brackets are locked. Changing settings like Number of Brackets or Qualifying Weeks could cause issues with the current schedule.\n\nProceed with editing?')) return;
+    appConfirm('Brackets are locked. Changing settings like Number of Brackets or Qualifying Weeks could cause issues with the current schedule.\n\nProceed with editing?', function() { doEditConfig(); }, '⚠️ Brackets Locked');
+    return;
   }
+  doEditConfig();
+}
+
+function doEditConfig() {
   // Snapshot current config for cancel
   configSnapshot = JSON.parse(JSON.stringify(config));
   // Enable all fields
@@ -1158,10 +1164,11 @@ function saveTeam() {
 }
 
 function deleteTeam(idx) {
-  if (!confirm('Delete team "' + teams[idx].name + '"?')) return;
-  teams.splice(idx, 1);
-  renderTeams();
-  showToast('🗑️ Team deleted');
+  appConfirm('Delete team "' + teams[idx].name + '"?', function() {
+    teams.splice(idx, 1);
+    renderTeams();
+    showToast('🗑️ Team deleted');
+  }, 'Delete Team');
 }
 
 function getSelectedTeamIndices() {
@@ -1192,11 +1199,11 @@ function deleteSelectedTeams() {
   const msg = sel.length === 1
     ? 'Delete team "' + names[0] + '"?'
     : 'Delete ' + sel.length + ' teams?\n\n' + names.slice(0, 10).map(n => '  • ' + n).join('\n') + (names.length > 10 ? '\n  ... and ' + (names.length - 10) + ' more' : '');
-  if (!confirm(msg)) return;
-  // Delete in reverse index order so indices stay valid
-  sel.sort((a, b) => b - a).forEach(i => teams.splice(i, 1));
-  renderTeams();
-  showToast('🗑️ ' + sel.length + ' team' + (sel.length > 1 ? 's' : '') + ' deleted');
+  appConfirm(msg, function() {
+    sel.sort((a, b) => b - a).forEach(i => teams.splice(i, 1));
+    renderTeams();
+    showToast('🗑️ ' + sel.length + ' team' + (sel.length > 1 ? 's' : '') + ' deleted');
+  }, 'Delete Teams');
 }
 
 /* ══════════════════════════════════════════
@@ -1209,6 +1216,8 @@ function renderFreeAgents() {
   document.getElementById('freeAgentCount').textContent = freeAgents.length;
   var btn = document.getElementById('btnAutoAssign');
   if (btn) btn.style.display = freeAgents.length > 0 ? '' : 'none';
+  var btnCreate = document.getElementById('btnCreateTeamFA');
+  if (btnCreate) btnCreate.style.display = freeAgents.length >= 1 ? '' : 'none';
   if (freeAgents.length === 0) {
     body.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--text-light);">No free agents. Add individual archers who haven\'t been assigned to a team yet.</td></tr>';
     return;
@@ -1266,6 +1275,44 @@ function removeFreeAgent(idx) {
   freeAgents.splice(idx, 1);
   renderFreeAgents();
   showToast('✕ Archer removed from free agents');
+}
+
+function createTeamFromFreeAgents() {
+  var perTeam = config.archersPerTeam || 3;
+  if (freeAgents.length === 0) { showToast('⚠️ No free agents available'); return; }
+  var maxPick = Math.min(freeAgents.length, perTeam);
+  var html = '<div style="text-align:left;">' +
+    '<p style="margin:0 0 12px;">Select free agents to form a new team (' + perTeam + ' archers per team):</p>' +
+    '<div style="max-height:260px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius);padding:8px;">' +
+    freeAgents.map(function(fa, i) {
+      return '<label style="display:flex;align-items:center;gap:8px;padding:6px 4px;cursor:pointer;border-bottom:1px solid var(--border);">' +
+        '<input type="checkbox" class="fa-team-pick" data-idx="' + i + '"' + (i < maxPick ? ' checked' : '') + '>' +
+        '<span style="font-weight:600;">' + esc(fa.name) + '</span>' +
+        (fa.phone ? '<span style="font-size:0.75rem;color:var(--text-light);">' + esc(fa.phone) + '</span>' : '') +
+        '</label>';
+    }).join('') +
+    '</div></div>';
+  showGenericModal('Create Team from Free Agents', html, function() {
+    var checks = document.querySelectorAll('.fa-team-pick:checked');
+    if (checks.length === 0) { showToast('⚠️ Select at least one archer'); return; }
+    var picked = [];
+    checks.forEach(function(cb) { picked.push(parseInt(cb.dataset.idx)); });
+    picked.sort(function(a, b) { return b - a; }); // reverse for safe splice
+    var archers = [], contacts = [];
+    picked.forEach(function(idx) {
+      var fa = freeAgents[idx];
+      archers.unshift(fa.name);
+      contacts.unshift({ phone: fa.phone || '', email: fa.email || '' });
+    });
+    // Remove from free agents (reverse order so indices stay valid)
+    picked.forEach(function(idx) { freeAgents.splice(idx, 1); });
+    var teamName = String(getNextTeamNumber());
+    var id = teams.length > 0 ? Math.max.apply(null, teams.map(function(t) { return t.id; })) + 1 : 1;
+    teams.push({ id: id, name: teamName, archers: archers, contacts: contacts, bracket: null });
+    renderTeams();
+    renderFreeAgents();
+    showToast('👥 Team ' + teamName + ' created with ' + archers.length + ' archer' + (archers.length > 1 ? 's' : ''));
+  });
 }
 
 function assignFreeAgentToTeam(idx) {
@@ -1368,12 +1415,13 @@ function getTeamWeekScore(teamId, week) {
 
 function lockBrackets() {
   if (config.bracketsLocked) {
-    if (!confirm('Unlock brackets? This will clear the schedule and let you re-assign.')) return;
-    config.bracketsLocked = false;
-    schedule = {};
-    teams.forEach(t => { t.bracket = null; });
-    renderTeams();
-    showToast('🔓 Brackets unlocked');
+    appConfirm('Unlock brackets? This will clear the schedule and let you re-assign.', function() {
+      config.bracketsLocked = false;
+      schedule = {};
+      teams.forEach(t => { t.bracket = null; });
+      renderTeams();
+      showToast('🔓 Brackets unlocked');
+    }, 'Unlock Brackets');
     return;
   }
   if (teams.length < 2) { showToast('⚠️ Need at least 2 teams'); return; }
@@ -1381,7 +1429,10 @@ function lockBrackets() {
   let hasScores = false;
   for (let w = 1; w <= config.qualWeeks; w++) { if (scores[w] && Object.keys(scores[w]).length > 0) hasScores = true; }
   if (!hasScores) {
-    if (!confirm('No qualifying scores entered yet. Lock brackets anyway? (Teams will be assigned randomly.)')) return;
+    appConfirm('No qualifying scores entered yet. Lock brackets anyway? (Teams will be assigned randomly.)', function() {
+      openBracketModal();
+    }, 'No Qualifying Scores');
+    return;
   }
   openBracketModal();
 }
@@ -2210,26 +2261,26 @@ function submitWeekScores(week) {
     if (missing.length > 10) msg += '\n  ... and ' + (missing.length - 10) + ' more';
     msg += '\n\nSubmit anyway?';
   }
-  if (!confirm(msg)) return;
-  submittedWeeks[week] = true;
-  // Rebuild week dropdown so new weeks (if any) appear and ✓ marks update
-  populateWeekSelect();
-  // Auto-advance to next week if available
-  const sel = document.getElementById('weekSelect');
-  const totalWeeks = Math.max(getTotalSeasonWeeks(), config.qualWeeks);
-  if (week < totalWeeks) {
-    sel.value = String(week + 1);
-  }
-  renderScoreEntry();
-  updateWeekNav();
-  showToast('Week ' + week + ' submitted — advanced to Week ' + (week < totalWeeks ? week + 1 : week));
+  appConfirm(msg, function() {
+    submittedWeeks[week] = true;
+    populateWeekSelect();
+    const sel = document.getElementById('weekSelect');
+    const totalWeeks = Math.max(getTotalSeasonWeeks(), config.qualWeeks);
+    if (week < totalWeeks) {
+      sel.value = String(week + 1);
+    }
+    renderScoreEntry();
+    updateWeekNav();
+    showToast('Week ' + week + ' submitted — advanced to Week ' + (week < totalWeeks ? week + 1 : week));
+  }, 'Submit Week ' + week);
 }
 
 function unsubmitWeek(week) {
-  if (!confirm('Unlock Week ' + week + ' scores for editing?')) return;
-  delete submittedWeeks[week];
-  renderScoreEntry();
-  showToast('✏️ Week ' + week + ' unlocked for editing');
+  appConfirm('Unlock Week ' + week + ' scores for editing?', function() {
+    delete submittedWeeks[week];
+    renderScoreEntry();
+    showToast('✏️ Week ' + week + ' unlocked for editing');
+  }, 'Unlock Week');
 }
 
 function clearSeasonStep1() {
@@ -2247,33 +2298,35 @@ function clearSeasonStep1() {
     '  • All substitute assignments\n\n' +
     'This CANNOT be undone.\n\n' +
     'Are you sure you want to continue?';
-  if (!confirm(msg)) return;
-  clearSeasonStep2();
+  appConfirm(msg, function() {
+    clearSeasonStep2();
+  }, '⚠️ Clear Season');
 }
 
 function clearSeasonStep2() {
-  const typed = prompt('🔒 Final confirmation:\n\nType CLEAR to permanently delete all season data:');
-  if (!typed || typed.trim().toUpperCase() !== 'CLEAR') {
-    showToast('❌ Season clear cancelled');
-    return;
-  }
-  // Back up first (auto-download)
-  if (teams.length > 0) {
-    backupData();
-  }
-  // Reset everything
-  teams = [];
-  scores = {};
-  schedule = {};
-  substitutes = {};
-  submittedWeeks = {};
-  freeAgents = [];
-  config.bracketsLocked = false;
-  loadConfigUI();
-  renderTeams();
-  renderFreeAgents();
-  renderDashboard();
-  showToast('🗑️ Season cleared — backup was downloaded automatically');
+  appPrompt('Type CLEAR to permanently delete all season data:', function(typed) {
+    if (!typed || typed.trim().toUpperCase() !== 'CLEAR') {
+      showToast('❌ Season clear cancelled');
+      return;
+    }
+    // Back up first (auto-download)
+    if (teams.length > 0) {
+      backupData();
+    }
+    // Reset everything
+    teams = [];
+    scores = {};
+    schedule = {};
+    substitutes = {};
+    submittedWeeks = {};
+    freeAgents = [];
+    config.bracketsLocked = false;
+    loadConfigUI();
+    renderTeams();
+    renderFreeAgents();
+    renderDashboard();
+    showToast('🗑️ Season cleared — backup was downloaded automatically');
+  }, '🔒 Final Confirmation');
 }
 
 /* ══════════════════════════════════════════
@@ -2908,7 +2961,14 @@ function restoreData(event) {
    SAMPLE DATA
    ══════════════════════════════════════════ */
 function loadSampleData() {
-  if (teams.length > 0 && !confirm('This will replace all current data. Continue?')) return;
+  if (teams.length > 0) {
+    appConfirm('This will replace all current data. Continue?', function() { doLoadSampleData(); }, 'Load Sample Data');
+    return;
+  }
+  doLoadSampleData();
+}
+
+function doLoadSampleData() {
   config = {
     leagueName: 'Buckskin Bowmen', season: '2026 Summer', numBrackets: 4,
     qualWeeks: 2, bracketPlayWeeks: 11, targets: 28, ptsPerTarget: 10, handicapPct: 80,
