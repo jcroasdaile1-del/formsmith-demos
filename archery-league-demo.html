@@ -143,6 +143,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 .field-group.full-width { grid-column: 1 / -1; }
 .field-group label { font-size: 0.75rem; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.3px; }
 .field-group input, .field-group select, .field-group textarea { padding: 10px 14px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.88rem; font-family: inherit; width: 100%; box-sizing: border-box; }
+.field-input { padding: 10px 14px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.92rem; font-family: inherit; width: 100%; box-sizing: border-box; }
+.field-input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(22,163,74,0.15); }
 .field-group select { padding-right: 28px; }
 .field-group input:focus, .field-group select:focus, .field-group textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(22,163,74,0.15); }
 
@@ -1076,11 +1078,11 @@ function buildArcherRows(count, team) {
   for (var i = 0; i < count; i++) {
     var a = team ? (team.archers[i] || '') : '';
     var c = team && team.contacts && team.contacts[i] ? team.contacts[i] : {};
-    html += '<div style="border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px;margin-top:10px;">';
-    html += '<div style="font-weight:600;font-size:0.82rem;color:var(--text-light);margin-bottom:6px;">Archer ' + (i + 1) + '</div>';
-    html += '<div class="field-grid" style="grid-template-columns:1fr;gap:6px;">';
+    html += '<div style="border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-top:12px;">';
+    html += '<div style="font-weight:600;font-size:0.85rem;color:var(--text-light);margin-bottom:8px;">Archer ' + (i + 1) + '</div>';
+    html += '<div class="field-grid" style="grid-template-columns:1fr;gap:8px;">';
     html += '<input type="text" class="field-input tm-archer-name" placeholder="Name" value="' + esc(a) + '">';
-    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">';
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">';
     html += '<input type="text" class="field-input tm-archer-phone" placeholder="Phone" value="' + esc(c.phone || '') + '">';
     html += '<input type="email" class="field-input tm-archer-email" placeholder="Email" value="' + esc(c.email || '') + '">';
     html += '</div></div></div>';
