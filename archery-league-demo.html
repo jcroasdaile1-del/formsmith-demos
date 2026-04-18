@@ -1046,7 +1046,6 @@ function renderTeams() {
   }
   body.innerHTML = teams.map((t, i) => {
     const avg = getTeamQualAvg(t.id);
-    const phantomStyle = t.phantom ? ' style="opacity:0.55;font-style:italic;"' : '';
     const c = t.contacts || [];
     var hasContacts = c.some(function(ci) { return ci && (ci.phone || ci.email); });
     var expandBtn = hasContacts ? ' <button class="btn-contact-expand" onclick="event.stopPropagation();toggleTeamContacts(' + i + ')" title="View contact info">&#x1F4DE;</button>' : '';
@@ -1063,8 +1062,8 @@ function renderTeams() {
         }).join('') +
         '</div></td></tr>';
     }
-    return '<tr' + phantomStyle + ' style="cursor:pointer;' + (t.phantom ? 'opacity:0.55;font-style:italic;' : '') + '" onclick="editTeam(' + i + ')">' +
-      '<td onclick="event.stopPropagation()"><input type="checkbox" class="team-check" data-idx="' + i + '" onchange="updateTeamBulkActions()"></td><td style="font-weight:700;">' + (t.phantom ? '👻 ' : '') + esc(t.name) + expandBtn + '</td>' +
+    return '<tr style="cursor:pointer;" onclick="editTeam(' + i + ')">' +
+      '<td onclick="event.stopPropagation()"><input type="checkbox" class="team-check" data-idx="' + i + '" onchange="updateTeamBulkActions()"></td><td style="font-weight:700;">' + esc(t.name) + expandBtn + '</td>' +
       t.archers.map(function(a) { return '<td>' + esc(a) + '</td>'; }).join('') +
       (t.archers.length < 3 ? '<td></td>'.repeat(3 - t.archers.length) : '') +
       '<td>' + (t.bracket ? '<span class="badge badge-green">' + esc(t.bracket) + '</span>' : '<span class="badge badge-gray">—</span>') + '</td>' +
@@ -1273,7 +1272,7 @@ function assignFreeAgentToTeam(idx) {
   var fa = freeAgents[idx];
   if (teams.length === 0) { showToast('⚠️ No teams to assign to'); return; }
   var perTeam = config.archersPerTeam || 3;
-  var incomplete = teams.filter(function(t) { return !t.phantom && t.archers.length < perTeam; });
+  var incomplete = teams.filter(function(t) { return t.archers.length < perTeam; });
   if (incomplete.length === 0) { showToast('⚠️ All teams already have ' + perTeam + ' archers'); return; }
   var opts = incomplete.map(function(t) {
     return '<option value="' + t.id + '">Team ' + esc(t.name) + ' (' + t.archers.length + ' archers)</option>';
@@ -1300,7 +1299,7 @@ function autoAssignFreeAgents() {
   if (freeAgents.length === 0) { showToast('⚠️ No free agents to assign'); return; }
   var perTeam = config.archersPerTeam || 3;
   // Find teams that need archers
-  var incomplete = teams.filter(function(t) { return !t.phantom && t.archers.length < perTeam; });
+  var incomplete = teams.filter(function(t) { return t.archers.length < perTeam; });
   var assigned = 0;
   // First fill incomplete teams
   while (freeAgents.length > 0 && incomplete.length > 0) {
@@ -1372,9 +1371,7 @@ function lockBrackets() {
     if (!confirm('Unlock brackets? This will clear the schedule and let you re-assign.')) return;
     config.bracketsLocked = false;
     schedule = {};
-    teams.forEach(t => { t.bracket = null; t.phantom = false; });
-    // Remove phantom teams
-    teams = teams.filter(function(t) { return !t.phantom; });
+    teams.forEach(t => { t.bracket = null; });
     renderTeams();
     showToast('🔓 Brackets unlocked');
     return;
@@ -1428,8 +1425,8 @@ function showBracketStep1() {
     html += '<span style="font-size:1.8rem;font-weight:800;color:' + (recommended ? 'var(--primary)' : 'var(--text)') + ';">' + d + '</span>';
     html += '<span style="font-size:0.88rem;font-weight:600;color:var(--text-light);margin-top:2px;">divisions</span>';
     html += '<span style="font-size:0.82rem;color:var(--text-light);margin-top:6px;">(' + sizeLabel + ')</span>';
-    var phantomCount = sizes.filter(function(s) { return s % 2 !== 0 || s < Math.max.apply(null, sizes); }).length;
-    if (phantomCount > 0) html += '<span style="font-size:0.75rem;color:var(--accent);margin-top:4px;">👻 ' + phantomCount + ' phantom team' + (phantomCount > 1 ? 's' : '') + ' added</span>';
+    var oddCount = sizes.filter(function(s) { return s % 2 !== 0; }).length;
+    if (oddCount > 0) html += '<span style="font-size:0.75rem;color:var(--accent);margin-top:4px;">🎯 ' + oddCount + ' div' + (oddCount > 1 ? 's' : '') + ' with odd teams</span>';
     if (recommended) html += '<span style="font-size:0.78rem;font-weight:700;color:var(--primary);margin-top:5px;text-transform:uppercase;letter-spacing:0.5px;">⚙️ Current Setting</span>';
     html += '</button>';
   }
@@ -1480,11 +1477,11 @@ function renderBracketSummaryBar() {
   labels.forEach(function(label) {
     var g = groups[label];
     var avg = g.count > 0 ? (g.totalAvg / g.count).toFixed(0) : '—';
-    var needsPhantom = g.count < maxCount || g.count % 2 !== 0;
+    var isOdd = g.count % 2 !== 0;
     html += '<div style="flex:1;min-width:80px;background:var(--primary-light);border:1px solid var(--primary);border-radius:var(--radius);padding:8px 12px;text-align:center;">';
     html += '<div style="font-weight:800;font-size:1rem;color:var(--primary-dark);">Div ' + esc(label) + '</div>';
     html += '<div style="font-size:0.75rem;color:var(--text-light);">' + g.count + ' teams · Avg ' + avg + '</div>';
-    if (needsPhantom) html += '<div style="font-size:0.75rem;color:var(--accent);margin-top:3px;">👻 phantom team added</div>';
+    if (isOdd) html += '<div style="font-size:0.75rem;color:var(--accent);margin-top:3px;">🎯 odd — shoots vs. avg</div>';
     html += '</div>';
   });
   bar.innerHTML = html;
@@ -1604,16 +1601,7 @@ function confirmBracketAssignment() {
   bracketDraft.forEach(function(t) { if (t.bracket && usedBrackets.indexOf(t.bracket) === -1) usedBrackets.push(t.bracket); });
   config.numBrackets = usedBrackets.length;
 
-  // Detect uneven divisions and add phantom (bye) teams where needed
-  var divCounts = {};
-  usedBrackets.forEach(function(b) { divCounts[b] = 0; });
-  bracketDraft.forEach(function(t) { if (t.bracket) divCounts[t.bracket]++; });
-  var maxSize = Math.max.apply(null, usedBrackets.map(function(b) { return divCounts[b]; }));
-  var phantomDivs = usedBrackets.filter(function(b) { return divCounts[b] < maxSize || divCounts[b] % 2 !== 0; });
-  if (phantomDivs.length > 0) {
-    addPhantomTeams(phantomDivs);
-  }
-
+  // Odd divisions will have self-matches (team shoots vs. own average)
   config.bracketsLocked = true;
   generateSchedule();
   renderTeams();
@@ -1624,68 +1612,17 @@ function confirmBracketAssignment() {
   if (sel) { sel.value = String(config.qualWeeks + 1); }
   renderScoreEntry();
   updateWeekNav();
+  // Check for odd divisions
+  var oddDivs = [];
+  usedBrackets.forEach(function(b) {
+    var count = bracketDraft.filter(function(t) { return t.bracket === b; }).length;
+    if (count % 2 !== 0) oddDivs.push(b);
+  });
   var toastMsg = '🔒 Divisions locked — ' + usedBrackets.length + ' divisions, schedule generated!';
-  if (phantomDivs.length > 0) {
-    toastMsg += '\n👻 Phantom teams added to Div ' + phantomDivs.join(', ') + ' to even out matchups.';
+  if (oddDivs.length > 0) {
+    toastMsg += '\n🎯 Div ' + oddDivs.join(', ') + ' has odd teams — one team each week shoots vs. own average.';
   }
   showToast(toastMsg);
-}
-
-function addPhantomTeams(divisions) {
-  var maxId = teams.length > 0 ? Math.max.apply(null, teams.map(function(t) { return t.id; })) : 0;
-  divisions.forEach(function(bracket) {
-    maxId++;
-    var phantomTeam = {
-      id: maxId,
-      name: 'BYE (' + bracket + ')',
-      archers: ['Phantom', 'Phantom', 'Phantom'],
-      bracket: bracket,
-      phantom: true
-    };
-    teams.push(phantomTeam);
-    // Add to bracketDraft too
-    var divTeams = bracketDraft.filter(function(t) { return t.bracket === bracket; });
-    var divAvg = divTeams.reduce(function(s, t) { return s + t.qualAvg; }, 0) / divTeams.length;
-    bracketDraft.push({ teamId: maxId, teamName: phantomTeam.name, qualAvg: divAvg, bracket: bracket });
-
-    // Generate phantom scores for qualifying weeks so handicap calc has data
-    for (var w = 1; w <= config.qualWeeks; w++) {
-      if (!scores[w]) scores[w] = {};
-      var perArcher = Math.round(divAvg / config.archersPerTeam);
-      var phantomScores = [];
-      for (var a = 0; a < config.archersPerTeam; a++) phantomScores.push(perArcher);
-      scores[w][maxId] = phantomScores;
-    }
-  });
-}
-
-function isPhantomTeam(teamId) {
-  var t = teams.find(function(x) { return x.id === teamId; });
-  return t && t.phantom === true;
-}
-
-function fillPhantomScores(week) {
-  // For every phantom team, auto-fill their score with division average of real teams
-  teams.forEach(function(t) {
-    if (!t.phantom || !t.bracket) return;
-    // Get real teams in same division
-    var realTeams = teams.filter(function(x) { return x.bracket === t.bracket && !x.phantom; });
-    if (realTeams.length === 0) return;
-    // Compute division avg for this week from rolling 3-week avg
-    var divTotal = 0, divCount = 0;
-    realTeams.forEach(function(rt) {
-      var avg = getTeamRunningAvg(rt.id, week - 1);
-      if (avg > 0) { divTotal += avg; divCount++; }
-    });
-    var divAvg = divCount > 0 ? divTotal / divCount : 0;
-    if (divAvg <= 0) return;
-    // Fill phantom scores
-    if (!scores[week]) scores[week] = {};
-    var perArcher = Math.round(divAvg / config.archersPerTeam);
-    var phantomScores = [];
-    for (var a = 0; a < config.archersPerTeam; a++) phantomScores.push(perArcher);
-    scores[week][t.id] = phantomScores;
-  });
 }
 
 /* ══════════════════════════════════════════
@@ -1709,7 +1646,7 @@ function generateSchedule() {
     }
     evens.reverse();
     var ids = odds.concat(evens);
-    if (ids.length % 2 !== 0) ids.push(-1); // bye placeholder (shouldn't happen with phantoms)
+    if (ids.length % 2 !== 0) ids.push(-1); // odd team out shoots vs. own average
     var numRounds = ids.length - 1;
     // Build one full round-robin cycle of pairings
     var cyclePairings = []; // array of arrays of {teamA, teamB}
@@ -1719,6 +1656,8 @@ function generateSchedule() {
       for (var i = 0; i < half; i++) {
         var a = ids[i], b = ids[ids.length - 1 - i];
         if (a !== -1 && b !== -1) roundPairs.push({ teamA: a, teamB: b });
+        else if (a !== -1) roundPairs.push({ teamA: a, teamB: -1 }); // shoots vs own avg
+        else if (b !== -1) roundPairs.push({ teamA: b, teamB: -1 }); // shoots vs own avg
       }
       cyclePairings.push(roundPairs);
       // Rotate: fix first, rotate rest
@@ -1771,8 +1710,16 @@ function getWeekMatchups(bracket, week) {
    HANDICAP & RESULTS
    ══════════════════════════════════════════ */
 function calcMatchResult(teamA_id, teamB_id, week) {
-  // Ensure phantom teams have scores filled for this week
-  if (isPhantomTeam(teamA_id) || isPhantomTeam(teamB_id)) fillPhantomScores(week);
+  // Self-match: team shoots against own running average
+  if (teamB_id === -1) {
+    let sRawA = getTeamWeekScore(teamA_id, week);
+    if (sRawA === 0) return null;
+    let sAvgA = getTeamRunningAvg(teamA_id, week - 1) || sRawA;
+    let sResult = 'TIE';
+    if (sRawA > sAvgA) sResult = 'WIN';
+    else if (sRawA < sAvgA) sResult = 'LOSS';
+    return { rawA: sRawA, rawB: Math.round(sAvgA), hcpA: 0, hcpB: 0, adjA: sRawA, adjB: Math.round(sAvgA), resultA: sResult, resultB: sResult === 'WIN' ? 'LOSS' : sResult === 'LOSS' ? 'WIN' : 'TIE', selfMatch: true };
+  }
   const rawA = getTeamWeekScore(teamA_id, week);
   const rawB = getTeamWeekScore(teamB_id, week);
   if (rawA === 0 || rawB === 0) return null; // no scores entered for at least one team
@@ -1803,8 +1750,9 @@ function calcBracketStandings(bracket, upToWeek) {
   allWeeks.forEach(w => {
     const matchups = getWeekMatchups(bracket, w);
     matchups.forEach(m => {
-      if (!m.teamA || !m.teamB) return;
-      const result = calcMatchResult(m.teamA, m.teamB, w);
+      if (!m.teamA) return;
+      var isSelf = m.teamB === -1;
+      var result = calcMatchResult(m.teamA, m.teamB, w);
       if (!result) return;
       if (records[m.teamA]) {
         records[m.teamA].totalScore += result.rawA;
@@ -1813,7 +1761,7 @@ function calcBracketStandings(bracket, upToWeek) {
         else if (result.resultA === 'LOSS') records[m.teamA].losses++;
         else { records[m.teamA].wins += 0.5; records[m.teamA].ties++; }
       }
-      if (records[m.teamB]) {
+      if (!isSelf && records[m.teamB]) {
         records[m.teamB].totalScore += result.rawB;
         if (result.rawB > 0) records[m.teamB].weeksShot++;
         if (result.resultB === 'WIN') records[m.teamB].wins++;
@@ -2039,7 +1987,7 @@ function renderScoreEntry() {
     if (locked) html += '<div class="submitted-bar">Week ' + week + ' scores submitted<button class="btn btn-outline btn-sm" style="margin-left:auto;" onclick="unsubmitWeek(' + week + ')">✏️ Edit Scores</button></div>';
     html += '<h3 style="margin-bottom:4px;">🎯 Qualifying — Week ' + week + '</h3><p style="font-size:0.85rem;color:var(--text-light);margin-bottom:12px;">Enter individual scores for all teams. No matchups during qualifying.</p>';
     // Toolbar: search + progress
-    const realTeams = teams.filter(t => !t.phantom);
+    const realTeams = teams;
     const scoredCount = realTeams.filter(t => scores[week] && scores[week][t.id] && scores[week][t.id].some(v => v > 0)).length;
     html += '<div class="qual-toolbar">';
     html += '<input class="qual-search" type="text" placeholder="Search teams..." value="' + esc(qualTeamFilter) + '" oninput="filterQualTeams(this.value)">';
@@ -2081,8 +2029,6 @@ function renderScoreEntry() {
   }
 
   // Bracket play: show bracket tabs + selected bracket only
-  // Auto-fill phantom team scores before rendering
-  fillPhantomScores(week);
   const brackets = [...new Set(teams.map(t => t.bracket).filter(Boolean))].sort();
   const locked = submittedWeeks[week];
   // Build/update bracket tabs
@@ -2099,59 +2045,74 @@ function renderScoreEntry() {
     html += '<div style="text-align:center;padding:30px;color:var(--text-light);">No matchups for Bracket ' + selectedBracket + ' this week.</div>';
   } else {
     matchups.forEach(m => {
-      if (!m.teamA || !m.teamB) return;
+      if (!m.teamA) return;
+      var isSelf = m.teamB === -1;
       const tA = teams.find(t => t.id === m.teamA);
-      const tB = teams.find(t => t.id === m.teamB);
-      if (!tA || !tB) return;
+      if (!tA) return;
+      const tB = isSelf ? null : teams.find(t => t.id === m.teamB);
+      if (!isSelf && !tB) return;
       const sA = (scores[week] && scores[week][tA.id]) || [];
-      const sB = (scores[week] && scores[week][tB.id]) || [];
-      const result = calcMatchResult(tA.id, tB.id, week);
+      const result = calcMatchResult(tA.id, isSelf ? -1 : tB.id, week);
       html += '<div class="score-matchup">';
       const badgeA = result ? (result.resultA === 'WIN' ? ' <span style="color:#16a34a;font-weight:800;font-size:0.8em;">W</span>' : result.resultA === 'LOSS' ? ' <span style="color:#dc2626;font-weight:800;font-size:0.8em;">L</span>' : ' <span style="color:#d97706;font-weight:800;font-size:0.8em;">T</span>') : '';
-      const badgeB = result ? (result.resultB === 'WIN' ? ' <span style="color:#16a34a;font-weight:800;font-size:0.8em;">W</span>' : result.resultB === 'LOSS' ? ' <span style="color:#dc2626;font-weight:800;font-size:0.8em;">L</span>' : ' <span style="color:#d97706;font-weight:800;font-size:0.8em;">T</span>') : '';
-      html += '<div class="matchup-header"><div class="matchup-team"><div class="matchup-team-name">' + esc(tA.name) + badgeA + '</div></div><div class="vs">VS</div><div class="matchup-team" style="text-align:right;"><div class="matchup-team-name">' + esc(tB.name) + badgeB + '</div></div></div>';
-      html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">';
-      html += '<div>';
-      var phantomA = isPhantomTeam(tA.id);
-      tA.archers.forEach((a, ai) => {
-        const dispA = getArcherName(tA.id, ai, week);
-        const isSubA = isSubstitute(tA.id, ai, week);
-        var disabledA = locked || phantomA;
-        html += '<div class="score-row"><span class="name">' + (phantomA ? '👻 BYE' : esc(dispA) + (isSubA ? ' <span class="sub-badge">SUB</span>' : '')) + '</span><input class="score-input" type="number" min="0" max="' + getPerfectScore() + '" value="' + (sA[ai] || '') + '" onfocus="this.select()" onchange="setScore(' + tA.id + ',' + week + ',' + ai + ',this.value)"' + (disabledA ? ' disabled style="opacity:0.6;cursor:not-allowed;"' : '') + '></div>';
-      });
-      html += '</div><div>';
-      var phantomB = isPhantomTeam(tB.id);
-      tB.archers.forEach((a, ai) => {
-        const dispB = getArcherName(tB.id, ai, week);
-        const isSubB = isSubstitute(tB.id, ai, week);
-        var disabledB = locked || phantomB;
-        html += '<div class="score-row"><span class="name">' + (phantomB ? '👻 BYE' : esc(dispB) + (isSubB ? ' <span class="sub-badge">SUB</span>' : '')) + '</span><input class="score-input" type="number" min="0" max="' + getPerfectScore() + '" value="' + (sB[ai] || '') + '" onfocus="this.select()" onchange="setScore(' + tB.id + ',' + week + ',' + ai + ',this.value)"' + (disabledB ? ' disabled style="opacity:0.6;cursor:not-allowed;"' : '') + '></div>';
-      });
-      html += '</div></div>';
-      if (result) {
-        html += '<div class="matchup-totals"><div class="team-side">';
-        html += '<div class="label-val"><span>Raw Score</span><span>' + result.rawA + '</span></div>';
-        html += '<div class="label-val"><span>Handicap</span><span>+' + result.hcpA + '</span></div>';
-        html += '<div class="label-val bold"><span>Adjusted</span><span>' + result.adjA + '</span></div>';
-        html += '</div><div class="team-side right">';
-        html += '<div class="label-val"><span>Raw Score</span><span>' + result.rawB + '</span></div>';
-        html += '<div class="label-val"><span>Handicap</span><span>+' + result.hcpB + '</span></div>';
-        html += '<div class="label-val bold"><span>Adjusted</span><span>' + result.adjB + '</span></div>';
+      if (isSelf) {
+        // Self-match: team shoots against own average
+        var selfAvg = getTeamRunningAvg(tA.id, week - 1);
+        var selfAvgDisplay = selfAvg > 0 ? Math.round(selfAvg) : '—';
+        html += '<div class="matchup-header"><div class="matchup-team"><div class="matchup-team-name">' + esc(tA.name) + badgeA + '</div></div><div class="vs">VS</div><div class="matchup-team" style="text-align:right;"><div class="matchup-team-name">🎯 Own Average (' + selfAvgDisplay + ')</div></div></div>';
+        html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">';
+        html += '<div>';
+        tA.archers.forEach((a, ai) => {
+          const dispA = getArcherName(tA.id, ai, week);
+          const isSubA = isSubstitute(tA.id, ai, week);
+          html += '<div class="score-row"><span class="name">' + esc(dispA) + (isSubA ? ' <span class="sub-badge">SUB</span>' : '') + '</span><input class="score-input" type="number" min="0" max="' + getPerfectScore() + '" value="' + (sA[ai] || '') + '" onfocus="this.select()" onchange="setScore(' + tA.id + ',' + week + ',' + ai + ',this.value)"' + (locked ? ' disabled style="opacity:0.6;cursor:not-allowed;"' : '') + '></div>';
+        });
+        html += '</div><div style="display:flex;align-items:center;justify-content:center;color:var(--text-light);font-size:0.88rem;padding:12px;">';
+        html += '<div style="text-align:center;"><div style="font-size:2rem;margin-bottom:4px;">🎯</div>';
+        html += '<div style="font-weight:700;font-size:1.1rem;">Target: ' + selfAvgDisplay + '</div>';
+        html += '<div style="font-size:0.78rem;margin-top:2px;">Beat your average to win</div></div>';
         html += '</div></div>';
+        if (result) {
+          html += '<div class="matchup-totals"><div class="team-side">';
+          html += '<div class="label-val"><span>Raw Score</span><span>' + result.rawA + '</span></div>';
+          html += '<div class="label-val bold"><span>Result</span><span>' + (result.resultA === 'WIN' ? '✅ Above Avg' : result.resultA === 'LOSS' ? '❌ Below Avg' : '➖ Tied Avg') + '</span></div>';
+          html += '</div><div class="team-side right">';
+          html += '<div class="label-val"><span>Running Avg</span><span>' + result.rawB + '</span></div>';
+          html += '</div></div>';
+        }
+      } else {
+        // Normal matchup
+        const sB = (scores[week] && scores[week][tB.id]) || [];
+        const badgeB = result ? (result.resultB === 'WIN' ? ' <span style="color:#16a34a;font-weight:800;font-size:0.8em;">W</span>' : result.resultB === 'LOSS' ? ' <span style="color:#dc2626;font-weight:800;font-size:0.8em;">L</span>' : ' <span style="color:#d97706;font-weight:800;font-size:0.8em;">T</span>') : '';
+        html += '<div class="matchup-header"><div class="matchup-team"><div class="matchup-team-name">' + esc(tA.name) + badgeA + '</div></div><div class="vs">VS</div><div class="matchup-team" style="text-align:right;"><div class="matchup-team-name">' + esc(tB.name) + badgeB + '</div></div></div>';
+        html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">';
+        html += '<div>';
+        tA.archers.forEach((a, ai) => {
+          const dispA = getArcherName(tA.id, ai, week);
+          const isSubA = isSubstitute(tA.id, ai, week);
+          html += '<div class="score-row"><span class="name">' + esc(dispA) + (isSubA ? ' <span class="sub-badge">SUB</span>' : '') + '</span><input class="score-input" type="number" min="0" max="' + getPerfectScore() + '" value="' + (sA[ai] || '') + '" onfocus="this.select()" onchange="setScore(' + tA.id + ',' + week + ',' + ai + ',this.value)"' + (locked ? ' disabled style="opacity:0.6;cursor:not-allowed;"' : '') + '></div>';
+        });
+        html += '</div><div>';
+        tB.archers.forEach((a, ai) => {
+          const dispB = getArcherName(tB.id, ai, week);
+          const isSubB = isSubstitute(tB.id, ai, week);
+          html += '<div class="score-row"><span class="name">' + esc(dispB) + (isSubB ? ' <span class="sub-badge">SUB</span>' : '') + '</span><input class="score-input" type="number" min="0" max="' + getPerfectScore() + '" value="' + (sB[ai] || '') + '" onfocus="this.select()" onchange="setScore(' + tB.id + ',' + week + ',' + ai + ',this.value)"' + (locked ? ' disabled style="opacity:0.6;cursor:not-allowed;"' : '') + '></div>';
+        });
+        html += '</div></div>';
+        if (result) {
+          html += '<div class="matchup-totals"><div class="team-side">';
+          html += '<div class="label-val"><span>Raw Score</span><span>' + result.rawA + '</span></div>';
+          html += '<div class="label-val"><span>Handicap</span><span>+' + result.hcpA + '</span></div>';
+          html += '<div class="label-val bold"><span>Adjusted</span><span>' + result.adjA + '</span></div>';
+          html += '</div><div class="team-side right">';
+          html += '<div class="label-val"><span>Raw Score</span><span>' + result.rawB + '</span></div>';
+          html += '<div class="label-val"><span>Handicap</span><span>+' + result.hcpB + '</span></div>';
+          html += '<div class="label-val bold"><span>Adjusted</span><span>' + result.adjB + '</span></div>';
+          html += '</div></div>';
+        }
       }
       html += '</div>';
     });
-  }
-  // Show bye teams for this bracket/week (teams with no matchup)
-  var bracketTeamsThisWeek = teams.filter(function(t) { return t.bracket === selectedBracket && !t.phantom; });
-  var matchedIds = [];
-  matchups.forEach(function(m) { if (m.teamA) matchedIds.push(m.teamA); if (m.teamB) matchedIds.push(m.teamB); });
-  var byeTeams = bracketTeamsThisWeek.filter(function(t) { return matchedIds.indexOf(t.id) === -1; });
-  if (byeTeams.length > 0) {
-    html += '<div style="margin-top:16px;padding:14px 18px;background:var(--bg);border:1px dashed var(--border);border-radius:var(--radius);color:var(--text-light);font-size:0.88rem;">';
-    html += '<strong>BYE this week:</strong> ';
-    html += byeTeams.map(function(t) { return esc(t.name); }).join(', ');
-    html += '</div>';
   }
   if (!html) html = '<div style="text-align:center;padding:30px;color:var(--text-light);">No matchups for this week. Lock brackets on the Teams tab to generate the schedule.</div>';
   else if (!locked) html += buildSubmitBar(week);
@@ -2172,7 +2133,7 @@ function setScore(teamId, week, archerIdx, val) {
     const cells = rows[teamIdx].querySelectorAll('td');
     cells[cells.length - 1].textContent = total > 0 ? total : '—';
     // Update scored count in toolbar
-    const realTeamsForCount = teams.filter(t => !t.phantom);
+    const realTeamsForCount = teams;
     const scoredCount = realTeamsForCount.filter(t => scores[week] && scores[week][t.id] && scores[week][t.id].some(v => v > 0)).length;
     const countSpan = area.querySelector('.qual-toolbar span');
     if (countSpan) countSpan.textContent = scoredCount + '/' + realTeamsForCount.length + ' scored';
@@ -2431,35 +2392,36 @@ function renderBracketSchedule(bracket) {
     html += '<div class="dash-card" style="margin-bottom:14px;"><div class="dash-card-header"><h3>Week ' + w + (isPlayoff ? ' (Playoff)' : '') + '</h3></div>';
     html += '<div class="dash-card-body" style="padding:0;overflow-x:auto;"><table class="data-table"><thead><tr><th>#</th><th class="num">Raw</th><th class="num">HC</th><th class="num" style="font-weight:700;">Adj</th><th style="text-align:center;">vs</th><th>#</th><th class="num">Raw</th><th class="num">HC</th><th class="num" style="font-weight:700;">Adj</th><th style="text-align:center;">Result</th></tr></thead><tbody>';
     matchups.forEach(m => {
-      if (!m.teamA || !m.teamB) { html += '<tr><td colspan="10" style="text-align:center;color:var(--text-light);">Seeded by standings</td></tr>'; return; }
+      if (!m.teamA) { html += '<tr><td colspan="10" style="text-align:center;color:var(--text-light);">Seeded by standings</td></tr>'; return; }
+      var isSelf = m.teamB === -1;
       const tA = teams.find(t => t.id === m.teamA);
-      const tB = teams.find(t => t.id === m.teamB);
-      const result = calcMatchResult(m.teamA, m.teamB, w);
+      const tB = isSelf ? null : teams.find(t => t.id === m.teamB);
+      const result = calcMatchResult(m.teamA, isSelf ? -1 : m.teamB, w);
       let resultHtml = '<span class="badge badge-gray">—</span>';
       let rawAhtml = '—', hcAhtml = '—', adjAhtml = '—';
       let rawBhtml = '—', hcBhtml = '—', adjBhtml = '—';
       if (result) {
-        if (result.resultA === 'WIN') resultHtml = '<span class="badge badge-green">' + esc(tA.name) + '</span>';
-        else if (result.resultB === 'WIN') resultHtml = '<span class="badge badge-green">' + esc(tB.name) + '</span>';
-        else resultHtml = '<span class="badge badge-amber">Tie</span>';
-        rawAhtml = result.rawA;
-        hcAhtml = result.hcpA > 0 ? '<span style="color:#16a34a;font-weight:600;">+' + result.hcpA + '</span>' : '0';
-        adjAhtml = '<strong>' + result.adjA + '</strong>';
-        rawBhtml = result.rawB;
-        hcBhtml = result.hcpB > 0 ? '<span style="color:#16a34a;font-weight:600;">+' + result.hcpB + '</span>' : '0';
-        adjBhtml = '<strong>' + result.adjB + '</strong>';
+        if (isSelf) {
+          resultHtml = result.resultA === 'WIN' ? '<span class="badge badge-green">✅ Above</span>' : result.resultA === 'LOSS' ? '<span class="badge badge-red">❌ Below</span>' : '<span class="badge badge-amber">➖ Tied</span>';
+          rawAhtml = result.rawA;
+          hcAhtml = '—'; adjAhtml = '<strong>' + result.rawA + '</strong>';
+          rawBhtml = result.rawB; hcBhtml = '—'; adjBhtml = '<strong>' + result.rawB + '</strong>';
+        } else {
+          if (result.resultA === 'WIN') resultHtml = '<span class="badge badge-green">' + esc(tA.name) + '</span>';
+          else if (result.resultB === 'WIN') resultHtml = '<span class="badge badge-green">' + esc(tB.name) + '</span>';
+          else resultHtml = '<span class="badge badge-amber">Tie</span>';
+          rawAhtml = result.rawA;
+          hcAhtml = result.hcpA > 0 ? '<span style="color:#16a34a;font-weight:600;">+' + result.hcpA + '</span>' : '0';
+          adjAhtml = '<strong>' + result.adjA + '</strong>';
+          rawBhtml = result.rawB;
+          hcBhtml = result.hcpB > 0 ? '<span style="color:#16a34a;font-weight:600;">+' + result.hcpB + '</span>' : '0';
+          adjBhtml = '<strong>' + result.adjB + '</strong>';
+        }
       }
-      html += '<tr><td style="font-weight:600;">' + esc(tA ? tA.name : '?') + '</td><td class="num">' + rawAhtml + '</td><td class="num">' + hcAhtml + '</td><td class="num">' + adjAhtml + '</td><td style="text-align:center;color:var(--text-light);">vs</td><td style="font-weight:600;">' + esc(tB ? tB.name : '?') + '</td><td class="num">' + rawBhtml + '</td><td class="num">' + hcBhtml + '</td><td class="num">' + adjBhtml + '</td><td style="text-align:center;">' + resultHtml + '</td></tr>';
+      var teamBName = isSelf ? '🎯 Own Avg' : esc(tB ? tB.name : '?');
+      html += '<tr><td style="font-weight:600;">' + esc(tA ? tA.name : '?') + '</td><td class="num">' + rawAhtml + '</td><td class="num">' + hcAhtml + '</td><td class="num">' + adjAhtml + '</td><td style="text-align:center;color:var(--text-light);">vs</td><td style="font-weight:600;">' + teamBName + '</td><td class="num">' + rawBhtml + '</td><td class="num">' + hcBhtml + '</td><td class="num">' + adjBhtml + '</td><td style="text-align:center;">' + resultHtml + '</td></tr>';
     });
     html += '</tbody></table></div>';
-    // Show bye teams for this bracket/week
-    var bracketTeamsThisWeek = teams.filter(function(t) { return t.bracket === bracket && !t.phantom; });
-    var schedMatchedIds = [];
-    matchups.forEach(function(m) { if (m.teamA) schedMatchedIds.push(m.teamA); if (m.teamB) schedMatchedIds.push(m.teamB); });
-    var schedByeTeams = bracketTeamsThisWeek.filter(function(t) { return schedMatchedIds.indexOf(t.id) === -1; });
-    if (schedByeTeams.length > 0) {
-      html += '<div style="padding:8px 16px;font-size:0.82rem;color:var(--text-light);border-top:1px dashed var(--border);"><strong>BYE:</strong> ' + schedByeTeams.map(function(t) { return esc(t.name); }).join(', ') + '</div>';
-    }
     html += '</div>';
   });
   area.innerHTML = html;
@@ -2485,7 +2447,7 @@ function renderStats() {
   renderRecords();
   cachedArcherStats = [];
   teams.forEach(t => {
-    if (t.phantom) return; // exclude phantom/BYE teams from individual stats
+
     t.archers.forEach((name, ai) => {
       let totalPts = 0, weeks = 0, high = 0, low = Infinity;
       Object.values(scores).forEach(ws => {
@@ -2589,7 +2551,7 @@ function printWeek() {
     // Bracket play — show scores only (same format as qualifying, grouped by bracket)
     const brackets = [...new Set(teams.map(t => t.bracket).filter(Boolean))].sort();
     brackets.forEach(b => {
-      const bracketTeams = teams.filter(t => t.bracket === b && !t.phantom);
+      const bracketTeams = teams.filter(t => t.bracket === b);
       if (bracketTeams.length === 0) return;
       body += '<h2>Bracket ' + esc(b) + ' — Week ' + week + ' Scores</h2>';
       body += '<table><thead><tr><th>Team</th>';
@@ -2884,7 +2846,7 @@ function exportTeamsCSV() {
    BACKUP / RESTORE
    ══════════════════════════════════════════ */
 function backupData() {
-  const data = { version: 3, date: new Date().toISOString(), config, teams, scores, schedule, substitutes, submittedWeeks, freeAgents };
+  const data = { version: 4, date: new Date().toISOString(), config, teams, scores, schedule, substitutes, submittedWeeks, freeAgents };
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a'); a.href = url; a.download = 'archery-league-backup-' + new Date().toISOString().slice(0, 10) + '.json'; a.click();
@@ -2899,19 +2861,44 @@ function restoreData(event) {
   reader.onload = function(e) {
     try {
       const d = JSON.parse(e.target.result);
-      if (d.config) config = d.config;
-      if (d.teams) teams = d.teams;
-      if (d.scores) scores = d.scores;
-      if (d.schedule) schedule = d.schedule;
-      if (d.substitutes) substitutes = d.substitutes;
-      if (d.submittedWeeks) submittedWeeks = d.submittedWeeks;
-      if (d.freeAgents) freeAgents = d.freeAgents;
-      loadConfigUI();
-      renderTeams();
-      renderFreeAgents();
-      renderDashboard();
-      showToast('📂 Backup restored — ' + teams.length + ' teams loaded');
-    } catch (err) { showToast('⚠️ Invalid backup file'); }
+      if (!d.config && !d.teams) { showToast('⚠️ This file does not look like a valid backup'); return; }
+      // Show confirmation with file details
+      var weekCount = d.scores ? Object.keys(d.scores).length : 0;
+      var teamCount = d.teams ? d.teams.length : 0;
+      var faCount = d.freeAgents ? d.freeAgents.length : 0;
+      var dateStr = d.date ? new Date(d.date).toLocaleString() : 'Unknown';
+      var season = d.config ? (d.config.season || 'Unknown') : 'Unknown';
+      var detailHtml = '<div style="text-align:left;">' +
+        '<p style="margin:0 0 12px;font-weight:600;">Restore this backup? Current data will be replaced.</p>' +
+        '<div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:12px;font-size:0.85rem;line-height:1.6;">' +
+        '<div>📁 <strong>File:</strong> ' + esc(file.name) + '</div>' +
+        '<div>📅 <strong>Saved:</strong> ' + esc(dateStr) + '</div>' +
+        '<div>🏹 <strong>Season:</strong> ' + esc(season) + '</div>' +
+        '<div>👥 <strong>Teams:</strong> ' + teamCount + (faCount > 0 ? ' + ' + faCount + ' free agents' : '') + '</div>' +
+        '<div>📊 <strong>Weeks scored:</strong> ' + weekCount + '</div>' +
+        '<div>🔒 <strong>Brackets:</strong> ' + (d.config && d.config.bracketsLocked ? 'Locked' : 'Not locked') + '</div>' +
+        (d.version ? '<div>💾 <strong>Backup version:</strong> ' + d.version + '</div>' : '') +
+        '</div></div>';
+      showGenericModal('Restore Backup', detailHtml, function() {
+        // Strip any phantom teams from old backups (v3 and below)
+        if (d.teams) d.teams = d.teams.filter(function(t) { return !t.phantom; });
+        if (d.config) config = d.config;
+        if (d.teams) teams = d.teams;
+        if (d.scores) scores = d.scores;
+        if (d.schedule) schedule = d.schedule;
+        if (d.substitutes) substitutes = d.substitutes;
+        if (d.submittedWeeks) submittedWeeks = d.submittedWeeks;
+        if (d.freeAgents) freeAgents = d.freeAgents;
+        loadConfigUI();
+        renderTeams();
+        renderFreeAgents();
+        populateWeekSelect();
+        renderScoreEntry();
+        updateWeekNav();
+        renderDashboard();
+        showToast('📂 Backup restored — ' + teams.length + ' teams, ' + weekCount + ' weeks of scores loaded');
+      });
+    } catch (err) { showToast('⚠️ Invalid backup file: ' + err.message); }
   };
   reader.readAsText(file);
   event.target.value = '';
@@ -2993,7 +2980,7 @@ function loadSampleData() {
   renderTeams();
   renderFreeAgents();
   renderDashboard();
-  showToast('📋 39 teams + 3 free agents loaded with 2 weeks of qualifying scores — lock brackets to see phantom team handling');
+  showToast('📋 39 teams + 3 free agents loaded with 2 weeks of qualifying scores — lock brackets to start bracket play');
 }
 
 /* ══════════════════════════════════════════
