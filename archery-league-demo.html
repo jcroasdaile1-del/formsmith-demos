@@ -914,21 +914,21 @@ function switchTab(tabName) {
    CONFIG — Season Setup (Teams tab) + Settings (Settings tab)
    ══════════════════════════════════════════ */
 function saveSeasonSetup() {
-  config.leagueName = document.getElementById('cfg-leagueName').value;
-  config.season = document.getElementById('cfg-season').value;
-  config.startDate = document.getElementById('cfg-startDate').value;
-  var newBrackets = parseInt(document.getElementById('cfg-numBrackets').value);
+  config.leagueName = (document.getElementById('cfg-leagueName').value || '').trim() || config.leagueName;
+  config.season = (document.getElementById('cfg-season').value || '').trim() || config.season;
+  config.startDate = document.getElementById('cfg-startDate').value || config.startDate;
+  var newBrackets = parseInt(document.getElementById('cfg-numBrackets').value) || config.numBrackets;
   if (config.bracketsLocked && newBrackets !== config.numBrackets) {
     appConfirm('Brackets are locked. Changing the number of divisions could cause issues with the current schedule.\n\nSave anyway?', function() {
       config.numBrackets = newBrackets;
       showToast('💾 Season setup saved');
-      renderDashboard();
+      try { renderDashboard(); } catch(e) { console.error('renderDashboard error:', e); }
     }, '⚠️ Brackets Locked');
     return;
   }
   config.numBrackets = newBrackets;
   showToast('💾 Season setup saved');
-  renderDashboard();
+  try { renderDashboard(); } catch(e) { console.error('renderDashboard error:', e); }
 }
 
 function saveSettings() {
@@ -2679,7 +2679,15 @@ function printWeek() {
 /* ══════════════════════════════════════════
    IMPORT WIZARD
    ══════════════════════════════════════════ */
-function openImportWizard() { document.getElementById('importModal').classList.add('show'); goImportStep(1); }
+function openImportWizard() {
+  document.getElementById('importModal').classList.add('show');
+  goImportStep(1);
+  // Reset file input so re-selecting the same file fires onchange
+  var fi = document.querySelector('#wizStep1 input[type="file"]');
+  if (fi) fi.value = '';
+  var info = document.getElementById('importFileInfo');
+  if (info) { info.textContent = ''; info.classList.remove('visible'); }
+}
 function closeImportWizard() { document.getElementById('importModal').classList.remove('show'); }
 
 function handleImportFile(event) {
@@ -3005,7 +3013,7 @@ function doLoadSampleData() {
     { id: 20, name: '20', archers: ['Chris Wegner', 'Dave Grisar Jr.'], contacts: [{phone:'920-555-2001',email:'cwegner@example.com'},{phone:'920-555-2002',email:'dgrisarjr@example.com'}], bracket: null },
     { id: 21, name: '21', archers: ['Paul Fischer', 'Brian Fischer'], contacts: [{phone:'920-555-2101',email:'pfischer@example.com'},{phone:'920-555-2102',email:'bfischer@example.com'}], bracket: null },
     { id: 22, name: '22', archers: ['Jim Reinhart', 'Scott Reinhart'], contacts: [{phone:'920-555-2201',email:'jreinhart@example.com'},{phone:'920-555-2202',email:'sreinhart@example.com'}], bracket: null },
-    { id: 23, name: '23', archers: ['Pete Kowalski', 'Adam Kowalski', 'Carl Zimmerman'], contacts: [{phone:'920-555-2301',email:'pkowalski@example.com'},{phone:'920-555-2302',email:'akowalski@example.com'},{phone:'920-555-2303',email:'czimmerman@example.com'}], bracket: null },
+    { id: 23, name: '23', archers: ['Pete Kowalski', 'Adam Kowalski'], contacts: [{phone:'920-555-2301',email:'pkowalski@example.com'},{phone:'920-555-2302',email:'akowalski@example.com'}], bracket: null },
   ];
   scores = {};
   schedule = {};
