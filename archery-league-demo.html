@@ -584,7 +584,7 @@ body.dark-mode .config-editing-banner { background: #422006; border-color: #d977
         <button class="btn btn-accent btn-sm" id="btnAutoAssign" onclick="autoAssignFreeAgents()" style="display:none;">🔀 Auto-Assign to Teams</button>
       </div>
     </div>
-    <p style="font-size:0.82rem;color:var(--text-light);margin:0 0 8px 0;padding:0 16px;">Individual archers not yet assigned to a team. Add them here and use Auto-Assign to build teams, or drag them into teams manually.</p>
+    <p style="font-size:0.82rem;color:var(--text-light);margin:0 0 8px 0;padding:0 16px;">Individual archers not yet assigned to a team. Use Auto-Assign to fill incomplete teams automatically, or click <strong>➡ Team</strong> to assign an archer to a specific team.</p>
     <div class="dash-card-body" style="padding:0;overflow-x:auto;"><table class="data-table" id="freeAgentTable"><thead><tr><th>#</th><th>Name</th><th>Phone</th><th>Email</th><th>Actions</th></tr></thead><tbody id="freeAgentBody"><tr><td colspan="5" style="text-align:center;padding:20px;color:var(--text-light);">No free agents. Add individual archers who haven't been assigned to a team yet.</td></tr></tbody></table></div>
   </div>
 </div>
@@ -1024,6 +1024,16 @@ function appConfirmResolve(ok) {
   _appConfirmCb = null;
 }
 
+function showGenericModal(title, bodyHtml, onConfirm) {
+  document.getElementById('appConfirmTitle').textContent = title;
+  document.getElementById('appConfirmMsg').innerHTML = bodyHtml;
+  document.getElementById('appPromptWrap').style.display = 'none';
+  document.getElementById('appConfirmOk').textContent = 'Confirm';
+  _appPromptMode = false;
+  _appConfirmCb = onConfirm;
+  document.getElementById('appConfirmModal').classList.add('show');
+}
+
 /* ══════════════════════════════════════════
    TEAMS
    ══════════════════════════════════════════ */
@@ -1206,7 +1216,8 @@ function renderFreeAgents() {
   }
   body.innerHTML = freeAgents.map(function(fa, i) {
     return '<tr><td>' + (i + 1) + '</td><td style="font-weight:600;">' + esc(fa.name) + '</td><td>' + esc(fa.phone || '') + '</td><td>' + esc(fa.email || '') + '</td>' +
-      '<td><button class="btn btn-sm" style="background:var(--danger-light);color:#991b1b;border:1px solid #fca5a5;font-size:0.72rem;padding:2px 8px;" onclick="removeFreeAgent(' + i + ')">✕</button></td></tr>';
+      '<td style="white-space:nowrap;"><button class="btn btn-sm" style="background:var(--primary-light);color:var(--primary);border:1px solid var(--primary);font-size:0.72rem;padding:2px 8px;margin-right:4px;" onclick="assignFreeAgentToTeam(' + i + ')" title="Assign to a team">➡ Team</button>' +
+      '<button class="btn btn-sm" style="background:var(--danger-light);color:#991b1b;border:1px solid #fca5a5;font-size:0.72rem;padding:2px 8px;" onclick="removeFreeAgent(' + i + ')">✕</button></td></tr>';
   }).join('');
 }
 
@@ -1256,6 +1267,30 @@ function removeFreeAgent(idx) {
   freeAgents.splice(idx, 1);
   renderFreeAgents();
   showToast('✕ Archer removed from free agents');
+}
+
+function assignFreeAgentToTeam(idx) {
+  var fa = freeAgents[idx];
+  if (teams.length === 0) { showToast('⚠️ No teams to assign to'); return; }
+  var opts = teams.filter(function(t) { return !t.phantom; }).map(function(t) {
+    return '<option value="' + t.id + '">Team ' + esc(t.name) + ' (' + t.archers.length + ' archers)</option>';
+  }).join('');
+  var html = '<div style="text-align:left;">' +
+    '<p style="margin:0 0 10px;">Move <strong>' + esc(fa.name) + '</strong> to:</p>' +
+    '<select id="assignTeamPick" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius);font-size:0.9rem;font-family:inherit;">' + opts + '</select></div>';
+  showGenericModal('Assign to Team', html, function() {
+    var sel = document.getElementById('assignTeamPick');
+    var tid = parseInt(sel.value);
+    var team = teams.find(function(t) { return t.id === tid; });
+    if (!team) return;
+    team.archers.push(fa.name);
+    if (!team.contacts) team.contacts = [];
+    team.contacts.push({ phone: fa.phone || '', email: fa.email || '' });
+    freeAgents.splice(idx, 1);
+    renderTeams();
+    renderFreeAgents();
+    showToast('✅ ' + fa.name + ' assigned to Team ' + team.name);
+  });
 }
 
 function autoAssignFreeAgents() {

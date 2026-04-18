@@ -34,7 +34,6 @@ Mitch Henke,,,11
 Steve Kletzien,920-555-1103,,11
 Dick Buchholz,920-555-1201,,12
 Bob Callies,,,12
-Bob Butler,920-555-1203,,12
 Ron Spieth,920-555-1301,,13
 Kris King,,,13
 Curt Hoffart,920-555-1303,,13
@@ -73,7 +72,6 @@ Luke Zimmerman,,,24
 Ray Novak,920-555-2403,,24
 Wayne Brandt,920-555-2501,,25
 Derek Brandt,,,25
-Sam Henrich,920-555-2503,,25
 Rich Keller,920-555-2601,,26
 Tim Keller,,,26
 Joe Prentice,920-555-2603,,26
@@ -112,13 +110,15 @@ Troy Wendt,,,37
 Glenn Frey,920-555-3703,,37
 Roy Ebert,920-555-3801,,38
 Shane Ebert,,,38
-Don Lange,920-555-3803,,38
 Art Frey,920-555-3901,,39
 Joel Frey,,,39
 Russ Pfeiffer,920-555-3903,,39
+Bob Reinhart,920-555-4004,,40
+Jenny Kraft,920-555-4005,jkraft@example.com,40
+Tom Pfeiffer,920-555-4006,,40
 Steve Augustin,920-555-4001,saugustin@example.com,
 Matt Reindl,920-555-4002,mreindl@example.com,
 Lisa Hartmann,,lhartmann@example.com,
-Bob Reinhart,920-555-4004,,
-Jenny Kraft,920-555-4005,jkraft@example.com,
-Tom Pfeiffer,920-555-4006,,
+Bob Butler,920-555-1203,,
+Sam Henrich,920-555-2503,,
+Don Lange,920-555-3803,,
