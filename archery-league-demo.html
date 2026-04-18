@@ -1049,7 +1049,7 @@ function renderTeams() {
     const phantomStyle = t.phantom ? ' style="opacity:0.55;font-style:italic;"' : '';
     const c = t.contacts || [];
     var hasContacts = c.some(function(ci) { return ci && (ci.phone || ci.email); });
-    var expandBtn = hasContacts ? ' <button class="btn-contact-expand" onclick="event.stopPropagation();toggleTeamContacts(' + i + ')" title="View contact info">�</button>' : '';
+    var expandBtn = hasContacts ? ' <button class="btn-contact-expand" onclick="event.stopPropagation();toggleTeamContacts(' + i + ')" title="View contact info">&#x1F4DE;</button>' : '';
     var contactRow = '';
     if (hasContacts) {
       contactRow = '<tr class="contact-detail-row" id="team-contacts-' + i + '" style="display:none;"><td></td><td colspan="6"><div class="contact-detail-grid">' +
