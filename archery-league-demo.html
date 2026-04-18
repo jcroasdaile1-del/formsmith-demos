@@ -499,6 +499,7 @@ body.dark-mode .config-editing-banner { background: #422006; border-color: #d977
     <button class="tab-btn" data-tab="standings" onclick="switchTab('standings')">🏆 Standings</button>
     <button class="tab-btn" data-tab="schedule" onclick="switchTab('schedule')">📅 Schedule</button>
     <button class="tab-btn" data-tab="stats" onclick="switchTab('stats')">📈 Stats</button>
+    <button class="tab-btn" data-tab="settings" onclick="switchTab('settings')">⚙️ Settings</button>
   </nav>
 </header>
 
@@ -543,31 +544,17 @@ body.dark-mode .config-editing-banner { background: #422006; border-color: #d977
     <button class="btn btn-warning" onclick="loadSampleData()">📋 Load Sample Data</button>
     <button class="btn btn-sm" style="background:#fef3c7;color:#92400e;border:1px solid #fbbf24;" onclick="openSubModal()">🔄 Assign Sub</button>
   </div>
-  <div class="form-section" id="seasonConfig">
-    <div class="section-header" onclick="toggleSection(this)"><span class="section-label">⚙️ Season Configuration</span><span class="chevron">▼</span></div>
+  <div class="form-section" id="seasonSetup">
+    <div class="section-header" onclick="toggleSection(this)"><span class="section-label">📋 Season Setup</span><span class="chevron">▼</span></div>
     <div class="section-body">
-      <div class="config-editing-banner" id="configEditBanner">✏️ Editing — make your changes, then click Save to commit them.</div>
       <div class="field-grid">
-        <div class="field-group"><label>League Name</label><input type="text" id="cfg-leagueName" value="Buckskin Bowmen" disabled></div>
-        <div class="field-group"><label>Season</label><input type="text" id="cfg-season" value="2026 Summer" disabled></div>
-        <div class="field-group"><label>Number of Brackets</label><select id="cfg-numBrackets" disabled><option>2</option><option>3</option><option selected>4</option><option>5</option></select></div>
-        <div class="field-group"><label>Qualifying Weeks</label><select id="cfg-qualWeeks" disabled><option selected>2</option><option>3</option><option>4</option></select></div>
-        <div class="field-group"><label>Bracket Play Weeks</label><input type="number" id="cfg-bracketPlayWeeks" value="11" min="1" max="52" disabled></div>
-        <div class="field-group"><label>Targets per Round</label><input type="number" id="cfg-targets" value="28" disabled></div>
-        <div class="field-group"><label>Points per Target</label><input type="number" id="cfg-ptsPerTarget" value="10" disabled></div>
-        <div class="field-group"><label>Handicap %</label><input type="number" id="cfg-handicapPct" value="80" min="0" max="100" disabled></div>
-        <div class="field-group"><label>Archers per Team</label><select id="cfg-archersPerTeam" disabled><option>3</option><option>4</option><option>5</option></select></div>
-        <div class="field-group"><label>Start Date</label><input type="date" id="cfg-startDate" value="2026-06-01" disabled></div>
+        <div class="field-group"><label>League Name</label><input type="text" id="cfg-leagueName" value="Buckskin Bowmen"></div>
+        <div class="field-group"><label>Season</label><input type="text" id="cfg-season" value="2026 Summer"></div>
+        <div class="field-group"><label>Start Date</label><input type="date" id="cfg-startDate" value="2026-06-01"></div>
+        <div class="field-group"><label>Number of Divisions</label><select id="cfg-numBrackets"><option>2</option><option>3</option><option selected>4</option><option>5</option></select></div>
       </div>
       <div class="config-actions">
-        <button class="btn btn-outline btn-sm" id="btnEditConfig" onclick="editConfig()">✏️ Edit Configuration</button>
-        <button class="btn btn-primary btn-sm" id="btnSaveConfig" onclick="commitConfig()" style="display:none;">💾 Save Configuration</button>
-        <button class="btn btn-sm" id="btnCancelConfig" onclick="cancelConfigEdit()" style="display:none;background:var(--bg);color:var(--text);border:1px solid var(--border);">Cancel</button>
-        <span class="config-status" id="configStatus">🔒 Locked</span>
-      </div>
-      <div class="clear-season-section">
-        <p class="section-warning">⚠️ End of season — this permanently deletes ALL data (teams, scores, brackets, schedule).</p>
-        <button class="btn btn-danger btn-sm" onclick="clearSeasonStep1()">🗑️ Clear Entire Season</button>
+        <button class="btn btn-primary btn-sm" onclick="saveSeasonSetup()">💾 Save</button>
       </div>
     </div>
   </div>
@@ -581,7 +568,7 @@ body.dark-mode .config-editing-banner { background: #422006; border-color: #d977
       <h3>🏹 Free Agents (<span id="freeAgentCount">0</span>)</h3>
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
         <button class="btn btn-primary btn-sm" onclick="addFreeAgentModal()">＋ Add Archer</button>
-        <button class="btn btn-sm" id="btnCreateTeamFA" onclick="createTeamFromFreeAgents()" style="display:none;background:var(--success-light,#dcfce7);color:#166534;border:1px solid #86efac;font-size:0.78rem;">👥 Create Team</button>
+        <button class="btn btn-sm" id="btnCreateTeamFA" onclick="createTeamFromFreeAgents()" style="display:none;background:var(--purple-light);color:var(--purple);border:1px solid #c4b5fd;font-size:0.78rem;">👥 Create Team</button>
         <button class="btn btn-accent btn-sm" id="btnAutoAssign" onclick="autoAssignFreeAgents()" style="display:none;">🔀 Auto-Assign to Teams</button>
       </div>
     </div>
@@ -637,6 +624,35 @@ body.dark-mode .config-editing-banner { background: #422006; border-color: #d977
     <div class="dash-card-header"><h3>🏹 Individual Averages</h3></div>
     <div class="dash-card-body" style="padding:0;overflow-x:auto;"><table class="data-table" id="statsTable"><thead><tr><th>#</th><th>Archer</th><th>Team</th><th>Bracket</th><th class="num">Weeks Shot</th><th class="num">Total Pts</th><th class="num">Average</th><th class="num">High</th><th class="num">Low</th></tr></thead><tbody id="statsBody"></tbody></table></div>
     <div id="statsPagination" style="display:flex;justify-content:center;align-items:center;gap:8px;padding:12px 16px;border-top:1px solid var(--border);"></div>
+  </div>
+</div>
+
+<!-- ═══════ SETTINGS TAB ═══════ -->
+<div class="tab-content" id="tab-settings">
+  <div class="sample-banner"><img class="banner-logo" id="bannerLogoSettings" alt=""><strong>⚙️ Settings</strong> — League rules and scoring configuration. These settings rarely change between seasons.</div>
+  <div class="dash-card">
+    <div class="dash-card-header"><h3>🎯 Scoring Rules</h3></div>
+    <div class="dash-card-body">
+      <div class="field-grid">
+        <div class="field-group"><label>Qualifying Weeks</label><select id="cfg-qualWeeks"><option selected>2</option><option>3</option><option>4</option></select></div>
+        <div class="field-group"><label>Bracket Play Weeks</label><input type="number" id="cfg-bracketPlayWeeks" value="11" min="1" max="52"></div>
+        <div class="field-group"><label>Targets per Round</label><input type="number" id="cfg-targets" value="28"></div>
+        <div class="field-group"><label>Points per Target</label><input type="number" id="cfg-ptsPerTarget" value="10"></div>
+        <div class="field-group"><label>Handicap %</label><input type="number" id="cfg-handicapPct" value="80" min="0" max="100"></div>
+        <div class="field-group"><label>Archers per Team</label><select id="cfg-archersPerTeam"><option>3</option><option>4</option><option>5</option></select></div>
+      </div>
+      <div class="config-actions">
+        <button class="btn btn-primary btn-sm" onclick="saveSettings()">💾 Save Settings</button>
+        <span style="font-size:0.82rem;color:var(--text-light);margin-left:8px;">Max score per archer: <strong id="settingsMaxScore">280</strong></span>
+      </div>
+    </div>
+  </div>
+  <div class="dash-card" style="margin-top:16px;">
+    <div class="dash-card-header"><h3>🗑️ Season Management</h3></div>
+    <div class="dash-card-body">
+      <p style="font-size:0.85rem;color:var(--text-light);margin:0 0 12px;">End of season — this permanently deletes ALL data (teams, scores, brackets, schedule). A backup will be downloaded automatically before clearing.</p>
+      <button class="btn btn-danger btn-sm" onclick="clearSeasonStep1()">🗑️ Clear Entire Season</button>
+    </div>
   </div>
 </div>
 
@@ -891,86 +907,78 @@ function switchTab(tabName) {
   if (tabName === 'standings') renderStandings();
   if (tabName === 'schedule') renderScheduleTab();
   if (tabName === 'stats') renderStats();
+  if (tabName === 'settings') loadSettingsUI();
 }
 
 /* ══════════════════════════════════════════
-   CONFIG
+   CONFIG — Season Setup (Teams tab) + Settings (Settings tab)
    ══════════════════════════════════════════ */
-function saveConfig() {
+function saveSeasonSetup() {
   config.leagueName = document.getElementById('cfg-leagueName').value;
   config.season = document.getElementById('cfg-season').value;
-  config.numBrackets = parseInt(document.getElementById('cfg-numBrackets').value);
+  config.startDate = document.getElementById('cfg-startDate').value;
+  var newBrackets = parseInt(document.getElementById('cfg-numBrackets').value);
+  if (config.bracketsLocked && newBrackets !== config.numBrackets) {
+    appConfirm('Brackets are locked. Changing the number of divisions could cause issues with the current schedule.\n\nSave anyway?', function() {
+      config.numBrackets = newBrackets;
+      showToast('💾 Season setup saved');
+      renderDashboard();
+    }, '⚠️ Brackets Locked');
+    return;
+  }
+  config.numBrackets = newBrackets;
+  showToast('💾 Season setup saved');
+  renderDashboard();
+}
+
+function saveSettings() {
+  var newQual = parseInt(document.getElementById('cfg-qualWeeks').value);
+  var newArchers = parseInt(document.getElementById('cfg-archersPerTeam').value) || 3;
+  if (config.bracketsLocked && (newQual !== config.qualWeeks || newArchers !== config.archersPerTeam)) {
+    appConfirm('Brackets are locked. Changing qualifying weeks or archers per team could cause issues with scores and schedules.\n\nSave anyway?', function() {
+      doSaveSettings();
+    }, '⚠️ Brackets Locked');
+    return;
+  }
+  doSaveSettings();
+}
+
+function doSaveSettings() {
   config.qualWeeks = parseInt(document.getElementById('cfg-qualWeeks').value);
   config.bracketPlayWeeks = parseInt(document.getElementById('cfg-bracketPlayWeeks').value) || 10;
   config.targets = parseInt(document.getElementById('cfg-targets').value) || 28;
   config.ptsPerTarget = parseInt(document.getElementById('cfg-ptsPerTarget').value) || 10;
   config.handicapPct = parseInt(document.getElementById('cfg-handicapPct').value) || 80;
   config.archersPerTeam = parseInt(document.getElementById('cfg-archersPerTeam').value) || 3;
-  config.startDate = document.getElementById('cfg-startDate').value;
-}
-
-let configSnapshot = null;
-
-function editConfig() {
-  // Warn if brackets are locked — some changes are dangerous
-  if (config.bracketsLocked) {
-    appConfirm('Brackets are locked. Changing settings like Number of Brackets or Qualifying Weeks could cause issues with the current schedule.\n\nProceed with editing?', function() { doEditConfig(); }, '⚠️ Brackets Locked');
-    return;
-  }
-  doEditConfig();
-}
-
-function doEditConfig() {
-  // Snapshot current config for cancel
-  configSnapshot = JSON.parse(JSON.stringify(config));
-  // Enable all fields
-  document.querySelectorAll('#seasonConfig .field-group input, #seasonConfig .field-group select').forEach(el => el.disabled = false);
-  document.getElementById('btnEditConfig').style.display = 'none';
-  document.getElementById('btnSaveConfig').style.display = '';
-  document.getElementById('btnCancelConfig').style.display = '';
-  document.getElementById('configStatus').textContent = '✏️ Editing';
-  document.getElementById('configEditBanner').classList.add('show');
-}
-
-function commitConfig() {
-  saveConfig();
-  lockConfigUI();
-  configSnapshot = null;
-  showToast('💾 Configuration saved');
-  // Refresh any affected views
+  showToast('💾 Settings saved');
+  updateSettingsMaxScore();
   renderDashboard();
 }
 
-function cancelConfigEdit() {
-  if (configSnapshot) {
-    config = configSnapshot;
-    configSnapshot = null;
-  }
-  loadConfigUI();
-  lockConfigUI();
-  showToast('↩️ Changes discarded');
-}
-
-function lockConfigUI() {
-  document.querySelectorAll('#seasonConfig .field-group input, #seasonConfig .field-group select').forEach(el => el.disabled = true);
-  document.getElementById('btnEditConfig').style.display = '';
-  document.getElementById('btnSaveConfig').style.display = 'none';
-  document.getElementById('btnCancelConfig').style.display = 'none';
-  document.getElementById('configStatus').textContent = '🔒 Locked';
-  document.getElementById('configEditBanner').classList.remove('show');
-}
-
 function loadConfigUI() {
+  // Season Setup (Teams tab)
   document.getElementById('cfg-leagueName').value = config.leagueName;
   document.getElementById('cfg-season').value = config.season;
-  document.getElementById('cfg-numBrackets').value = config.numBrackets;
-  document.getElementById('cfg-qualWeeks').value = config.qualWeeks;
-  document.getElementById('cfg-bracketPlayWeeks').value = config.bracketPlayWeeks || 10;
-  document.getElementById('cfg-targets').value = config.targets;
-  document.getElementById('cfg-ptsPerTarget').value = config.ptsPerTarget;
-  document.getElementById('cfg-handicapPct').value = config.handicapPct;
-  document.getElementById('cfg-archersPerTeam').value = config.archersPerTeam;
   document.getElementById('cfg-startDate').value = config.startDate;
+  document.getElementById('cfg-numBrackets').value = config.numBrackets;
+  // Settings (Settings tab)
+  loadSettingsUI();
+}
+
+function loadSettingsUI() {
+  var el;
+  el = document.getElementById('cfg-qualWeeks'); if (el) el.value = config.qualWeeks;
+  el = document.getElementById('cfg-bracketPlayWeeks'); if (el) el.value = config.bracketPlayWeeks || 10;
+  el = document.getElementById('cfg-targets'); if (el) el.value = config.targets;
+  el = document.getElementById('cfg-ptsPerTarget'); if (el) el.value = config.ptsPerTarget;
+  el = document.getElementById('cfg-handicapPct'); if (el) el.value = config.handicapPct;
+  el = document.getElementById('cfg-archersPerTeam'); if (el) el.value = config.archersPerTeam;
+  updateSettingsMaxScore();
+}
+
+function updateSettingsMaxScore() {
+  var el = document.getElementById('settingsMaxScore');
+  if (el) el.textContent = (config.targets * config.ptsPerTarget);
 }
 
 function getPerfectScore() { return config.targets * config.ptsPerTarget; }
@@ -1018,16 +1026,16 @@ function appPrompt(msg, onDone, title) {
 
 function appConfirmResolve(ok) {
   document.getElementById('appConfirmModal').classList.remove('show');
-  if (ok && _appConfirmCb) {
-    if (_appPromptMode) {
-      _appConfirmCb(document.getElementById('appPromptInput').value);
-    } else {
-      _appConfirmCb();
-    }
-  } else if (!ok && _appPromptMode && _appConfirmCb) {
-    _appConfirmCb(null);
-  }
+  var cb = _appConfirmCb;
+  var wasPrompt = _appPromptMode;
+  var val = wasPrompt ? document.getElementById('appPromptInput').value : null;
   _appConfirmCb = null;
+  if (!cb) return;
+  // Delay callback so modal fully closes before a chained modal opens
+  setTimeout(function() {
+    if (ok) { wasPrompt ? cb(val) : cb(); }
+    else if (wasPrompt) { cb(null); }
+  }, 60);
 }
 
 function showGenericModal(title, bodyHtml, onConfirm) {
@@ -2975,72 +2983,46 @@ function doLoadSampleData() {
     archersPerTeam: 3, startDate: '2026-06-01', bracketsLocked: false
   };
   teams = [
-    { id: 1, name: '1', archers: ['Dave Grisar', 'Tyler Grisar', 'Matt Esselmann'], contacts: [{phone:'920-555-0101',email:'dgrisar@example.com'},{phone:'920-555-0102',email:''},{phone:'',email:'messelmann@example.com'}], bracket: null },
-    { id: 2, name: '2', archers: ['Guy Schultz', 'Kurt Zirtzlaff', 'Josh Hafemeister'], contacts: [{phone:'920-555-0201',email:'gschultz@example.com'},{phone:'',email:''},{phone:'920-555-0203',email:''}], bracket: null },
-    { id: 3, name: '3', archers: ['Dustin Moder', 'Jacob Lewin', 'Patrick Fridholm'], contacts: [{phone:'920-555-0301',email:''},{phone:'',email:'jlewin@example.com'},{phone:'',email:''}], bracket: null },
-    { id: 4, name: '4', archers: ['Jesse Barron', 'Tom Dierringer', 'Jack Mueller'], contacts: [{phone:'',email:'jbarron@example.com'},{phone:'920-555-0402',email:''},{phone:'',email:''}], bracket: null },
-    { id: 5, name: '5', archers: ['Mark Speirs', 'Brandon Speirs', 'Steve Bohn'], contacts: [{phone:'920-555-0501',email:'mspeirs@example.com'},{phone:'920-555-0502',email:''},{phone:'',email:'sbohn@example.com'}], bracket: null },
-    { id: 6, name: '6', archers: ['Dennis Haas', 'Terri Haas', 'Ben Haas'], contacts: [{phone:'920-555-0601',email:'dhaas@example.com'},{phone:'920-555-0602',email:''},{phone:'920-555-0603',email:''}], bracket: null },
-    { id: 7, name: '7', archers: ['Matt Streim', 'Derrick Malcore', 'Christian Bilgo'], bracket: null },
-    { id: 8, name: '8', archers: ['Tom Harwood', 'John Knepel Sr.', 'John Knepel Jr.'], bracket: null },
-    { id: 9, name: '9', archers: ['Ryan Krombach', 'Andy Harrigan', 'Mike Janz'], bracket: null },
-    { id: 10, name: '10', archers: ['Mike Cibulka', 'Griff Rice', 'Greg Windel'], bracket: null },
-    { id: 11, name: '11', archers: ['Todd King', 'Mitch Henke', 'Steve Kletzien'], bracket: null },
-    { id: 12, name: '12', archers: ['Dick Buchholz', 'Bob Callies', 'Bob Butler'], bracket: null },
-    { id: 13, name: '13', archers: ['Ron Spieth', 'Kris King', 'Curt Hoffart'], bracket: null },
-    { id: 14, name: '14', archers: ['David Haltner', 'Jason Stoecker', 'Randy Ziarek'], bracket: null },
-    { id: 15, name: '15', archers: ['Don Bublitz', 'Jesse Seltrecht', 'Mike Herre'], bracket: null },
-    { id: 16, name: '16', archers: ['Mike Newell', 'David Papke', 'Zyle Newell'], bracket: null },
-    { id: 17, name: '17', archers: ['Andy Holtebeck', 'Kevin Friede', 'Dennis Heusdens'], bracket: null },
-    { id: 18, name: '18', archers: ['Eric Schmelling', 'Chuck Schmelling', 'Ben Schmelling'], bracket: null },
-    { id: 19, name: '19', archers: ['Neil Steffans', 'Dale Mueller', 'Bill Akerett'], bracket: null },
-    { id: 20, name: '20', archers: ['Chris Wegner', 'Dave Grisar Jr.', 'Mike Grisar'], bracket: null },
-    { id: 21, name: '21', archers: ['Paul Fischer', 'Brian Fischer', 'Kyle Drews'], bracket: null },
-    { id: 22, name: '22', archers: ['Jim Reinhart', 'Scott Reinhart', 'Dan Vogt'], bracket: null },
-    { id: 23, name: '23', archers: ['Pete Kowalski', 'Adam Kowalski', 'Tony Becker'], bracket: null },
-    { id: 24, name: '24', archers: ['Carl Zimmerman', 'Luke Zimmerman', 'Ray Novak'], bracket: null },
-    { id: 25, name: '25', archers: ['Wayne Brandt', 'Derek Brandt', 'Sam Henrich'], bracket: null },
-    { id: 26, name: '26', archers: ['Rich Keller', 'Tim Keller', 'Joe Prentice'], bracket: null },
-    { id: 27, name: '27', archers: ['Frank Novak', 'Ted Novak', 'Bill Schuster'], bracket: null },
-    { id: 28, name: '28', archers: ['Dan Hartmann', 'Jake Hartmann', 'Gary Meier'], bracket: null },
-    { id: 29, name: '29', archers: ['Larry Vogt', 'Kevin Vogt', 'Phil Oster'], bracket: null },
-    { id: 30, name: '30', archers: ['Roger Drews', 'Chad Drews', 'Craig Wendt'], bracket: null },
-    { id: 31, name: '31', archers: ['Al Meier', 'Doug Meier', 'Ken Farber'], bracket: null },
-    { id: 32, name: '32', archers: ['Hank Schuster', 'Tom Schuster', 'Marty Gruber'], bracket: null },
-    { id: 33, name: '33', archers: ['Jeff Oster', 'Ryan Oster', 'Dale Kraft'], bracket: null },
-    { id: 34, name: '34', archers: ['Gene Kraft', 'Brett Kraft', 'Leo Bruns'], bracket: null },
-    { id: 35, name: '35', archers: ['Vince Farber', 'Nick Farber', 'Walt Ebert'], bracket: null },
-    { id: 36, name: '36', archers: ['Stan Gruber', 'Cody Gruber', 'Rick Heinz'], bracket: null },
-    { id: 37, name: '37', archers: ['Max Wendt', 'Troy Wendt', 'Glenn Frey'], bracket: null },
-    { id: 38, name: '38', archers: ['Roy Ebert', 'Shane Ebert', 'Don Lange'], bracket: null },
-    { id: 39, name: '39', archers: ['Art Frey', 'Joel Frey', 'Russ Pfeiffer'], bracket: null },
+    { id: 1, name: '1', archers: ['Dave Grisar', 'Tyler Grisar', 'Matt Esselmann'], contacts: [{phone:'920-555-0101',email:'dgrisar@example.com'},{phone:'920-555-0102',email:'tgrisar@example.com'},{phone:'920-555-0103',email:'messelmann@example.com'}], bracket: null },
+    { id: 2, name: '2', archers: ['Guy Schultz', 'Kurt Zirtzlaff', 'Josh Hafemeister'], contacts: [{phone:'920-555-0201',email:'gschultz@example.com'},{phone:'920-555-0202',email:'kzirtzlaff@example.com'},{phone:'920-555-0203',email:'jhafemeister@example.com'}], bracket: null },
+    { id: 3, name: '3', archers: ['Dustin Moder', 'Jacob Lewin', 'Patrick Fridholm'], contacts: [{phone:'920-555-0301',email:'dmoder@example.com'},{phone:'920-555-0302',email:'jlewin@example.com'},{phone:'920-555-0303',email:'pfridholm@example.com'}], bracket: null },
+    { id: 4, name: '4', archers: ['Jesse Barron', 'Tom Dierringer', 'Jack Mueller'], contacts: [{phone:'920-555-0401',email:'jbarron@example.com'},{phone:'920-555-0402',email:'tdierringer@example.com'},{phone:'920-555-0403',email:'jmueller@example.com'}], bracket: null },
+    { id: 5, name: '5', archers: ['Mark Speirs', 'Brandon Speirs', 'Steve Bohn'], contacts: [{phone:'920-555-0501',email:'mspeirs@example.com'},{phone:'920-555-0502',email:'bspeirs@example.com'},{phone:'920-555-0503',email:'sbohn@example.com'}], bracket: null },
+    { id: 6, name: '6', archers: ['Dennis Haas', 'Terri Haas', 'Ben Haas'], contacts: [{phone:'920-555-0601',email:'dhaas@example.com'},{phone:'920-555-0602',email:'thaas@example.com'},{phone:'920-555-0603',email:'bhaas@example.com'}], bracket: null },
+    { id: 7, name: '7', archers: ['Matt Streim', 'Derrick Malcore', 'Christian Bilgo'], contacts: [{phone:'920-555-0701',email:'mstreim@example.com'},{phone:'920-555-0702',email:'dmalcore@example.com'},{phone:'920-555-0703',email:'cbilgo@example.com'}], bracket: null },
+    { id: 8, name: '8', archers: ['Tom Harwood', 'John Knepel Sr.', 'John Knepel Jr.'], contacts: [{phone:'920-555-0801',email:'tharwood@example.com'},{phone:'920-555-0802',email:'jknepelsr@example.com'},{phone:'920-555-0803',email:'jknepeljr@example.com'}], bracket: null },
+    { id: 9, name: '9', archers: ['Ryan Krombach', 'Andy Harrigan', 'Mike Janz'], contacts: [{phone:'920-555-0901',email:'rkrombach@example.com'},{phone:'920-555-0902',email:'aharrigan@example.com'},{phone:'920-555-0903',email:'mjanz@example.com'}], bracket: null },
+    { id: 10, name: '10', archers: ['Mike Cibulka', 'Griff Rice', 'Greg Windel'], contacts: [{phone:'920-555-1001',email:'mcibulka@example.com'},{phone:'920-555-1002',email:'grice@example.com'},{phone:'920-555-1003',email:'gwindel@example.com'}], bracket: null },
+    { id: 11, name: '11', archers: ['Todd King', 'Mitch Henke', 'Steve Kletzien'], contacts: [{phone:'920-555-1101',email:'tking@example.com'},{phone:'920-555-1102',email:'mhenke@example.com'},{phone:'920-555-1103',email:'skletzien@example.com'}], bracket: null },
+    { id: 12, name: '12', archers: ['Dick Buchholz', 'Bob Callies', 'Bob Butler'], contacts: [{phone:'920-555-1201',email:'dbuchholz@example.com'},{phone:'920-555-1202',email:'bcallies@example.com'},{phone:'920-555-1203',email:'bbutler@example.com'}], bracket: null },
+    { id: 13, name: '13', archers: ['Ron Spieth', 'Kris King', 'Curt Hoffart'], contacts: [{phone:'920-555-1301',email:'rspieth@example.com'},{phone:'920-555-1302',email:'kking@example.com'},{phone:'920-555-1303',email:'choffart@example.com'}], bracket: null },
+    { id: 14, name: '14', archers: ['David Haltner', 'Jason Stoecker', 'Randy Ziarek'], contacts: [{phone:'920-555-1401',email:'dhaltner@example.com'},{phone:'920-555-1402',email:'jstoecker@example.com'},{phone:'920-555-1403',email:'rziarek@example.com'}], bracket: null },
+    { id: 15, name: '15', archers: ['Don Bublitz', 'Jesse Seltrecht', 'Mike Herre'], contacts: [{phone:'920-555-1501',email:'dbublitz@example.com'},{phone:'920-555-1502',email:'jseltrecht@example.com'},{phone:'920-555-1503',email:'mherre@example.com'}], bracket: null },
+    { id: 16, name: '16', archers: ['Mike Newell', 'David Papke', 'Zyle Newell'], contacts: [{phone:'920-555-1601',email:'mnewell@example.com'},{phone:'920-555-1602',email:'dpapke@example.com'},{phone:'920-555-1603',email:'znewell@example.com'}], bracket: null },
+    { id: 17, name: '17', archers: ['Andy Holtebeck', 'Kevin Friede', 'Dennis Heusdens'], contacts: [{phone:'920-555-1701',email:'aholtebeck@example.com'},{phone:'920-555-1702',email:'kfriede@example.com'},{phone:'920-555-1703',email:'dheusdens@example.com'}], bracket: null },
+    { id: 18, name: '18', archers: ['Eric Schmelling', 'Chuck Schmelling', 'Ben Schmelling'], contacts: [{phone:'920-555-1801',email:'eschmelling@example.com'},{phone:'920-555-1802',email:'cschmelling@example.com'},{phone:'920-555-1803',email:'bschmelling@example.com'}], bracket: null },
+    { id: 19, name: '19', archers: ['Neil Steffans', 'Dale Mueller', 'Bill Akerett'], contacts: [{phone:'920-555-1901',email:'nsteffans@example.com'},{phone:'920-555-1902',email:'dmueller@example.com'},{phone:'920-555-1903',email:'bakerett@example.com'}], bracket: null },
+    { id: 20, name: '20', archers: ['Chris Wegner', 'Dave Grisar Jr.'], contacts: [{phone:'920-555-2001',email:'cwegner@example.com'},{phone:'920-555-2002',email:'dgrisarjr@example.com'}], bracket: null },
+    { id: 21, name: '21', archers: ['Paul Fischer', 'Brian Fischer'], contacts: [{phone:'920-555-2101',email:'pfischer@example.com'},{phone:'920-555-2102',email:'bfischer@example.com'}], bracket: null },
+    { id: 22, name: '22', archers: ['Jim Reinhart', 'Scott Reinhart'], contacts: [{phone:'920-555-2201',email:'jreinhart@example.com'},{phone:'920-555-2202',email:'sreinhart@example.com'}], bracket: null },
+    { id: 23, name: '23', archers: ['Pete Kowalski', 'Adam Kowalski', 'Carl Zimmerman'], contacts: [{phone:'920-555-2301',email:'pkowalski@example.com'},{phone:'920-555-2302',email:'akowalski@example.com'},{phone:'920-555-2303',email:'czimmerman@example.com'}], bracket: null },
   ];
-  // Scores for 3 weeks (2 qualifying + 1 bracket play) for all 39 teams — realistic archery scores (out of 280 max)
-  scores = {
-    1: { 1:[270,262,262], 2:[254,247,264], 3:[265,258,258], 4:[267,247,240], 5:[243,268,235], 6:[270,256,239], 7:[251,252,216], 8:[263,245,252], 9:[254,240,248], 10:[246,158,240],
-         11:[269,274,258], 12:[238,232,241], 13:[263,268,273], 14:[248,255,261], 15:[235,239,244], 16:[263,256,252], 17:[242,238,235], 18:[252,238,236], 19:[258,248,242], 20:[273,265,258],
-         21:[260,255,248], 22:[244,250,238], 23:[268,262,255], 24:[241,236,230], 25:[257,260,252], 26:[250,245,240], 27:[236,228,232], 28:[264,258,250], 29:[248,242,235], 30:[232,226,220],
-         31:[245,240,234], 32:[238,230,225], 33:[255,250,248], 34:[262,254,248], 35:[228,222,218], 36:[240,235,230], 37:[252,248,244], 38:[234,228,222], 39:[246,240,236] },
-    2: { 1:[255,264,268], 2:[232,260,266], 3:[262,260,253], 4:[254,257,236], 5:[255,269,247], 6:[241,260,260], 7:[257,258,259], 8:[258,250,261], 9:[258,246,252], 10:[249,189,241],
-         11:[270,265,260], 12:[241,240,236], 13:[272,265,268], 14:[252,258,257], 15:[240,241,249], 16:[258,253,257], 17:[245,242,238], 18:[248,242,240], 19:[262,252,246], 20:[272,264,262],
-         21:[256,258,252], 22:[248,246,240], 23:[265,260,258], 24:[238,240,228], 25:[262,255,258], 26:[246,250,244], 27:[240,232,228], 28:[260,262,254], 29:[245,248,238], 30:[228,230,218],
-         31:[242,244,238], 32:[235,234,228], 33:[258,252,250], 34:[258,258,252], 35:[224,226,220], 36:[238,240,232], 37:[248,252,246], 38:[230,232,226], 39:[250,244,238] },
-    3: { 1:[262,268,260], 2:[251,252,270], 3:[249,257,256], 4:[272,244,220], 5:[269,241,255], 6:[242,243,244], 7:[266,205,264], 8:[265,248,258], 9:[251,244,250], 10:[257,198,240],
-         11:[265,270,255], 12:[244,238,240], 13:[270,262,268], 14:[255,260,258], 15:[246,243,252], 16:[260,255,260], 17:[240,240,232], 18:[245,240,238], 19:[260,250,248], 20:[268,260,255],
-         21:[258,252,255], 22:[250,244,242], 23:[270,258,260], 24:[235,242,232], 25:[260,258,255], 26:[252,248,242], 27:[234,230,235], 28:[266,256,252], 29:[250,240,240], 30:[230,228,224],
-         31:[248,242,240], 32:[240,232,230], 33:[260,254,246], 34:[260,256,250], 35:[226,220,222], 36:[242,238,234], 37:[250,250,248], 38:[236,230,224], 39:[248,242,240] },
-  };
+  scores = {};
   schedule = {};
   freeAgents = [
-    { name: 'Steve Augustin', phone: '', email: 'saugustin@example.com' },
-    { name: 'Matt Reindl', phone: '', email: 'mreindl@example.com' },
-    { name: 'Davian Welch', phone: '', email: 'dwelch@example.com' },
+    { name: 'Wayne Brandt', phone: '920-555-2501', email: '' },
+    { name: 'Derek Brandt', phone: '920-555-2502', email: '' },
+    { name: 'Sam Henrich', phone: '920-555-2503', email: 'shenrich@example.com' },
+    { name: 'Rich Keller', phone: '920-555-2601', email: '' },
+    { name: 'Tim Keller', phone: '920-555-2602', email: 'tkeller@example.com' },
+    { name: 'Frank Novak', phone: '920-555-2701', email: 'fnovak@example.com' },
+    { name: 'Ted Novak', phone: '920-555-2702', email: '' },
   ];
   loadConfigUI();
   renderTeams();
   renderFreeAgents();
   renderDashboard();
-  showToast('📋 39 teams + 3 free agents loaded with 2 weeks of qualifying scores — lock brackets to start bracket play');
+  showToast('📋 23 teams + 7 free agents loaded — 4 teams need a 3rd archer, create Team 24 from remaining free agents');
 }
 
 /* ══════════════════════════════════════════
@@ -3600,7 +3582,7 @@ document.addEventListener('DOMContentLoaded', function() {
   var heroLogo = document.getElementById('heroLogo');
   if (heroLogo) heroLogo.src = LOGO_URI;
   // Set banner logos
-  ['bannerLogoTeams','bannerLogoScores','bannerLogoStand','bannerLogoSched','bannerLogoStats'].forEach(function(id) {
+  ['bannerLogoTeams','bannerLogoScores','bannerLogoStand','bannerLogoSched','bannerLogoStats','bannerLogoSettings'].forEach(function(id) {
     var el = document.getElementById(id);
     if (el) el.src = LOGO_URI;
   });
