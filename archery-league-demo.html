@@ -1578,10 +1578,12 @@ function confirmBracketAssignment() {
   generateSchedule();
   renderTeams();
   closeBracketModal();
-  // Advance score tab to first bracket play week
+  // Rebuild week options first (now includes bracket play weeks), then advance
+  populateWeekSelect();
   var sel = document.getElementById('weekSelect');
   if (sel) { sel.value = String(config.qualWeeks + 1); }
-  renderScoreTab();
+  renderScoreEntry();
+  updateWeekNav();
   var toastMsg = '🔒 Divisions locked — ' + usedBrackets.length + ' divisions, schedule generated!';
   if (phantomDivs.length > 0) {
     toastMsg += '\n👻 Phantom teams added to Div ' + phantomDivs.join(', ') + ' to even out matchups.';
