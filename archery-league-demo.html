@@ -679,7 +679,7 @@ body.dark-mode .config-editing-banner { background: #422006; border-color: #d977
     <div class="modal-header"><h3 id="teamModalTitle">Add Team</h3><button class="modal-close" onclick="closeTeamModal()">&times;</button></div>
     <div class="modal-body">
       <div class="field-grid" style="grid-template-columns:1fr;">
-        <div class="field-group"><label>Team #</label><input type="text" id="tm-name" readonly style="background:var(--bg);font-weight:700;font-size:1.1rem;"></div>
+        <div class="field-group"><label>Team #</label><input type="text" id="tm-name" readonly style="background:var(--bg);font-weight:700;font-size:1.4rem;text-align:center;max-width:80px;"></div>
       </div>
       <div id="tm-archer-rows"></div>
       <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px;">
@@ -1091,8 +1091,8 @@ function buildArcherRows(count, team) {
 function getNextTeamNumber() {
   var max = 0;
   teams.forEach(function(t) {
-    var m = t.name.match(/^Team\s+(\d+)$/i);
-    if (m) max = Math.max(max, parseInt(m[1]));
+    var n = parseInt(t.name);
+    if (!isNaN(n) && n > max) max = n;
   });
   return max + 1;
 }
@@ -1100,7 +1100,7 @@ function getNextTeamNumber() {
 function addTeamModal() {
   editingTeamIdx = null;
   document.getElementById('teamModalTitle').textContent = 'Add Team';
-  document.getElementById('tm-name').value = 'Team ' + getNextTeamNumber();
+  document.getElementById('tm-name').value = String(getNextTeamNumber());
   buildArcherRows(config.archersPerTeam || 3, null);
   document.getElementById('teamModal').classList.add('show');
 }
@@ -1130,7 +1130,7 @@ function saveTeam() {
       contacts.push({ phone: phoneEls[i].value.trim(), email: emailEls[i].value.trim() });
     }
   }
-  if (!name) name = 'Team ' + getNextTeamNumber();
+  if (!name) name = String(getNextTeamNumber());
   if (archers.length === 0) { showToast('⚠️ At least one archer required'); return; }
   if (editingTeamIdx !== null) {
     teams[editingTeamIdx].name = name;
@@ -1283,7 +1283,7 @@ function autoAssignFreeAgents() {
       teamArchers.push(fa2.name);
       teamContacts.push({ phone: fa2.phone || '', email: fa2.email || '' });
     }
-    teams.push({ id: nextId, name: 'Team ' + nextId, archers: teamArchers, contacts: teamContacts, bracket: null });
+    teams.push({ id: nextId, name: String(nextId), archers: teamArchers, contacts: teamContacts, bracket: null });
     newTeams++;
   }
   renderTeams();
@@ -2387,7 +2387,7 @@ function renderBracketSchedule(bracket) {
     const matchups = getWeekMatchups(bracket, w);
     const isPlayoff = matchups.some(m => m.playoff);
     html += '<div class="dash-card" style="margin-bottom:14px;"><div class="dash-card-header"><h3>Week ' + w + (isPlayoff ? ' (Playoff)' : '') + '</h3></div>';
-    html += '<div class="dash-card-body" style="padding:0;overflow-x:auto;"><table class="data-table"><thead><tr><th>Team A</th><th class="num">Raw</th><th class="num">HC</th><th class="num" style="font-weight:700;">Adj</th><th style="text-align:center;">vs</th><th>Team B</th><th class="num">Raw</th><th class="num">HC</th><th class="num" style="font-weight:700;">Adj</th><th style="text-align:center;">Result</th></tr></thead><tbody>';
+    html += '<div class="dash-card-body" style="padding:0;overflow-x:auto;"><table class="data-table"><thead><tr><th>#</th><th class="num">Raw</th><th class="num">HC</th><th class="num" style="font-weight:700;">Adj</th><th style="text-align:center;">vs</th><th>#</th><th class="num">Raw</th><th class="num">HC</th><th class="num" style="font-weight:700;">Adj</th><th style="text-align:center;">Result</th></tr></thead><tbody>';
     matchups.forEach(m => {
       if (!m.teamA || !m.teamB) { html += '<tr><td colspan="10" style="text-align:center;color:var(--text-light);">Seeded by standings</td></tr>'; return; }
       const tA = teams.find(t => t.id === m.teamA);
@@ -2721,7 +2721,7 @@ function buildImportPreview() {
       });
       if (rec.teamName || rec.archer1) {
         previewTeams.push({
-          name: rec.teamName || ('Team ' + (previewTeams.length + 1)),
+          name: rec.teamName || String(previewTeams.length + 1),
           archers: [rec.archer1, rec.archer2, rec.archer3].filter(Boolean),
           contacts: [
             { phone: rec.phone1 || '', email: rec.email1 || '' },
@@ -2745,7 +2745,7 @@ function buildImportPreview() {
       var emailVal = colOf.email1 !== undefined ? (row[colOf.email1] || '').trim() : '';
       if (teamVal && !isNaN(parseInt(teamVal))) {
         // New team row
-        currentTeam = { name: 'Team ' + teamVal, archers: [], contacts: [] };
+        currentTeam = { name: String(teamVal), archers: [], contacts: [] };
         previewTeams.push(currentTeam);
       }
       if (currentTeam && archerVal) {
@@ -2870,45 +2870,45 @@ function loadSampleData() {
     archersPerTeam: 3, startDate: '2026-06-01', bracketsLocked: false
   };
   teams = [
-    { id: 1, name: 'Team Grisar', archers: ['Dave Grisar', 'Tyler Grisar', 'Matt Esselmann'], contacts: [{phone:'920-555-0101',email:'dgrisar@example.com'},{phone:'920-555-0102',email:''},{phone:'',email:'messelmann@example.com'}], bracket: null },
-    { id: 2, name: 'Team Schultz', archers: ['Guy Schultz', 'Kurt Zirtzlaff', 'Josh Hafemeister'], contacts: [{phone:'920-555-0201',email:'gschultz@example.com'},{phone:'',email:''},{phone:'920-555-0203',email:''}], bracket: null },
-    { id: 3, name: 'Team Moder', archers: ['Dustin Moder', 'Jacob Lewin', 'Patrick Fridholm'], contacts: [{phone:'920-555-0301',email:''},{phone:'',email:'jlewin@example.com'},{phone:'',email:''}], bracket: null },
-    { id: 4, name: 'Team Barron', archers: ['Jesse Barron', 'Tom Dierringer', 'Jack Mueller'], contacts: [{phone:'',email:'jbarron@example.com'},{phone:'920-555-0402',email:''},{phone:'',email:''}], bracket: null },
-    { id: 5, name: 'Team Speirs', archers: ['Mark Speirs', 'Brandon Speirs', 'Steve Bohn'], contacts: [{phone:'920-555-0501',email:'mspeirs@example.com'},{phone:'920-555-0502',email:''},{phone:'',email:'sbohn@example.com'}], bracket: null },
-    { id: 6, name: 'Team Haas', archers: ['Dennis Haas', 'Terri Haas', 'Ben Haas'], contacts: [{phone:'920-555-0601',email:'dhaas@example.com'},{phone:'920-555-0602',email:''},{phone:'920-555-0603',email:''}], bracket: null },
-    { id: 7, name: 'Team Streim', archers: ['Matt Streim', 'Derrick Malcore', 'Christian Bilgo'], bracket: null },
-    { id: 8, name: 'Team Harwood', archers: ['Tom Harwood', 'John Knepel Sr.', 'John Knepel Jr.'], bracket: null },
-    { id: 9, name: 'Team Krombach', archers: ['Ryan Krombach', 'Andy Harrigan', 'Mike Janz'], bracket: null },
-    { id: 10, name: 'Team Cibulka', archers: ['Mike Cibulka', 'Griff Rice', 'Greg Windel'], bracket: null },
-    { id: 11, name: 'Team King', archers: ['Todd King', 'Mitch Henke', 'Steve Kletzien'], bracket: null },
-    { id: 12, name: 'Team Buchholz', archers: ['Dick Buchholz', 'Bob Callies', 'Bob Butler'], bracket: null },
-    { id: 13, name: 'Team Spieth', archers: ['Ron Spieth', 'Kris King', 'Curt Hoffart'], bracket: null },
-    { id: 14, name: 'Team Haltner', archers: ['David Haltner', 'Jason Stoecker', 'Randy Ziarek'], bracket: null },
-    { id: 15, name: 'Team Bublitz', archers: ['Don Bublitz', 'Jesse Seltrecht', 'Mike Herre'], bracket: null },
-    { id: 16, name: 'Team Newell', archers: ['Mike Newell', 'David Papke', 'Zyle Newell'], bracket: null },
-    { id: 17, name: 'Team Holtebeck', archers: ['Andy Holtebeck', 'Kevin Friede', 'Dennis Heusdens'], bracket: null },
-    { id: 18, name: 'Team Schmelling', archers: ['Eric Schmelling', 'Chuck Schmelling', 'Ben Schmelling'], bracket: null },
-    { id: 19, name: 'Team Steffans', archers: ['Neil Steffans', 'Dale Mueller', 'Bill Akerett'], bracket: null },
-    { id: 20, name: 'Team Wegner', archers: ['Chris Wegner', 'Dave Grisar Jr.', 'Mike Grisar'], bracket: null },
-    { id: 21, name: 'Team Fischer', archers: ['Paul Fischer', 'Brian Fischer', 'Kyle Drews'], bracket: null },
-    { id: 22, name: 'Team Reinhart', archers: ['Jim Reinhart', 'Scott Reinhart', 'Dan Vogt'], bracket: null },
-    { id: 23, name: 'Team Kowalski', archers: ['Pete Kowalski', 'Adam Kowalski', 'Tony Becker'], bracket: null },
-    { id: 24, name: 'Team Zimmerman', archers: ['Carl Zimmerman', 'Luke Zimmerman', 'Ray Novak'], bracket: null },
-    { id: 25, name: 'Team Brandt', archers: ['Wayne Brandt', 'Derek Brandt', 'Sam Henrich'], bracket: null },
-    { id: 26, name: 'Team Keller', archers: ['Rich Keller', 'Tim Keller', 'Joe Prentice'], bracket: null },
-    { id: 27, name: 'Team Novak', archers: ['Frank Novak', 'Ted Novak', 'Bill Schuster'], bracket: null },
-    { id: 28, name: 'Team Hartmann', archers: ['Dan Hartmann', 'Jake Hartmann', 'Gary Meier'], bracket: null },
-    { id: 29, name: 'Team Vogt', archers: ['Larry Vogt', 'Kevin Vogt', 'Phil Oster'], bracket: null },
-    { id: 30, name: 'Team Drews', archers: ['Roger Drews', 'Chad Drews', 'Craig Wendt'], bracket: null },
-    { id: 31, name: 'Team Meier', archers: ['Al Meier', 'Doug Meier', 'Ken Farber'], bracket: null },
-    { id: 32, name: 'Team Schuster', archers: ['Hank Schuster', 'Tom Schuster', 'Marty Gruber'], bracket: null },
-    { id: 33, name: 'Team Oster', archers: ['Jeff Oster', 'Ryan Oster', 'Dale Kraft'], bracket: null },
-    { id: 34, name: 'Team Kraft', archers: ['Gene Kraft', 'Brett Kraft', 'Leo Bruns'], bracket: null },
-    { id: 35, name: 'Team Farber', archers: ['Vince Farber', 'Nick Farber', 'Walt Ebert'], bracket: null },
-    { id: 36, name: 'Team Gruber', archers: ['Stan Gruber', 'Cody Gruber', 'Rick Heinz'], bracket: null },
-    { id: 37, name: 'Team Wendt', archers: ['Max Wendt', 'Troy Wendt', 'Glenn Frey'], bracket: null },
-    { id: 38, name: 'Team Ebert', archers: ['Roy Ebert', 'Shane Ebert', 'Don Lange'], bracket: null },
-    { id: 39, name: 'Team Frey', archers: ['Art Frey', 'Joel Frey', 'Russ Pfeiffer'], bracket: null },
+    { id: 1, name: '1', archers: ['Dave Grisar', 'Tyler Grisar', 'Matt Esselmann'], contacts: [{phone:'920-555-0101',email:'dgrisar@example.com'},{phone:'920-555-0102',email:''},{phone:'',email:'messelmann@example.com'}], bracket: null },
+    { id: 2, name: '2', archers: ['Guy Schultz', 'Kurt Zirtzlaff', 'Josh Hafemeister'], contacts: [{phone:'920-555-0201',email:'gschultz@example.com'},{phone:'',email:''},{phone:'920-555-0203',email:''}], bracket: null },
+    { id: 3, name: '3', archers: ['Dustin Moder', 'Jacob Lewin', 'Patrick Fridholm'], contacts: [{phone:'920-555-0301',email:''},{phone:'',email:'jlewin@example.com'},{phone:'',email:''}], bracket: null },
+    { id: 4, name: '4', archers: ['Jesse Barron', 'Tom Dierringer', 'Jack Mueller'], contacts: [{phone:'',email:'jbarron@example.com'},{phone:'920-555-0402',email:''},{phone:'',email:''}], bracket: null },
+    { id: 5, name: '5', archers: ['Mark Speirs', 'Brandon Speirs', 'Steve Bohn'], contacts: [{phone:'920-555-0501',email:'mspeirs@example.com'},{phone:'920-555-0502',email:''},{phone:'',email:'sbohn@example.com'}], bracket: null },
+    { id: 6, name: '6', archers: ['Dennis Haas', 'Terri Haas', 'Ben Haas'], contacts: [{phone:'920-555-0601',email:'dhaas@example.com'},{phone:'920-555-0602',email:''},{phone:'920-555-0603',email:''}], bracket: null },
+    { id: 7, name: '7', archers: ['Matt Streim', 'Derrick Malcore', 'Christian Bilgo'], bracket: null },
+    { id: 8, name: '8', archers: ['Tom Harwood', 'John Knepel Sr.', 'John Knepel Jr.'], bracket: null },
+    { id: 9, name: '9', archers: ['Ryan Krombach', 'Andy Harrigan', 'Mike Janz'], bracket: null },
+    { id: 10, name: '10', archers: ['Mike Cibulka', 'Griff Rice', 'Greg Windel'], bracket: null },
+    { id: 11, name: '11', archers: ['Todd King', 'Mitch Henke', 'Steve Kletzien'], bracket: null },
+    { id: 12, name: '12', archers: ['Dick Buchholz', 'Bob Callies', 'Bob Butler'], bracket: null },
+    { id: 13, name: '13', archers: ['Ron Spieth', 'Kris King', 'Curt Hoffart'], bracket: null },
+    { id: 14, name: '14', archers: ['David Haltner', 'Jason Stoecker', 'Randy Ziarek'], bracket: null },
+    { id: 15, name: '15', archers: ['Don Bublitz', 'Jesse Seltrecht', 'Mike Herre'], bracket: null },
+    { id: 16, name: '16', archers: ['Mike Newell', 'David Papke', 'Zyle Newell'], bracket: null },
+    { id: 17, name: '17', archers: ['Andy Holtebeck', 'Kevin Friede', 'Dennis Heusdens'], bracket: null },
+    { id: 18, name: '18', archers: ['Eric Schmelling', 'Chuck Schmelling', 'Ben Schmelling'], bracket: null },
+    { id: 19, name: '19', archers: ['Neil Steffans', 'Dale Mueller', 'Bill Akerett'], bracket: null },
+    { id: 20, name: '20', archers: ['Chris Wegner', 'Dave Grisar Jr.', 'Mike Grisar'], bracket: null },
+    { id: 21, name: '21', archers: ['Paul Fischer', 'Brian Fischer', 'Kyle Drews'], bracket: null },
+    { id: 22, name: '22', archers: ['Jim Reinhart', 'Scott Reinhart', 'Dan Vogt'], bracket: null },
+    { id: 23, name: '23', archers: ['Pete Kowalski', 'Adam Kowalski', 'Tony Becker'], bracket: null },
+    { id: 24, name: '24', archers: ['Carl Zimmerman', 'Luke Zimmerman', 'Ray Novak'], bracket: null },
+    { id: 25, name: '25', archers: ['Wayne Brandt', 'Derek Brandt', 'Sam Henrich'], bracket: null },
+    { id: 26, name: '26', archers: ['Rich Keller', 'Tim Keller', 'Joe Prentice'], bracket: null },
+    { id: 27, name: '27', archers: ['Frank Novak', 'Ted Novak', 'Bill Schuster'], bracket: null },
+    { id: 28, name: '28', archers: ['Dan Hartmann', 'Jake Hartmann', 'Gary Meier'], bracket: null },
+    { id: 29, name: '29', archers: ['Larry Vogt', 'Kevin Vogt', 'Phil Oster'], bracket: null },
+    { id: 30, name: '30', archers: ['Roger Drews', 'Chad Drews', 'Craig Wendt'], bracket: null },
+    { id: 31, name: '31', archers: ['Al Meier', 'Doug Meier', 'Ken Farber'], bracket: null },
+    { id: 32, name: '32', archers: ['Hank Schuster', 'Tom Schuster', 'Marty Gruber'], bracket: null },
+    { id: 33, name: '33', archers: ['Jeff Oster', 'Ryan Oster', 'Dale Kraft'], bracket: null },
+    { id: 34, name: '34', archers: ['Gene Kraft', 'Brett Kraft', 'Leo Bruns'], bracket: null },
+    { id: 35, name: '35', archers: ['Vince Farber', 'Nick Farber', 'Walt Ebert'], bracket: null },
+    { id: 36, name: '36', archers: ['Stan Gruber', 'Cody Gruber', 'Rick Heinz'], bracket: null },
+    { id: 37, name: '37', archers: ['Max Wendt', 'Troy Wendt', 'Glenn Frey'], bracket: null },
+    { id: 38, name: '38', archers: ['Roy Ebert', 'Shane Ebert', 'Don Lange'], bracket: null },
+    { id: 39, name: '39', archers: ['Art Frey', 'Joel Frey', 'Russ Pfeiffer'], bracket: null },
   ];
   // Scores for 3 weeks (2 qualifying + 1 bracket play) for all 39 teams — realistic archery scores (out of 280 max)
   scores = {
