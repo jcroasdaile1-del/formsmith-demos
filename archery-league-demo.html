@@ -860,11 +860,11 @@ const IMPORT_FIELDS = [
   { key: 'singlesEmail', label: 'Free Agent Email' },
 ];
 const IMPORT_ALIASES = {
-  teamName: ['team name', 'team', 'name', 'squad', 'group', 'team number', 'team #', 'team no'],
-  archer1: ['archer 1', 'archer1', 'shooter 1', 'shooter1', 'member 1', 'member1', 'player 1', 'player1', 'name 1', 'name1', 'archer'],
+  teamName: ['team name', 'team', 'squad', 'group', 'team number', 'team #', 'team no'],
+  archer1: ['archer 1', 'archer1', 'shooter 1', 'shooter1', 'member 1', 'member1', 'player 1', 'player1', 'name 1', 'name1', 'archer', 'name', 'shooter', 'member', 'player'],
   archer2: ['archer 2', 'archer2', 'shooter 2', 'shooter2', 'member 2', 'member2', 'player 2', 'player2', 'name 2', 'name2'],
   archer3: ['archer 3', 'archer3', 'shooter 3', 'shooter3', 'member 3', 'member3', 'player 3', 'player3', 'name 3', 'name3'],
-  phone1: ['phone', 'phone #', 'phone1', 'phone 1', 'tel', 'mobile'],
+  phone1: ['phone', 'phone #', 'phone1', 'phone 1', 'phone number', 'tel', 'mobile'],
   email1: ['email', 'e-mail', 'email1', 'email 1', 'e-mail 1'],
   phone2: ['phone 2', 'phone2'],
   email2: ['email 2', 'email2', 'e-mail 2'],
@@ -2677,8 +2677,13 @@ function parseCSVLine(line, delim) {
 
 function autoMatchImport(header) {
   const h = header.toLowerCase().trim();
+  // Pass 1: exact match
   for (const [key, aliases] of Object.entries(IMPORT_ALIASES)) {
-    if (aliases.some(a => a === h || h.includes(a) || a.includes(h))) return key;
+    if (aliases.some(a => a === h)) return key;
+  }
+  // Pass 2: fuzzy (substring) match
+  for (const [key, aliases] of Object.entries(IMPORT_ALIASES)) {
+    if (aliases.some(a => h.includes(a) || a.includes(h))) return key;
   }
   return '';
 }
@@ -2740,22 +2745,26 @@ function buildImportPreview() {
       }
     });
   } else {
-    // Multi-row-per-team format (like the Sample.xlsx): team number in col A, one archer per row
-    var currentTeam = null;
+    // Multi-row-per-team format: team number in one column, one archer per row.
+    // Blank team number = free agent.
+    var teamMap = {}; // teamNumber -> { name, archers, contacts }
     importRows.forEach(function(row) {
       var teamVal = colOf.teamName !== undefined ? (row[colOf.teamName] || '').trim() : '';
       var archerVal = colOf.archer1 !== undefined ? (row[colOf.archer1] || '').trim() : '';
       var phoneVal = colOf.phone1 !== undefined ? (row[colOf.phone1] || '').trim() : '';
       var emailVal = colOf.email1 !== undefined ? (row[colOf.email1] || '').trim() : '';
-      if (teamVal && !isNaN(parseInt(teamVal))) {
-        // New team row
-        currentTeam = { name: String(teamVal), archers: [], contacts: [] };
-        previewTeams.push(currentTeam);
+      if (!archerVal) return; // skip blank rows
+      if (!teamVal) {
+        // No team number → free agent
+        previewFreeAgents.push({ name: archerVal, phone: phoneVal, email: emailVal });
+        return;
       }
-      if (currentTeam && archerVal) {
-        currentTeam.archers.push(archerVal);
-        currentTeam.contacts.push({ phone: phoneVal, email: emailVal });
+      var teamKey = String(teamVal).trim();
+      if (!teamMap[teamKey]) {
+        teamMap[teamKey] = { name: teamKey, archers: [], contacts: [] };
       }
+      teamMap[teamKey].archers.push(archerVal);
+      teamMap[teamKey].contacts.push({ phone: phoneVal, email: emailVal });
       // Check for singles data in this row
       var singlesVal = colOf.singles !== undefined ? (row[colOf.singles] || '').trim() : '';
       var singlesEmailVal = colOf.singlesEmail !== undefined ? (row[colOf.singlesEmail] || '').trim() : '';
@@ -2763,6 +2772,13 @@ function buildImportPreview() {
         previewFreeAgents.push({ name: singlesVal, phone: '', email: singlesEmailVal });
       }
     });
+    // Sort teams by number and build previewTeams
+    var sortedKeys = Object.keys(teamMap).sort(function(a, b) {
+      var na = parseInt(a), nb = parseInt(b);
+      if (!isNaN(na) && !isNaN(nb)) return na - nb;
+      return a.localeCompare(b);
+    });
+    sortedKeys.forEach(function(k) { previewTeams.push(teamMap[k]); });
   }
 
   var wrap = document.getElementById('importPreviewWrap');
