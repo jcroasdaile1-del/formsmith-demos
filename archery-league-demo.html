@@ -571,7 +571,7 @@ body.dark-mode .config-editing-banner { background: #422006; border-color: #d977
   </div>
   <div class="dash-card">
     <div class="dash-card-header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;"><h3>📋 Team Roster (<span id="teamCount">0</span> teams)</h3><div id="teamBulkActions" style="display:none;gap:8px;"><button class="btn btn-outline btn-sm" onclick="editSelectedTeam()">✏️ Edit</button> <button class="btn btn-sm" style="background:var(--danger-light);color:#991b1b;border:1px solid #fca5a5;" onclick="deleteSelectedTeams()">🗑️ Delete</button></div></div>
-    <div class="dash-card-body" style="padding:0;overflow-x:auto;"><table class="data-table" id="teamTable"><thead><tr><th style="width:36px;"><input type="checkbox" id="teamSelectAll" onchange="toggleAllTeams(this.checked)"></th><th>#</th><th>Team Name</th><th>Archer 1</th><th>Archer 2</th><th>Archer 3</th><th>Bracket</th><th>Qual. Avg</th></tr></thead><tbody id="teamBody"></tbody></table></div>
+    <div class="dash-card-body" style="padding:0;overflow-x:auto;"><table class="data-table" id="teamTable"><thead><tr><th style="width:36px;"><input type="checkbox" id="teamSelectAll" onchange="toggleAllTeams(this.checked)"></th><th>Team</th><th>Archer 1</th><th>Archer 2</th><th>Archer 3</th><th>Bracket</th><th>Qual. Avg</th></tr></thead><tbody id="teamBody"></tbody></table></div>
   </div>
   <!-- Free Agents Pool -->
   <div class="dash-card" style="margin-top:16px;">
@@ -1029,7 +1029,7 @@ function renderTeams() {
   document.getElementById('teamCount').textContent = teams.length;
   const body = document.getElementById('teamBody');
   if (teams.length === 0) {
-    body.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:30px;color:var(--text-light);">No teams yet. Add teams manually, import from CSV, or load sample data.</td></tr>';
+    body.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--text-light);">No teams yet. Add teams manually, import from CSV, or load sample data.</td></tr>';
     return;
   }
   body.innerHTML = teams.map((t, i) => {
@@ -1040,7 +1040,7 @@ function renderTeams() {
     var expandBtn = hasContacts ? ' <button class="btn-contact-expand" onclick="event.stopPropagation();toggleTeamContacts(' + i + ')" title="View contact info">📇</button>' : '';
     var contactRow = '';
     if (hasContacts) {
-      contactRow = '<tr class="contact-detail-row" id="team-contacts-' + i + '" style="display:none;"><td></td><td colspan="7"><div class="contact-detail-grid">' +
+      contactRow = '<tr class="contact-detail-row" id="team-contacts-' + i + '" style="display:none;"><td></td><td colspan="6"><div class="contact-detail-grid">' +
         t.archers.map(function(a, ai) {
           var ci = c[ai];
           if (!ci || (!ci.phone && !ci.email)) return '';
@@ -1052,7 +1052,7 @@ function renderTeams() {
         '</div></td></tr>';
     }
     return '<tr' + phantomStyle + ' style="cursor:pointer;' + (t.phantom ? 'opacity:0.55;font-style:italic;' : '') + '" onclick="editTeam(' + i + ')">' +
-      '<td onclick="event.stopPropagation()"><input type="checkbox" class="team-check" data-idx="' + i + '" onchange="updateTeamBulkActions()"></td><td>' + (i + 1) + '</td><td style="font-weight:600;">' + (t.phantom ? '👻 ' : '') + esc(t.name) + expandBtn + '</td>' +
+      '<td onclick="event.stopPropagation()"><input type="checkbox" class="team-check" data-idx="' + i + '" onchange="updateTeamBulkActions()"></td><td style="font-weight:700;">' + (t.phantom ? '👻 ' : '') + esc(t.name) + expandBtn + '</td>' +
       t.archers.map(function(a) { return '<td>' + esc(a) + '</td>'; }).join('') +
       (t.archers.length < 3 ? '<td></td>'.repeat(3 - t.archers.length) : '') +
       '<td>' + (t.bracket ? '<span class="badge badge-green">' + esc(t.bracket) + '</span>' : '<span class="badge badge-gray">—</span>') + '</td>' +
@@ -3147,7 +3147,7 @@ function renderH2H() {
     else ties++;
   });
 
-  let html = '<div class="h2h-summary"><div class="h2h-team-summary"><div class="team-name">' + esc(tA.name) + '</div><div class="team-record" style="color:var(--primary);">' + winsA + ' W</div></div><div style="display:flex;align-items:center;justify-content:center;flex-direction:column;"><div style="font-weight:800;font-size:0.85rem;color:var(--text-light);">vs</div><div style="font-size:0.78rem;color:var(--text-light);margin-top:2px;">' + ties + ' tie' + (ties !== 1 ? 's' : '') + '</div></div><div class="h2h-team-summary"><div class="team-name">' + esc(tB.name) + '</div><div class="team-record" style="color:var(--accent);">' + winsB + ' W</div></div></div>';
+  let html = '<div class="h2h-summary"><div class="h2h-team-summary"><div class="team-name">' + esc(tA.name) + '</div><div class="team-record" style="color:' + (winsA > winsB ? 'var(--primary)' : winsA < winsB ? '#dc2626' : 'var(--text-light)') + ';">' + (winsA > winsB ? 'W' : winsA < winsB ? 'L' : '—') + '</div></div><div style="display:flex;align-items:center;justify-content:center;flex-direction:column;"><div style="font-weight:800;font-size:0.85rem;color:var(--text-light);">vs</div><div style="font-size:0.78rem;color:var(--text-light);margin-top:2px;">' + ties + ' tie' + (ties !== 1 ? 's' : '') + '</div></div><div class="h2h-team-summary"><div class="team-name">' + esc(tB.name) + '</div><div class="team-record" style="color:' + (winsB > winsA ? 'var(--primary)' : winsB < winsA ? '#dc2626' : 'var(--text-light)') + ';">' + (winsB > winsA ? 'W' : winsB < winsA ? 'L' : '—') + '</div></div></div>';
 
   if (matchups.length === 0) {
     html += '<div style="text-align:center;padding:20px;color:var(--text-light);">These teams haven\'t played each other yet.</div>';
