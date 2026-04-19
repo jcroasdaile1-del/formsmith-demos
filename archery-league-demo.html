@@ -2199,8 +2199,8 @@ function setScore(teamId, week, archerIdx, val) {
   if (!scores[week]) scores[week] = {};
   if (!scores[week][teamId]) scores[week][teamId] = [];
   scores[week][teamId][archerIdx] = parseInt(val) || 0;
-  // Update the total cell without full re-render to preserve focus
   const area = document.getElementById('scoreEntryArea');
+  // Update the total cell in qualification table view (preserve focus)
   const rows = area.querySelectorAll('.score-entry-table tbody tr');
   const teamIdx = (qualTeamFilter ? teams.filter(t => t.name.toLowerCase().includes(qualTeamFilter)) : teams).findIndex(t => t.id === teamId);
   if (teamIdx >= 0 && rows[teamIdx]) {
@@ -2208,15 +2208,14 @@ function setScore(teamId, week, archerIdx, val) {
     const total = s.reduce((a, b) => a + (b || 0), 0);
     const cells = rows[teamIdx].querySelectorAll('td');
     cells[cells.length - 1].textContent = total > 0 ? total : '—';
-    // Update scored count in toolbar
-    const realTeamsForCount = teams;
-    const scoredCount = realTeamsForCount.filter(t => scores[week] && scores[week][t.id] && scores[week][t.id].some(v => v > 0)).length;
-    const countSpan = area.querySelector('.qual-toolbar span');
-    if (countSpan) countSpan.textContent = scoredCount + '/' + realTeamsForCount.length + ' scored';
-    // Refresh submit bar so button enables as scores are entered
-    const submitArea = area.querySelector('.submit-scores-area, .submitted-bar');
-    if (submitArea) submitArea.outerHTML = buildSubmitBar(week);
   }
+  // Update scored count in toolbar
+  const scoredCount = teams.filter(t => scores[week] && scores[week][t.id] && scores[week][t.id].some(v => v > 0)).length;
+  const countSpan = area.querySelector('.qual-toolbar span');
+  if (countSpan) countSpan.textContent = scoredCount + '/' + teams.length + ' scored';
+  // Refresh submit bar so button enables as scores are entered
+  const submitArea = area.querySelector('.submit-scores-area, .submitted-bar');
+  if (submitArea) submitArea.outerHTML = buildSubmitBar(week);
 }
 
 function toggleQualTeam(id) { }
