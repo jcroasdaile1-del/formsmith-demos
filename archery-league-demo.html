@@ -2213,6 +2213,9 @@ function setScore(teamId, week, archerIdx, val) {
     const scoredCount = realTeamsForCount.filter(t => scores[week] && scores[week][t.id] && scores[week][t.id].some(v => v > 0)).length;
     const countSpan = area.querySelector('.qual-toolbar span');
     if (countSpan) countSpan.textContent = scoredCount + '/' + realTeamsForCount.length + ' scored';
+    // Refresh submit bar so button enables as scores are entered
+    const submitArea = area.querySelector('.submit-scores-area, .submitted-bar');
+    if (submitArea) submitArea.outerHTML = buildSubmitBar(week);
   }
 }
 
