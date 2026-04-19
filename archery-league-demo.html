@@ -570,7 +570,7 @@ body.dark-mode .config-editing-banner { background: #422006; border-color: #d977
   <div style="display:flex;gap:10px;align-items:center;margin-bottom:16px;flex-wrap:wrap;">
     <label style="font-weight:600;font-size:0.88rem;">Week:</label>
     <button class="week-nav-btn" id="weekPrev" onclick="changeWeek(-1)" title="Previous week">◀</button>
-    <select id="weekSelect" style="padding:8px 14px;border:1px solid var(--border);border-radius:8px;font-size:0.88rem;font-family:inherit;width:auto;min-width:200px;padding-right:28px;box-sizing:border-box;background:var(--card);color:var(--text);" onchange="renderScoreEntry()"></select>
+    <select id="weekSelect" style="padding:8px 14px;border:1px solid var(--border);border-radius:8px;font-size:0.88rem;font-family:inherit;width:auto;min-width:200px;padding-right:28px;box-sizing:border-box;background:var(--card);color:var(--text);" onchange="resetBracketTab();renderScoreEntry()"></select>
     <button class="week-nav-btn" id="weekNext" onclick="changeWeek(1)" title="Next week">▶</button>
     <button class="btn btn-outline btn-sm no-print" onclick="printWeek()">🖨️ Print Week</button>
     <button class="btn btn-accent btn-sm no-print" onclick="copyWeekSummary()">📧 Email Summary</button>
@@ -2232,6 +2232,10 @@ function selectScoreBracket(b) {
   renderScoreEntry();
 }
 
+function resetBracketTab() {
+  document.querySelectorAll('#scoreBracketTabs .bracket-tab').forEach(t => t.classList.remove('active'));
+}
+
 function filterQualTeams(val) {
   qualTeamFilter = val.toLowerCase();
   renderScoreEntry();
@@ -2248,6 +2252,7 @@ function changeWeek(dir) {
   if (next < 1 || next > totalWeeks) return;
   sel.value = String(next);
   qualTeamFilter = '';
+  resetBracketTab();
   renderScoreEntry();
   updateWeekNav();
 }
@@ -2301,6 +2306,7 @@ function submitWeekScores(week) {
     if (week < totalWeeks) {
       sel.value = String(week + 1);
     }
+    resetBracketTab();
     renderScoreEntry();
     updateWeekNav();
     showToast('Week ' + week + ' submitted — advanced to Week ' + (week < totalWeeks ? week + 1 : week));
