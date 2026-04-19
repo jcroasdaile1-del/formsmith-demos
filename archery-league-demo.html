@@ -2604,7 +2604,16 @@ function printWeek() {
   const week = parseInt(document.getElementById('weekSelect').value);
   if (!week) { showToast('⚠️ Select a week first'); return; }
   const isQual = week <= config.qualWeeks || !config.bracketsLocked;
-  const dateStr = new Date().toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' });
+  // Calculate week date from season start date
+  var weekDate;
+  if (config.startDate) {
+    var sd = new Date(config.startDate + 'T00:00:00');
+    sd.setDate(sd.getDate() + (week - 1) * 7);
+    weekDate = sd;
+  } else {
+    weekDate = new Date();
+  }
+  const dateStr = weekDate.toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' });
   const perfect = getPerfectScore();
 
   let body = '';
