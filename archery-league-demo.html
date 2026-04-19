@@ -3543,6 +3543,7 @@ function renderRecords() {
         let currentStreak = 0, maxStreak = 0;
         const weeks = [...new Set((schedule[b] || []).map(m => m.week))].sort((a, b) => a - b);
         weeks.forEach(w => {
+          if (!submittedWeeks[w]) return;
           const matchups = getWeekMatchups(b, w);
           matchups.forEach(m => {
             if (m.teamA !== t.id && m.teamB !== t.id) return;
@@ -3582,7 +3583,7 @@ function showStreakDetail() {
   brackets.forEach(b => {
     const bracketTeams = teams.filter(t => t.bracket === b);
     bracketTeams.forEach(t => {
-      let currentStreak = 0, maxStreak = 0;
+      let currentWin = 0, maxStreak = 0, currentLoss = 0, hasResults = false;
       const weeks = [...new Set((schedule[b] || []).map(m => m.week))].sort((a, c) => a - c);
       weeks.forEach(w => {
         if (!submittedWeeks[w]) return;
@@ -3591,22 +3592,32 @@ function showStreakDetail() {
           if (m.teamA !== t.id && m.teamB !== t.id) return;
           const result = calcMatchResult(m.teamA, m.teamB, w);
           if (!result) return;
+          hasResults = true;
           const myResult = m.teamA === t.id ? result.resultA : result.resultB;
-          if (myResult === 'WIN') { currentStreak++; if (currentStreak > maxStreak) maxStreak = currentStreak; }
-          else currentStreak = 0;
+          if (myResult === 'WIN') { currentWin++; currentLoss = 0; if (currentWin > maxStreak) maxStreak = currentWin; }
+          else { currentLoss++; currentWin = 0; }
         });
       });
-      allStreaks.push({ name: t.name, bracket: b, streak: maxStreak, current: currentStreak });
+      allStreaks.push({ name: t.name, bracket: b, streak: maxStreak, currentWin: currentWin, currentLoss: currentLoss, hasResults: hasResults });
     });
   });
-  allStreaks.sort((a, b) => b.streak - a.streak || b.current - a.current || a.name.localeCompare(b.name));
+  allStreaks.sort((a, b) => b.streak - a.streak || b.currentWin - a.currentWin || a.name.localeCompare(b.name));
 
   let html = '<div class="modal-overlay show" id="streakModal" onclick="if(event.target===this)this.remove()">';
   html += '<div class="modal-box trend-modal-box" style="overflow:hidden;display:flex;flex-direction:column;"><div class="modal-header"><h3>🔥 Win Streaks</h3><button class="modal-close" onclick="document.getElementById(\'streakModal\').remove()">&times;</button></div>';
   html += '<div class="modal-body" style="overflow-y:auto;flex:1;min-height:0;padding:0 24px 20px;"><table class="data-table"><thead><tr><th style="position:sticky;top:0;z-index:2;background:white;">Rank</th><th style="position:sticky;top:0;z-index:2;background:white;">Team</th><th style="position:sticky;top:0;z-index:2;background:white;">Bracket</th><th class="num" style="position:sticky;top:0;z-index:2;background:white;">Best Streak</th><th class="num" style="position:sticky;top:0;z-index:2;background:white;">Current</th></tr></thead><tbody>';
   allStreaks.forEach((s, i) => {
-    const isCurrent = s.current > 0 && s.current === s.streak;
-    html += '<tr><td>' + (i + 1) + '</td><td style="font-weight:600;">' + esc(s.name) + '</td><td>' + s.bracket + '</td><td class="num" style="font-weight:700;color:var(--primary);">' + s.streak + ' W</td><td class="num"' + (isCurrent ? ' style="color:var(--primary);font-weight:600;"' : '') + '>' + (s.current > 0 ? s.current + ' W' : '—') + '</td></tr>';
+    var currentText, currentStyle = '';
+    if (s.currentWin > 0) {
+      currentText = s.currentWin + ' W';
+      currentStyle = s.currentWin === s.streak ? ' style="color:var(--primary);font-weight:600;"' : ' style="color:var(--primary);"';
+    } else if (s.currentLoss > 0) {
+      currentText = s.currentLoss + ' L';
+      currentStyle = ' style="color:var(--danger);"';
+    } else {
+      currentText = '—';
+    }
+    html += '<tr><td>' + (i + 1) + '</td><td style="font-weight:600;">' + esc(s.name) + '</td><td>' + s.bracket + '</td><td class="num" style="font-weight:700;color:var(--primary);">' + s.streak + ' W</td><td class="num"' + currentStyle + '>' + currentText + '</td></tr>';
   });
   html += '</tbody></table></div></div></div>';
   document.body.insertAdjacentHTML('beforeend', html);
