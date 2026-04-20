@@ -528,7 +528,7 @@ body.dark-mode .config-editing-banner { background: #422006; border-color: #d977
     </div>
   </div>
   <div class="dash-card">
-    <div class="dash-card-header"><h3>⚡ Season Progress</h3></div>
+    <div class="dash-card-header"><h3>🏅 League Standings</h3></div>
     <div class="dash-card-body" id="dashProgress"></div>
   </div>
 </div>
@@ -1888,21 +1888,36 @@ function renderDashboard() {
   renderScoreDistChart();
   renderLeaderboard();
 
-  // Progress
+  // League Standings
   const prog = document.getElementById('dashProgress');
   if (!config.bracketsLocked) {
     prog.innerHTML = '<div style="text-align:center;padding:20px;"><p style="font-size:1rem;font-weight:600;margin-bottom:8px;">📋 Qualifying Phase</p><p style="color:var(--text-light);">Enter scores for ' + config.qualWeeks + ' qualifying weeks, then lock brackets on the Teams tab to generate the season schedule.</p></div>';
   } else {
     const brackets = [...new Set(teams.map(t => t.bracket).filter(Boolean))].sort();
-    let html = '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px;">';
+    const medals = ['🥇','🥈','🥉'];
+    let html = '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;">';
     brackets.forEach(b => {
       const st = calcBracketStandings(b, getTotalSeasonWeeks());
-      const leader = st[0];
-      html += '<div style="background:var(--bg);border-radius:8px;padding:14px;"><h4 style="margin-bottom:8px;">Bracket ' + b + '</h4>';
-      if (leader && leader.wins > 0) {
-        html += '<p style="font-weight:700;font-size:1rem;">' + esc(leader.name) + '</p><p style="font-size:0.82rem;color:var(--text-light);">' + leader.wins + 'W - ' + leader.losses + 'L - ' + leader.ties + 'T</p>';
-      } else {
+      const top3 = st.slice(0, 3);
+      html += '<div style="background:var(--bg);border-radius:10px;padding:16px 18px;border:1px solid var(--border);">';
+      html += '<h4 style="margin:0 0 12px;font-size:1rem;color:var(--primary);">Bracket ' + esc(b) + '</h4>';
+      if (top3.length === 0 || (top3[0] && top3[0].wins === 0 && top3[0].losses === 0)) {
         html += '<p style="color:var(--text-light);font-size:0.85rem;">No results yet</p>';
+      } else {
+        html += '<table style="width:100%;border-collapse:collapse;font-size:0.85rem;">';
+        html += '<thead><tr style="border-bottom:2px solid var(--border);"><th style="text-align:left;padding:4px 6px;"></th><th style="text-align:left;padding:4px 6px;">Team</th><th style="text-align:center;padding:4px 6px;">Record</th><th style="text-align:right;padding:4px 6px;">Avg</th></tr></thead><tbody>';
+        top3.forEach((s, i) => {
+          const actualWins = s.wins - 0.5 * s.ties;
+          const avg = s.weeksShot > 0 ? (s.totalScore / s.weeksShot).toFixed(1) : '—';
+          const bgColor = i === 0 ? 'rgba(22,163,74,0.08)' : 'transparent';
+          html += '<tr style="background:' + bgColor + ';border-bottom:1px solid var(--border);">';
+          html += '<td style="padding:6px;font-size:1.1rem;text-align:center;">' + medals[i] + '</td>';
+          html += '<td style="padding:6px;font-weight:' + (i === 0 ? '700' : '600') + ';">' + esc(s.name) + '</td>';
+          html += '<td style="padding:6px;text-align:center;color:var(--text-light);">' + actualWins + 'W-' + s.losses + 'L' + (s.ties > 0 ? '-' + s.ties + 'T' : '') + '</td>';
+          html += '<td style="padding:6px;text-align:right;font-weight:600;">' + avg + '</td>';
+          html += '</tr>';
+        });
+        html += '</tbody></table>';
       }
       html += '</div>';
     });
