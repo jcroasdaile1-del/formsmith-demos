@@ -523,7 +523,7 @@ body.dark-mode .config-editing-banner { background: #422006; border-color: #d977
       <div class="dash-card-body" style="padding:0;overflow-x:auto;" id="dashLeaderArchers"></div>
     </div>
     <div class="dash-card">
-      <div class="dash-card-header"><h3>🏆 Top Teams</h3></div>
+      <div class="dash-card-header"><h3>🏆 Top Team Averages</h3></div>
       <div class="dash-card-body" style="padding:0;overflow-x:auto;" id="dashLeaderTeams"></div>
     </div>
   </div>
@@ -1999,18 +1999,31 @@ function renderLeaderboard() {
     archEl.innerHTML = html;
   }
 
-  // Top Teams
+  // Top Team Averages
   const teamEl = document.getElementById('dashLeaderTeams');
-  const teamStats = teams.map(t => {
-    let totalScore = 0, weeks = 0;
-    Object.values(scores).forEach(ws => {
-      if (ws[t.id]) {
-        const sum = ws[t.id].reduce((a, x) => a + (x || 0), 0);
-        if (sum > 0) { totalScore += sum; weeks++; }
-      }
-    });
-    return { name: t.name, bracket: t.bracket, avg: weeks > 0 ? totalScore / weeks : 0, weeks };
-  }).filter(t => t.weeks > 0).sort((a, b) => b.avg - a.avg);
+  var teamStats;
+  if (config.bracketsLocked) {
+    // Use bracket play data only (matches standings)
+    const totalWeeks = getTotalSeasonWeeks();
+    const brackets = [...new Set(teams.map(t => t.bracket).filter(Boolean))];
+    var allStandings = [];
+    brackets.forEach(b => { allStandings = allStandings.concat(calcBracketStandings(b, totalWeeks)); });
+    teamStats = allStandings.map(s => ({
+      name: s.name, bracket: (teams.find(t => t.id === s.teamId) || {}).bracket || '',
+      avg: s.weeksShot > 0 ? s.totalScore / s.weeksShot : 0, weeks: s.weeksShot
+    })).filter(t => t.weeks > 0).sort((a, b) => b.avg - a.avg);
+  } else {
+    teamStats = teams.map(t => {
+      let totalScore = 0, weeks = 0;
+      Object.values(scores).forEach(ws => {
+        if (ws[t.id]) {
+          const sum = ws[t.id].reduce((a, x) => a + (x || 0), 0);
+          if (sum > 0) { totalScore += sum; weeks++; }
+        }
+      });
+      return { name: t.name, bracket: t.bracket, avg: weeks > 0 ? totalScore / weeks : 0, weeks };
+    }).filter(t => t.weeks > 0).sort((a, b) => b.avg - a.avg);
+  }
   const topTeams = teamStats.slice(0, 10);
   if (topTeams.length === 0) {
     teamEl.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-light);">No scores yet</div>';
@@ -2408,19 +2421,14 @@ function renderBracketStandings(bracket) {
   const standings = calcBracketStandings(bracket, totalWeeks);
   const topWins = standings.length > 0 ? standings[0].wins : 0;
 
-  let html = '<div class="dash-card"><div class="dash-card-header"><h3>🏆 Bracket ' + bracket + ' Standings</h3></div><div class="dash-card-body" style="padding:0;overflow-x:auto;"><table class="standings-table"><thead><tr><th>Rank</th><th>Team</th><th class="num">W</th><th class="num">L</th><th class="num">T</th><th class="num">Win%</th><th class="num">GB</th><th class="num">Avg Score</th><th class="num" title="Current 3-week rolling average (used for handicap calculation)">Cur. Avg</th></tr></thead><tbody>';
-  // Find latest scored week for rolling avg
-  var latestWeek = 0;
-  Object.keys(scores).forEach(function(w) { var wn = parseInt(w); if (wn > latestWeek) latestWeek = wn; });
+  let html = '<div class="dash-card"><div class="dash-card-header"><h3>🏆 Bracket ' + bracket + ' Standings</h3></div><div class="dash-card-body" style="padding:0;overflow-x:auto;"><table class="standings-table"><thead><tr><th>Rank</th><th>Team</th><th class="num">W</th><th class="num">L</th><th class="num">T</th><th class="num">Win%</th><th class="num">GB</th><th class="num">Avg Score</th></tr></thead><tbody>';
   standings.forEach((s, i) => {
     const actualWins = s.wins - 0.5 * s.ties;
     const totalGames = actualWins + s.losses + s.ties;
     const winPct = totalGames > 0 ? (actualWins / totalGames * 100).toFixed(1) : '—';
     const gb = topWins > 0 ? (topWins - s.wins).toFixed(1) : '—';
     const avgScore = s.weeksShot > 0 ? (s.totalScore / s.weeksShot).toFixed(1) : '—';
-    const curAvg = latestWeek > 0 ? getTeamRunningAvg(s.teamId, latestWeek) : 0;
-    const curAvgHtml = curAvg > 0 ? curAvg.toFixed(1) : '—';
-    html += '<tr' + (i < 3 ? ' class="rank-' + (i + 1) + '"' : '') + '><td>' + (i + 1) + '</td><td style="font-weight:600;">' + esc(s.name) + '</td><td class="num">' + actualWins + '</td><td class="num">' + s.losses + '</td><td class="num">' + s.ties + '</td><td class="num">' + winPct + '%</td><td class="num">' + gb + '</td><td class="num">' + avgScore + '</td><td class="num" style="font-weight:600;">' + curAvgHtml + '</td></tr>';
+    html += '<tr' + (i < 3 ? ' class="rank-' + (i + 1) + '"' : '') + '><td>' + (i + 1) + '</td><td style="font-weight:600;">' + esc(s.name) + '</td><td class="num">' + actualWins + '</td><td class="num">' + s.losses + '</td><td class="num">' + s.ties + '</td><td class="num">' + winPct + '%</td><td class="num">' + gb + '</td><td class="num">' + avgScore + '</td></tr>';
   });
   html += '</tbody></table></div></div>';
   area.innerHTML = html;
