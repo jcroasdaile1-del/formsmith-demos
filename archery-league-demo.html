@@ -721,7 +721,7 @@ body.dark-mode .config-editing-banner { background: #422006; border-color: #d977
     <div class="modal-header"><h3>❓ Help & FAQ</h3><button class="modal-close" onclick="closeHelp()">&times;</button></div>
     <div class="modal-body">
       <div class="faq-q" onclick="this.classList.toggle('open')">How does the handicap system work? <span class="faq-chevron">▼</span></div>
-      <div class="faq-a">Each week, the app compares each team's running average to their opponent's average. The weaker team gets a handicap: <strong>(Opponent Avg − Team Avg) × 80%</strong>. The stronger team gets 0 handicap. The adjusted scores (raw + handicap) determine W/L/T.</div>
+      <div class="faq-a">Each week, the app compares each team's running average (from their previous 2 weeks of scores) to their opponent's average. The weaker team gets a handicap: <strong>(Opponent Avg − Team Avg) × 80%</strong>. The stronger team gets 0 handicap. For example, an 800-avg team vs a 700-avg team → the 700 team gets an 80-point handicap (100 × 0.8). The adjusted scores (raw + handicap) determine W/L/T.</div>
       <div class="faq-q" onclick="this.classList.toggle('open')">How are brackets determined? <span class="faq-chevron">▼</span></div>
       <div class="faq-a">During qualifying weeks (first 3 by default), all teams shoot. After qualifying, click <strong>"🔒 Lock Brackets"</strong> on the Teams tab. Teams are ranked by their qualifying average and split evenly into brackets (A = strongest, B = next, etc.).</div>
       <div class="faq-q" onclick="this.classList.toggle('open')">How does the schedule work? <span class="faq-chevron">▼</span></div>
@@ -1420,9 +1420,9 @@ function getTeamQualAvg(teamId) {
 }
 
 function getTeamRunningAvg(teamId, upToWeek) {
-  // Rolling 3-week lookback — use up to 3 most recent weeks with scores
+  // Rolling 2-week lookback — use up to 2 most recent weeks with scores
   let totalScore = 0, count = 0;
-  var startW = Math.max(1, upToWeek - 2);
+  var startW = Math.max(1, upToWeek - 1);
   for (let w = startW; w <= upToWeek; w++) {
     if (scores[w] && scores[w][teamId]) {
       const s = scores[w][teamId];
