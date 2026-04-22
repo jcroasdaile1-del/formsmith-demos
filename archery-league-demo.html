@@ -861,6 +861,7 @@ let config = {
 let teams = [];       // { id, name, archers:[], bracket:null }
 let scores = {};      // scores[weekNum] = { [teamId]: [score1, score2, score3] }
 let schedule = {};    // schedule[bracket] = [ { week, teamA_id, teamB_id }, ... ]
+let qualSchedule = {}; // qualSchedule[weekNum] = [ { teamA, teamB }, ... ]  random matchups for qualifying weeks
 let substitutes = {};  // substitutes[weekNum] = { [teamId]: { archerIdx: subName } }
 let submittedWeeks = {}; // submittedWeeks[weekNum] = true (locked after submit)
 let qualTeamFilter = '';
@@ -1704,6 +1705,47 @@ function confirmBracketAssignment() {
 /* ══════════════════════════════════════════
    SCHEDULE GENERATION (Round-Robin)
    ══════════════════════════════════════════ */
+function generateQualWeek(week) {
+  var ids = teams.map(function(t) { return t.id; });
+  // Fisher-Yates shuffle
+  for (var i = ids.length - 1; i > 0; i--) {
+    var j = Math.floor(Math.random() * (i + 1));
+    var tmp = ids[i]; ids[i] = ids[j]; ids[j] = tmp;
+  }
+  var matchups = [];
+  for (var k = 0; k < ids.length; k += 2) {
+    if (k + 1 < ids.length) matchups.push({ teamA: ids[k], teamB: ids[k + 1] });
+    else matchups.push({ teamA: ids[k], teamB: -1 }); // odd team out shoots vs. own average
+  }
+  qualSchedule[week] = matchups;
+}
+
+function getQualMatchups(week) {
+  // Validate existing matchups (team count may have changed)
+  if (qualSchedule[week] && qualSchedule[week].length > 0) {
+    var validIds = {};
+    teams.forEach(function(t) { validIds[t.id] = true; });
+    var included = {};
+    var allValid = qualSchedule[week].every(function(m) {
+      included[m.teamA] = true;
+      if (m.teamB !== -1) included[m.teamB] = true;
+      return validIds[m.teamA] && (m.teamB === -1 || validIds[m.teamB]);
+    });
+    var allIncluded = teams.every(function(t) { return included[t.id]; });
+    if (allValid && allIncluded) return qualSchedule[week];
+  }
+  // Only (re)generate if week not yet submitted
+  if (!submittedWeeks[week]) generateQualWeek(week);
+  return qualSchedule[week] || [];
+}
+
+function invalidateUnsubmittedQualWeeks() {
+  // Called when team roster changes — clear qual matchups for unsubmitted weeks so they regenerate
+  for (var w = 1; w <= config.qualWeeks; w++) {
+    if (!submittedWeeks[w]) delete qualSchedule[w];
+  }
+}
+
 function generateSchedule() {
   schedule = {};
   var bpWeeks = config.bracketPlayWeeks || 10;
@@ -1822,6 +1864,31 @@ function calcBracketStandings(bracket, upToWeek) {
   bracketTeams.forEach(t => {
     records[t.id] = { teamId: t.id, name: t.name, wins: 0, losses: 0, ties: 0, totalScore: 0, weeksShot: 0 };
   });
+  // Qualifying weeks: count matchups from qualSchedule (teams may be in different brackets,
+  // so only log results for teams that are in THIS bracket)
+  for (var qw = 1; qw <= config.qualWeeks && qw <= upToWeek; qw++) {
+    var qMatchups = qualSchedule[qw] || [];
+    qMatchups.forEach(function(m) {
+      if (!m.teamA) return;
+      var isSelf = m.teamB === -1;
+      var result = calcMatchResult(m.teamA, m.teamB, qw);
+      if (!result) return;
+      if (records[m.teamA]) {
+        records[m.teamA].totalScore += result.rawA;
+        if (result.rawA > 0) records[m.teamA].weeksShot++;
+        if (result.resultA === 'WIN') records[m.teamA].wins++;
+        else if (result.resultA === 'LOSS') records[m.teamA].losses++;
+        else { records[m.teamA].wins += 0.5; records[m.teamA].ties++; }
+      }
+      if (!isSelf && records[m.teamB]) {
+        records[m.teamB].totalScore += result.rawB;
+        if (result.rawB > 0) records[m.teamB].weeksShot++;
+        if (result.resultB === 'WIN') records[m.teamB].wins++;
+        else if (result.resultB === 'LOSS') records[m.teamB].losses++;
+        else { records[m.teamB].wins += 0.5; records[m.teamB].ties++; }
+      }
+    });
+  }
   const allWeeks = [...new Set((schedule[bracket] || []).map(m => m.week))].filter(w => w <= upToWeek).sort((a, b) => a - b);
   allWeeks.forEach(w => {
     const matchups = getWeekMatchups(bracket, w);
@@ -2083,50 +2150,75 @@ function renderScoreEntry() {
   const week = parseInt(document.getElementById('weekSelect').value);
   if (!week) { area.innerHTML = ''; bracketTabsEl.style.display = 'none'; return; }
 
-  if (week <= config.qualWeeks || !config.bracketsLocked) {
+  if (week <= config.qualWeeks) {
     bracketTabsEl.style.display = 'none';
-    // Qualifying: all teams shoot, no matchups — table layout
+    // Qualifying: random matchups (no brackets yet) — matchup card layout
     const locked = submittedWeeks[week];
+    const matchups = getQualMatchups(week);
     let html = '';
     if (locked) html += '<div class="submitted-bar">Week ' + week + ' scores submitted<button class="btn btn-outline btn-sm" style="margin-left:auto;" onclick="unsubmitWeek(' + week + ')">✏️ Edit Scores</button></div>';
-    html += '<h3 style="margin-bottom:4px;">🎯 Qualifying — Week ' + week + '</h3><p style="font-size:0.85rem;color:var(--text-light);margin-bottom:12px;">Enter individual scores for all teams. No matchups during qualifying.</p>';
-    // Toolbar: search + progress
-    const realTeams = teams;
-    const scoredCount = realTeams.filter(t => scores[week] && scores[week][t.id] && scores[week][t.id].some(v => v > 0)).length;
-    html += '<div class="qual-toolbar">';
-    html += '<input class="qual-search" type="text" placeholder="Search teams..." value="' + esc(qualTeamFilter) + '" oninput="filterQualTeams(this.value)">';
-    html += '<span style="font-size:0.82rem;color:var(--text-light);">' + scoredCount + '/' + realTeams.length + ' scored</span>';
-    html += '</div>';
-    // Build table
-    const filteredTeams = qualTeamFilter ? realTeams.filter(t => t.name.toLowerCase().includes(qualTeamFilter)) : realTeams;
-    const archerCount = config.archersPerTeam || 3;
-    html += '<div class="score-entry-wrap"><div class="table-scroll">';
-    html += '<table class="score-entry-table"><thead><tr><th>Team</th>';
-    for (let a = 1; a <= archerCount; a++) html += '<th>Archer ' + a + '</th>';
-    html += '<th class="num">Total</th></tr></thead><tbody>';
-    filteredTeams.forEach(t => {
-      const s = (scores[week] && scores[week][t.id]) || [];
-      const total = s.reduce((a, b) => a + (b || 0), 0);
-      html += '<tr><td class="team-cell">' + esc(t.name) + '</td>';
-      t.archers.forEach((a, ai) => {
-        const dispName = getArcherName(t.id, ai, week);
-        const isSub = isSubstitute(t.id, ai, week);
-        html += '<td><div class="archer-cell"><span class="archer-name" title="' + esc(dispName) + '">' + esc(dispName) + (isSub ? ' <span class="sub-badge">SUB</span>' : '') + '</span><input class="score-input" type="number" min="0" max="' + getPerfectScore() + '" value="' + (s[ai] || '') + '" onfocus="this.select()" onchange="setScore(' + t.id + ',' + week + ',' + ai + ',this.value)"' + (locked ? ' disabled style="opacity:0.6;cursor:not-allowed;"' : '') + '></div></td>';
+    html += '<h3 style="margin-bottom:4px;">🎯 Qualifying — Week ' + week + '</h3>';
+    html += '<p style="font-size:0.85rem;color:var(--text-light);margin-bottom:12px;">Random matchups for qualifying. Results count toward standings once divisions are set.' + (!locked && teams.length >= 2 ? ' <button class="btn btn-outline btn-sm" style="margin-left:8px;" onclick="reshuffleQualWeek(' + week + ')">🎲 Reshuffle Matchups</button>' : '') + '</p>';
+    const scoredCount = teams.filter(t => scores[week] && scores[week][t.id] && scores[week][t.id].some(v => v > 0)).length;
+    html += '<div class="qual-toolbar"><span style="font-size:0.82rem;color:var(--text-light);">' + scoredCount + '/' + teams.length + ' teams scored</span></div>';
+    if (matchups.length === 0) {
+      html += '<div style="text-align:center;padding:30px;color:var(--text-light);">Add teams on the Teams tab to generate matchups.</div>';
+    } else {
+      matchups.forEach(function(m) {
+        if (!m.teamA) return;
+        var isSelf = m.teamB === -1;
+        const tA = teams.find(t => t.id === m.teamA);
+        if (!tA) return;
+        const tB = isSelf ? null : teams.find(t => t.id === m.teamB);
+        if (!isSelf && !tB) return;
+        const sA = (scores[week] && scores[week][tA.id]) || [];
+        const result = calcMatchResult(tA.id, isSelf ? -1 : tB.id, week);
+        html += '<div class="score-matchup">';
+        const badgeA = result ? (result.resultA === 'WIN' ? ' <span style="color:#16a34a;font-weight:800;font-size:0.8em;">W</span>' : result.resultA === 'LOSS' ? ' <span style="color:#dc2626;font-weight:800;font-size:0.8em;">L</span>' : ' <span style="color:#d97706;font-weight:800;font-size:0.8em;">T</span>') : '';
+        if (isSelf) {
+          var selfAvg = getTeamRunningAvg(tA.id, week - 1);
+          var selfAvgDisplay = selfAvg > 0 ? Math.round(selfAvg) : '—';
+          html += '<div class="matchup-header"><div class="matchup-team"><div class="matchup-team-name">' + esc(tA.name) + badgeA + '</div></div><div class="vs">VS</div><div class="matchup-team" style="text-align:right;"><div class="matchup-team-name">🎯 Own Average (' + selfAvgDisplay + ')</div></div></div>';
+          html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;"><div>';
+          tA.archers.forEach(function(a, ai) {
+            const dispA = getArcherName(tA.id, ai, week);
+            const isSubA = isSubstitute(tA.id, ai, week);
+            html += '<div class="score-row"><span class="name">' + esc(dispA) + (isSubA ? ' <span class="sub-badge">SUB</span>' : '') + '</span><input class="score-input" type="number" min="0" max="' + getPerfectScore() + '" value="' + (sA[ai] || '') + '" onfocus="this.select()" onchange="setScore(' + tA.id + ',' + week + ',' + ai + ',this.value)"' + (locked ? ' disabled style="opacity:0.6;cursor:not-allowed;"' : '') + '></div>';
+          });
+          html += '</div><div style="display:flex;align-items:center;justify-content:center;color:var(--text-light);font-size:0.88rem;padding:12px;"><div style="text-align:center;"><div style="font-size:2rem;margin-bottom:4px;">🎯</div><div style="font-weight:700;font-size:1.1rem;">Target: ' + selfAvgDisplay + '</div><div style="font-size:0.78rem;margin-top:2px;">Beat your average to win</div></div></div></div>';
+          if (result) {
+            html += '<div class="matchup-totals"><div class="team-side"><div class="label-val"><span>Raw Score</span><span>' + result.rawA + '</span></div><div class="label-val bold"><span>Result</span><span>' + (result.resultA === 'WIN' ? '✅ Above Avg' : result.resultA === 'LOSS' ? '❌ Below Avg' : '➖ Tied Avg') + '</span></div></div><div class="team-side right"><div class="label-val"><span>Running Avg</span><span>' + result.rawB + '</span></div></div></div>';
+          }
+        } else {
+          const sB = (scores[week] && scores[week][tB.id]) || [];
+          const badgeB = result ? (result.resultB === 'WIN' ? ' <span style="color:#16a34a;font-weight:800;font-size:0.8em;">W</span>' : result.resultB === 'LOSS' ? ' <span style="color:#dc2626;font-weight:800;font-size:0.8em;">L</span>' : ' <span style="color:#d97706;font-weight:800;font-size:0.8em;">T</span>') : '';
+          html += '<div class="matchup-header"><div class="matchup-team"><div class="matchup-team-name">' + esc(tA.name) + badgeA + '</div></div><div class="vs">VS</div><div class="matchup-team" style="text-align:right;"><div class="matchup-team-name">' + esc(tB.name) + badgeB + '</div></div></div>';
+          html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;"><div>';
+          tA.archers.forEach(function(a, ai) {
+            const dispA = getArcherName(tA.id, ai, week);
+            const isSubA = isSubstitute(tA.id, ai, week);
+            html += '<div class="score-row"><span class="name">' + esc(dispA) + (isSubA ? ' <span class="sub-badge">SUB</span>' : '') + '</span><input class="score-input" type="number" min="0" max="' + getPerfectScore() + '" value="' + (sA[ai] || '') + '" onfocus="this.select()" onchange="setScore(' + tA.id + ',' + week + ',' + ai + ',this.value)"' + (locked ? ' disabled style="opacity:0.6;cursor:not-allowed;"' : '') + '></div>';
+          });
+          html += '</div><div>';
+          tB.archers.forEach(function(a, ai) {
+            const dispB = getArcherName(tB.id, ai, week);
+            const isSubB = isSubstitute(tB.id, ai, week);
+            html += '<div class="score-row"><span class="name">' + esc(dispB) + (isSubB ? ' <span class="sub-badge">SUB</span>' : '') + '</span><input class="score-input" type="number" min="0" max="' + getPerfectScore() + '" value="' + (sB[ai] || '') + '" onfocus="this.select()" onchange="setScore(' + tB.id + ',' + week + ',' + ai + ',this.value)"' + (locked ? ' disabled style="opacity:0.6;cursor:not-allowed;"' : '') + '></div>';
+          });
+          html += '</div></div>';
+          if (result) {
+            html += '<div class="matchup-totals"><div class="team-side"><div class="label-val"><span>Raw Score</span><span>' + result.rawA + '</span></div><div class="label-val"><span>Handicap</span><span>+' + result.hcpA + '</span></div><div class="label-val bold"><span>Adjusted</span><span>' + result.adjA + '</span></div></div><div class="team-side right"><div class="label-val"><span>Raw Score</span><span>' + result.rawB + '</span></div><div class="label-val"><span>Handicap</span><span>+' + result.hcpB + '</span></div><div class="label-val bold"><span>Adjusted</span><span>' + result.adjB + '</span></div></div></div>';
+          }
+        }
+        html += '</div>';
       });
-      html += '<td class="num">' + (total > 0 ? total : '—') + '</td></tr>';
-    });
-    html += '</tbody></table></div>';
-    if (qualTeamFilter && filteredTeams.length === 0) html += '<div style="text-align:center;padding:20px;color:var(--text-light);">No teams match "' + esc(qualTeamFilter) + '"</div>';
+    }
     // Check if all qualifying weeks are submitted — show bracket transition prompt
     const allQualSubmitted = Array.from({length: config.qualWeeks}, (_, i) => i + 1).every(w => submittedWeeks[w]);
     if (allQualSubmitted && !config.bracketsLocked) {
-      html += '</div>';
       html += '<div class="bracket-prompt"><h4>Qualifying Complete</h4><p>All ' + config.qualWeeks + ' qualifying weeks are submitted. Lock brackets to generate the schedule and start bracket play.</p><button class="btn btn-primary" onclick="lockBrackets()">Lock Brackets & Start Season</button></div>';
     } else if (!locked) {
       html += buildSubmitBar(week);
-      html += '</div>';
-    } else {
-      html += '</div>';
     }
     area.innerHTML = html;
     return;
@@ -2262,6 +2354,13 @@ function selectScoreBracket(b) {
 
 function resetBracketTab() {
   document.querySelectorAll('#scoreBracketTabs .bracket-tab').forEach(t => t.classList.remove('active'));
+}
+
+function reshuffleQualWeek(week) {
+  if (submittedWeeks[week]) { showToast('⚠️ Cannot reshuffle submitted week'); return; }
+  generateQualWeek(week);
+  renderScoreEntry();
+  showToast('🎲 Matchups reshuffled');
 }
 
 function filterQualTeams(val) {
