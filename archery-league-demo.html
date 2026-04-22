@@ -3650,6 +3650,25 @@ function showStreakDetail() {
    INIT
    ══════════════════════════════════════════ */
 document.addEventListener('DOMContentLoaded', function() {
+  // Enter key advances to next score input (Tab works natively)
+  document.addEventListener('keydown', function(e) {
+    if (e.key !== 'Enter') return;
+    var el = e.target;
+    if (!el || !el.classList || !el.classList.contains('score-input')) return;
+    e.preventDefault();
+    var inputs = Array.prototype.slice.call(document.querySelectorAll('.score-input:not([disabled])'));
+    var idx = inputs.indexOf(el);
+    if (idx === -1) return;
+    var next = inputs[idx + 1];
+    if (next) {
+      // Focusing next triggers blur on current, which fires onchange and saves value
+      next.focus();
+      if (next.select) next.select();
+    } else {
+      // Last input — just blur to trigger save
+      el.blur();
+    }
+  });
   document.getElementById('headerLogo').src = LOGO_URI;
   // Create side gutter logos
   ['left', 'right'].forEach(function(side) {
