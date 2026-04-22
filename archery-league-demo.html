@@ -2329,18 +2329,26 @@ function setScore(teamId, week, archerIdx, val) {
     const cells = rows[teamIdx].querySelectorAll('td');
     cells[cells.length - 1].textContent = total > 0 ? total : '—';
   }
-  // Update scored count in toolbar
+  // Update scored count in toolbar (qual weeks)
   const scoredCount = teams.filter(t => scores[week] && scores[week][t.id] && scores[week][t.id].some(v => v > 0)).length;
   const countSpan = area.querySelector('.qual-toolbar span');
-  if (countSpan) countSpan.textContent = scoredCount + '/' + teams.length + ' scored';
-  // Refresh submit bar so button enables as scores are entered
-  // Deferred so that if the user clicks Submit while an input still has focus,
-  // the blur→onchange→setScore chain doesn't destroy the button mid-click
-  var submitArea = area.querySelector('.submit-scores-area, .submitted-bar');
-  if (submitArea) setTimeout(function() {
-    var el = document.querySelector('#scoreEntryArea .submit-scores-area, #scoreEntryArea .submitted-bar');
-    if (el) el.outerHTML = buildSubmitBar(week);
-  }, 0);
+  if (countSpan) countSpan.textContent = scoredCount + '/' + teams.length + ' teams scored';
+  // Surgically update submit bar WITHOUT replacing DOM (prevents destroying button mid-click)
+  var submitBtn = area.querySelector('.submit-scores-area button');
+  var progressSpan = area.querySelector('.submit-scores-area .submit-progress');
+  if (submitBtn && progressSpan) {
+    var total = teams.length;
+    var pct = total > 0 ? Math.round(scoredCount / total * 100) : 0;
+    var ready = scoredCount === total && total > 0;
+    if (scoredCount > 0) {
+      submitBtn.disabled = false;
+      submitBtn.removeAttribute('style');
+    } else {
+      submitBtn.disabled = true;
+      submitBtn.setAttribute('style', 'opacity:0.5;cursor:not-allowed;background:var(--primary);color:white;');
+    }
+    progressSpan.innerHTML = scoredCount + '/' + total + ' teams scored (' + pct + '%)' + (ready ? ' — <span style="color:var(--primary);font-weight:600;">Ready!</span>' : '');
+  }
 }
 
 function toggleQualTeam(id) { }
