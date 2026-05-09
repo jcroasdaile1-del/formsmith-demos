@@ -311,6 +311,7 @@
     label { font-size: 12px; color: var(--muted); font-weight: 800; }
     input, select, textarea {
       width: 100%;
+      max-width: 100%;
       min-height: 42px;
       border: 1px solid #d6e1db;
       border-radius: var(--radius);
@@ -318,6 +319,12 @@
       background: var(--panel);
       color: var(--ink);
       outline: none;
+    }
+    input[type="date"],
+    input[type="time"] {
+      min-width: 0;
+      appearance: none;
+      -webkit-appearance: none;
     }
     .select-note {
       color: var(--muted);
@@ -495,6 +502,14 @@
       background: linear-gradient(180deg, transparent, rgba(0,0,0,.58));
     }
     .photo-tile div { position: relative; padding: 10px; display: grid; gap: 3px; }
+    .upload-panel {
+      border: 1px dashed var(--soft);
+      border-radius: var(--radius);
+      padding: 12px;
+      background: var(--panel-2);
+      display: grid;
+      gap: 10px;
+    }
     .split-photo {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -764,6 +779,20 @@
         width: 100%;
         max-height: 94vh;
         border-radius: 12px 12px 0 0;
+        overflow-x: hidden;
+      }
+      .modal-body { overflow-x: hidden; }
+      .modal .card,
+      .modal form,
+      .modal .field,
+      .modal input,
+      .modal select,
+      .modal textarea { max-width: 100%; min-width: 0; }
+      input[type="date"],
+      input[type="time"],
+      .mobile-date {
+        font-size: 14px;
+        padding: 8px 9px;
       }
       .table-wrap table, .table-wrap thead, .table-wrap tbody, .table-wrap th, .table-wrap td, .table-wrap tr { display: block; }
       .table-wrap thead { display: none; }
@@ -1413,9 +1442,9 @@
 
     function renderPhotos() {
       return `
-        ${screenActions("Photos", "Before/after proof library connected to jobs and customer profiles.", `<button class="btn" data-action="new-photo"><i data-lucide="image-plus"></i>Add demo photo</button>`)}
+        ${screenActions("Photos", "Before/after proof library connected to jobs and customer profiles.", `<button class="btn" data-action="new-photo"><i data-lucide="image-plus"></i>Add photo</button>`)}
         <div class="photo-grid">
-          ${db.photos.map((p, idx) => `<article class="photo-tile" style="background:${esc(p.dataUrl || PHOTO_BACKGROUNDS[idx % PHOTO_BACKGROUNDS.length])};">
+          ${db.photos.map((p, idx) => `<article class="photo-tile" style="background:${photoBackground(p, idx)};">
             <div><strong>${esc(p.type)}</strong><span>${esc(p.caption)}</span><span>${esc(customerName(p.customerId))}</span></div>
           </article>`).join("")}
         </div>
@@ -1426,6 +1455,9 @@
             <div class="meta"><strong>${esc(customerName(j.customerId))}</strong><span>${esc(propertyAddress(j.propertyId))}</span></div>
           </div>`).join("")}</div>
         </div>`;
+    }
+    function photoBackground(p, idx) {
+      return p.dataUrl && p.dataUrl.startsWith("data:image") ? `center / cover no-repeat url('${p.dataUrl}')` : esc(p.dataUrl || PHOTO_BACKGROUNDS[idx % PHOTO_BACKGROUNDS.length]);
     }
 
     function renderReports() {
@@ -1693,6 +1725,52 @@
       activity(`${customer.name} customer profile saved`, "users");
       saveDb(); closeModal(); toast("Customer saved"); render();
     }
+    function openPhotoUpload(customerId = "") {
+      const defaultCustomer = customerId || db.customers[0]?.id || "";
+      const customerJobs = db.jobs.filter(j => !defaultCustomer || j.customerId === defaultCustomer);
+      openModal("Add Photo", `<form id="photoForm" class="form-grid">
+        ${select("customerId","Customer",db.customers.map(c=>[c.id,c.name]),defaultCustomer)}
+        <div id="photoJobSlot">${photoJobField(defaultCustomer, customerJobs[0]?.id || "")}</div>
+        ${select("type","Photo type",["Before","After","Before/After","Property note"],"Before/After")}
+        ${input("caption","Caption","Before/after job image")}
+        <div class="field full"><label>Photo</label><div class="upload-panel"><input name="photoFile" type="file" accept="image/*" capture="environment"><p class="select-note">Choose from your photo library or use the camera option on supported phones.</p></div></div>
+        <div class="toolbar full"><button class="btn" type="submit"><i data-lucide="image-plus"></i>Save photo</button></div>
+      </form>`, { small: true });
+    }
+    function photoJobField(customerId, selectedId) {
+      const jobs = db.jobs.filter(j => j.customerId === customerId);
+      return `<div class="field"><label>Job</label><select name="jobId"><option value="">Customer profile only</option>${jobs.map(j => `<option value="${esc(j.id)}" ${j.id === selectedId ? "selected" : ""}>${dateNice(j.scheduledDate)} - ${esc(propertyAddress(j.propertyId))}</option>`).join("")}</select><p class="select-note">Photos stay linked to the selected customer${jobs.length ? " and optional job" : ""}.</p></div>`;
+    }
+    function savePhoto(form) {
+      const file = form.photoFile.files?.[0];
+      if (!file) {
+        toast("Choose a photo first");
+        form.photoFile.focus();
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = () => {
+        const item = {
+          id: uid("photo"),
+          jobId: form.jobId.value,
+          customerId: form.customerId.value,
+          type: form.type.value,
+          caption: form.caption.value || file.name,
+          dataUrl: reader.result,
+          createdAt: iso(today())
+        };
+        db.photos.unshift(item);
+        const job = get.job(item.jobId);
+        if (job) {
+          const key = item.type === "After" ? "afterPhotos" : "beforePhotos";
+          job[key] = job[key] || [];
+          job[key].push(item.id);
+        }
+        activity(`${customerName(item.customerId)} photo saved`, "image-plus");
+        saveDb(); closeModal(); toast("Photo saved"); ui.view = "photos"; render();
+      };
+      reader.readAsDataURL(file);
+    }
 
     function openCustomerProfile(id) {
       const c = get.customer(id), p = db.properties.find(x => x.customerId === id);
@@ -1704,7 +1782,7 @@
         <div class="card"><h3>Property Profile</h3><p style="margin-top:8px;"><strong>${esc(p?.address || "")}</strong></p><div class="meta"><span>${esc(p?.homeType || "")}</span><span>${p?.sqft || ""} sqft</span><span>${p?.stories || ""} stories</span><span>Last clean ${p?.lastCleaningDate ? dateNice(p.lastCleaningDate) : "unknown"}</span></div><p class="subtle" style="margin-top:8px;">Gate: ${esc(p?.gateCode || "none")} | Water: ${esc(p?.waterAccess || "")}</p><p class="subtle">${esc(p?.materialNotes || "")}</p><p class="subtle">${esc(p?.specialNotes || "")}</p></div>
         <div class="card"><div class="section-title"><h3>Job History</h3><span class="pill">${jobs.length}</span></div><div class="list">${jobs.map(jobCard).join("") || emptyState("No jobs", "Convert a quote or add a job.")}</div></div>
         <div class="card"><div class="section-title"><h3>Quote History</h3><span class="pill">${quotes.length}</span></div><div class="list">${quotes.map(quoteCard).join("") || emptyState("No quotes", "Create a new quote from this profile.")}</div></div>
-      </div><div class="card" style="margin-top:14px;"><div class="section-title"><h3>Photos</h3><span class="pill">${photos.length}</span></div><div class="photo-grid">${photos.map((ph, idx) => `<div class="photo-tile" style="background:${esc(ph.dataUrl || PHOTO_BACKGROUNDS[idx % 4])};"><div><strong>${esc(ph.type)}</strong><span>${esc(ph.caption)}</span></div></div>`).join("") || emptyState("No photos", "Add before/after proof from Jobs or Photos.")}</div></div>`);
+      </div><div class="card" style="margin-top:14px;"><div class="section-title"><h3>Photos</h3><button class="ghost-btn" data-upload-photo="${id}"><i data-lucide="image-plus"></i>Add</button><span class="pill">${photos.length}</span></div><div class="photo-grid">${photos.map((ph, idx) => `<div class="photo-tile" style="background:${photoBackground(ph, idx)};"><div><strong>${esc(ph.type)}</strong><span>${esc(ph.caption)}</span></div></div>`).join("") || emptyState("No photos", "Add before/after proof from Jobs or Photos.")}</div></div>`);
     }
 
     function openJobForm(id, presetDate) {
@@ -2096,7 +2174,8 @@
     }
 
     function input(name, label, value, cls = "", type = "text") {
-      return `<div class="field ${cls}"><label>${esc(label)}</label><input name="${name}" type="${type}" value="${esc(value ?? "")}"></div>`;
+      const typeClass = type === "date" ? "mobile-date" : "";
+      return `<div class="field ${cls}"><label>${esc(label)}</label><input class="${typeClass}" name="${name}" type="${type}" value="${esc(value ?? "")}"></div>`;
     }
     function textarea(name, label, value, cls = "") {
       return `<div class="field ${cls}"><label>${esc(label)}</label><textarea name="${name}">${esc(value ?? "")}</textarea></div>`;
@@ -2224,7 +2303,7 @@
         if (a === "refresh-weather") fetchWeather(true).then(() => toast("Forecast refreshed"));
         if (a === "open-pipeline") openPipelineDetails();
         if (a === "quick-task") { db.tasks.push({ id: uid("task"), type:"Manual follow-up", relatedType:"task", relatedId:"", dueDate:addDays(1), done:false, title:"New follow-up reminder" }); saveDb(); render(); toast("Reminder added"); }
-        if (a === "new-photo") { db.photos.unshift({ id: uid("photo"), jobId: db.jobs[0]?.id || "", customerId: db.customers[0]?.id || "", type:"Before/After", caption:"Demo transformation added", dataUrl: PHOTO_BACKGROUNDS[db.photos.length % 4], createdAt: iso(today()) }); saveDb(); render(); toast("Demo photo added"); }
+        if (a === "new-photo") openPhotoUpload();
       });
       document.querySelectorAll("[data-kpi]").forEach(el => el.onclick = () => openKpi(el.dataset.kpi));
       document.querySelectorAll("[data-report]").forEach(el => el.onclick = e => { if (!e.target.closest("button, select, input, textarea")) openReport(el.dataset.report); });
@@ -2264,6 +2343,7 @@
       document.querySelectorAll("[data-lead-quote]").forEach(b => b.onclick = () => openQuoteBuilder("", b.dataset.leadQuote));
       document.querySelectorAll("[data-edit-customer]").forEach(b => b.onclick = () => openCustomerForm(b.dataset.editCustomer));
       document.querySelectorAll("[data-view-customer]").forEach(b => b.onclick = () => openCustomerProfile(b.dataset.viewCustomer));
+      document.querySelectorAll("[data-upload-photo]").forEach(b => b.onclick = () => openPhotoUpload(b.dataset.uploadPhoto));
       document.querySelectorAll("[data-delete-customer]").forEach(b => b.onclick = () => deleteRecord("customers", b.dataset.deleteCustomer, "customer"));
       document.querySelectorAll("[data-edit-job]").forEach(b => b.onclick = () => openJobForm(b.dataset.editJob));
       document.querySelectorAll("[data-status-job]").forEach(b => b.onclick = () => openStatusPicker("job", b.dataset.statusJob));
@@ -2283,6 +2363,10 @@
       if (jobCustomer) jobCustomer.onchange = () => {
         document.getElementById("jobPropertySlot").innerHTML = jobPropertyField(jobCustomer.value, "");
         paintIcons();
+      };
+      const photoCustomer = document.querySelector("#photoForm select[name='customerId']");
+      if (photoCustomer) photoCustomer.onchange = () => {
+        document.getElementById("photoJobSlot").innerHTML = photoJobField(photoCustomer.value, "");
       };
       document.querySelectorAll("input[name='requestedServices']").forEach(box => box.onchange = () => {
         const form = box.closest("form");
@@ -2304,6 +2388,7 @@
         statusForm: saveStatus,
         quoteForm: form => saveQuote(form),
         invoiceForm: saveInvoice,
+        photoForm: savePhoto,
         serviceForm: saveService
       };
       Object.entries(forms).forEach(([id, handler]) => {
