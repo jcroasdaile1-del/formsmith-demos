@@ -332,20 +332,51 @@
     .service-options {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 8px;
-      margin-top: 8px;
+      gap: 7px;
+      margin-top: 9px;
     }
     .check-tile {
-      min-height: 40px;
+      min-height: 38px;
       border: 1px solid var(--soft);
       border-radius: var(--radius);
-      padding: 8px;
+      padding: 7px 8px;
       background: var(--panel-2);
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 7px;
       font-weight: 800;
+      font-size: 13px;
+      line-height: 1.2;
+      cursor: pointer;
     }
+    .check-tile input[type="checkbox"] {
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      min-height: 16px;
+      flex: 0 0 16px;
+      margin: 0;
+      padding: 0;
+      border: 1.5px solid var(--soft);
+      border-radius: 4px;
+      background: var(--panel);
+      display: grid;
+      place-items: center;
+    }
+    .check-tile input[type="checkbox"]::after {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 2px;
+      transform: scale(0);
+      background: var(--brand);
+      transition: transform .12s ease;
+    }
+    .check-tile input[type="checkbox"]:checked {
+      border-color: var(--brand);
+      background: color-mix(in srgb, var(--brand) 12%, var(--panel));
+    }
+    .check-tile input[type="checkbox"]:checked::after { transform: scale(1); }
     textarea { min-height: 86px; resize: vertical; }
     input:focus, select:focus, textarea:focus { border-color: rgba(18, 123, 121, .65); box-shadow: 0 0 0 3px rgba(18, 123, 121, .12); }
     .table-wrap { overflow-x: auto; }
@@ -646,6 +677,12 @@
     body.dark-mode .pill.purple { background: #352d43; color: #d8c6ee; }
     body.dark-mode .danger-btn { background: #4a2725; color: #ffaaa1; }
     body.dark-mode .modal-backdrop { background: rgba(0, 0, 0, .68); }
+    body.dark-mode .calendar-head div { color: #e4c991; }
+    body.dark-mode .day { color: var(--ink); }
+    body.dark-mode .day .day-num { color: #fff3df; font-size: 13px; }
+    body.dark-mode .day.muted { color: #8f806f; }
+    body.dark-mode .day.muted .day-num { color: #7c6f62; }
+    body.dark-mode .day.today { box-shadow: inset 0 0 0 2px var(--brand-2); }
 
     @media (max-width: 1100px) {
       .grid.four { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -775,7 +812,7 @@
       "linear-gradient(135deg, #71665e 0 50%, #e4f4ee 50% 100%)"
     ];
     let db = loadDb();
-    let ui = { view: "dashboard", filters: {}, selectedMonth: new Date(), weather: {}, weatherLoadedAt: null };
+    let ui = { view: "dashboard", filters: {}, filterTimers: {}, selectedMonth: new Date(), weather: {}, weatherLoadedAt: null };
     if (localStorage.getItem(THEME_KEY) === "dark") document.body.classList.add("dark-mode");
 
     function uid(prefix) {
@@ -787,6 +824,15 @@
     function money(n) { return (Number(n) || 0).toLocaleString(undefined, { style: "currency", currency: "USD", maximumFractionDigits: 0 }); }
     function pct(n) { return Math.round((Number(n) || 0) * 100) + "%"; }
     function dateNice(v) { return new Date(v + "T12:00:00").toLocaleDateString(undefined, { month: "short", day: "numeric" }); }
+    function jobDateLabel(v) {
+      const d = new Date(v + "T12:00:00");
+      const base = today();
+      const diff = Math.round((d - base) / 86400000);
+      if (diff === 0) return "Today";
+      if (diff === 1) return "Tomorrow";
+      if (diff > 1 && diff < 7) return d.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
+      return dateNice(v);
+    }
     function monthName(d) { return d.toLocaleDateString(undefined, { month: "long", year: "numeric" }); }
     function esc(v) {
       return String(v ?? "").replace(/[&<>"']/g, s => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[s]));
@@ -998,6 +1044,12 @@
       localStorage.setItem(THEME_KEY, document.body.classList.contains("dark-mode") ? "dark" : "light");
       toast(document.body.classList.contains("dark-mode") ? "Dark mode on" : "Light mode on");
     }
+    function setView(view) {
+      ui.view = view;
+      document.body.classList.remove("mobile-nav-open");
+      render();
+      requestAnimationFrame(() => window.scrollTo({ top: 0, left: 0, behavior: "auto" }));
+    }
 
     function metrics() {
       const month = today().getMonth();
@@ -1051,7 +1103,7 @@
           </div>
           <div class="card">
             <div class="section-title"><h2>Upcoming Jobs</h2><button class="ghost-btn" data-nav-to="jobs"><i data-lucide="calendar-days"></i>Calendar</button></div>
-            <div class="list">${upcoming.map(jobCard).join("") || emptyState("Nothing scheduled", "Approved quotes can be converted to scheduled jobs.")}</div>
+            <div class="list">${upcoming.map(j => jobCard(j, true)).join("") || emptyState("Nothing scheduled", "Approved quotes can be converted to scheduled jobs.")}</div>
           </div>
           <div class="card">
             <div class="section-title"><h2>Pipeline Summary</h2><button class="ghost-btn" data-action="open-pipeline"><i data-lucide="kanban-square"></i>Details</button></div>
@@ -1085,12 +1137,12 @@
         <div class="delta ${tone === "risk" ? "warn" : ""}">${esc(detail)}</div>
       </article>`;
     }
-    function jobCard(job) {
+    function jobCard(job, showDate = false) {
       const customer = customerName(job.customerId);
       const w = weatherFor(job.scheduledDate);
       return `<div class="row-card">
         <div>
-          <strong>${esc(job.scheduledTime)} - ${esc(customer)}</strong>
+          <strong>${showDate ? `${esc(jobDateLabel(job.scheduledDate))} at ` : ""}${esc(job.scheduledTime)} - ${esc(customer)}</strong>
           <div class="meta">
             <span>${esc(propertyAddress(job.propertyId))}</span>
             <span class="pill ${statusClass(job.status)}">${esc(job.status)}</span>
@@ -1487,27 +1539,49 @@
       openModal("Lead Source Performance", `<div class="grid two">${rows.map(r => `<div class="card"><div class="section-title"><h3>${esc(r.source)}</h3><span class="pill ${r.revenue ? "good" : "info"}">${money(r.revenue)}</span></div><div class="meta"><span>${r.leads.length} active leads</span><span>${r.customers.length} customers</span><span>${pct(r.conversion)} customer conversion</span><span>${money(r.quoteTotal)} quoted</span></div><div class="progress" style="margin-top:10px;"><i style="width:${Math.round(r.conversion * 100)}%"></i></div></div>`).join("")}</div><div class="card" style="margin-top:14px;"><div class="section-title"><h2>Source Records</h2><span class="pill">${rows.reduce((s,r)=>s+r.leads.length+r.customers.length,0)} records</span></div><div class="list">${rows.flatMap(r => [...r.leads.map(l => `<div class="row-card"><div><strong>${esc(l.name)}</strong><div class="meta"><span>${esc(r.source)}</span><span>${esc(l.status)}</span><span>Lead</span></div></div></div>`), ...r.customers.map(c => `<div class="row-card"><div><strong>${esc(c.name)}</strong><div class="meta"><span>${esc(r.source)}</span><span>${esc(c.customerType)}</span><span>Customer</span></div></div></div>`)]).join("")}</div></div>`);
     }
     function openFollowupReport() {
-      const quoteCutoff = new Date(today());
-      quoteCutoff.setDate(quoteCutoff.getDate() - db.settings.followUpDays);
-      const staleQuotes = db.quotes.filter(q => ["Draft", "Sent"].includes(q.status) && new Date(q.createdAt + "T12:00:00") <= quoteCutoff);
-      const unpaid = db.invoices.filter(i => i.status !== "Paid");
-      const seasonal = db.properties.filter(p => {
-        const d = new Date(p.lastCleaningDate + "T12:00:00");
-        d.setMonth(d.getMonth() + Number(db.settings.rebookMonths || 9));
-        return d <= today();
-      });
-      const tasks = db.tasks.filter(t => !t.done);
+      const { tasks, staleQuotes, unpaid, seasonal } = followupBuckets();
       openModal("Follow-Up Opportunities", `<div class="grid four">
-        ${kpiCard("noop", "Open tasks", String(tasks.length), "Manual reminders", "check-circle-2", "warn").replace('data-kpi="noop"', "")}
-        ${kpiCard("noop", "Stale quotes", String(staleQuotes.length), "Need quote follow-up", "file-clock", "risk").replace('data-kpi="noop"', "")}
-        ${kpiCard("noop", "Unpaid invoices", String(unpaid.length), money(unpaid.reduce((s,i)=>s+i.total,0)), "receipt", "risk").replace('data-kpi="noop"', "")}
-        ${kpiCard("noop", "Seasonal rebooks", String(seasonal.length), "Properties due", "repeat-2", "good").replace('data-kpi="noop"', "")}
+        ${followupMetricCard("tasks", "Open tasks", String(tasks.length), "Manual reminders", "check-circle-2", "warn")}
+        ${followupMetricCard("quotes", "Stale quotes", String(staleQuotes.length), "Need quote follow-up", "file-clock", "risk")}
+        ${followupMetricCard("invoices", "Unpaid invoices", String(unpaid.length), money(unpaid.reduce((s,i)=>s+i.total,0)), "receipt", "risk")}
+        ${followupMetricCard("seasonal", "Seasonal rebooks", String(seasonal.length), "Properties due", "repeat-2", "good")}
       </div><div class="card" style="margin-top:14px;"><div class="section-title"><h2>Follow-Up Queue</h2><span class="pill warn">${tasks.length + staleQuotes.length + unpaid.length + seasonal.length} records</span></div><div class="list">
         ${tasks.map(taskRow).join("")}
         ${staleQuotes.map(q => `<div class="row-card"><div><strong>Quote follow-up: ${esc(customerName(q.customerId))}</strong><div class="meta"><span>${esc(q.status)}</span><span>${money(q.total)}</span><span>Created ${dateNice(q.createdAt)}</span></div></div></div>`).join("")}
         ${unpaid.map(i => `<div class="row-card"><div><strong>Unpaid invoice: ${esc(customerName(i.customerId))}</strong><div class="meta"><span>${money(i.total)}</span><span>Issued ${dateNice(i.issueDate)}</span></div></div></div>`).join("")}
         ${seasonal.map(p => `<div class="row-card"><div><strong>Seasonal rebooking: ${esc(customerName(p.customerId))}</strong><div class="meta"><span>${esc(p.address)}</span><span>Last cleaned ${dateNice(p.lastCleaningDate)}</span></div></div></div>`).join("")}
       </div></div>`);
+    }
+    function followupBuckets() {
+      const quoteCutoff = new Date(today());
+      quoteCutoff.setDate(quoteCutoff.getDate() - db.settings.followUpDays);
+      return {
+        tasks: db.tasks.filter(t => !t.done),
+        staleQuotes: db.quotes.filter(q => ["Draft", "Sent"].includes(q.status) && new Date(q.createdAt + "T12:00:00") <= quoteCutoff),
+        unpaid: db.invoices.filter(i => i.status !== "Paid"),
+        seasonal: db.properties.filter(p => {
+          const d = new Date(p.lastCleaningDate + "T12:00:00");
+          d.setMonth(d.getMonth() + Number(db.settings.rebookMonths || 9));
+          return d <= today();
+        })
+      };
+    }
+    function followupMetricCard(type, title, value, detail, icon, tone) {
+      return `<article class="card clickable kpi-card" data-followup-type="${type}">
+        <div class="kpi-top"><div><div class="subtle">${esc(title)}</div><div class="kpi-value">${esc(value)}</div></div><div class="kpi-icon ${tone}"><i data-lucide="${icon}"></i></div></div>
+        <div class="delta ${tone === "risk" ? "warn" : ""}">${esc(detail)}</div>
+      </article>`;
+    }
+    function openFollowupDetail(type) {
+      const { tasks, staleQuotes, unpaid, seasonal } = followupBuckets();
+      const views = {
+        tasks: ["Open Tasks", "Manual reminders and operational follow-ups that still need action.", tasks.map(taskRow)],
+        quotes: ["Stale Quotes", `Quotes still open after ${db.settings.followUpDays} days.`, staleQuotes.map(q => `<div class="row-card"><div><strong>${esc(customerName(q.customerId))}</strong><div class="meta"><span>${esc(q.status)}</span><span>${money(q.total)}</span><span>Created ${dateNice(q.createdAt)}</span></div><p class="subtle">Suggested next step: text the estimate and offer a bundled service slot.</p></div></div>`)],
+        invoices: ["Unpaid Invoices", "Invoices waiting for an external payment to be marked received.", unpaid.map(i => `<div class="row-card"><div><strong>${esc(customerName(i.customerId))}</strong><div class="meta"><span>${money(i.total)}</span><span>Issued ${dateNice(i.issueDate)}</span><span>${esc(i.status)}</span></div></div><div class="row-actions"><button class="btn" data-pay-invoice="${i.id}"><i data-lucide="check"></i>Paid</button></div></div>`)],
+        seasonal: ["Seasonal Rebooking", `Properties due based on the ${db.settings.rebookMonths}-month reminder default.`, seasonal.map(p => `<div class="row-card"><div><strong>${esc(customerName(p.customerId))}</strong><div class="meta"><span>${esc(p.address)}</span><span>Last cleaned ${dateNice(p.lastCleaningDate)}</span><span>${esc(p.homeType)}</span></div><p class="subtle">${esc(p.materialNotes || p.specialNotes || "Offer a maintenance wash or exterior refresh.")}</p></div></div>`)]
+      };
+      const [title, insight, rows] = views[type] || views.tasks;
+      openModal(title, `<div class="card"><h3>Filtered follow-up view</h3><p class="subtle" style="margin-top:8px;">${esc(insight)}</p></div><div class="card" style="margin-top:14px;"><div class="section-title"><h2>Records</h2><span class="pill">${rows.length}</span></div><div class="list">${rows.join("") || emptyState("No matching follow-ups", "This queue is clear.")}</div></div>`);
     }
     function recordSummary(r) {
       if (r.id?.startsWith("q_")) return `<div class="row-card"><div><strong>${esc(customerName(r.customerId))}</strong><div class="meta"><span>${esc(r.status)}</span><span>${money(r.total)}</span><span>Created ${dateNice(r.createdAt)}</span></div></div></div>`;
@@ -1724,7 +1798,23 @@
       if (box) box.innerHTML = `<div class="total-box"><div class="total-line"><span>Subtotal</span><strong>${money(subtotal)}</strong></div><div class="total-line"><span>Tax (${(db.settings.taxRate*100).toFixed(2)}%)</span><strong>${money(tax)}</strong></div><div class="total-line big"><span>Total</span><strong>${money(total)}</strong></div></div>`;
       const suggestBox = document.getElementById("quoteSuggestions");
       if (suggestBox) suggestBox.innerHTML = suggestionMarkup(suggestUpsells(window.activeQuoteItems));
+      bindSmartAddons();
       paintIcons();
+    }
+    function addQuoteService(serviceId) {
+      const form = document.getElementById("quoteForm");
+      const lines = document.getElementById("quoteLines");
+      const svc = get.service(serviceId);
+      if (!form || !lines || !svc) return;
+      syncQuoteLinesFromDom();
+      const prop = get.property(document.querySelector("#quoteForm select[name='propertyId']")?.value);
+      window.activeQuoteItems.push(buildLine(svc, prop, form.dataset.id));
+      lines.innerHTML = window.activeQuoteItems.map(lineMarkup).join("");
+      bindView();
+      recalcQuoteBuilder();
+    }
+    function bindSmartAddons() {
+      document.querySelectorAll("[data-add-suggestion]").forEach(b => b.onclick = () => addQuoteService(b.dataset.addSuggestion));
     }
     function saveQuote(form, forcedStatus) {
       syncQuoteLinesFromDom();
@@ -1906,8 +1996,8 @@
     }
 
     function bindView() {
-      document.querySelectorAll("[data-view]").forEach(btn => btn.onclick = () => { ui.view = btn.dataset.view; document.body.classList.remove("mobile-nav-open"); render(); });
-      document.querySelectorAll("[data-nav-to]").forEach(btn => btn.onclick = () => { ui.view = btn.dataset.navTo; render(); });
+      document.querySelectorAll("[data-view]").forEach(btn => btn.onclick = () => setView(btn.dataset.view));
+      document.querySelectorAll("[data-nav-to]").forEach(btn => btn.onclick = () => setView(btn.dataset.navTo));
       document.querySelectorAll("[data-action]").forEach(btn => btn.onclick = () => {
         const a = btn.dataset.action;
         if (a === "collapse-nav") document.body.classList.toggle("nav-mini");
@@ -1927,15 +2017,35 @@
       });
       document.querySelectorAll("[data-kpi]").forEach(el => el.onclick = () => openKpi(el.dataset.kpi));
       document.querySelectorAll("[data-report]").forEach(el => el.onclick = e => { if (!e.target.closest("button, select, input, textarea")) openReport(el.dataset.report); });
+      document.querySelectorAll("[data-followup-type]").forEach(el => el.onclick = () => openFollowupDetail(el.dataset.followupType));
       document.querySelectorAll("[data-day]").forEach(el => el.onclick = () => openDay(el.dataset.day));
       document.querySelectorAll("[data-month-step]").forEach(btn => btn.onclick = () => { ui.selectedMonth.setMonth(ui.selectedMonth.getMonth() + Number(btn.dataset.monthStep)); render(); });
       document.querySelectorAll("[data-close-modal]").forEach(btn => btn.onclick = closeModal);
       document.getElementById("modalRoot").onclick = e => { if (e.target.id === "modalRoot") closeModal(); };
       document.querySelectorAll("[data-filter-scope]").forEach(scope => {
         scope.querySelectorAll("[data-filter]").forEach(input => input.oninput = () => {
-          ui.filters[scope.dataset.filterScope] = ui.filters[scope.dataset.filterScope] || {};
-          ui.filters[scope.dataset.filterScope][input.dataset.filter] = input.value;
-          render();
+          const scopeName = scope.dataset.filterScope;
+          const key = input.dataset.filter;
+          const value = input.value;
+          const cursor = input.selectionStart;
+          ui.filters[scopeName] = ui.filters[scopeName] || {};
+          ui.filters[scopeName][key] = value;
+          const restore = () => requestAnimationFrame(() => {
+            const restored = document.querySelector(`[data-filter-scope="${scopeName}"] [data-filter="${key}"]`);
+            if (restored) {
+              restored.focus();
+              const pos = Math.min(cursor ?? value.length, restored.value.length);
+              if (restored.setSelectionRange) restored.setSelectionRange(pos, pos);
+            }
+          });
+          const delay = input.tagName === "INPUT" && ["search", "text"].includes(input.type);
+          clearTimeout(ui.filterTimers[`${scopeName}.${key}`]);
+          if (delay) {
+            ui.filterTimers[`${scopeName}.${key}`] = setTimeout(() => { render(); restore(); }, 180);
+          } else {
+            render();
+            restore();
+          }
         });
       });
       document.querySelectorAll("[data-edit-lead]").forEach(b => b.onclick = () => openLeadForm(b.dataset.editLead));
@@ -1969,8 +2079,8 @@
           summary.textContent = picked.length ? picked.join(", ") : "Choose services";
         }
       });
-      document.querySelectorAll("[data-add-service]").forEach(b => b.onclick = () => { syncQuoteLinesFromDom(); const svc = get.service(b.dataset.addService); const prop = get.property(document.querySelector("#quoteForm select[name='propertyId']")?.value); window.activeQuoteItems.push(buildLine(svc, prop, document.getElementById("quoteForm").dataset.id)); document.getElementById("quoteLines").innerHTML = window.activeQuoteItems.map(lineMarkup).join(""); bindView(); recalcQuoteBuilder(); });
-      document.querySelectorAll("[data-add-suggestion]").forEach(b => b.onclick = () => { syncQuoteLinesFromDom(); const svc = get.service(b.dataset.addSuggestion); window.activeQuoteItems.push(buildLine(svc, get.property(document.querySelector("#quoteForm select[name='propertyId']")?.value), document.getElementById("quoteForm").dataset.id)); document.getElementById("quoteLines").innerHTML = window.activeQuoteItems.map(lineMarkup).join(""); bindView(); recalcQuoteBuilder(); });
+      document.querySelectorAll("[data-add-service]").forEach(b => b.onclick = () => addQuoteService(b.dataset.addService));
+      bindSmartAddons();
       document.querySelectorAll("[data-remove-line]").forEach(b => b.onclick = () => { window.activeQuoteItems = window.activeQuoteItems.filter(i => i.id !== b.dataset.removeLine); document.getElementById("quoteLines").innerHTML = window.activeQuoteItems.map(lineMarkup).join("") || emptyState("No services yet", "Tap a service preset to build the estimate."); bindView(); recalcQuoteBuilder(); });
       document.querySelectorAll("[data-line-field], #quoteForm select[name='propertyId']").forEach(input => input.oninput = recalcQuoteBuilder);
       document.querySelectorAll("[data-quote-save]").forEach(b => b.onclick = () => saveQuote(document.getElementById("quoteForm"), b.dataset.quoteSave));
