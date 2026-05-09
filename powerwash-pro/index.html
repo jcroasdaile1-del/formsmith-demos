@@ -1,0 +1,1723 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PowerWash Pro by Formsmith</title>
+  <meta name="description" content="Single-file mobile-first pressure washing business dashboard prototype.">
+  <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+  <style>
+    :root {
+      --bg: #f5f7f4;
+      --panel: #ffffff;
+      --panel-2: #f9fbf9;
+      --ink: #17211f;
+      --muted: #66736f;
+      --soft: #dfe7e2;
+      --brand: #127b79;
+      --brand-2: #0d5f5d;
+      --mint: #dff4ef;
+      --green: #21825d;
+      --amber: #bd7a13;
+      --red: #bd3b31;
+      --blue: #3c6e91;
+      --purple: #725ca0;
+      --shadow: 0 16px 45px rgba(28, 43, 38, .10);
+      --radius: 8px;
+      --sidebar: 248px;
+      --sidebar-mini: 76px;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background:
+        radial-gradient(circle at top left, rgba(18, 123, 121, .10), transparent 30rem),
+        linear-gradient(180deg, #f9faf7 0%, var(--bg) 100%);
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+      line-height: 1.4;
+    }
+
+    button, input, select, textarea { font: inherit; }
+    button { cursor: pointer; }
+    .app { min-height: 100vh; }
+    .sidebar {
+      position: fixed;
+      inset: 0 auto 0 0;
+      width: var(--sidebar);
+      padding: 14px 12px;
+      background: rgba(255, 255, 255, .92);
+      border-right: 1px solid var(--soft);
+      box-shadow: 0 12px 40px rgba(17, 33, 31, .08);
+      z-index: 30;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      transition: width .18s ease, transform .18s ease;
+    }
+    body.nav-mini .sidebar { width: var(--sidebar-mini); }
+    .brand {
+      min-height: 50px;
+      display: grid;
+      grid-template-columns: 42px 1fr auto;
+      align-items: center;
+      gap: 10px;
+      padding: 4px;
+    }
+    .brand-mark {
+      width: 42px;
+      height: 42px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, var(--brand), #6ebda6);
+      color: white;
+      display: grid;
+      place-items: center;
+      box-shadow: inset 0 -10px 24px rgba(0,0,0,.12);
+    }
+    .brand-text strong { display: block; font-size: 14px; letter-spacing: 0; }
+    .brand-text span { display: block; color: var(--muted); font-size: 12px; }
+    body.nav-mini .brand { grid-template-columns: 42px; justify-content: center; }
+    body.nav-mini .brand-text,
+    body.nav-mini .sidebar .nav-label,
+    body.nav-mini .side-footer,
+    body.nav-mini .collapse-btn span { display: none; }
+    .icon-btn, .btn, .ghost-btn, .danger-btn {
+      border: 0;
+      border-radius: var(--radius);
+      min-height: 40px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 9px 12px;
+      font-weight: 700;
+      color: var(--ink);
+      background: #eef4f0;
+      transition: transform .12s ease, background .12s ease, color .12s ease, box-shadow .12s ease;
+    }
+    .icon-btn { width: 40px; padding: 0; }
+    .icon-btn:hover, .btn:hover, .ghost-btn:hover { transform: translateY(-1px); }
+    .btn {
+      background: var(--brand);
+      color: white;
+      box-shadow: 0 10px 22px rgba(18, 123, 121, .22);
+    }
+    .btn.secondary { background: #213c3a; }
+    .ghost-btn { background: #edf3ef; color: var(--ink); }
+    .danger-btn { background: #f8e6e3; color: var(--red); }
+    .nav-list { display: grid; gap: 5px; }
+    .nav-item {
+      border: 0;
+      background: transparent;
+      color: #34413d;
+      min-height: 42px;
+      border-radius: var(--radius);
+      display: grid;
+      grid-template-columns: 36px 1fr;
+      align-items: center;
+      padding: 0 10px;
+      text-align: left;
+      font-weight: 700;
+    }
+    .nav-item svg { margin: auto; }
+    .nav-item:hover { background: #eef5f0; }
+    .nav-item.active {
+      background: #dff4ef;
+      color: var(--brand-2);
+      box-shadow: inset 3px 0 0 var(--brand);
+    }
+    body.nav-mini .nav-item { grid-template-columns: 36px; padding: 0; justify-content: center; }
+    .side-footer {
+      margin-top: auto;
+      padding: 12px;
+      border: 1px solid var(--soft);
+      border-radius: var(--radius);
+      background: #fbfcfa;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .main {
+      min-height: 100vh;
+      padding: 18px 18px 34px;
+      margin-left: var(--sidebar);
+      transition: margin-left .18s ease;
+    }
+    body.nav-mini .main { margin-left: var(--sidebar-mini); }
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      align-items: center;
+      margin: -18px -18px 18px;
+      padding: 14px 18px;
+      background: rgba(245, 247, 244, .92);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(223, 231, 226, .82);
+    }
+    .mobile-menu { display: none; }
+    .eyebrow { margin: 0; color: var(--brand-2); font-size: 12px; font-weight: 900; text-transform: uppercase; letter-spacing: .06em; }
+    h1, h2, h3 { margin: 0; letter-spacing: 0; }
+    h1 { font-size: clamp(24px, 4vw, 36px); line-height: 1.08; }
+    h2 { font-size: 20px; }
+    h3 { font-size: 16px; }
+    p { margin: 0; }
+    .subtle { color: var(--muted); }
+    .toolbar {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      align-items: center;
+    }
+    .screen-head {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: end;
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+    .grid { display: grid; gap: 14px; }
+    .grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .grid.four { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .card {
+      background: rgba(255, 255, 255, .92);
+      border: 1px solid var(--soft);
+      border-radius: var(--radius);
+      padding: 14px;
+      box-shadow: 0 1px 0 rgba(255,255,255,.9), 0 12px 28px rgba(36, 54, 49, .05);
+      min-width: 0;
+    }
+    .card.clickable { cursor: pointer; }
+    .card.clickable:hover { border-color: rgba(18, 123, 121, .45); box-shadow: var(--shadow); }
+    .kpi-card {
+      min-height: 132px;
+      display: grid;
+      gap: 8px;
+      align-content: space-between;
+    }
+    .kpi-top { display: flex; justify-content: space-between; gap: 8px; align-items: start; }
+    .kpi-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: var(--radius);
+      display: grid;
+      place-items: center;
+      background: #edf7f4;
+      color: var(--brand);
+      flex: 0 0 auto;
+    }
+    .kpi-value { font-size: 28px; font-weight: 900; line-height: 1; }
+    .delta { font-size: 12px; font-weight: 800; color: var(--green); }
+    .delta.warn { color: var(--amber); }
+    .section-title {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .list { display: grid; gap: 10px; }
+    .row-card {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: center;
+      padding: 12px;
+      border: 1px solid var(--soft);
+      border-radius: var(--radius);
+      background: #fff;
+    }
+    .row-actions { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+    .meta { display: flex; gap: 7px; flex-wrap: wrap; align-items: center; margin-top: 6px; color: var(--muted); font-size: 12px; }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      min-height: 24px;
+      border-radius: 999px;
+      padding: 3px 8px;
+      background: #eef3ef;
+      color: #41504b;
+      font-size: 12px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+    .pill.good { background: #def3e9; color: var(--green); }
+    .pill.warn { background: #fff1d9; color: var(--amber); }
+    .pill.risk { background: #fde7e3; color: var(--red); }
+    .pill.info { background: #e5eff5; color: var(--blue); }
+    .pill.purple { background: #eee8f7; color: var(--purple); }
+    .filters {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .field { display: grid; gap: 5px; }
+    label { font-size: 12px; color: var(--muted); font-weight: 800; }
+    input, select, textarea {
+      width: 100%;
+      min-height: 42px;
+      border: 1px solid #d6e1db;
+      border-radius: var(--radius);
+      padding: 9px 10px;
+      background: #fff;
+      color: var(--ink);
+      outline: none;
+    }
+    textarea { min-height: 86px; resize: vertical; }
+    input:focus, select:focus, textarea:focus { border-color: rgba(18, 123, 121, .65); box-shadow: 0 0 0 3px rgba(18, 123, 121, .12); }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th, td { padding: 10px 8px; border-bottom: 1px solid var(--soft); text-align: left; vertical-align: top; }
+    th { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
+    .mini-chart { height: 190px; display: flex; align-items: end; gap: 8px; padding-top: 10px; }
+    .bar {
+      flex: 1;
+      min-width: 0;
+      border-radius: 6px 6px 2px 2px;
+      background: linear-gradient(180deg, #48a999, var(--brand));
+      position: relative;
+      min-height: 10px;
+    }
+    .bar span {
+      position: absolute;
+      left: 50%;
+      bottom: -24px;
+      transform: translateX(-50%);
+      color: var(--muted);
+      font-size: 11px;
+      white-space: nowrap;
+    }
+    .progress {
+      height: 10px;
+      border-radius: 999px;
+      background: #edf2ef;
+      overflow: hidden;
+    }
+    .progress > i { display: block; height: 100%; background: var(--brand); border-radius: inherit; }
+    .calendar {
+      display: grid;
+      gap: 8px;
+    }
+    .calendar-head, .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 6px;
+    }
+    .calendar-head div { color: var(--muted); font-size: 11px; font-weight: 900; text-align: center; }
+    .day {
+      min-height: 78px;
+      border: 1px solid var(--soft);
+      border-radius: var(--radius);
+      background: #fff;
+      padding: 7px;
+      display: grid;
+      align-content: start;
+      gap: 5px;
+      cursor: pointer;
+    }
+    .day:hover { border-color: rgba(18, 123, 121, .55); }
+    .day.muted { background: #f6f8f6; color: #9aa5a1; }
+    .day.today { box-shadow: inset 0 0 0 2px var(--brand); }
+    .day-num { font-size: 12px; font-weight: 900; }
+    .dot-row { display: flex; gap: 3px; flex-wrap: wrap; }
+    .dot { width: 8px; height: 8px; border-radius: 999px; background: var(--brand); }
+    .kanban {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(180px, 1fr));
+      gap: 10px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+    .kanban-col {
+      background: #f6f9f6;
+      border: 1px solid var(--soft);
+      border-radius: var(--radius);
+      padding: 10px;
+      min-height: 150px;
+    }
+    .kanban-col h3 { font-size: 13px; margin-bottom: 8px; color: var(--muted); }
+    .job-mini {
+      background: #fff;
+      border: 1px solid var(--soft);
+      border-radius: var(--radius);
+      padding: 10px;
+      margin-bottom: 8px;
+      display: grid;
+      gap: 7px;
+    }
+    .photo-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .photo-tile {
+      position: relative;
+      min-height: 150px;
+      border-radius: var(--radius);
+      overflow: hidden;
+      background-size: cover;
+      background-position: center;
+      border: 1px solid var(--soft);
+      display: flex;
+      align-items: end;
+      color: white;
+    }
+    .photo-tile::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, transparent, rgba(0,0,0,.58));
+    }
+    .photo-tile div { position: relative; padding: 10px; display: grid; gap: 3px; }
+    .split-photo {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2px;
+      min-height: 160px;
+      border-radius: var(--radius);
+      overflow: hidden;
+      border: 1px solid var(--soft);
+    }
+    .split-photo .before { background: linear-gradient(135deg, #766b5b, #a78b70); }
+    .split-photo .after { background: linear-gradient(135deg, #d5f3f0, #65b5a3); }
+    .split-photo > div { display: grid; place-items: center; color: white; font-weight: 900; text-shadow: 0 2px 8px rgba(0,0,0,.35); }
+    .quote-builder {
+      display: grid;
+      grid-template-columns: 320px minmax(0, 1fr);
+      gap: 14px;
+    }
+    .service-chip {
+      border: 1px solid #d6e1db;
+      background: #fff;
+      border-radius: var(--radius);
+      padding: 10px;
+      display: grid;
+      gap: 4px;
+      text-align: left;
+    }
+    .service-chip:hover { border-color: var(--brand); }
+    .line-item {
+      display: grid;
+      grid-template-columns: minmax(150px, 1.2fr) repeat(4, minmax(80px, .7fr)) auto;
+      gap: 8px;
+      align-items: end;
+      padding: 10px;
+      border: 1px solid var(--soft);
+      border-radius: var(--radius);
+      background: #fff;
+      margin-bottom: 8px;
+    }
+    .total-box {
+      margin-left: auto;
+      max-width: 340px;
+      display: grid;
+      gap: 8px;
+      padding: 12px;
+      border-radius: var(--radius);
+      background: #f6faf8;
+      border: 1px solid var(--soft);
+    }
+    .total-line { display: flex; justify-content: space-between; gap: 10px; }
+    .total-line.big { font-size: 22px; font-weight: 900; border-top: 1px solid var(--soft); padding-top: 8px; }
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(10, 20, 18, .48);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 14px;
+      z-index: 80;
+    }
+    .modal-backdrop.open { display: flex; }
+    .modal {
+      width: min(980px, 100%);
+      max-height: min(92vh, 920px);
+      overflow: auto;
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 30px 90px rgba(0, 0, 0, .28);
+      border: 1px solid rgba(255,255,255,.7);
+    }
+    .modal.small { width: min(620px, 100%); }
+    .modal-head {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: center;
+      padding: 16px;
+      border-bottom: 1px solid var(--soft);
+      background: rgba(255,255,255,.96);
+      backdrop-filter: blur(12px);
+    }
+    .modal-body { padding: 16px; }
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .form-grid .full { grid-column: 1 / -1; }
+    .toast {
+      position: fixed;
+      right: 16px;
+      bottom: 16px;
+      z-index: 100;
+      display: grid;
+      gap: 8px;
+      max-width: 320px;
+    }
+    .toast-item {
+      padding: 12px 14px;
+      border-radius: var(--radius);
+      background: #152724;
+      color: #fff;
+      box-shadow: var(--shadow);
+      font-weight: 800;
+    }
+    .print-shell { display: none; }
+
+    @media (max-width: 1100px) {
+      .grid.four { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .grid.three { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .filters { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .quote-builder { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 760px) {
+      .sidebar {
+        width: min(315px, calc(100vw - 34px));
+        transform: translateX(-105%);
+      }
+      body.mobile-nav-open .sidebar { transform: translateX(0); }
+      body.nav-mini .sidebar { width: min(315px, calc(100vw - 34px)); }
+      body.nav-mini .brand { grid-template-columns: 42px 1fr auto; justify-content: stretch; }
+      body.nav-mini .brand-text,
+      body.nav-mini .sidebar .nav-label,
+      body.nav-mini .side-footer,
+      body.nav-mini .collapse-btn span { display: block; }
+      body.nav-mini .nav-item { grid-template-columns: 36px 1fr; padding: 0 10px; justify-content: stretch; }
+      .main, body.nav-mini .main { margin-left: 0; padding: 14px 12px 78px; }
+      .topbar { margin: -14px -12px 14px; padding: 12px; grid-template-columns: auto 1fr auto; }
+      .mobile-menu { display: inline-flex; }
+      .topbar-title h1 { font-size: 21px; }
+      .screen-head { grid-template-columns: 1fr; align-items: start; }
+      .toolbar { justify-content: flex-start; }
+      .grid.two, .grid.three, .grid.four, .filters, .form-grid { grid-template-columns: 1fr; }
+      .row-card { grid-template-columns: 1fr; }
+      .row-actions { justify-content: flex-start; }
+      .kpi-card { min-height: 118px; }
+      .photo-grid { grid-template-columns: 1fr; }
+      .calendar-grid, .calendar-head { gap: 4px; }
+      .day { min-height: 62px; padding: 5px; }
+      .day .pill { display: none; }
+      .kanban { grid-template-columns: 1fr; overflow: visible; }
+      .line-item { grid-template-columns: 1fr 1fr; }
+      .line-item .remove-line { grid-column: 1 / -1; }
+      .modal-backdrop { align-items: end; padding: 0; }
+      .modal {
+        width: 100%;
+        max-height: 94vh;
+        border-radius: 12px 12px 0 0;
+      }
+      .table-wrap table, .table-wrap thead, .table-wrap tbody, .table-wrap th, .table-wrap td, .table-wrap tr { display: block; }
+      .table-wrap thead { display: none; }
+      .table-wrap tr {
+        border: 1px solid var(--soft);
+        border-radius: var(--radius);
+        margin-bottom: 10px;
+        padding: 8px;
+        background: #fff;
+      }
+      .table-wrap td {
+        border-bottom: 0;
+        display: grid;
+        grid-template-columns: 120px 1fr;
+        gap: 8px;
+        padding: 6px 2px;
+      }
+      .table-wrap td::before {
+        content: attr(data-label);
+        color: var(--muted);
+        font-weight: 900;
+        font-size: 12px;
+      }
+    }
+
+    @media print {
+      body * { visibility: hidden !important; }
+      .print-shell, .print-shell * { visibility: visible !important; }
+      .print-shell {
+        display: block;
+        position: absolute;
+        inset: 0;
+        padding: 28px;
+        background: white;
+        color: #111;
+        font-family: Arial, sans-serif;
+      }
+      .print-card { border: 1px solid #ddd; padding: 22px; }
+      .print-head { display: flex; justify-content: space-between; gap: 20px; border-bottom: 2px solid #111; padding-bottom: 14px; margin-bottom: 18px; }
+      .print-table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+      .print-table th, .print-table td { border-bottom: 1px solid #ddd; padding: 9px; text-align: left; }
+      .print-total { margin-left: auto; width: 280px; margin-top: 16px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="main">
+      <header class="topbar">
+        <button class="icon-btn mobile-menu" type="button" data-action="mobile-nav" title="Open navigation"><i data-lucide="menu"></i></button>
+        <div class="topbar-title">
+          <p class="eyebrow">PowerWash Pro by Formsmith</p>
+          <h1 id="pageTitle">Dashboard</h1>
+        </div>
+        <div class="toolbar">
+          <button class="ghost-btn" type="button" data-action="quick-lead"><i data-lucide="plus"></i><span>Lead</span></button>
+          <button class="btn" type="button" data-action="quote-builder"><i data-lucide="calculator"></i><span>Quote</span></button>
+        </div>
+      </header>
+      <section id="view"></section>
+    </main>
+  </div>
+  <div class="modal-backdrop" id="modalRoot"></div>
+  <div class="toast" id="toast"></div>
+  <div class="print-shell" id="printShell"></div>
+
+  <script>
+    /* PowerWash Pro prototype.
+       Data shape mirrors future Google Sheet tabs: Customers, Properties, Leads,
+       Quotes, QuoteItems, Jobs, Invoices, Payments, Photos, Services,
+       PricingRules, Tasks, Settings. */
+    const STORAGE_KEY = "formsmith.powerwashPro.v1";
+    const STATUSES = ["Lead", "Quoted", "Scheduled", "In Progress", "Completed", "Invoiced", "Paid", "Follow-Up Needed"];
+    const LEAD_SOURCES = ["Google", "Facebook", "Yard sign", "Referral", "Repeat customer", "Website"];
+    const HOME_TYPES = ["Single-family", "Townhome", "Duplex", "Ranch", "Two-story", "Brick home", "Vinyl siding"];
+    const PHOTO_BACKGROUNDS = [
+      "linear-gradient(135deg, #69594d 0 50%, #8fd4ca 50% 100%)",
+      "linear-gradient(135deg, #756653 0 50%, #bde9e3 50% 100%)",
+      "linear-gradient(135deg, #6d746b 0 50%, #73bfae 50% 100%)",
+      "linear-gradient(135deg, #71665e 0 50%, #e4f4ee 50% 100%)"
+    ];
+    let db = loadDb();
+    let ui = { view: "dashboard", filters: {}, selectedMonth: new Date(), weather: {}, weatherLoadedAt: null };
+
+    function uid(prefix) {
+      return prefix + "_" + Math.random().toString(36).slice(2, 8) + Date.now().toString(36).slice(-4);
+    }
+    function today() { const d = new Date(); d.setHours(0,0,0,0); return d; }
+    function addDays(n) { const d = today(); d.setDate(d.getDate() + n); return iso(d); }
+    function iso(d) { return new Date(d).toISOString().slice(0, 10); }
+    function money(n) { return (Number(n) || 0).toLocaleString(undefined, { style: "currency", currency: "USD", maximumFractionDigits: 0 }); }
+    function pct(n) { return Math.round((Number(n) || 0) * 100) + "%"; }
+    function dateNice(v) { return new Date(v + "T12:00:00").toLocaleDateString(undefined, { month: "short", day: "numeric" }); }
+    function monthName(d) { return d.toLocaleDateString(undefined, { month: "long", year: "numeric" }); }
+    function esc(v) {
+      return String(v ?? "").replace(/[&<>"']/g, s => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[s]));
+    }
+    function saveDb() { localStorage.setItem(STORAGE_KEY, JSON.stringify(db)); }
+    function loadDb() {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        try { return JSON.parse(raw); } catch (e) { console.warn("Demo data reset after parse error", e); }
+      }
+      const seeded = seedData();
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(seeded));
+      return seeded;
+    }
+    function resetDemo() {
+      if (!confirm("Reset all demo records to the seeded sample data?")) return;
+      localStorage.removeItem(STORAGE_KEY);
+      db = loadDb();
+      ui.filters = {};
+      toast("Demo data reset");
+      render();
+      fetchWeather();
+    }
+    function toast(message) {
+      const node = document.createElement("div");
+      node.className = "toast-item";
+      node.textContent = message;
+      document.getElementById("toast").appendChild(node);
+      setTimeout(() => node.remove(), 2800);
+    }
+    function seedData() {
+      const services = [
+        ["svc_house", "House Wash", "property", 185, 125, .13, 1.18, 1.12, ["Driveway", "Gutters"], "Soft wash siding, trim, soffits, exterior windows rinse."],
+        ["svc_driveway", "Driveway", "measurement", 120, 55, .22, 1, 1.10, ["Walkway", "Patio"], "Surface clean concrete drive and rinse edges."],
+        ["svc_patio", "Patio", "measurement", 95, 45, .24, 1, 1.10, ["Walkway"], "Clean patio slab, pavers, or pool deck."],
+        ["svc_walkway", "Walkway", "measurement", 65, 30, .27, 1, 1.05, ["Driveway"], "Clean entry path and public sidewalk strip."],
+        ["svc_deck", "Deck", "measurement", 175, 85, .38, 1, 1.20, ["Fence"], "Low pressure wood-safe wash."],
+        ["svc_fence", "Fence", "measurement", 160, 75, .32, 1, 1.18, ["Deck"], "Fence wash by panel/linear estimate."],
+        ["svc_roof", "Roof Soft Wash", "property", 450, 260, .21, 1.22, 1.18, ["Gutters"], "No-pressure soft wash treatment."],
+        ["svc_gutters", "Gutters", "flat", 125, 125, 0, 1.08, 1.05, ["House Wash"], "Exterior gutter brightening and rinse."]
+      ].map(s => ({
+        id: s[0], name: s[1], estimateMode: s[2], minimumPrice: s[3], baseRate: s[4],
+        perSqftRate: s[5], storyMultiplier: s[6], conditionMultiplier: s[7],
+        accessMultiplier: 1.08, defaultUpsells: s[8], optionalNotes: s[9], active: true
+      }));
+      const settings = {
+        taxRate: 0.0725,
+        invoiceTerms: "Due on completion. Payment accepted by cash, check, Zelle, or external card link.",
+        quoteExpiryDays: 14,
+        followUpDays: 3,
+        rebookMonths: 9,
+        weather: { provider: "Open-Meteo", latitude: 32.7767, longitude: -96.7970, label: "Primary service area", apiKey: "" },
+        businessInfo: { name: "Residential Pressure Washing", phone: "(555) 013-8844", email: "hello@example.com", city: "Local service area" },
+        leadSources: LEAD_SOURCES
+      };
+      const customers = [
+        ["cus_miller", "Avery Miller", "avery@example.com", "(555) 201-1101", "Repeat customer", "Google", "Prefers text before arrival. Has two dogs."],
+        ["cus_reed", "Morgan Reed", "morgan@example.com", "(555) 201-2240", "New customer", "Referral", "Interested in annual exterior plan."],
+        ["cus_santos", "Jamie Santos", "jamie@example.com", "(555) 201-3771", "Repeat customer", "Facebook", "Gate latch sticks after rain."],
+        ["cus_bennett", "Taylor Bennett", "taylor@example.com", "(555) 201-5032", "New customer", "Website", "HOA notice for driveway discoloration."],
+        ["cus_chang", "Riley Chang", "riley@example.com", "(555) 201-6782", "Repeat customer", "Yard sign", "Wants roof evaluated every spring."],
+        ["cus_parker", "Casey Parker", "casey@example.com", "(555) 201-7199", "New customer", "Google", "Budget-conscious, ask before add-ons."]
+      ].map(c => ({ id: c[0], name: c[1], email: c[2], phone: c[3], customerType: c[4], leadSource: c[5], notes: c[6], createdAt: addDays(-80) }));
+      const props = [
+        ["prop_miller", "cus_miller", "1840 Meadow Glen Dr", "Single-family", 2350, 2, "Vinyl siding with north-side algae", "4421", "Spigot left of garage", "Fragile flower beds along front walk", addDays(-232)],
+        ["prop_reed", "cus_reed", "912 Cedar Hollow Ln", "Brick home", 2800, 2, "Brick front, painted siding rear", "", "Back patio spigot", "Steep driveway apron", addDays(-420)],
+        ["prop_santos", "cus_santos", "77 Windmill Court", "Ranch", 1680, 1, "Painted lap siding", "7710", "Spigot by pool pump", "Pool deck gets slick", addDays(-128)],
+        ["prop_bennett", "cus_bennett", "6042 Prairie Lake Way", "Two-story", 3100, 2, "Stucco accents, concrete drive", "", "Front hose bib", "HOA letter attached in notes", addDays(-540)],
+        ["prop_chang", "cus_chang", "23 Oak Terrace", "Townhome", 1450, 2, "Dark roof streaking", "8888", "Shared side-yard spigot", "Coordinate parking", addDays(-301)],
+        ["prop_parker", "cus_parker", "319 Pecan Branch Rd", "Single-family", 2100, 1, "White vinyl, shaded back patio", "", "Rear spigot low pressure", "Ask about walkway upsell", addDays(-700)]
+      ].map(p => ({
+        id: p[0], customerId: p[1], address: p[2], homeType: p[3], sqft: p[4], stories: p[5],
+        materialNotes: p[6], gateCode: p[7], waterAccess: p[8], specialNotes: p[9], lastCleaningDate: p[10]
+      }));
+      const leads = [
+        ["lead_watts", "Jordan Watts", "(555) 510-1103", "jordan@example.com", "489 Bluebonnet Path", "Google", ["House Wash", "Driveway"], "Quoted", addDays(-5), "Asking for Friday if available."],
+        ["lead_nguyen", "Sam Nguyen", "(555) 510-2299", "sam@example.com", "1406 Ash Bend", "Facebook", ["Roof Soft Wash", "Gutters"], "New", addDays(-1), "Roof streaks visible from street."],
+        ["lead_hill", "Drew Hill", "(555) 510-3301", "drew@example.com", "2219 Larkspur Loop", "Yard sign", ["Driveway"], "Follow-Up Needed", addDays(-9), "Needs price under $200 if possible."],
+        ["lead_ortiz", "Robin Ortiz", "(555) 510-4818", "robin@example.com", "88 Stone Creek", "Website", ["Patio", "Walkway"], "New", addDays(0), "Back patio before graduation party."]
+      ].map(l => ({ id: l[0], name: l[1], phone: l[2], email: l[3], address: l[4], source: l[5], requestedServices: l[6], status: l[7], createdAt: l[8], notes: l[9] }));
+      const quoteData = [
+        ["q_miller", "cus_miller", "prop_miller", "Approved", addDays(-4), addDays(10), ["House Wash", "Driveway", "Gutters"], 612, "Approved by text. Schedule morning."],
+        ["q_reed", "cus_reed", "prop_reed", "Sent", addDays(-6), addDays(8), ["House Wash", "Patio"], 544, "Follow up after weekend."],
+        ["q_bennett", "cus_bennett", "prop_bennett", "Draft", addDays(-2), addDays(12), ["Driveway", "Walkway"], 268, "Needs HOA photos included."],
+        ["q_chang", "cus_chang", "prop_chang", "Approved", addDays(-12), addDays(2), ["Roof Soft Wash", "Gutters"], 760, "Annual roof treatment."],
+        ["q_watts", "", "", "Sent", addDays(-5), addDays(9), ["House Wash", "Driveway"], 580, "Lead quote from Google form."]
+      ];
+      const quotes = quoteData.map(q => ({ id: q[0], customerId: q[1], propertyId: q[2], leadId: q[0] === "q_watts" ? "lead_watts" : "", status: q[3], createdAt: q[4], expiresAt: q[5], subtotal: q[7], tax: Math.round(q[7] * settings.taxRate), total: Math.round(q[7] * (1 + settings.taxRate)), notes: q[8] }));
+      const quoteItems = [];
+      quoteData.forEach(q => q[6].forEach((serviceName, idx) => {
+        const service = services.find(s => s.name === serviceName);
+        const subtotal = Math.round(q[7] / q[6].length + (idx * 8));
+        quoteItems.push({ id: uid("qi"), quoteId: q[0], serviceId: service.id, description: serviceName, qty: 1, sqft: service.estimateMode === "flat" ? 0 : 700 + idx * 180, unitPrice: subtotal, calculatedPrice: subtotal, manualOverride: false, notes: service.optionalNotes });
+      }));
+      const jobs = [
+        ["job_chang", "cus_chang", "prop_chang", "q_chang", addDays(0), "08:30", "In Progress", "Protect shared driveway. Roof soft wash first.", "Unpaid"],
+        ["job_santos", "cus_santos", "prop_santos", "", addDays(0), "13:30", "Scheduled", "Pool deck and patio re-clean.", "Not invoiced"],
+        ["job_miller", "cus_miller", "prop_miller", "q_miller", addDays(2), "09:00", "Scheduled", "House wash with driveway. Text at arrival.", "Not invoiced"],
+        ["job_reed", "cus_reed", "prop_reed", "q_reed", addDays(5), "10:00", "Scheduled", "Pending quote approval, placeholder hold.", "Not invoiced"],
+        ["job_old1", "cus_santos", "prop_santos", "", addDays(-4), "11:00", "Paid", "Completed patio and walkway.", "Paid"],
+        ["job_old2", "cus_parker", "prop_parker", "", addDays(-6), "14:00", "Invoiced", "House wash, customer asked for receipt.", "Unpaid"],
+        ["job_bennett", "cus_bennett", "prop_bennett", "q_bennett", addDays(11), "08:00", "Follow-Up Needed", "Send revised driveway estimate.", "Not invoiced"]
+      ].map(j => ({ id: j[0], customerId: j[1], propertyId: j[2], quoteId: j[3], scheduledDate: j[4], scheduledTime: j[5], status: j[6], notes: j[7], invoiceStatus: j[8] === "Not invoiced" ? "Not invoiced" : "Invoiced", paymentStatus: j[8] === "Paid" ? "Paid" : "Unpaid", assignedTo: "Owner", beforePhotos: [], afterPhotos: [] }));
+      const invoices = [
+        { id: "inv_old1", jobId: "job_old1", customerId: "cus_santos", issueDate: addDays(-4), dueDate: addDays(-4), status: "Paid", subtotal: 285, tax: 21, total: 306, paidAt: addDays(-3), notes: "Paid externally." },
+        { id: "inv_old2", jobId: "job_old2", customerId: "cus_parker", issueDate: addDays(-6), dueDate: addDays(-6), status: "Unpaid", subtotal: 395, tax: 29, total: 424, paidAt: "", notes: "Customer requested invoice by email." },
+        { id: "inv_chang", jobId: "job_chang", customerId: "cus_chang", issueDate: addDays(0), dueDate: addDays(0), status: "Unpaid", subtotal: 760, tax: 55, total: 815, paidAt: "", notes: "Draft invoice after job completion." }
+      ];
+      const payments = [{ id: "pay_old1", invoiceId: "inv_old1", amount: 306, date: addDays(-3), method: "External transfer", notes: "Marked received manually." }];
+      const photos = [
+        ["photo1", "job_old1", "cus_santos", "After", "Pool deck brightened", PHOTO_BACKGROUNDS[0]],
+        ["photo2", "job_old2", "cus_parker", "Before/After", "North siding transformation", PHOTO_BACKGROUNDS[1]],
+        ["photo3", "job_chang", "cus_chang", "Before", "Roof streaking before treatment", PHOTO_BACKGROUNDS[2]],
+        ["photo4", "job_miller", "cus_miller", "Before/After", "Driveway preview gallery", PHOTO_BACKGROUNDS[3]]
+      ].map(p => ({ id: p[0], jobId: p[1], customerId: p[2], type: p[3], caption: p[4], dataUrl: p[5], createdAt: addDays(-3) }));
+      const tasks = [
+        { id: "task_quote_reed", type: "Quote follow-up", relatedType: "quote", relatedId: "q_reed", dueDate: addDays(0), done: false, title: "Follow up on Reed quote" },
+        { id: "task_invoice_parker", type: "Unpaid invoice", relatedType: "invoice", relatedId: "inv_old2", dueDate: addDays(-1), done: false, title: "Collect Parker invoice" },
+        { id: "task_rebook_santos", type: "Seasonal rebooking", relatedType: "customer", relatedId: "cus_santos", dueDate: addDays(2), done: false, title: "Offer Santos fall maintenance clean" }
+      ];
+      const activities = [
+        { id: uid("act"), date: addDays(0), text: "Chang roof soft wash moved to In Progress", icon: "activity" },
+        { id: uid("act"), date: addDays(-1), text: "New Facebook lead requested roof soft wash", icon: "message-circle" },
+        { id: uid("act"), date: addDays(-2), text: "Bennett driveway quote saved as draft", icon: "file-text" },
+        { id: uid("act"), date: addDays(-6), text: "Parker invoice generated and emailed externally", icon: "receipt" }
+      ];
+      return { customers, properties: props, leads, quotes, quoteItems, jobs, invoices, payments, photos, services, pricingRules: services, tasks, settings, activities };
+    }
+
+    const get = {
+      customer: id => db.customers.find(x => x.id === id),
+      property: id => db.properties.find(x => x.id === id),
+      quote: id => db.quotes.find(x => x.id === id),
+      job: id => db.jobs.find(x => x.id === id),
+      invoice: id => db.invoices.find(x => x.id === id),
+      service: id => db.services.find(x => x.id === id)
+    };
+    function customerName(id, fallback = "Lead prospect") { return get.customer(id)?.name || fallback; }
+    function propertyAddress(id, fallback = "Address TBD") { return get.property(id)?.address || fallback; }
+    function quoteItems(id) { return db.quoteItems.filter(x => x.quoteId === id); }
+    function invoiceItems(invoice) {
+      const job = get.job(invoice.jobId);
+      const quote = job?.quoteId ? get.quote(job.quoteId) : null;
+      if (quote) return quoteItems(quote.id).map(x => ({ description: x.description, amount: x.unitPrice }));
+      return [{ description: job?.notes || "Pressure washing service", amount: invoice.subtotal }];
+    }
+    function statusClass(status) {
+      if (["Paid", "Completed"].includes(status)) return "good";
+      if (["Follow-Up Needed", "Unpaid"].includes(status)) return "risk";
+      if (["In Progress", "Sent", "Scheduled", "Approved"].includes(status)) return "info";
+      return "warn";
+    }
+    function activity(text, icon = "activity") {
+      db.activities.unshift({ id: uid("act"), date: iso(new Date()), text, icon });
+      db.activities = db.activities.slice(0, 18);
+      saveDb();
+    }
+
+    function render() {
+      renderSidebar();
+      document.getElementById("pageTitle").textContent = navItems().find(n => n.id === ui.view)?.label || "Dashboard";
+      const view = document.getElementById("view");
+      const renderers = {
+        dashboard: renderDashboard,
+        leads: renderLeads,
+        quotes: renderQuotes,
+        jobs: renderJobs,
+        customers: renderCustomers,
+        invoices: renderInvoices,
+        photos: renderPhotos,
+        reports: renderReports,
+        settings: renderSettings
+      };
+      view.innerHTML = (renderers[ui.view] || renderDashboard)();
+      bindView();
+      paintIcons();
+    }
+    function navItems() {
+      return [
+        ["dashboard", "Dashboard", "layout-dashboard"],
+        ["leads", "Leads", "megaphone"],
+        ["quotes", "Quotes", "calculator"],
+        ["jobs", "Jobs", "calendar-check"],
+        ["customers", "Customers", "users"],
+        ["invoices", "Invoices / Payments", "receipt"],
+        ["photos", "Photos", "images"],
+        ["reports", "Reports", "bar-chart-3"],
+        ["settings", "Settings", "settings"]
+      ].map(([id, label, icon]) => ({ id, label, icon }));
+    }
+    function renderSidebar() {
+      document.getElementById("sidebar").innerHTML = `
+        <div class="brand">
+          <div class="brand-mark"><i data-lucide="droplets"></i></div>
+          <div class="brand-text"><strong>PowerWash Pro</strong><span>by Formsmith</span></div>
+          <button class="icon-btn collapse-btn" type="button" data-action="collapse-nav" title="Collapse sidebar"><i data-lucide="panel-left-close"></i></button>
+        </div>
+        <nav class="nav-list">
+          ${navItems().map(n => `<button class="nav-item ${ui.view === n.id ? "active" : ""}" type="button" data-view="${n.id}" title="${esc(n.label)}"><i data-lucide="${n.icon}"></i><span class="nav-label">${esc(n.label)}</span></button>`).join("")}
+        </nav>
+        <div class="side-footer">
+          <strong>Future Sheets tabs</strong><br>
+          Customers, Properties, Leads, Quotes, QuoteItems, Jobs, Invoices, Payments, Photos, Services, PricingRules, Tasks, Settings.
+        </div>`;
+    }
+    function paintIcons() { if (window.lucide) lucide.createIcons({ attrs: { width: 18, height: 18, strokeWidth: 2.2 } }); }
+
+    function metrics() {
+      const month = today().getMonth();
+      const year = today().getFullYear();
+      const paidInvoices = db.invoices.filter(i => i.status === "Paid");
+      const monthRevenue = paidInvoices.filter(i => {
+        const d = new Date((i.paidAt || i.issueDate) + "T12:00:00");
+        return d.getMonth() === month && d.getFullYear() === year;
+      }).reduce((s, i) => s + i.total, 0);
+      const openQuotes = db.quotes.filter(q => !["Approved", "Declined", "Converted"].includes(q.status));
+      const approved = db.quotes.filter(q => ["Approved", "Converted"].includes(q.status)).length;
+      const sent = db.quotes.filter(q => ["Sent", "Approved", "Converted"].includes(q.status)).length || 1;
+      const completedJobs = db.jobs.filter(j => ["Completed", "Invoiced", "Paid"].includes(j.status));
+      const avgJob = completedJobs.length ? db.invoices.reduce((s, i) => s + i.total, 0) / db.invoices.length : 0;
+      const outstanding = db.invoices.filter(i => i.status !== "Paid").reduce((s, i) => s + i.total, 0);
+      const repeat = db.customers.filter(c => c.customerType === "Repeat customer").length / Math.max(db.customers.length, 1);
+      return { monthRevenue, openQuotes, winRate: approved / sent, avgJob, outstanding, repeat };
+    }
+    function renderDashboard() {
+      const m = metrics();
+      const todaysJobs = db.jobs.filter(j => j.scheduledDate === iso(today())).sort((a,b) => a.scheduledTime.localeCompare(b.scheduledTime));
+      const upcoming = db.jobs.filter(j => new Date(j.scheduledDate) > today()).sort((a,b) => a.scheduledDate.localeCompare(b.scheduledDate)).slice(0, 5);
+      const reminders = db.tasks.filter(t => !t.done).sort((a,b) => a.dueDate.localeCompare(b.dueDate));
+      const pipeline = STATUSES.map(status => ({ status, count: recordsForStatus(status).length }));
+      return `
+        <div class="screen-head">
+          <div>
+            <p class="eyebrow">Solo operator command center</p>
+            <h2>Today's route, money, follow-ups, and field conditions in one place.</h2>
+          </div>
+          <div class="toolbar">
+            <button class="ghost-btn" data-action="reset-demo"><i data-lucide="refresh-ccw"></i>Reset demo</button>
+          </div>
+        </div>
+        <section class="grid four">
+          ${kpiCard("monthlyRevenue", "Monthly revenue", money(m.monthRevenue), "Paid work this month", "trending-up", "good")}
+          ${kpiCard("openQuotes", "Open quotes", String(m.openQuotes.length), money(m.openQuotes.reduce((s,q) => s + q.total, 0)) + " active value", "file-check-2", "warn")}
+          ${kpiCard("winRate", "Quote win rate", pct(m.winRate), "Approved / sent quotes", "target", "good")}
+          ${kpiCard("avgJob", "Average job value", money(m.avgJob), "Based on invoices", "badge-dollar-sign", "info")}
+          ${kpiCard("outstanding", "Outstanding invoices", money(m.outstanding), "Needs collection", "receipt", "risk")}
+          ${kpiCard("repeatRate", "Repeat customer rate", pct(m.repeat), "Customer base quality", "repeat-2", "purple")}
+        </section>
+        <section class="grid two" style="margin-top:14px;">
+          <div class="card">
+            <div class="section-title"><h2>Today's Jobs</h2><span class="pill info">${todaysJobs.length} scheduled</span></div>
+            <div class="list">${todaysJobs.map(jobCard).join("") || emptyState("No jobs today", "Use the Jobs calendar to schedule approved work.")}</div>
+          </div>
+          <div class="card">
+            <div class="section-title"><h2>Weather Snapshot</h2><button class="ghost-btn" data-action="refresh-weather"><i data-lucide="cloud-sun"></i>Refresh</button></div>
+            <div class="list">${weatherRows(db.jobs.filter(j => new Date(j.scheduledDate) >= today()).slice(0, 5))}</div>
+          </div>
+          <div class="card">
+            <div class="section-title"><h2>Upcoming Jobs</h2><button class="ghost-btn" data-nav-to="jobs"><i data-lucide="calendar-days"></i>Calendar</button></div>
+            <div class="list">${upcoming.map(jobCard).join("") || emptyState("Nothing scheduled", "Approved quotes can be converted to scheduled jobs.")}</div>
+          </div>
+          <div class="card">
+            <div class="section-title"><h2>Pipeline Summary</h2><button class="ghost-btn" data-action="open-pipeline"><i data-lucide="kanban-square"></i>Details</button></div>
+            <div class="list">${pipeline.map(p => `
+              <div>
+                <div class="total-line"><strong>${p.status}</strong><span>${p.count}</span></div>
+                <div class="progress"><i style="width:${Math.min(100, p.count * 18)}%"></i></div>
+              </div>`).join("")}</div>
+          </div>
+          <div class="card">
+            <div class="section-title"><h2>Calendar Snapshot</h2><button class="ghost-btn" data-nav-to="jobs"><i data-lucide="calendar"></i>Open</button></div>
+            ${calendarMarkup(ui.selectedMonth, true)}
+          </div>
+          <div class="card">
+            <div class="section-title"><h2>Follow-Up Reminders</h2><button class="ghost-btn" data-action="quick-task"><i data-lucide="plus"></i>Task</button></div>
+            <div class="list">${reminders.map(taskRow).join("") || emptyState("No follow-ups due", "Quotes, invoices, and seasonal work will surface here.")}</div>
+          </div>
+          <div class="card">
+            <div class="section-title"><h2>Revenue Trend</h2><button class="ghost-btn" data-nav-to="reports"><i data-lucide="bar-chart-3"></i>Reports</button></div>
+            ${revenueChart()}
+          </div>
+          <div class="card">
+            <div class="section-title"><h2>Recent Activity</h2><span class="pill">${db.activities.length} updates</span></div>
+            <div class="list">${db.activities.slice(0, 6).map(a => `<div class="row-card"><div><strong>${esc(a.text)}</strong><div class="meta"><span>${dateNice(a.date)}</span></div></div><i data-lucide="${a.icon}"></i></div>`).join("")}</div>
+          </div>
+        </section>`;
+    }
+    function kpiCard(key, title, value, detail, icon, tone) {
+      return `<article class="card clickable kpi-card" data-kpi="${key}">
+        <div class="kpi-top"><div><div class="subtle">${esc(title)}</div><div class="kpi-value">${esc(value)}</div></div><div class="kpi-icon ${tone}"><i data-lucide="${icon}"></i></div></div>
+        <div class="delta ${tone === "risk" ? "warn" : ""}">${esc(detail)}</div>
+      </article>`;
+    }
+    function jobCard(job) {
+      const customer = customerName(job.customerId);
+      const w = weatherFor(job.scheduledDate);
+      return `<div class="row-card">
+        <div>
+          <strong>${esc(job.scheduledTime)} - ${esc(customer)}</strong>
+          <div class="meta">
+            <span>${esc(propertyAddress(job.propertyId))}</span>
+            <span class="pill ${statusClass(job.status)}">${esc(job.status)}</span>
+            ${w ? `<span class="pill ${w.badgeClass}">${esc(w.label)} ${w.temp}F</span>` : `<span class="pill">Forecast loading</span>`}
+          </div>
+          <p class="subtle" style="margin-top:6px;">${esc(job.notes)}</p>
+        </div>
+        <div class="row-actions">
+          <button class="ghost-btn" data-edit-job="${job.id}"><i data-lucide="pencil"></i>Edit</button>
+          <button class="ghost-btn" data-status-job="${job.id}"><i data-lucide="shuffle"></i>Status</button>
+        </div>
+      </div>`;
+    }
+    function weatherRows(jobs) {
+      if (!jobs.length) return emptyState("No forecasted jobs", "Schedule a job to see field-weather guidance.");
+      return jobs.map(j => {
+        const w = weatherFor(j.scheduledDate);
+        return `<div class="row-card">
+          <div>
+            <strong>${dateNice(j.scheduledDate)} - ${esc(customerName(j.customerId))}</strong>
+            <div class="meta"><span>${esc(propertyAddress(j.propertyId))}</span>${w ? `<span class="pill ${w.badgeClass}">${esc(w.label)}</span><span>${esc(w.condition)}, ${w.precip}% rain, wind ${w.wind} mph</span>` : `<span class="pill">Loading forecast</span>`}</div>
+          </div>
+          <i data-lucide="cloud-sun"></i>
+        </div>`;
+      }).join("");
+    }
+    function taskRow(task) {
+      const overdue = new Date(task.dueDate) < today();
+      return `<div class="row-card">
+        <div><strong>${esc(task.title)}</strong><div class="meta"><span class="pill ${overdue ? "risk" : "warn"}">${overdue ? "Overdue" : "Due"} ${dateNice(task.dueDate)}</span><span>${esc(task.type)}</span></div></div>
+        <div class="row-actions"><button class="ghost-btn" data-complete-task="${task.id}"><i data-lucide="check"></i>Done</button></div>
+      </div>`;
+    }
+    function emptyState(title, text) {
+      return `<div class="card" style="box-shadow:none;background:#f9fbf9;"><strong>${esc(title)}</strong><p class="subtle">${esc(text)}</p></div>`;
+    }
+
+    function renderLeads() {
+      const f = ui.filters.leads || {};
+      const rows = db.leads.filter(l =>
+        (!f.status || l.status === f.status) &&
+        (!f.source || l.source === f.source) &&
+        (!f.search || JSON.stringify(l).toLowerCase().includes(f.search.toLowerCase()))
+      ).sort((a,b) => b.createdAt.localeCompare(a.createdAt));
+      return `
+        ${screenActions("Leads", "Track new residential inquiries and convert them into quote-ready records.", `<button class="btn" data-action="quick-lead"><i data-lucide="plus"></i>Add lead</button>`)}
+        ${filtersMarkup("leads", [
+          ["search", "Search", "search", ""],
+          ["status", "Status", "select", ["", "New", "Quoted", "Follow-Up Needed", "Converted", "Lost"]],
+          ["source", "Lead source", "select", ["", ...db.settings.leadSources]]
+        ], f)}
+        <div class="grid two">${rows.map(leadCard).join("") || emptyState("No leads found", "Adjust filters or add a new lead.")}</div>`;
+    }
+    function leadCard(l) {
+      return `<article class="card">
+        <div class="section-title"><div><h3>${esc(l.name)}</h3><p class="subtle">${esc(l.address)}</p></div><span class="pill ${statusClass(l.status)}">${esc(l.status)}</span></div>
+        <div class="meta"><span>${esc(l.phone)}</span><span>${esc(l.email)}</span><span class="pill">${esc(l.source)}</span></div>
+        <p style="margin:10px 0;">${esc(l.requestedServices.join(", "))}</p>
+        <p class="subtle">${esc(l.notes)}</p>
+        <div class="row-actions" style="margin-top:12px;">
+          <button class="ghost-btn" data-edit-lead="${l.id}"><i data-lucide="pencil"></i>Edit</button>
+          <button class="ghost-btn" data-lead-quote="${l.id}"><i data-lucide="calculator"></i>Quote</button>
+          <button class="danger-btn" data-delete-lead="${l.id}"><i data-lucide="trash-2"></i>Delete</button>
+        </div>
+      </article>`;
+    }
+
+    function renderQuotes() {
+      const f = ui.filters.quotes || {};
+      const rows = db.quotes.filter(q =>
+        (!f.status || q.status === f.status) &&
+        (!f.search || [customerName(q.customerId), q.notes, q.status].join(" ").toLowerCase().includes(f.search.toLowerCase()))
+      ).sort((a,b) => b.createdAt.localeCompare(a.createdAt));
+      return `
+        ${screenActions("Quotes", "Fast estimating with configurable pricing, one-tap upsells, manual overrides, and printable estimates.", `<button class="btn" data-action="quote-builder"><i data-lucide="calculator"></i>New quote</button>`)}
+        ${filtersMarkup("quotes", [
+          ["search", "Search", "search", ""],
+          ["status", "Status", "select", ["", "Draft", "Sent", "Approved", "Converted", "Declined"]]
+        ], f)}
+        <div class="grid two">${rows.map(quoteCard).join("") || emptyState("No quotes found", "Create a quote from scratch or from a lead.")}</div>`;
+    }
+    function quoteCard(q) {
+      const items = quoteItems(q.id);
+      return `<article class="card">
+        <div class="section-title"><div><h3>${esc(customerName(q.customerId))}</h3><p class="subtle">${esc(propertyAddress(q.propertyId))}</p></div><span class="pill ${statusClass(q.status)}">${esc(q.status)}</span></div>
+        <div class="meta"><span>Created ${dateNice(q.createdAt)}</span><span>Expires ${dateNice(q.expiresAt)}</span><span>${items.length} line items</span></div>
+        <p style="margin:10px 0;">${items.map(i => esc(i.description)).join(", ")}</p>
+        <div class="total-line"><strong>Total</strong><strong>${money(q.total)}</strong></div>
+        <p class="subtle" style="margin-top:8px;">${esc(q.notes)}</p>
+        <div class="row-actions" style="margin-top:12px;">
+          <button class="ghost-btn" data-edit-quote="${q.id}"><i data-lucide="pencil"></i>Edit</button>
+          <button class="ghost-btn" data-print-quote="${q.id}"><i data-lucide="printer"></i>Print</button>
+          <button class="ghost-btn" data-quote-status="${q.id}"><i data-lucide="send"></i>Status</button>
+          <button class="btn" data-convert-quote="${q.id}"><i data-lucide="calendar-plus"></i>Schedule</button>
+        </div>
+      </article>`;
+    }
+
+    function renderJobs() {
+      const f = ui.filters.jobs || {};
+      const rows = db.jobs.filter(j =>
+        (!f.status || j.status === f.status) &&
+        (!f.date || j.scheduledDate === f.date) &&
+        (!f.search || [customerName(j.customerId), propertyAddress(j.propertyId), j.notes, j.status].join(" ").toLowerCase().includes(f.search.toLowerCase()))
+      ).sort((a,b) => (a.scheduledDate + a.scheduledTime).localeCompare(b.scheduledDate + b.scheduledTime));
+      return `
+        ${screenActions("Jobs", "Manage the schedule, day cards, job statuses, photos, invoices, and payment state.", `<button class="btn" data-action="new-job"><i data-lucide="calendar-plus"></i>Add job</button>`)}
+        <div class="grid two">
+          <div class="card">
+            <div class="section-title">
+              <button class="icon-btn" data-month-step="-1" title="Previous month"><i data-lucide="chevron-left"></i></button>
+              <h2>${monthName(ui.selectedMonth)}</h2>
+              <button class="icon-btn" data-month-step="1" title="Next month"><i data-lucide="chevron-right"></i></button>
+            </div>
+            ${calendarMarkup(ui.selectedMonth, false)}
+          </div>
+          <div class="card">
+            <div class="section-title"><h2>Job List</h2><span class="pill">${rows.length} shown</span></div>
+            ${filtersMarkup("jobs", [
+              ["search", "Search", "search", ""],
+              ["status", "Status", "select", ["", ...STATUSES]],
+              ["date", "Date", "date", ""]
+            ], f)}
+            <div class="list">${rows.map(jobCard).join("") || emptyState("No jobs found", "Select another date or clear filters.")}</div>
+          </div>
+        </div>`;
+    }
+    function calendarMarkup(monthDate, compact) {
+      const d = new Date(monthDate);
+      const y = d.getFullYear(), m = d.getMonth();
+      const first = new Date(y, m, 1);
+      const start = new Date(first);
+      start.setDate(1 - first.getDay());
+      const cells = [];
+      for (let i = 0; i < 42; i++) {
+        const day = new Date(start);
+        day.setDate(start.getDate() + i);
+        const key = iso(day);
+        const jobs = db.jobs.filter(j => j.scheduledDate === key);
+        cells.push(`<button class="day ${day.getMonth() !== m ? "muted" : ""} ${key === iso(today()) ? "today" : ""}" data-day="${key}" type="button">
+          <span class="day-num">${day.getDate()}</span>
+          <span class="dot-row">${jobs.slice(0, 4).map(j => `<i class="dot" style="background:${jobColor(j.status)}"></i>`).join("")}</span>
+          ${!compact && jobs[0] ? `<span class="pill ${statusClass(jobs[0].status)}">${jobs.length} job${jobs.length > 1 ? "s" : ""}</span>` : ""}
+        </button>`);
+      }
+      return `<div class="calendar"><div class="calendar-head">${["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].map(x => `<div>${x}</div>`).join("")}</div><div class="calendar-grid">${cells.join("")}</div></div>`;
+    }
+    function jobColor(status) {
+      return { "Paid": "#21825d", "Completed": "#21825d", "Invoiced": "#3c6e91", "In Progress": "#127b79", "Follow-Up Needed": "#bd3b31", "Scheduled": "#bd7a13" }[status] || "#725ca0";
+    }
+
+    function renderCustomers() {
+      const f = ui.filters.customers || {};
+      const rows = db.customers.filter(c =>
+        (!f.type || c.customerType === f.type) &&
+        (!f.source || c.leadSource === f.source) &&
+        (!f.search || JSON.stringify(c).toLowerCase().includes(f.search.toLowerCase()))
+      ).sort((a,b) => a.name.localeCompare(b.name));
+      return `
+        ${screenActions("Customers", "Customer, property, history, repeat-service, lead source, and notes in one clean profile.", `<button class="btn" data-action="new-customer"><i data-lucide="user-plus"></i>Add customer</button>`)}
+        ${filtersMarkup("customers", [
+          ["search", "Search", "search", ""],
+          ["type", "Customer type", "select", ["", "New customer", "Repeat customer"]],
+          ["source", "Lead source", "select", ["", ...db.settings.leadSources]]
+        ], f)}
+        <div class="grid two">${rows.map(customerCard).join("") || emptyState("No customers found", "Add customers as leads convert.")}</div>`;
+    }
+    function customerCard(c) {
+      const prop = db.properties.find(p => p.customerId === c.id);
+      const jobs = db.jobs.filter(j => j.customerId === c.id);
+      const quotes = db.quotes.filter(q => q.customerId === c.id);
+      return `<article class="card">
+        <div class="section-title"><div><h3>${esc(c.name)}</h3><p class="subtle">${esc(c.phone)} | ${esc(c.email)}</p></div><span class="pill ${c.customerType.includes("Repeat") ? "good" : "info"}">${esc(c.customerType)}</span></div>
+        <p><strong>${esc(prop?.address || "Property not captured")}</strong></p>
+        <div class="meta"><span>${esc(prop?.homeType || "")}</span><span>${prop?.sqft || ""} sqft</span><span>${prop?.stories || ""} stories</span><span class="pill">${esc(c.leadSource)}</span></div>
+        <div class="grid two" style="margin:12px 0;">
+          <div class="card" style="box-shadow:none;"><strong>${jobs.length}</strong><p class="subtle">Jobs</p></div>
+          <div class="card" style="box-shadow:none;"><strong>${quotes.length}</strong><p class="subtle">Quotes</p></div>
+        </div>
+        <p class="subtle">${esc(c.notes)}</p>
+        <div class="row-actions" style="margin-top:12px;">
+          <button class="ghost-btn" data-view-customer="${c.id}"><i data-lucide="eye"></i>Profile</button>
+          <button class="ghost-btn" data-edit-customer="${c.id}"><i data-lucide="pencil"></i>Edit</button>
+          <button class="danger-btn" data-delete-customer="${c.id}"><i data-lucide="trash-2"></i>Delete</button>
+        </div>
+      </article>`;
+    }
+
+    function renderInvoices() {
+      const f = ui.filters.invoices || {};
+      const rows = db.invoices.filter(i =>
+        (!f.status || i.status === f.status) &&
+        (!f.search || [customerName(i.customerId), i.notes, i.status].join(" ").toLowerCase().includes(f.search.toLowerCase()))
+      ).sort((a,b) => b.issueDate.localeCompare(a.issueDate));
+      return `
+        ${screenActions("Invoices / Payments", "Generate client-ready invoices and mark external payments received without processing real payments.", `<button class="btn" data-action="new-invoice"><i data-lucide="receipt"></i>Create invoice</button>`)}
+        ${filtersMarkup("invoices", [
+          ["search", "Search", "search", ""],
+          ["status", "Payment status", "select", ["", "Unpaid", "Paid", "Void"]]
+        ], f)}
+        <div class="table-wrap"><table>
+          <thead><tr><th>Invoice</th><th>Customer</th><th>Issue</th><th>Status</th><th>Total</th><th>Actions</th></tr></thead>
+          <tbody>${rows.map(i => `<tr>
+            <td data-label="Invoice"><strong>${esc(i.id)}</strong></td>
+            <td data-label="Customer">${esc(customerName(i.customerId))}</td>
+            <td data-label="Issue">${dateNice(i.issueDate)}</td>
+            <td data-label="Status"><span class="pill ${statusClass(i.status)}">${esc(i.status)}</span></td>
+            <td data-label="Total"><strong>${money(i.total)}</strong></td>
+            <td data-label="Actions"><div class="row-actions"><button class="ghost-btn" data-print-invoice="${i.id}"><i data-lucide="printer"></i>Print</button>${i.status !== "Paid" ? `<button class="btn" data-pay-invoice="${i.id}"><i data-lucide="check"></i>Paid</button>` : ""}</div></td>
+          </tr>`).join("")}</tbody>
+        </table></div>`;
+    }
+
+    function renderPhotos() {
+      return `
+        ${screenActions("Photos", "Before/after proof library connected to jobs and customer profiles.", `<button class="btn" data-action="new-photo"><i data-lucide="image-plus"></i>Add demo photo</button>`)}
+        <div class="photo-grid">
+          ${db.photos.map((p, idx) => `<article class="photo-tile" style="background:${esc(p.dataUrl || PHOTO_BACKGROUNDS[idx % PHOTO_BACKGROUNDS.length])};">
+            <div><strong>${esc(p.type)}</strong><span>${esc(p.caption)}</span><span>${esc(customerName(p.customerId))}</span></div>
+          </article>`).join("")}
+        </div>
+        <div class="card" style="margin-top:14px;">
+          <div class="section-title"><h2>Job Transformations</h2><span class="pill info">Demo placeholders</span></div>
+          <div class="grid two">${db.jobs.slice(0,4).map(j => `<div>
+            <div class="split-photo"><div class="before">Before</div><div class="after">After</div></div>
+            <div class="meta"><strong>${esc(customerName(j.customerId))}</strong><span>${esc(propertyAddress(j.propertyId))}</span></div>
+          </div>`).join("")}</div>
+        </div>`;
+    }
+
+    function renderReports() {
+      const f = ui.filters.reports || {};
+      const jobs = db.jobs.filter(j =>
+        (!f.status || j.status === f.status) &&
+        (!f.start || j.scheduledDate >= f.start) &&
+        (!f.end || j.scheduledDate <= f.end) &&
+        (!f.customerType || get.customer(j.customerId)?.customerType === f.customerType)
+      );
+      const bySource = db.settings.leadSources.map(source => ({
+        source,
+        leads: db.leads.filter(l => l.source === source).length + db.customers.filter(c => c.leadSource === source).length,
+        revenue: db.invoices.filter(i => get.customer(i.customerId)?.leadSource === source).reduce((s,i) => s + i.total, 0)
+      }));
+      const topServices = db.services.map(s => ({ name: s.name, count: db.quoteItems.filter(i => i.serviceId === s.id).length })).sort((a,b) => b.count - a.count);
+      return `
+        ${screenActions("Reports", "Useful field-service reporting with compact drilldowns for revenue, conversion, services, and follow-ups.", "")}
+        ${filtersMarkup("reports", [
+          ["start", "Date from", "date", ""],
+          ["end", "Date to", "date", ""],
+          ["status", "Job status", "select", ["", ...STATUSES]],
+          ["customerType", "Customer type", "select", ["", "New customer", "Repeat customer"]]
+        ], f)}
+        <section class="grid two">
+          <div class="card clickable" data-report="revenue"><div class="section-title"><h2>Revenue Over Time</h2><span class="pill good">${money(db.invoices.reduce((s,i) => s+i.total,0))}</span></div>${revenueChart()}</div>
+          <div class="card clickable" data-report="conversion"><div class="section-title"><h2>Quote Conversion</h2><span class="pill info">${pct(metrics().winRate)}</span></div>${conversionMarkup()}</div>
+          <div class="card clickable" data-report="services"><div class="section-title"><h2>Top Services</h2><span class="pill">${topServices[0]?.name || "None"}</span></div><div class="list">${topServices.map(s => `<div><div class="total-line"><strong>${esc(s.name)}</strong><span>${s.count}</span></div><div class="progress"><i style="width:${Math.min(100, s.count * 22)}%"></i></div></div>`).join("")}</div></div>
+          <div class="card clickable" data-report="sources"><div class="section-title"><h2>Lead Source Performance</h2><span class="pill">${bySource.length} sources</span></div><div class="list">${bySource.map(s => `<div class="row-card"><div><strong>${esc(s.source)}</strong><div class="meta"><span>${s.leads} records</span><span>${money(s.revenue)} revenue</span></div></div></div>`).join("")}</div></div>
+          <div class="card clickable" data-report="outstanding"><div class="section-title"><h2>Outstanding Invoices</h2><span class="pill risk">${money(metrics().outstanding)}</span></div><div class="list">${db.invoices.filter(i => i.status !== "Paid").map(i => `<div class="row-card"><div><strong>${esc(customerName(i.customerId))}</strong><div class="meta"><span>${dateNice(i.issueDate)}</span><span>${money(i.total)}</span></div></div></div>`).join("")}</div></div>
+          <div class="card clickable" data-report="followups"><div class="section-title"><h2>Follow-Up Opportunities</h2><span class="pill warn">${db.tasks.filter(t=>!t.done).length}</span></div><div class="list">${db.tasks.filter(t=>!t.done).map(taskRow).join("")}</div></div>
+        </section>
+        <div class="card" style="margin-top:14px;"><div class="section-title"><h2>Filtered Job Detail</h2><span class="pill">${jobs.length} jobs</span></div><div class="list">${jobs.map(jobCard).join("") || emptyState("No jobs match", "Change the report filters.")}</div></div>`;
+    }
+    function revenueChart() {
+      const months = [];
+      for (let i = 5; i >= 0; i--) {
+        const d = new Date(today());
+        d.setMonth(d.getMonth() - i);
+        const label = d.toLocaleDateString(undefined, { month: "short" });
+        const value = db.invoices.filter(inv => {
+          const id = new Date((inv.paidAt || inv.issueDate) + "T12:00:00");
+          return id.getMonth() === d.getMonth() && id.getFullYear() === d.getFullYear();
+        }).reduce((s, inv) => s + inv.total, 0);
+        months.push({ label, value });
+      }
+      const max = Math.max(...months.map(m => m.value), 1);
+      return `<div class="mini-chart">${months.map(m => `<div class="bar" style="height:${Math.max(8, m.value / max * 160)}px" title="${money(m.value)}"><span>${m.label}</span></div>`).join("")}</div>`;
+    }
+    function conversionMarkup() {
+      const counts = ["Draft", "Sent", "Approved", "Converted", "Declined"].map(status => ({ status, count: db.quotes.filter(q => q.status === status).length }));
+      return `<div class="list">${counts.map(c => `<div><div class="total-line"><strong>${c.status}</strong><span>${c.count}</span></div><div class="progress"><i style="width:${Math.min(100, c.count * 28)}%"></i></div></div>`).join("")}</div>`;
+    }
+
+    function renderSettings() {
+      return `
+        ${screenActions("Settings", "Customization is the sales engine: services, pricing, taxes, invoices, lead sources, reminders, and weather config.", `<button class="btn" data-save-settings><i data-lucide="save"></i>Save settings</button>`)}
+        <div class="grid two">
+          <form class="card" id="settingsForm">
+            <div class="section-title"><h2>Defaults</h2><span class="pill info">Local demo</span></div>
+            <div class="form-grid">
+              <div class="field"><label>Tax rate</label><input name="taxRate" type="number" step="0.0001" value="${db.settings.taxRate}"></div>
+              <div class="field"><label>Quote expiry days</label><input name="quoteExpiryDays" type="number" value="${db.settings.quoteExpiryDays}"></div>
+              <div class="field"><label>Follow-up days</label><input name="followUpDays" type="number" value="${db.settings.followUpDays}"></div>
+              <div class="field"><label>Seasonal rebook months</label><input name="rebookMonths" type="number" value="${db.settings.rebookMonths}"></div>
+              <div class="field"><label>Weather latitude</label><input name="latitude" type="number" step="0.0001" value="${db.settings.weather.latitude}"></div>
+              <div class="field"><label>Weather longitude</label><input name="longitude" type="number" step="0.0001" value="${db.settings.weather.longitude}"></div>
+              <div class="field full"><label>Invoice terms</label><textarea name="invoiceTerms">${esc(db.settings.invoiceTerms)}</textarea></div>
+              <div class="field full"><label>Weather/API notes</label><textarea readonly>Open-Meteo is configured as the no-key demo forecast provider. Apps Script can call the same endpoint from UrlFetchApp later. API key field is intentionally isolated for providers that need one.</textarea></div>
+            </div>
+          </form>
+          <div class="card">
+            <div class="section-title"><h2>Demo Controls</h2><span class="pill warn">Persistence</span></div>
+            <p class="subtle">All edits are stored in browser localStorage. Reset returns Customers, Properties, Leads, Quotes, QuoteItems, Jobs, Invoices, Payments, Photos, Services, PricingRules, Tasks, and Settings to the seeded sample.</p>
+            <div class="toolbar" style="justify-content:flex-start;margin-top:14px;"><button class="danger-btn" data-action="reset-demo"><i data-lucide="refresh-ccw"></i>Reset demo data</button></div>
+          </div>
+        </div>
+        <div class="card" style="margin-top:14px;">
+          <div class="section-title"><h2>Services & Pricing Rules</h2><button class="btn" data-action="new-service"><i data-lucide="plus"></i>Add service</button></div>
+          <div class="table-wrap"><table>
+            <thead><tr><th>Service</th><th>Mode</th><th>Minimum</th><th>Base</th><th>Per sqft</th><th>Upsells</th><th>Actions</th></tr></thead>
+            <tbody>${db.services.map(s => `<tr>
+              <td data-label="Service"><strong>${esc(s.name)}</strong></td>
+              <td data-label="Mode">${esc(s.estimateMode)}</td>
+              <td data-label="Minimum">${money(s.minimumPrice)}</td>
+              <td data-label="Base">${money(s.baseRate)}</td>
+              <td data-label="Per sqft">$${Number(s.perSqftRate).toFixed(2)}</td>
+              <td data-label="Upsells">${esc((s.defaultUpsells || []).join(", "))}</td>
+              <td data-label="Actions"><button class="ghost-btn" data-edit-service="${s.id}"><i data-lucide="pencil"></i>Edit</button></td>
+            </tr>`).join("")}</tbody>
+          </table></div>
+        </div>`;
+    }
+
+    function screenActions(title, subtitle, actions) {
+      return `<div class="screen-head"><div><p class="eyebrow">${esc(title)}</p><h2>${esc(subtitle)}</h2></div><div class="toolbar">${actions || ""}</div></div>`;
+    }
+    function filtersMarkup(scope, defs, values) {
+      return `<div class="filters" data-filter-scope="${scope}">${defs.map(([key, label, type, opts]) => {
+        const value = values[key] || "";
+        if (type === "select") return `<div class="field"><label>${label}</label><select data-filter="${key}">${opts.map(o => `<option value="${esc(o)}" ${o === value ? "selected" : ""}>${esc(o || "All")}</option>`).join("")}</select></div>`;
+        return `<div class="field"><label>${label}</label><input data-filter="${key}" type="${type}" value="${esc(value)}" placeholder="${label}"></div>`;
+      }).join("")}</div>`;
+    }
+
+    function openModal(title, body, opts = {}) {
+      const root = document.getElementById("modalRoot");
+      root.className = "modal-backdrop open";
+      root.innerHTML = `<div class="modal ${opts.small ? "small" : ""}" role="dialog" aria-modal="true">
+        <div class="modal-head"><div><p class="eyebrow">${esc(opts.eyebrow || "PowerWash Pro")}</p><h2>${esc(title)}</h2></div><button class="icon-btn" data-close-modal title="Close"><i data-lucide="x"></i></button></div>
+        <div class="modal-body">${body}</div>
+      </div>`;
+      bindView();
+      paintIcons();
+    }
+    function closeModal() {
+      document.getElementById("modalRoot").className = "modal-backdrop";
+      document.getElementById("modalRoot").innerHTML = "";
+    }
+
+    function openKpi(key) {
+      const m = metrics();
+      const map = {
+        monthlyRevenue: ["Monthly Revenue", `${money(m.monthRevenue)} collected this month.`, db.invoices.filter(i => i.status === "Paid")],
+        openQuotes: ["Open Quotes", `${m.openQuotes.length} quotes worth ${money(m.openQuotes.reduce((s,q)=>s+q.total,0))}. Follow up after ${db.settings.followUpDays} days.`, m.openQuotes],
+        winRate: ["Quote Win Rate", `${pct(m.winRate)} of sent quotes are approved or converted.`, db.quotes],
+        avgJob: ["Average Job Value", `${money(m.avgJob)} average invoice value across completed work.`, db.invoices],
+        outstanding: ["Outstanding Invoices", `${money(m.outstanding)} is waiting on external payment.`, db.invoices.filter(i => i.status !== "Paid")],
+        repeatRate: ["Repeat Customer Rate", `${pct(m.repeat)} of customers are marked repeat.`, db.customers.filter(c => c.customerType === "Repeat customer")]
+      };
+      const [title, insight, rows] = map[key];
+      openModal(title, `<div class="grid two"><div class="card"><h3>Insight</h3><p class="subtle" style="margin-top:8px;">${esc(insight)}</p></div><div class="card"><h3>Suggested action</h3><p class="subtle" style="margin-top:8px;">${key === "openQuotes" ? "Call or text the oldest sent quotes first and offer a bundled driveway/walkway slot." : key === "outstanding" ? "Mark payment received after an external transfer or send a reminder before scheduling new work." : "Use the detail list below to spot the next best action."}</p></div></div><div class="card" style="margin-top:14px;"><div class="section-title"><h2>Filtered Records</h2><span class="pill">${rows.length}</span></div><div class="list">${rows.map(recordSummary).join("") || emptyState("No records", "This metric has no matching records.")}</div></div>`);
+    }
+    function recordSummary(r) {
+      if (r.id?.startsWith("q_")) return `<div class="row-card"><div><strong>${esc(customerName(r.customerId))}</strong><div class="meta"><span>${esc(r.status)}</span><span>${money(r.total)}</span><span>Created ${dateNice(r.createdAt)}</span></div></div></div>`;
+      if (r.id?.startsWith("inv_")) return `<div class="row-card"><div><strong>${esc(customerName(r.customerId))}</strong><div class="meta"><span>${esc(r.status)}</span><span>${money(r.total)}</span><span>${dateNice(r.issueDate)}</span></div></div></div>`;
+      if (r.id?.startsWith("cus_")) return `<div class="row-card"><div><strong>${esc(r.name)}</strong><div class="meta"><span>${esc(r.customerType)}</span><span>${esc(r.leadSource)}</span></div></div></div>`;
+      return `<div class="row-card"><div><strong>${esc(r.name || r.id)}</strong><div class="meta"><span>${esc(r.status || r.type || "")}</span></div></div></div>`;
+    }
+
+    function openDay(date) {
+      const jobs = db.jobs.filter(j => j.scheduledDate === date).sort((a,b) => a.scheduledTime.localeCompare(b.scheduledTime));
+      openModal(`Jobs for ${dateNice(date)}`, `<div class="kanban">${["Scheduled","In Progress","Completed","Invoiced","Paid","Follow-Up Needed"].map(status => `<div class="kanban-col"><h3>${status}</h3>${jobs.filter(j => j.status === status).map(j => `<div class="job-mini"><strong>${esc(j.scheduledTime)} ${esc(customerName(j.customerId))}</strong><span class="subtle">${esc(propertyAddress(j.propertyId))}</span>${weatherFor(j.scheduledDate) ? `<span class="pill ${weatherFor(j.scheduledDate).badgeClass}">${weatherFor(j.scheduledDate).label}</span>` : ""}<select data-job-status-inline="${j.id}">${STATUSES.map(s => `<option ${s === j.status ? "selected" : ""}>${s}</option>`).join("")}</select></div>`).join("") || `<p class="subtle">No ${status.toLowerCase()} jobs.</p>`}</div>`).join("")}</div><div class="toolbar" style="justify-content:flex-start;margin-top:14px;"><button class="btn" data-action="new-job" data-date="${date}"><i data-lucide="calendar-plus"></i>Add job</button></div>`);
+    }
+
+    function openLeadForm(id) {
+      const l = id ? db.leads.find(x => x.id === id) : { name:"", phone:"", email:"", address:"", source:"Google", requestedServices:["House Wash"], status:"New", createdAt: iso(today()), notes:"" };
+      openModal(id ? "Edit Lead" : "Add Lead", `<form id="leadForm" data-id="${esc(id || "")}" class="form-grid">
+        ${input("name","Lead name",l.name)}${input("phone","Phone",l.phone)}${input("email","Email",l.email)}${input("address","Address",l.address)}
+        ${select("source","Lead source",db.settings.leadSources,l.source)}${select("status","Status",["New","Quoted","Follow-Up Needed","Converted","Lost"],l.status)}
+        ${input("requestedServices","Requested services",l.requestedServices.join(", "),"full")}${textarea("notes","Notes",l.notes,"full")}
+        <div class="toolbar full"><button class="btn" type="submit"><i data-lucide="save"></i>Save lead</button></div>
+      </form>`, { small: true });
+    }
+    function saveLead(form) {
+      const id = form.dataset.id || uid("lead");
+      const item = {
+        id, name: form.name.value, phone: form.phone.value, email: form.email.value, address: form.address.value,
+        source: form.source.value, status: form.status.value, requestedServices: form.requestedServices.value.split(",").map(s => s.trim()).filter(Boolean),
+        createdAt: db.leads.find(x => x.id === id)?.createdAt || iso(today()), notes: form.notes.value
+      };
+      upsert(db.leads, item);
+      activity(`${item.name} lead saved`, "megaphone");
+      saveDb(); closeModal(); toast("Lead saved"); render();
+    }
+
+    function openCustomerForm(id) {
+      const c = id ? get.customer(id) : { name:"", email:"", phone:"", customerType:"New customer", leadSource:"Google", notes:"" };
+      const p = db.properties.find(x => x.customerId === c.id) || { address:"", homeType:"Single-family", sqft:2200, stories:1, materialNotes:"", gateCode:"", waterAccess:"", specialNotes:"", lastCleaningDate:addDays(-365) };
+      openModal(id ? "Edit Customer" : "Add Customer", `<form id="customerForm" data-id="${esc(id || "")}" class="form-grid">
+        ${input("name","Name",c.name)}${input("phone","Phone",c.phone)}${input("email","Email",c.email)}${select("customerType","Customer type",["New customer","Repeat customer"],c.customerType)}${select("leadSource","Lead source",db.settings.leadSources,c.leadSource)}
+        ${input("address","Address",p.address,"full")}${select("homeType","Home type",HOME_TYPES,p.homeType)}${input("sqft","Estimated sqft",p.sqft)}${input("stories","Stories",p.stories)}
+        ${input("gateCode","Gate code",p.gateCode)}${input("waterAccess","Water access",p.waterAccess)}${textarea("materialNotes","Surface/material notes",p.materialNotes,"full")}${textarea("specialNotes","Special notes",p.specialNotes,"full")}${input("lastCleaningDate","Last cleaning date",p.lastCleaningDate,"full","date")}${textarea("notes","Customer notes",c.notes,"full")}
+        <div class="toolbar full"><button class="btn" type="submit"><i data-lucide="save"></i>Save customer</button></div>
+      </form>`);
+    }
+    function saveCustomer(form) {
+      const id = form.dataset.id || uid("cus");
+      const customer = { id, name: form.name.value, phone: form.phone.value, email: form.email.value, customerType: form.customerType.value, leadSource: form.leadSource.value, notes: form.notes.value, createdAt: db.customers.find(c => c.id === id)?.createdAt || iso(today()) };
+      upsert(db.customers, customer);
+      const existing = db.properties.find(p => p.customerId === id);
+      const prop = { id: existing?.id || uid("prop"), customerId: id, address: form.address.value, homeType: form.homeType.value, sqft: Number(form.sqft.value), stories: Number(form.stories.value), materialNotes: form.materialNotes.value, gateCode: form.gateCode.value, waterAccess: form.waterAccess.value, specialNotes: form.specialNotes.value, lastCleaningDate: form.lastCleaningDate.value };
+      upsert(db.properties, prop);
+      activity(`${customer.name} customer profile saved`, "users");
+      saveDb(); closeModal(); toast("Customer saved"); render();
+    }
+
+    function openCustomerProfile(id) {
+      const c = get.customer(id), p = db.properties.find(x => x.customerId === id);
+      const jobs = db.jobs.filter(j => j.customerId === id);
+      const quotes = db.quotes.filter(q => q.customerId === id);
+      const photos = db.photos.filter(ph => ph.customerId === id);
+      openModal(c.name, `<div class="grid two">
+        <div class="card"><h3>Contact</h3><div class="meta"><span>${esc(c.phone)}</span><span>${esc(c.email)}</span><span>${esc(c.leadSource)}</span></div><p style="margin-top:10px;">${esc(c.notes)}</p></div>
+        <div class="card"><h3>Property Profile</h3><p style="margin-top:8px;"><strong>${esc(p?.address || "")}</strong></p><div class="meta"><span>${esc(p?.homeType || "")}</span><span>${p?.sqft || ""} sqft</span><span>${p?.stories || ""} stories</span><span>Last clean ${p?.lastCleaningDate ? dateNice(p.lastCleaningDate) : "unknown"}</span></div><p class="subtle" style="margin-top:8px;">Gate: ${esc(p?.gateCode || "none")} | Water: ${esc(p?.waterAccess || "")}</p><p class="subtle">${esc(p?.materialNotes || "")}</p><p class="subtle">${esc(p?.specialNotes || "")}</p></div>
+        <div class="card"><div class="section-title"><h3>Job History</h3><span class="pill">${jobs.length}</span></div><div class="list">${jobs.map(jobCard).join("") || emptyState("No jobs", "Convert a quote or add a job.")}</div></div>
+        <div class="card"><div class="section-title"><h3>Quote History</h3><span class="pill">${quotes.length}</span></div><div class="list">${quotes.map(quoteCard).join("") || emptyState("No quotes", "Create a new quote from this profile.")}</div></div>
+      </div><div class="card" style="margin-top:14px;"><div class="section-title"><h3>Photos</h3><span class="pill">${photos.length}</span></div><div class="photo-grid">${photos.map((ph, idx) => `<div class="photo-tile" style="background:${esc(ph.dataUrl || PHOTO_BACKGROUNDS[idx % 4])};"><div><strong>${esc(ph.type)}</strong><span>${esc(ph.caption)}</span></div></div>`).join("") || emptyState("No photos", "Add before/after proof from Jobs or Photos.")}</div></div>`);
+    }
+
+    function openJobForm(id, presetDate) {
+      const j = id ? get.job(id) : { customerId: db.customers[0]?.id || "", propertyId: db.properties[0]?.id || "", quoteId:"", scheduledDate: presetDate || iso(today()), scheduledTime:"09:00", status:"Scheduled", notes:"", invoiceStatus:"Not invoiced", paymentStatus:"Unpaid", assignedTo:"Owner" };
+      openModal(id ? "Edit Job" : "Add Job", `<form id="jobForm" data-id="${esc(id || "")}" class="form-grid">
+        ${select("customerId","Customer",db.customers.map(c=>[c.id,c.name]),j.customerId)}${select("propertyId","Property",db.properties.map(p=>[p.id,p.address]),j.propertyId)}
+        ${select("quoteId","Linked quote",[["","None"],...db.quotes.map(q=>[q.id, customerName(q.customerId)+" - "+money(q.total)])],j.quoteId)}
+        ${input("scheduledDate","Scheduled date",j.scheduledDate,"","date")}${input("scheduledTime","Scheduled time",j.scheduledTime,"","time")}${select("status","Status",STATUSES,j.status)}
+        ${textarea("notes","Job notes",j.notes,"full")}
+        <div class="toolbar full"><button class="btn" type="submit"><i data-lucide="save"></i>Save job</button></div>
+      </form>`);
+    }
+    function saveJob(form) {
+      const id = form.dataset.id || uid("job");
+      const item = { id, customerId: form.customerId.value, propertyId: form.propertyId.value, quoteId: form.quoteId.value, scheduledDate: form.scheduledDate.value, scheduledTime: form.scheduledTime.value, status: form.status.value, notes: form.notes.value, invoiceStatus:"Not invoiced", paymentStatus:"Unpaid", assignedTo:"Owner", beforePhotos:[], afterPhotos:[] };
+      const old = get.job(id);
+      if (old) Object.assign(item, { invoiceStatus: old.invoiceStatus, paymentStatus: old.paymentStatus, beforePhotos: old.beforePhotos, afterPhotos: old.afterPhotos });
+      upsert(db.jobs, item);
+      activity(`${customerName(item.customerId)} job saved for ${dateNice(item.scheduledDate)}`, "calendar-check");
+      saveDb(); closeModal(); toast("Job saved"); render();
+    }
+
+    function openStatusPicker(kind, id) {
+      const list = kind === "job" ? STATUSES : ["Draft", "Sent", "Approved", "Converted", "Declined"];
+      const rec = kind === "job" ? get.job(id) : get.quote(id);
+      openModal("Change Status", `<form id="statusForm" data-kind="${kind}" data-id="${id}" class="form-grid"><div class="field full"><label>Status</label><select name="status">${list.map(s => `<option ${s === rec.status ? "selected" : ""}>${s}</option>`).join("")}</select></div><div class="toolbar full"><button class="btn" type="submit"><i data-lucide="save"></i>Update status</button></div></form>`, { small: true });
+    }
+    function saveStatus(form) {
+      const rec = form.dataset.kind === "job" ? get.job(form.dataset.id) : get.quote(form.dataset.id);
+      rec.status = form.status.value;
+      if (rec.status === "Paid" && rec.id.startsWith("job_")) rec.paymentStatus = "Paid";
+      activity(`${rec.id} changed to ${rec.status}`, "shuffle");
+      saveDb(); closeModal(); toast("Status updated"); render();
+    }
+
+    function openQuoteBuilder(id, leadId) {
+      const q = id ? get.quote(id) : { id: uid("q"), customerId:"", propertyId:"", leadId: leadId || "", status:"Draft", notes:"", subtotal:0, tax:0, total:0, createdAt: iso(today()), expiresAt: addDays(db.settings.quoteExpiryDays) };
+      let items = id ? quoteItems(id).map(x => ({ ...x })) : [];
+      if (leadId && !items.length) {
+        const lead = db.leads.find(l => l.id === leadId);
+        items = (lead?.requestedServices || []).map(name => buildLine(db.services.find(s => s.name === name) || db.services[0], null, q.id));
+        q.notes = lead?.notes || "";
+      }
+      const suggestions = suggestUpsells(items);
+      openModal(id ? "Edit Quote" : "Quote Builder", `<form id="quoteForm" data-id="${esc(q.id)}" data-existing="${id ? "1" : ""}">
+        <div class="quote-builder">
+          <aside class="card" style="box-shadow:none;">
+            <h3>Customer & Property</h3>
+            <div class="field" style="margin-top:10px;"><label>Customer</label><select name="customerId">${[["","Lead prospect"],...db.customers.map(c=>[c.id,c.name])].map(o=>`<option value="${o[0]}" ${o[0]===q.customerId?"selected":""}>${esc(o[1])}</option>`).join("")}</select></div>
+            <div class="field"><label>Property</label><select name="propertyId">${[["","Use lead address"],...db.properties.map(p=>[p.id,p.address])].map(o=>`<option value="${o[0]}" ${o[0]===q.propertyId?"selected":""}>${esc(o[1])}</option>`).join("")}</select></div>
+            <div class="field"><label>Status</label><select name="status">${["Draft","Sent","Approved","Converted","Declined"].map(s=>`<option ${s===q.status?"selected":""}>${s}</option>`).join("")}</select></div>
+            <div class="field"><label>Notes</label><textarea name="notes">${esc(q.notes)}</textarea></div>
+            <h3 style="margin-top:14px;">Add service</h3>
+            <div class="list" style="margin-top:8px;">${db.services.filter(s=>s.active !== false).map(s => `<button class="service-chip" type="button" data-add-service="${s.id}"><strong>${esc(s.name)}</strong><span class="subtle">Min ${money(s.minimumPrice)} | ${s.estimateMode}</span></button>`).join("")}</div>
+          </aside>
+          <section class="card" style="box-shadow:none;">
+            <div class="section-title"><h3>Line Items</h3><span class="pill info">Hybrid estimating</span></div>
+            <div id="quoteLines">${items.map(lineMarkup).join("") || emptyState("No services yet", "Tap a service preset to build the estimate.")}</div>
+            <div id="quoteSuggestions">${suggestionMarkup(suggestions)}</div>
+            <div id="quoteTotals"></div>
+            <div class="toolbar" style="margin-top:14px;">
+              <button class="ghost-btn" type="button" data-quote-save="Draft"><i data-lucide="save"></i>Save draft</button>
+              <button class="ghost-btn" type="button" data-quote-save="Sent"><i data-lucide="send"></i>Mark sent</button>
+              <button class="ghost-btn" type="button" data-quote-save="Approved"><i data-lucide="badge-check"></i>Approve</button>
+              <button class="btn" type="submit"><i data-lucide="save"></i>Save quote</button>
+            </div>
+          </section>
+        </div>
+      </form>`);
+      window.activeQuoteItems = items;
+      recalcQuoteBuilder();
+    }
+    function buildLine(service, prop, quoteId) {
+      prop = prop || db.properties[0] || { sqft: 2000, stories: 1 };
+      const sqft = service.estimateMode === "flat" ? 0 : Math.round((service.estimateMode === "property" ? prop.sqft * .55 : 650));
+      const story = service.estimateMode === "property" ? Math.max(1, prop.stories || 1) : 1;
+      const calc = Math.max(service.minimumPrice, service.baseRate + (sqft * service.perSqftRate * story));
+      return { id: uid("qi"), quoteId, serviceId: service.id, description: service.name, qty: 1, sqft, unitPrice: Math.round(calc), calculatedPrice: Math.round(calc), manualOverride: false, notes: service.optionalNotes };
+    }
+    function lineMarkup(item) {
+      return `<div class="line-item" data-line="${item.id}">
+        <div class="field"><label>Service</label><input data-line-field="description" value="${esc(item.description)}"></div>
+        <div class="field"><label>Qty</label><input data-line-field="qty" type="number" min="1" value="${item.qty}"></div>
+        <div class="field"><label>Sq ft</label><input data-line-field="sqft" type="number" min="0" value="${item.sqft}"></div>
+        <div class="field"><label>Price</label><input data-line-field="unitPrice" type="number" min="0" value="${item.unitPrice}"></div>
+        <div class="field"><label>Override</label><select data-line-field="manualOverride"><option value="false" ${!item.manualOverride?"selected":""}>Auto</option><option value="true" ${item.manualOverride?"selected":""}>Manual</option></select></div>
+        <button type="button" class="danger-btn remove-line" data-remove-line="${item.id}"><i data-lucide="trash-2"></i></button>
+      </div>`;
+    }
+    function suggestionMarkup(suggestions) {
+      return suggestions.length ? `<div class="card" style="box-shadow:none;background:#f6faf8;margin-top:10px;"><div class="section-title"><h3>Smart add-ons</h3><span class="pill good">One tap</span></div><div class="toolbar" style="justify-content:flex-start;">${suggestions.map(s => `<button class="ghost-btn" type="button" data-add-suggestion="${esc(s.id)}"><i data-lucide="sparkles"></i>${esc(s.name)}</button>`).join("")}</div></div>` : "";
+    }
+    function suggestUpsells(items) {
+      const names = new Set(items.map(i => i.description));
+      const suggestions = new Map();
+      items.forEach(i => (get.service(i.serviceId)?.defaultUpsells || []).forEach(name => {
+        if (!names.has(name)) {
+          const svc = db.services.find(s => s.name === name);
+          if (svc) suggestions.set(svc.id, svc);
+        }
+      }));
+      return [...suggestions.values()];
+    }
+    function syncQuoteLinesFromDom() {
+      document.querySelectorAll("[data-line]").forEach(row => {
+        const item = window.activeQuoteItems.find(i => i.id === row.dataset.line);
+        if (!item) return;
+        row.querySelectorAll("[data-line-field]").forEach(input => {
+          const k = input.dataset.lineField;
+          item[k] = ["qty","sqft","unitPrice"].includes(k) ? Number(input.value) : k === "manualOverride" ? input.value === "true" : input.value;
+        });
+      });
+    }
+    function recalcQuoteBuilder() {
+      syncQuoteLinesFromDom();
+      const propId = document.querySelector("#quoteForm select[name='propertyId']")?.value;
+      const prop = get.property(propId) || db.properties[0];
+      window.activeQuoteItems.forEach(item => {
+        const svc = get.service(item.serviceId);
+        if (!svc || item.manualOverride) return;
+        const story = svc.estimateMode === "property" ? Math.max(1, prop?.stories || 1) : 1;
+        const condition = svc.conditionMultiplier || 1;
+        const access = svc.accessMultiplier || 1;
+        item.calculatedPrice = Math.round(Math.max(svc.minimumPrice, svc.baseRate + (Number(item.sqft || 0) * svc.perSqftRate * story * condition * access)));
+        item.unitPrice = item.calculatedPrice;
+      });
+      const subtotal = window.activeQuoteItems.reduce((s, i) => s + Number(i.unitPrice || 0) * Number(i.qty || 1), 0);
+      const tax = subtotal * Number(db.settings.taxRate || 0);
+      const total = subtotal + tax;
+      const box = document.getElementById("quoteTotals");
+      if (box) box.innerHTML = `<div class="total-box"><div class="total-line"><span>Subtotal</span><strong>${money(subtotal)}</strong></div><div class="total-line"><span>Tax (${(db.settings.taxRate*100).toFixed(2)}%)</span><strong>${money(tax)}</strong></div><div class="total-line big"><span>Total</span><strong>${money(total)}</strong></div></div>`;
+      const suggestBox = document.getElementById("quoteSuggestions");
+      if (suggestBox) suggestBox.innerHTML = suggestionMarkup(suggestUpsells(window.activeQuoteItems));
+      paintIcons();
+    }
+    function saveQuote(form, forcedStatus) {
+      syncQuoteLinesFromDom();
+      const id = form.dataset.id;
+      const subtotal = window.activeQuoteItems.reduce((s, i) => s + Number(i.unitPrice || 0) * Number(i.qty || 1), 0);
+      const tax = Math.round(subtotal * Number(db.settings.taxRate || 0));
+      const existing = get.quote(id);
+      const q = { id, customerId: form.customerId.value, propertyId: form.propertyId.value, leadId: existing?.leadId || "", status: forcedStatus || form.status.value, createdAt: existing?.createdAt || iso(today()), expiresAt: existing?.expiresAt || addDays(db.settings.quoteExpiryDays), subtotal: Math.round(subtotal), tax, total: Math.round(subtotal + tax), notes: form.notes.value };
+      upsert(db.quotes, q);
+      db.quoteItems = db.quoteItems.filter(i => i.quoteId !== id).concat(window.activeQuoteItems.map(i => ({ ...i, quoteId: id })));
+      if (q.leadId) {
+        const lead = db.leads.find(l => l.id === q.leadId);
+        if (lead) lead.status = "Quoted";
+      }
+      activity(`${customerName(q.customerId)} quote saved as ${q.status}`, "calculator");
+      saveDb(); closeModal(); toast("Quote saved"); ui.view = "quotes"; render();
+    }
+    function convertQuote(id) {
+      const q = get.quote(id);
+      if (!q) return;
+      q.status = "Converted";
+      const job = { id: uid("job"), customerId: q.customerId, propertyId: q.propertyId, quoteId: q.id, scheduledDate: addDays(3), scheduledTime:"09:00", status:"Scheduled", notes:`Converted from quote ${q.id}. ${q.notes}`, invoiceStatus:"Not invoiced", paymentStatus:"Unpaid", assignedTo:"Owner", beforePhotos:[], afterPhotos:[] };
+      db.jobs.push(job);
+      activity(`${customerName(q.customerId)} quote converted to scheduled job`, "calendar-plus");
+      saveDb(); toast("Quote converted to scheduled job"); ui.view = "jobs"; render();
+    }
+
+    function openInvoiceForm() {
+      const unbilled = db.jobs.filter(j => !db.invoices.some(i => i.jobId === j.id));
+      openModal("Create Invoice", `<form id="invoiceForm" class="form-grid">
+        ${select("jobId","Job",unbilled.map(j=>[j.id, `${customerName(j.customerId)} - ${dateNice(j.scheduledDate)}`]),unbilled[0]?.id || "")}
+        ${textarea("notes","Notes",db.settings.invoiceTerms,"full")}
+        <div class="toolbar full"><button class="btn" type="submit"><i data-lucide="receipt"></i>Generate invoice</button></div>
+      </form>`, { small: true });
+    }
+    function saveInvoice(form) {
+      const job = get.job(form.jobId.value);
+      if (!job) return;
+      const quote = get.quote(job.quoteId);
+      const subtotal = quote?.subtotal || 350;
+      const tax = Math.round(subtotal * db.settings.taxRate);
+      const inv = { id: uid("inv"), jobId: job.id, customerId: job.customerId, issueDate: iso(today()), dueDate: iso(today()), status:"Unpaid", subtotal, tax, total: subtotal + tax, paidAt:"", notes: form.notes.value };
+      db.invoices.push(inv);
+      job.invoiceStatus = "Invoiced";
+      if (!["Paid","Follow-Up Needed"].includes(job.status)) job.status = "Invoiced";
+      activity(`${customerName(job.customerId)} invoice generated`, "receipt");
+      saveDb(); closeModal(); toast("Invoice created"); render();
+    }
+    function markPaid(id) {
+      const inv = get.invoice(id);
+      inv.status = "Paid"; inv.paidAt = iso(today());
+      db.payments.push({ id: uid("pay"), invoiceId: id, amount: inv.total, date: inv.paidAt, method:"External payment", notes:"Marked received in demo." });
+      const job = get.job(inv.jobId);
+      if (job) { job.paymentStatus = "Paid"; job.status = "Paid"; }
+      activity(`${customerName(inv.customerId)} payment marked received`, "badge-dollar-sign");
+      saveDb(); toast("Payment marked received"); render();
+    }
+    function printInvoice(id, quoteMode) {
+      const isQuote = quoteMode;
+      const q = isQuote ? get.quote(id) : null;
+      const inv = isQuote ? null : get.invoice(id);
+      const customerId = q?.customerId || inv?.customerId;
+      const propId = q?.propertyId || get.job(inv?.jobId)?.propertyId;
+      const items = isQuote ? quoteItems(q.id).map(i => ({ description: i.description, amount: i.unitPrice })) : invoiceItems(inv);
+      const subtotal = q?.subtotal || inv.subtotal, tax = q?.tax || inv.tax, total = q?.total || inv.total;
+      document.getElementById("printShell").innerHTML = `<div class="print-card">
+        <div class="print-head"><div><h1>${isQuote ? "Estimate" : "Invoice"}</h1><p>${esc(db.settings.businessInfo.name)}</p><p>${esc(db.settings.businessInfo.phone)} | ${esc(db.settings.businessInfo.email)}</p></div><div><strong>${esc(id)}</strong><p>${new Date().toLocaleDateString()}</p><p>Status: ${esc(q?.status || inv.status)}</p></div></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;"><div><strong>Customer</strong><p>${esc(customerName(customerId))}</p><p>${esc(propertyAddress(propId))}</p></div><div><strong>Notes</strong><p>${esc(q?.notes || inv.notes || db.settings.invoiceTerms)}</p></div></div>
+        <table class="print-table"><thead><tr><th>Description</th><th>Amount</th></tr></thead><tbody>${items.map(i => `<tr><td>${esc(i.description)}</td><td>${money(i.amount)}</td></tr>`).join("")}</tbody></table>
+        <div class="print-total"><p>Subtotal: <strong>${money(subtotal)}</strong></p><p>Tax: <strong>${money(tax)}</strong></p><h2>Total: ${money(total)}</h2></div>
+      </div>`;
+      window.print();
+    }
+
+    function openServiceForm(id) {
+      const s = id ? get.service(id) : { name:"", estimateMode:"measurement", minimumPrice:100, baseRate:50, perSqftRate:.2, storyMultiplier:1.1, conditionMultiplier:1.1, accessMultiplier:1.05, defaultUpsells:[], optionalNotes:"", active:true };
+      openModal(id ? "Edit Service Rule" : "Add Service Rule", `<form id="serviceForm" data-id="${esc(id || "")}" class="form-grid">
+        ${input("name","Service name",s.name)}${select("estimateMode","Estimate mode",["flat","measurement","property"],s.estimateMode)}
+        ${input("minimumPrice","Minimum price",s.minimumPrice)}${input("baseRate","Base rate",s.baseRate)}${input("perSqftRate","Per-square-foot rate",s.perSqftRate)}${input("storyMultiplier","Story multiplier",s.storyMultiplier)}${input("conditionMultiplier","Condition multiplier",s.conditionMultiplier)}${input("accessMultiplier","Access/difficulty multiplier",s.accessMultiplier)}
+        ${input("defaultUpsells","Default upsells",s.defaultUpsells.join(", "),"full")}${textarea("optionalNotes","Optional notes",s.optionalNotes,"full")}
+        <div class="toolbar full"><button class="btn" type="submit"><i data-lucide="save"></i>Save service</button></div>
+      </form>`);
+    }
+    function saveService(form) {
+      const id = form.dataset.id || uid("svc");
+      const s = { id, name: form.name.value, estimateMode: form.estimateMode.value, minimumPrice:Number(form.minimumPrice.value), baseRate:Number(form.baseRate.value), perSqftRate:Number(form.perSqftRate.value), storyMultiplier:Number(form.storyMultiplier.value), conditionMultiplier:Number(form.conditionMultiplier.value), accessMultiplier:Number(form.accessMultiplier.value), defaultUpsells: form.defaultUpsells.value.split(",").map(x=>x.trim()).filter(Boolean), optionalNotes: form.optionalNotes.value, active:true };
+      upsert(db.services, s); db.pricingRules = db.services;
+      saveDb(); closeModal(); toast("Pricing rule saved"); render();
+    }
+    function saveSettings() {
+      const form = document.getElementById("settingsForm");
+      if (!form) return;
+      db.settings.taxRate = Number(form.taxRate.value);
+      db.settings.quoteExpiryDays = Number(form.quoteExpiryDays.value);
+      db.settings.followUpDays = Number(form.followUpDays.value);
+      db.settings.rebookMonths = Number(form.rebookMonths.value);
+      db.settings.invoiceTerms = form.invoiceTerms.value;
+      db.settings.weather.latitude = Number(form.latitude.value);
+      db.settings.weather.longitude = Number(form.longitude.value);
+      saveDb(); toast("Settings saved"); fetchWeather(true);
+    }
+
+    function input(name, label, value, cls = "", type = "text") {
+      return `<div class="field ${cls}"><label>${esc(label)}</label><input name="${name}" type="${type}" value="${esc(value ?? "")}"></div>`;
+    }
+    function textarea(name, label, value, cls = "") {
+      return `<div class="field ${cls}"><label>${esc(label)}</label><textarea name="${name}">${esc(value ?? "")}</textarea></div>`;
+    }
+    function select(name, label, options, value) {
+      return `<div class="field"><label>${esc(label)}</label><select name="${name}">${options.map(o => {
+        const val = Array.isArray(o) ? o[0] : o, text = Array.isArray(o) ? o[1] : o;
+        return `<option value="${esc(val)}" ${val === value ? "selected" : ""}>${esc(text)}</option>`;
+      }).join("")}</select></div>`;
+    }
+    function upsert(arr, item) {
+      const idx = arr.findIndex(x => x.id === item.id);
+      if (idx >= 0) arr[idx] = item; else arr.push(item);
+    }
+    function deleteRecord(collection, id, label) {
+      if (!confirm(`Delete this ${label}?`)) return;
+      db[collection] = db[collection].filter(x => x.id !== id);
+      saveDb(); toast(`${label} deleted`); render();
+    }
+    function recordsForStatus(status) {
+      return [
+        ...db.leads.filter(x => x.status === status),
+        ...db.quotes.filter(x => x.status === status || (status === "Quoted" && ["Draft", "Sent"].includes(x.status))),
+        ...db.jobs.filter(x => x.status === status),
+        ...db.invoices.filter(x => x.status === status)
+      ];
+    }
+
+    async function fetchWeather(force) {
+      const cfg = db.settings.weather;
+      if (!force && ui.weatherLoadedAt && Date.now() - ui.weatherLoadedAt < 1000 * 60 * 30) return;
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${encodeURIComponent(cfg.latitude)}&longitude=${encodeURIComponent(cfg.longitude)}&daily=weather_code,temperature_2m_max,precipitation_probability_max,wind_speed_10m_max&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto&forecast_days=16`;
+      try {
+        const res = await fetch(url);
+        const data = await res.json();
+        ui.weather = {};
+        (data.daily?.time || []).forEach((date, idx) => {
+          const precip = data.daily.precipitation_probability_max[idx] ?? 0;
+          const wind = data.daily.wind_speed_10m_max[idx] ?? 0;
+          const temp = Math.round(data.daily.temperature_2m_max[idx] ?? 0);
+          const code = data.daily.weather_code[idx];
+          const risk = precip >= 60 || wind >= 22 ? "risk" : precip >= 35 || temp < 45 || wind >= 16 ? "caution" : "good";
+          ui.weather[date] = { temp, precip, wind: Math.round(wind), condition: weatherCode(code), label: risk === "good" ? "Good" : risk === "caution" ? "Caution" : "Risk", badgeClass: risk === "good" ? "good" : risk === "caution" ? "warn" : "risk" };
+        });
+        ui.weatherLoadedAt = Date.now();
+        if (document.getElementById("view")) render();
+      } catch (e) {
+        console.warn("Weather unavailable", e);
+      }
+    }
+    function weatherFor(date) { return ui.weather[date]; }
+    function weatherCode(code) {
+      if ([0,1].includes(code)) return "Clear";
+      if ([2,3].includes(code)) return "Clouds";
+      if ([45,48].includes(code)) return "Fog";
+      if ([51,53,55,61,63,65,80,81,82].includes(code)) return "Rain";
+      if ([95,96,99].includes(code)) return "Storms";
+      return "Mixed";
+    }
+
+    function bindView() {
+      document.querySelectorAll("[data-view]").forEach(btn => btn.onclick = () => { ui.view = btn.dataset.view; document.body.classList.remove("mobile-nav-open"); render(); });
+      document.querySelectorAll("[data-nav-to]").forEach(btn => btn.onclick = () => { ui.view = btn.dataset.navTo; render(); });
+      document.querySelectorAll("[data-action]").forEach(btn => btn.onclick = () => {
+        const a = btn.dataset.action;
+        if (a === "collapse-nav") document.body.classList.toggle("nav-mini");
+        if (a === "mobile-nav") document.body.classList.toggle("mobile-nav-open");
+        if (a === "reset-demo") resetDemo();
+        if (a === "quick-lead") openLeadForm();
+        if (a === "quote-builder") openQuoteBuilder();
+        if (a === "new-job") openJobForm("", btn.dataset.date);
+        if (a === "new-customer") openCustomerForm();
+        if (a === "new-invoice") openInvoiceForm();
+        if (a === "new-service") openServiceForm();
+        if (a === "refresh-weather") fetchWeather(true).then(() => toast("Forecast refreshed"));
+        if (a === "open-pipeline") openKpi("openQuotes");
+        if (a === "quick-task") { db.tasks.push({ id: uid("task"), type:"Manual follow-up", relatedType:"task", relatedId:"", dueDate:addDays(1), done:false, title:"New follow-up reminder" }); saveDb(); render(); toast("Reminder added"); }
+        if (a === "new-photo") { db.photos.unshift({ id: uid("photo"), jobId: db.jobs[0]?.id || "", customerId: db.customers[0]?.id || "", type:"Before/After", caption:"Demo transformation added", dataUrl: PHOTO_BACKGROUNDS[db.photos.length % 4], createdAt: iso(today()) }); saveDb(); render(); toast("Demo photo added"); }
+      });
+      document.querySelectorAll("[data-kpi]").forEach(el => el.onclick = () => openKpi(el.dataset.kpi));
+      document.querySelectorAll("[data-report]").forEach(el => el.onclick = () => openKpi(el.dataset.report === "outstanding" ? "outstanding" : el.dataset.report === "conversion" ? "winRate" : "monthlyRevenue"));
+      document.querySelectorAll("[data-day]").forEach(el => el.onclick = () => openDay(el.dataset.day));
+      document.querySelectorAll("[data-month-step]").forEach(btn => btn.onclick = () => { ui.selectedMonth.setMonth(ui.selectedMonth.getMonth() + Number(btn.dataset.monthStep)); render(); });
+      document.querySelectorAll("[data-close-modal]").forEach(btn => btn.onclick = closeModal);
+      document.getElementById("modalRoot").onclick = e => { if (e.target.id === "modalRoot") closeModal(); };
+      document.querySelectorAll("[data-filter-scope]").forEach(scope => {
+        scope.querySelectorAll("[data-filter]").forEach(input => input.oninput = () => {
+          ui.filters[scope.dataset.filterScope] = ui.filters[scope.dataset.filterScope] || {};
+          ui.filters[scope.dataset.filterScope][input.dataset.filter] = input.value;
+          render();
+        });
+      });
+      document.querySelectorAll("[data-edit-lead]").forEach(b => b.onclick = () => openLeadForm(b.dataset.editLead));
+      document.querySelectorAll("[data-delete-lead]").forEach(b => b.onclick = () => deleteRecord("leads", b.dataset.deleteLead, "lead"));
+      document.querySelectorAll("[data-lead-quote]").forEach(b => b.onclick = () => openQuoteBuilder("", b.dataset.leadQuote));
+      document.querySelectorAll("[data-edit-customer]").forEach(b => b.onclick = () => openCustomerForm(b.dataset.editCustomer));
+      document.querySelectorAll("[data-view-customer]").forEach(b => b.onclick = () => openCustomerProfile(b.dataset.viewCustomer));
+      document.querySelectorAll("[data-delete-customer]").forEach(b => b.onclick = () => deleteRecord("customers", b.dataset.deleteCustomer, "customer"));
+      document.querySelectorAll("[data-edit-job]").forEach(b => b.onclick = () => openJobForm(b.dataset.editJob));
+      document.querySelectorAll("[data-status-job]").forEach(b => b.onclick = () => openStatusPicker("job", b.dataset.statusJob));
+      document.querySelectorAll("[data-edit-quote]").forEach(b => b.onclick = () => openQuoteBuilder(b.dataset.editQuote));
+      document.querySelectorAll("[data-quote-status]").forEach(b => b.onclick = () => openStatusPicker("quote", b.dataset.quoteStatus));
+      document.querySelectorAll("[data-convert-quote]").forEach(b => b.onclick = () => convertQuote(b.dataset.convertQuote));
+      document.querySelectorAll("[data-print-quote]").forEach(b => b.onclick = () => printInvoice(b.dataset.printQuote, true));
+      document.querySelectorAll("[data-print-invoice]").forEach(b => b.onclick = () => printInvoice(b.dataset.printInvoice));
+      document.querySelectorAll("[data-pay-invoice]").forEach(b => b.onclick = () => markPaid(b.dataset.payInvoice));
+      document.querySelectorAll("[data-edit-service]").forEach(b => b.onclick = () => openServiceForm(b.dataset.editService));
+      document.querySelectorAll("[data-save-settings]").forEach(b => b.onclick = saveSettings);
+      document.querySelectorAll("[data-complete-task]").forEach(b => b.onclick = () => { const t = db.tasks.find(x => x.id === b.dataset.completeTask); if (t) t.done = true; saveDb(); render(); toast("Reminder completed"); });
+      document.querySelectorAll("[data-job-status-inline]").forEach(s => s.onchange = () => { const j = get.job(s.dataset.jobStatusInline); j.status = s.value; saveDb(); toast("Job status updated"); openDay(j.scheduledDate); });
+      document.querySelectorAll("[data-add-service]").forEach(b => b.onclick = () => { syncQuoteLinesFromDom(); const svc = get.service(b.dataset.addService); const prop = get.property(document.querySelector("#quoteForm select[name='propertyId']")?.value); window.activeQuoteItems.push(buildLine(svc, prop, document.getElementById("quoteForm").dataset.id)); document.getElementById("quoteLines").innerHTML = window.activeQuoteItems.map(lineMarkup).join(""); bindView(); recalcQuoteBuilder(); });
+      document.querySelectorAll("[data-add-suggestion]").forEach(b => b.onclick = () => { syncQuoteLinesFromDom(); const svc = get.service(b.dataset.addSuggestion); window.activeQuoteItems.push(buildLine(svc, get.property(document.querySelector("#quoteForm select[name='propertyId']")?.value), document.getElementById("quoteForm").dataset.id)); document.getElementById("quoteLines").innerHTML = window.activeQuoteItems.map(lineMarkup).join(""); bindView(); recalcQuoteBuilder(); });
+      document.querySelectorAll("[data-remove-line]").forEach(b => b.onclick = () => { window.activeQuoteItems = window.activeQuoteItems.filter(i => i.id !== b.dataset.removeLine); document.getElementById("quoteLines").innerHTML = window.activeQuoteItems.map(lineMarkup).join("") || emptyState("No services yet", "Tap a service preset to build the estimate."); bindView(); recalcQuoteBuilder(); });
+      document.querySelectorAll("[data-line-field], #quoteForm select[name='propertyId']").forEach(input => input.oninput = recalcQuoteBuilder);
+      document.querySelectorAll("[data-quote-save]").forEach(b => b.onclick = () => saveQuote(document.getElementById("quoteForm"), b.dataset.quoteSave));
+      const forms = {
+        leadForm: saveLead,
+        customerForm: saveCustomer,
+        jobForm: saveJob,
+        statusForm: saveStatus,
+        quoteForm: form => saveQuote(form),
+        invoiceForm: saveInvoice,
+        serviceForm: saveService
+      };
+      Object.entries(forms).forEach(([id, handler]) => {
+        const form = document.getElementById(id);
+        if (form) form.onsubmit = e => { e.preventDefault(); handler(form); };
+      });
+    }
+
+    render();
+    fetchWeather();
+  </script>
+</body>
+</html>
