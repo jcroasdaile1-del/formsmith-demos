@@ -6,6 +6,7 @@
   <title>PowerWash Pro by Formsmith</title>
   <meta name="description" content="Single-file mobile-first pressure washing business dashboard prototype.">
   <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
     :root {
       --bg: #edf2ee;
@@ -50,6 +51,7 @@
     html { scroll-behavior: smooth; }
     body {
       margin: 0;
+      overflow-x: hidden;
       background:
         radial-gradient(circle at top left, rgba(18, 123, 121, .12), transparent 30rem),
         linear-gradient(180deg, #f8faf6 0%, var(--bg) 100%);
@@ -60,7 +62,17 @@
 
     button, input, select, textarea { font: inherit; }
     button { cursor: pointer; }
+    input, select, textarea, .field, .filters, .card { min-width: 0; }
     .app { min-height: 100vh; }
+    .nav-scrim {
+      position: fixed;
+      inset: 0;
+      z-index: 25;
+      background: rgba(10, 20, 18, .38);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .18s ease;
+    }
     .sidebar {
       position: fixed;
       inset: 0 auto 0 0;
@@ -692,6 +704,11 @@
     }
 
     @media (max-width: 760px) {
+      body.mobile-nav-open { overflow: hidden; }
+      body.mobile-nav-open .nav-scrim {
+        opacity: 1;
+        pointer-events: auto;
+      }
       .sidebar {
         width: min(315px, calc(100vw - 34px));
         transform: translateX(-105%);
@@ -704,24 +721,44 @@
       body.nav-mini .side-footer,
       body.nav-mini .collapse-btn span { display: block; }
       body.nav-mini .nav-item { grid-template-columns: 36px 1fr; padding: 0 10px; justify-content: stretch; }
-      .main, body.nav-mini .main { margin-left: 0; padding: 14px 12px 78px; }
+      .main, body.nav-mini .main { margin-left: 0; padding: 14px 12px 78px; max-width: 100vw; overflow-x: hidden; }
       .topbar { margin: -14px -12px 14px; padding: 12px; grid-template-columns: auto 1fr auto; }
       .mobile-menu { display: inline-flex; }
       .topbar-title h1 { font-size: 21px; }
       .screen-head { grid-template-columns: 1fr; align-items: start; }
       .toolbar { justify-content: flex-start; }
-      .grid.two, .grid.three, .grid.four, .filters, .form-grid { grid-template-columns: 1fr; }
+      .grid.two, .grid.three, .grid.four, .filters, .form-grid { grid-template-columns: minmax(0, 1fr); }
+      .filters { width: 100%; overflow: hidden; }
+      .filters input, .filters select { width: 100%; max-width: 100%; }
       .row-card { grid-template-columns: 1fr; }
       .row-actions { justify-content: flex-start; }
       .kpi-card { min-height: 118px; }
       .photo-grid { grid-template-columns: 1fr; }
-      .calendar-grid, .calendar-head { gap: 4px; }
-      .day { min-height: 62px; padding: 5px; }
+      .calendar { width: 100%; overflow: hidden; }
+      .calendar-grid, .calendar-head { gap: 3px; grid-template-columns: repeat(7, minmax(0, 1fr)); }
+      .calendar-head div { font-size: 10px; overflow: hidden; }
+      .day { min-height: 58px; padding: 4px 3px; overflow: hidden; gap: 3px; align-content: start; }
+      .day-num { font-size: 11px; line-height: 1; }
+      .day .weather-chip {
+        max-width: 100%;
+        min-height: 20px;
+        padding: 1px 3px;
+        justify-content: center;
+        gap: 0;
+        overflow: hidden;
+      }
+      .day .weather-chip .wx-icon { font-size: 12px; }
+      .day .weather-chip .wx-temp,
+      .day .weather-chip .subtle { display: none; }
       .day .pill { display: none; }
+      .dot-row { gap: 2px; min-width: 0; }
+      .dot { width: 6px; height: 6px; }
       .kanban { grid-template-columns: 1fr; overflow: visible; }
       .line-item { grid-template-columns: 1fr 1fr; }
       .line-item .remove-line { grid-column: 1 / -1; }
       .service-options { grid-template-columns: 1fr; }
+      .mini-chart { max-width: 100%; overflow: hidden; gap: 5px; }
+      .bar span { font-size: 10px; }
       .modal-backdrop { align-items: end; padding: 0; }
       .modal {
         width: 100%;
@@ -735,7 +772,7 @@
         border-radius: var(--radius);
         margin-bottom: 10px;
         padding: 8px;
-        background: #fff;
+        background: var(--panel);
       }
       .table-wrap td {
         border-bottom: 0;
@@ -774,6 +811,7 @@
 </head>
 <body>
   <div class="app">
+    <button class="nav-scrim" id="navScrim" type="button" data-action="close-mobile-nav" aria-label="Close navigation"></button>
     <aside class="sidebar" id="sidebar"></aside>
     <main class="main">
       <header class="topbar">
@@ -1368,7 +1406,7 @@
             <td data-label="Issue">${dateNice(i.issueDate)}</td>
             <td data-label="Status"><span class="pill ${statusClass(i.status)}">${esc(i.status)}</span></td>
             <td data-label="Total"><strong>${money(i.total)}</strong></td>
-            <td data-label="Actions"><div class="row-actions"><button class="ghost-btn" data-print-invoice="${i.id}"><i data-lucide="printer"></i>Print</button>${i.status !== "Paid" ? `<button class="btn" data-pay-invoice="${i.id}"><i data-lucide="check"></i>Paid</button>` : ""}</div></td>
+            <td data-label="Actions"><div class="row-actions"><button class="ghost-btn" data-print-invoice="${i.id}"><i data-lucide="printer"></i>Print</button><button class="ghost-btn" data-pdf-invoice="${i.id}"><i data-lucide="file-down"></i>PDF</button><button class="ghost-btn" data-email-invoice="${i.id}"><i data-lucide="mail"></i>Email</button>${i.status !== "Paid" ? `<button class="btn" data-pay-invoice="${i.id}"><i data-lucide="check"></i>Paid</button>` : ""}</div></td>
           </tr>`).join("")}</tbody>
         </table></div>`;
     }
@@ -1907,6 +1945,129 @@
       </div>`;
       window.print();
     }
+    function invoicePayload(id) {
+      const inv = get.invoice(id);
+      if (!inv) return null;
+      const job = get.job(inv.jobId);
+      const customer = get.customer(inv.customerId);
+      const property = get.property(job?.propertyId);
+      const items = invoiceItems(inv);
+      return {
+        inv, job, customer, property, items,
+        business: db.settings.businessInfo,
+        notes: inv.notes || db.settings.invoiceTerms
+      };
+    }
+    function downloadInvoicePdf(id) {
+      const data = invoicePayload(id);
+      if (!data) return;
+      const Pdf = window.jspdf?.jsPDF;
+      if (!Pdf) {
+        toast("PDF library unavailable. Opening print view instead.");
+        printInvoice(id);
+        return;
+      }
+      const doc = new Pdf({ unit: "pt", format: "letter" });
+      const pageW = doc.internal.pageSize.getWidth();
+      const margin = 44;
+      const brand = [18, 123, 121];
+      const ink = [24, 33, 31];
+      const muted = [94, 110, 104];
+      doc.setFillColor(245, 248, 246);
+      doc.rect(0, 0, pageW, 792, "F");
+      doc.setFillColor(255, 255, 255);
+      doc.roundedRect(28, 28, pageW - 56, 736, 8, 8, "F");
+      doc.setDrawColor(207, 217, 210);
+      doc.roundedRect(28, 28, pageW - 56, 736, 8, 8, "S");
+
+      doc.setTextColor(...brand);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(24);
+      doc.text("INVOICE", margin, 72);
+      doc.setFontSize(11);
+      doc.setTextColor(...muted);
+      doc.text(data.business.name, margin, 94);
+      doc.text(`${data.business.phone} | ${data.business.email}`, margin, 111);
+      doc.text(data.business.city || "Local service area", margin, 128);
+
+      doc.setTextColor(...ink);
+      doc.setFontSize(12);
+      doc.text(`Invoice: ${data.inv.id}`, pageW - margin, 72, { align: "right" });
+      doc.text(`Issued: ${dateNice(data.inv.issueDate)}`, pageW - margin, 90, { align: "right" });
+      doc.text(`Due: ${dateNice(data.inv.dueDate)}`, pageW - margin, 108, { align: "right" });
+      doc.setTextColor(...(data.inv.status === "Paid" ? [33, 130, 93] : [189, 59, 49]));
+      doc.text(`Status: ${data.inv.status}`, pageW - margin, 126, { align: "right" });
+
+      doc.setDrawColor(...brand);
+      doc.setLineWidth(2);
+      doc.line(margin, 154, pageW - margin, 154);
+
+      doc.setTextColor(...ink);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(12);
+      doc.text("Bill To", margin, 184);
+      doc.text("Service Location", pageW / 2, 184);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(...muted);
+      doc.text(data.customer?.name || "Customer", margin, 204);
+      doc.text(data.customer?.phone || "", margin, 221);
+      doc.text(data.customer?.email || "", margin, 238);
+      doc.text(data.property?.address || "Address on file", pageW / 2, 204);
+      doc.text(data.property?.homeType || "Residential property", pageW / 2, 221);
+
+      let y = 292;
+      doc.setFillColor(18, 123, 121);
+      doc.roundedRect(margin, y - 22, pageW - margin * 2, 30, 4, 4, "F");
+      doc.setTextColor(255, 255, 255);
+      doc.setFont("helvetica", "bold");
+      doc.text("Description", margin + 12, y - 2);
+      doc.text("Amount", pageW - margin - 12, y - 2, { align: "right" });
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(...ink);
+      y += 24;
+      data.items.forEach(item => {
+        const lines = doc.splitTextToSize(item.description, pageW - margin * 2 - 120);
+        doc.text(lines, margin + 12, y);
+        doc.text(money(item.amount), pageW - margin - 12, y, { align: "right" });
+        y += Math.max(26, lines.length * 14 + 8);
+        doc.setDrawColor(226, 232, 228);
+        doc.line(margin, y - 12, pageW - margin, y - 12);
+      });
+
+      y = Math.max(y + 12, 430);
+      const totalX = pageW - margin - 210;
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(...muted);
+      doc.text("Subtotal", totalX, y);
+      doc.text(money(data.inv.subtotal), pageW - margin - 12, y, { align: "right" });
+      y += 22;
+      doc.text("Tax", totalX, y);
+      doc.text(money(data.inv.tax), pageW - margin - 12, y, { align: "right" });
+      y += 28;
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(18);
+      doc.setTextColor(...ink);
+      doc.text("Total", totalX, y);
+      doc.text(money(data.inv.total), pageW - margin - 12, y, { align: "right" });
+
+      y += 52;
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "bold");
+      doc.text("Notes", margin, y);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(...muted);
+      doc.text(doc.splitTextToSize(data.notes, pageW - margin * 2), margin, y + 20);
+      doc.save(`Invoice-${id}.pdf`);
+      toast("Invoice PDF generated");
+    }
+    function emailInvoice(id) {
+      const data = invoicePayload(id);
+      if (!data) return;
+      const subject = encodeURIComponent(`Invoice ${data.inv.id} from ${data.business.name}`);
+      const body = encodeURIComponent(`Hi ${data.customer?.name || ""},\n\nYour invoice ${data.inv.id} is ready.\n\nTotal: ${money(data.inv.total)}\nStatus: ${data.inv.status}\n\nPlease see the attached PDF generated from PowerWash Pro.\n\nThank you.`);
+      window.location.href = `mailto:${encodeURIComponent(data.customer?.email || "")}?subject=${subject}&body=${body}`;
+      toast("Email draft opened");
+    }
 
     function openServiceForm(id) {
       const s = id ? get.service(id) : { name:"", estimateMode:"measurement", minimumPrice:100, baseRate:50, perSqftRate:.2, storyMultiplier:1.1, conditionMultiplier:1.1, accessMultiplier:1.05, defaultUpsells:[], optionalNotes:"", active:true };
@@ -2046,8 +2207,12 @@
       document.querySelectorAll("[data-nav-to]").forEach(btn => btn.onclick = () => setView(btn.dataset.navTo));
       document.querySelectorAll("[data-action]").forEach(btn => btn.onclick = () => {
         const a = btn.dataset.action;
-        if (a === "collapse-nav") document.body.classList.toggle("nav-mini");
+        if (a === "collapse-nav") {
+          if (window.matchMedia("(max-width: 760px)").matches) document.body.classList.remove("mobile-nav-open");
+          else document.body.classList.toggle("nav-mini");
+        }
         if (a === "mobile-nav") document.body.classList.toggle("mobile-nav-open");
+        if (a === "close-mobile-nav") document.body.classList.remove("mobile-nav-open");
         if (a === "toggle-theme") toggleTheme();
         if (a === "reset-demo") resetDemo();
         if (a === "quick-lead") openLeadForm();
@@ -2107,6 +2272,8 @@
       document.querySelectorAll("[data-convert-quote]").forEach(b => b.onclick = () => convertQuote(b.dataset.convertQuote));
       document.querySelectorAll("[data-print-quote]").forEach(b => b.onclick = () => printInvoice(b.dataset.printQuote, true));
       document.querySelectorAll("[data-print-invoice]").forEach(b => b.onclick = () => printInvoice(b.dataset.printInvoice));
+      document.querySelectorAll("[data-pdf-invoice]").forEach(b => b.onclick = () => downloadInvoicePdf(b.dataset.pdfInvoice));
+      document.querySelectorAll("[data-email-invoice]").forEach(b => b.onclick = () => emailInvoice(b.dataset.emailInvoice));
       document.querySelectorAll("[data-pay-invoice]").forEach(b => b.onclick = () => markPaid(b.dataset.payInvoice));
       document.querySelectorAll("[data-edit-service]").forEach(b => b.onclick = () => openServiceForm(b.dataset.editService));
       document.querySelectorAll("[data-save-settings]").forEach(b => b.onclick = saveSettings);
