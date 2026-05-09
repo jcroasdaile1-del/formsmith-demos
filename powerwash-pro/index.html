@@ -823,9 +823,18 @@
     function iso(d) { return new Date(d).toISOString().slice(0, 10); }
     function money(n) { return (Number(n) || 0).toLocaleString(undefined, { style: "currency", currency: "USD", maximumFractionDigits: 0 }); }
     function pct(n) { return Math.round((Number(n) || 0) * 100) + "%"; }
-    function dateNice(v) { return new Date(v + "T12:00:00").toLocaleDateString(undefined, { month: "short", day: "numeric" }); }
+    function dateNice(v) { return parseLocalDate(v).toLocaleDateString(undefined, { month: "short", day: "numeric" }); }
+    function parseLocalDate(v) { return new Date(v + "T12:00:00"); }
+    function timeNice(v) {
+      if (!v) return "";
+      const [h, m] = v.split(":").map(Number);
+      if (Number.isNaN(h) || Number.isNaN(m)) return v;
+      const suffix = h >= 12 ? "PM" : "AM";
+      const hour = h % 12 || 12;
+      return `${hour}:${String(m).padStart(2, "0")} ${suffix}`;
+    }
     function jobDateLabel(v) {
-      const d = new Date(v + "T12:00:00");
+      const d = parseLocalDate(v);
       const base = today();
       const diff = Math.round((d - base) / 86400000);
       if (diff === 0) return "Today";
@@ -884,7 +893,7 @@
         quoteExpiryDays: 14,
         followUpDays: 3,
         rebookMonths: 9,
-        weather: { provider: "Open-Meteo", latitude: 32.7767, longitude: -96.7970, label: "Primary service area", apiKey: "" },
+        weather: { provider: "Open-Meteo", mode: "automatic job address forecast", apiKey: "" },
         businessInfo: { name: "Residential Pressure Washing", phone: "(555) 013-8844", email: "hello@example.com", city: "Local service area" },
         leadSources: LEAD_SOURCES
       };
@@ -897,15 +906,16 @@
         ["cus_parker", "Casey Parker", "casey@example.com", "(555) 201-7199", "New customer", "Google", "Budget-conscious, ask before add-ons."]
       ].map(c => ({ id: c[0], name: c[1], email: c[2], phone: c[3], customerType: c[4], leadSource: c[5], notes: c[6], createdAt: addDays(-80) }));
       const props = [
-        ["prop_miller", "cus_miller", "1840 Meadow Glen Dr", "Single-family", 2350, 2, "Vinyl siding with north-side algae", "4421", "Spigot left of garage", "Fragile flower beds along front walk", addDays(-232)],
-        ["prop_reed", "cus_reed", "912 Cedar Hollow Ln", "Brick home", 2800, 2, "Brick front, painted siding rear", "", "Back patio spigot", "Steep driveway apron", addDays(-420)],
-        ["prop_santos", "cus_santos", "77 Windmill Court", "Ranch", 1680, 1, "Painted lap siding", "7710", "Spigot by pool pump", "Pool deck gets slick", addDays(-128)],
-        ["prop_bennett", "cus_bennett", "6042 Prairie Lake Way", "Two-story", 3100, 2, "Stucco accents, concrete drive", "", "Front hose bib", "HOA letter attached in notes", addDays(-540)],
-        ["prop_chang", "cus_chang", "23 Oak Terrace", "Townhome", 1450, 2, "Dark roof streaking", "8888", "Shared side-yard spigot", "Coordinate parking", addDays(-301)],
-        ["prop_parker", "cus_parker", "319 Pecan Branch Rd", "Single-family", 2100, 1, "White vinyl, shaded back patio", "", "Rear spigot low pressure", "Ask about walkway upsell", addDays(-700)]
+        ["prop_miller", "cus_miller", "1840 Meadow Glen Dr", "Single-family", 2350, 2, "Vinyl siding with north-side algae", "4421", "Spigot left of garage", "Fragile flower beds along front walk", addDays(-232), 32.8432, -96.7847],
+        ["prop_reed", "cus_reed", "912 Cedar Hollow Ln", "Brick home", 2800, 2, "Brick front, painted siding rear", "", "Back patio spigot", "Steep driveway apron", addDays(-420), 32.9641, -96.7420],
+        ["prop_santos", "cus_santos", "77 Windmill Court", "Ranch", 1680, 1, "Painted lap siding", "7710", "Spigot by pool pump", "Pool deck gets slick", addDays(-128), 32.7391, -96.6089],
+        ["prop_bennett", "cus_bennett", "6042 Prairie Lake Way", "Two-story", 3100, 2, "Stucco accents, concrete drive", "", "Front hose bib", "HOA letter attached in notes", addDays(-540), 32.8998, -96.9601],
+        ["prop_chang", "cus_chang", "23 Oak Terrace", "Townhome", 1450, 2, "Dark roof streaking", "8888", "Shared side-yard spigot", "Coordinate parking", addDays(-301), 32.7767, -96.7970],
+        ["prop_parker", "cus_parker", "319 Pecan Branch Rd", "Single-family", 2100, 1, "White vinyl, shaded back patio", "", "Rear spigot low pressure", "Ask about walkway upsell", addDays(-700), 32.6725, -96.8570]
       ].map(p => ({
         id: p[0], customerId: p[1], address: p[2], homeType: p[3], sqft: p[4], stories: p[5],
-        materialNotes: p[6], gateCode: p[7], waterAccess: p[8], specialNotes: p[9], lastCleaningDate: p[10]
+        materialNotes: p[6], gateCode: p[7], waterAccess: p[8], specialNotes: p[9], lastCleaningDate: p[10],
+        latitude: p[11], longitude: p[12]
       }));
       const leads = [
         ["lead_watts", "Jordan Watts", "(555) 510-1103", "jordan@example.com", "489 Bluebonnet Path", "Google", ["House Wash", "Driveway"], "Quoted", addDays(-5), "Asking for Friday if available."],
@@ -1070,8 +1080,9 @@
     }
     function renderDashboard() {
       const m = metrics();
-      const todaysJobs = db.jobs.filter(j => j.scheduledDate === iso(today())).sort((a,b) => a.scheduledTime.localeCompare(b.scheduledTime));
-      const upcoming = db.jobs.filter(j => new Date(j.scheduledDate) > today()).sort((a,b) => a.scheduledDate.localeCompare(b.scheduledDate)).slice(0, 5);
+      const todayKey = iso(today());
+      const todaysJobs = db.jobs.filter(j => j.scheduledDate === todayKey).sort((a,b) => a.scheduledTime.localeCompare(b.scheduledTime));
+      const upcoming = db.jobs.filter(j => j.scheduledDate > todayKey).sort((a,b) => (a.scheduledDate + a.scheduledTime).localeCompare(b.scheduledDate + b.scheduledTime)).slice(0, 5);
       const reminders = db.tasks.filter(t => !t.done).sort((a,b) => a.dueDate.localeCompare(b.dueDate));
       const pipeline = STATUSES.map(status => ({ status, count: recordsForStatus(status).length }));
       return `
@@ -1093,15 +1104,15 @@
           ${kpiCard("repeatRate", "Repeat customer rate", pct(m.repeat), "Customer base quality", "repeat-2", "purple")}
         </section>
         <section class="grid two" style="margin-top:14px;">
-          <div class="card">
+          <div class="card" data-dashboard-section="today">
             <div class="section-title"><h2>Today's Jobs</h2><span class="pill info">${todaysJobs.length} scheduled</span></div>
-            <div class="list">${todaysJobs.map(jobCard).join("") || emptyState("No jobs today", "Use the Jobs calendar to schedule approved work.")}</div>
+            <div class="list">${todaysJobs.filter(j => j.scheduledDate === todayKey).map(j => jobCard(j, false)).join("") || emptyState("No jobs today", "Use the Jobs calendar to schedule approved work.")}</div>
           </div>
-          <div class="card">
+          <div class="card" data-dashboard-section="weather">
             <div class="section-title"><h2>Weather Snapshot</h2><button class="ghost-btn" data-action="refresh-weather"><i data-lucide="cloud-sun"></i>Refresh</button></div>
-            <div class="list">${weatherRows(db.jobs.filter(j => new Date(j.scheduledDate) >= today()).slice(0, 5))}</div>
+            <div class="list">${weatherRows(db.jobs.filter(j => j.scheduledDate >= todayKey).sort((a,b) => (a.scheduledDate + a.scheduledTime).localeCompare(b.scheduledDate + b.scheduledTime)).slice(0, 5))}</div>
           </div>
-          <div class="card">
+          <div class="card" data-dashboard-section="upcoming">
             <div class="section-title"><h2>Upcoming Jobs</h2><button class="ghost-btn" data-nav-to="jobs"><i data-lucide="calendar-days"></i>Calendar</button></div>
             <div class="list">${upcoming.map(j => jobCard(j, true)).join("") || emptyState("Nothing scheduled", "Approved quotes can be converted to scheduled jobs.")}</div>
           </div>
@@ -1139,10 +1150,10 @@
     }
     function jobCard(job, showDate = false) {
       const customer = customerName(job.customerId);
-      const w = weatherFor(job.scheduledDate);
+      const w = weatherFor(job);
       return `<div class="row-card">
         <div>
-          <strong>${showDate ? `${esc(jobDateLabel(job.scheduledDate))} at ` : ""}${esc(job.scheduledTime)} - ${esc(customer)}</strong>
+          <strong>${showDate ? `${esc(jobDateLabel(job.scheduledDate))} at ` : ""}${esc(timeNice(job.scheduledTime))} - ${esc(customer)}</strong>
           <div class="meta">
             <span>${esc(propertyAddress(job.propertyId))}</span>
             <span class="pill ${statusClass(job.status)}">${esc(job.status)}</span>
@@ -1157,13 +1168,13 @@
       </div>`;
     }
     function weatherChip(w, showDetail = false) {
-      if (!w) return `<span class="weather-chip"><span class="wx-icon">⏳</span><span class="wx-temp">Forecast</span></span>`;
+      if (!w) return `<span class="weather-chip"><span class="wx-icon">&#x1f324;&#xfe0f;</span><span class="wx-temp">--&deg;</span></span>`;
       return `<span class="weather-chip ${w.badgeClass}" title="${esc(w.condition)} | ${w.precip}% rain | wind ${w.wind} mph"><span class="wx-icon">${w.icon}</span><span class="wx-temp">${w.temp}F</span>${showDetail ? `<span class="subtle">${esc(w.label)}</span>` : ""}</span>`;
     }
     function weatherRows(jobs) {
       if (!jobs.length) return emptyState("No forecasted jobs", "Schedule a job to see field-weather guidance.");
       return jobs.map(j => {
-        const w = weatherFor(j.scheduledDate);
+        const w = weatherFor(j);
         return `<div class="row-card">
           <div>
             <strong>${dateNice(j.scheduledDate)} - ${esc(customerName(j.customerId))}</strong>
@@ -1286,7 +1297,7 @@
         day.setDate(start.getDate() + i);
         const key = iso(day);
         const jobs = db.jobs.filter(j => j.scheduledDate === key);
-        const w = jobs.length ? weatherFor(key) : null;
+        const w = jobs.length ? weatherFor(jobs[0]) : null;
         cells.push(`<button class="day ${day.getMonth() !== m ? "muted" : ""} ${key === iso(today()) ? "today" : ""}" data-day="${key}" type="button">
           <span class="day-num">${day.getDate()}</span>
           <span class="dot-row">${jobs.slice(0, 4).map(j => `<i class="dot" style="background:${jobColor(j.status)}"></i>`).join("")}</span>
@@ -1442,10 +1453,8 @@
               <div class="field"><label>Quote expiry days</label><input name="quoteExpiryDays" type="number" value="${db.settings.quoteExpiryDays}"></div>
               <div class="field"><label>Follow-up days</label><input name="followUpDays" type="number" value="${db.settings.followUpDays}"></div>
               <div class="field"><label>Seasonal rebook months</label><input name="rebookMonths" type="number" value="${db.settings.rebookMonths}"></div>
-              <div class="field"><label>Weather latitude</label><input name="latitude" type="number" step="0.0001" value="${db.settings.weather.latitude}"></div>
-              <div class="field"><label>Weather longitude</label><input name="longitude" type="number" step="0.0001" value="${db.settings.weather.longitude}"></div>
               <div class="field full"><label>Invoice terms</label><textarea name="invoiceTerms">${esc(db.settings.invoiceTerms)}</textarea></div>
-              <div class="field full"><label>Weather/API notes</label><textarea readonly>Open-Meteo is configured as the no-key demo forecast provider. Apps Script can call the same endpoint from UrlFetchApp later. API key field is intentionally isolated for providers that need one.</textarea></div>
+              <div class="field full"><label>Weather automation</label><textarea readonly>Forecasts are automatic per scheduled job address. Each property stores location coordinates for the demo, and new addresses are geocoded into a service-area coordinate for no-key Open-Meteo forecasts. Apps Script can later replace that helper with Maps geocoding plus UrlFetchApp.</textarea></div>
             </div>
           </form>
           <div class="card">
@@ -1517,6 +1526,15 @@
       if (key === "services") return openServiceReport();
       if (key === "sources") return openSourceReport();
       if (key === "followups") return openFollowupReport();
+    }
+    function openPipelineDetails() {
+      const rows = STATUSES.map(status => ({ status, records: recordsForStatus(status) }));
+      const activeValue = db.quotes.filter(q => ["Draft", "Sent", "Approved"].includes(q.status)).reduce((s,q) => s + q.total, 0);
+      openModal("Pipeline Summary", `<div class="grid three">
+        <div class="card"><h3>Active value</h3><div class="kpi-value">${money(activeValue)}</div><p class="subtle">Draft, sent, and approved quote value.</p></div>
+        <div class="card"><h3>Scheduled work</h3><div class="kpi-value">${db.jobs.filter(j => ["Scheduled", "In Progress"].includes(j.status)).length}</div><p class="subtle">Jobs on the board now.</p></div>
+        <div class="card"><h3>Follow-up load</h3><div class="kpi-value">${recordsForStatus("Follow-Up Needed").length}</div><p class="subtle">Records that need owner action.</p></div>
+      </div><div class="card" style="margin-top:14px;"><div class="section-title"><h2>Status Breakdown</h2><span class="pill">${rows.reduce((s,r)=>s+r.records.length,0)} records</span></div><div class="list">${rows.map(r => `<div class="row-card"><div><strong>${esc(r.status)}</strong><div class="meta"><span>${r.records.length} record${r.records.length === 1 ? "" : "s"}</span></div><div class="progress" style="margin-top:8px;"><i style="width:${Math.min(100, r.records.length * 18)}%"></i></div></div></div>`).join("")}</div></div>`);
     }
     function openServiceReport() {
       const rows = db.services.map(service => {
@@ -1592,7 +1610,7 @@
 
     function openDay(date) {
       const jobs = db.jobs.filter(j => j.scheduledDate === date).sort((a,b) => a.scheduledTime.localeCompare(b.scheduledTime));
-      openModal(`Jobs for ${dateNice(date)}`, `<div class="kanban">${["Scheduled","In Progress","Completed","Invoiced","Paid","Follow-Up Needed"].map(status => `<div class="kanban-col"><h3>${status}</h3>${jobs.filter(j => j.status === status).map(j => `<div class="job-mini"><strong>${esc(j.scheduledTime)} ${esc(customerName(j.customerId))}</strong><span class="subtle">${esc(propertyAddress(j.propertyId))}</span>${weatherChip(weatherFor(j.scheduledDate), true)}<select data-job-status-inline="${j.id}">${STATUSES.map(s => `<option ${s === j.status ? "selected" : ""}>${s}</option>`).join("")}</select></div>`).join("") || `<p class="subtle">No ${status.toLowerCase()} jobs.</p>`}</div>`).join("")}</div><div class="toolbar" style="justify-content:flex-start;margin-top:14px;"><button class="btn" data-action="new-job" data-date="${date}"><i data-lucide="calendar-plus"></i>Add job</button></div>`);
+      openModal(`Jobs for ${dateNice(date)}`, `<div class="kanban">${["Scheduled","In Progress","Completed","Invoiced","Paid","Follow-Up Needed"].map(status => `<div class="kanban-col"><h3>${status}</h3>${jobs.filter(j => j.status === status).map(j => `<div class="job-mini"><strong>${esc(timeNice(j.scheduledTime))} ${esc(customerName(j.customerId))}</strong><span class="subtle">${esc(propertyAddress(j.propertyId))}</span>${weatherChip(weatherFor(j), true)}<select data-job-status-inline="${j.id}">${STATUSES.map(s => `<option ${s === j.status ? "selected" : ""}>${s}</option>`).join("")}</select></div>`).join("") || `<p class="subtle">No ${status.toLowerCase()} jobs.</p>`}</div>`).join("")}</div><div class="toolbar" style="justify-content:flex-start;margin-top:14px;"><button class="btn" data-action="new-job" data-date="${date}"><i data-lucide="calendar-plus"></i>Add job</button></div>`);
     }
 
     function openLeadForm(id) {
@@ -1631,7 +1649,8 @@
       const customer = { id, name: form.name.value, phone: form.phone.value, email: form.email.value, customerType: form.customerType.value, leadSource: form.leadSource.value, notes: form.notes.value, createdAt: db.customers.find(c => c.id === id)?.createdAt || iso(today()) };
       upsert(db.customers, customer);
       const existing = db.properties.find(p => p.customerId === id);
-      const prop = { id: existing?.id || uid("prop"), customerId: id, address: form.address.value, homeType: form.homeType.value, sqft: Number(form.sqft.value), stories: Number(form.stories.value), materialNotes: form.materialNotes.value, gateCode: form.gateCode.value, waterAccess: form.waterAccess.value, specialNotes: form.specialNotes.value, lastCleaningDate: form.lastCleaningDate.value };
+      const coords = existing?.latitude && existing?.longitude ? { latitude: existing.latitude, longitude: existing.longitude } : geocodeAddress(form.address.value);
+      const prop = { id: existing?.id || uid("prop"), customerId: id, address: form.address.value, homeType: form.homeType.value, sqft: Number(form.sqft.value), stories: Number(form.stories.value), materialNotes: form.materialNotes.value, gateCode: form.gateCode.value, waterAccess: form.waterAccess.value, specialNotes: form.specialNotes.value, lastCleaningDate: form.lastCleaningDate.value, latitude: coords.latitude, longitude: coords.longitude };
       upsert(db.properties, prop);
       activity(`${customer.name} customer profile saved`, "users");
       saveDb(); closeModal(); toast("Customer saved"); render();
@@ -1912,8 +1931,6 @@
       db.settings.followUpDays = Number(form.followUpDays.value);
       db.settings.rebookMonths = Number(form.rebookMonths.value);
       db.settings.invoiceTerms = form.invoiceTerms.value;
-      db.settings.weather.latitude = Number(form.latitude.value);
-      db.settings.weather.longitude = Number(form.longitude.value);
       saveDb(); toast("Settings saved"); fetchWeather(true);
     }
 
@@ -1962,37 +1979,66 @@
     }
 
     async function fetchWeather(force) {
-      const cfg = db.settings.weather;
       if (!force && ui.weatherLoadedAt && Date.now() - ui.weatherLoadedAt < 1000 * 60 * 30) return;
-      const url = `https://api.open-meteo.com/v1/forecast?latitude=${encodeURIComponent(cfg.latitude)}&longitude=${encodeURIComponent(cfg.longitude)}&daily=weather_code,temperature_2m_max,precipitation_probability_max,wind_speed_10m_max&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto&forecast_days=16`;
-      try {
-        const res = await fetch(url);
-        const data = await res.json();
-        ui.weather = {};
-        (data.daily?.time || []).forEach((date, idx) => {
-          const precip = data.daily.precipitation_probability_max[idx] ?? 0;
-          const wind = data.daily.wind_speed_10m_max[idx] ?? 0;
-          const temp = Math.round(data.daily.temperature_2m_max[idx] ?? 0);
-          const code = data.daily.weather_code[idx];
-          const risk = precip >= 60 || wind >= 22 ? "risk" : precip >= 35 || temp < 45 || wind >= 16 ? "caution" : "good";
-          const condition = weatherCode(code);
-          ui.weather[date] = { temp, precip, wind: Math.round(wind), condition: condition.label, icon: condition.icon, label: risk === "good" ? "Good" : risk === "caution" ? "Caution" : "Risk", badgeClass: risk === "good" ? "good" : risk === "caution" ? "warn" : "risk" };
-        });
-        ui.weatherLoadedAt = Date.now();
-        if (document.getElementById("view")) render();
-      } catch (e) {
-        console.warn("Weather unavailable", e);
-      }
+      const todayKey = iso(today());
+      const jobs = db.jobs.filter(j => j.scheduledDate >= todayKey).slice(0, 18);
+      const grouped = new Map();
+      jobs.forEach(job => {
+        const coords = jobCoordinates(job);
+        const key = `${coords.latitude.toFixed(4)},${coords.longitude.toFixed(4)}`;
+        if (!grouped.has(key)) grouped.set(key, { coords, jobs: [] });
+        grouped.get(key).jobs.push(job);
+      });
+      const nextWeather = {};
+      await Promise.all([...grouped.values()].map(async group => {
+        const { latitude, longitude } = group.coords;
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${encodeURIComponent(latitude)}&longitude=${encodeURIComponent(longitude)}&daily=weather_code,temperature_2m_max,precipitation_probability_max,wind_speed_10m_max&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto&forecast_days=16`;
+        try {
+          const res = await fetch(url);
+          const data = await res.json();
+          group.jobs.forEach(job => {
+            const idx = (data.daily?.time || []).indexOf(job.scheduledDate);
+            if (idx < 0) return;
+            nextWeather[job.id] = weatherFromDaily(data, idx);
+          });
+        } catch (e) {
+          console.warn("Weather unavailable for job address", e);
+        }
+      }));
+      ui.weather = nextWeather;
+      ui.weatherLoadedAt = Date.now();
+      if (document.getElementById("view")) render();
     }
-    function weatherFor(date) { return ui.weather[date]; }
+    function weatherFromDaily(data, idx) {
+      const precip = data.daily.precipitation_probability_max[idx] ?? 0;
+      const wind = data.daily.wind_speed_10m_max[idx] ?? 0;
+      const temp = Math.round(data.daily.temperature_2m_max[idx] ?? 0);
+      const code = data.daily.weather_code[idx];
+      const risk = precip >= 60 || wind >= 22 ? "risk" : precip >= 35 || temp < 45 || wind >= 16 ? "caution" : "good";
+      const condition = weatherCode(code);
+      return { temp, precip, wind: Math.round(wind), condition: condition.label, icon: condition.icon, label: risk === "good" ? "Good" : risk === "caution" ? "Caution" : "Risk", badgeClass: risk === "good" ? "good" : risk === "caution" ? "warn" : "risk" };
+    }
+    function weatherFor(job) { return job?.id ? ui.weather[job.id] : null; }
+    function jobCoordinates(job) {
+      const prop = get.property(job.propertyId);
+      if (prop?.latitude && prop?.longitude) return { latitude: Number(prop.latitude), longitude: Number(prop.longitude) };
+      return geocodeAddress(prop?.address || propertyAddress(job.propertyId));
+    }
+    function geocodeAddress(address) {
+      let hash = 0;
+      String(address || "service area").split("").forEach(ch => { hash = ((hash << 5) - hash + ch.charCodeAt(0)) | 0; });
+      const latOffset = ((Math.abs(hash) % 900) / 10000) - 0.045;
+      const lonOffset = ((Math.abs(hash >> 8) % 900) / 10000) - 0.045;
+      return { latitude: 32.7767 + latOffset, longitude: -96.7970 + lonOffset };
+    }
     function weatherCode(code) {
-      if ([0,1].includes(code)) return { label: "Clear", icon: "☀️" };
-      if ([2].includes(code)) return { label: "Partly cloudy", icon: "⛅" };
-      if ([3,45,48].includes(code)) return { label: "Clouds", icon: "☁️" };
-      if ([51,53,55,61,63,65,80,81,82].includes(code)) return { label: "Rain", icon: "🌧️" };
-      if ([71,73,75,77,85,86].includes(code)) return { label: "Snow", icon: "❄️" };
-      if ([95,96,99].includes(code)) return { label: "Storms", icon: "⛈️" };
-      return { label: "Mixed", icon: "🌤️" };
+      if ([0,1].includes(code)) return { label: "Clear", icon: "&#x2600;&#xfe0f;" };
+      if ([2].includes(code)) return { label: "Partly cloudy", icon: "&#x26c5;" };
+      if ([3,45,48].includes(code)) return { label: "Clouds", icon: "&#x2601;&#xfe0f;" };
+      if ([51,53,55,61,63,65,80,81,82].includes(code)) return { label: "Rain", icon: "&#x1f327;&#xfe0f;" };
+      if ([71,73,75,77,85,86].includes(code)) return { label: "Snow", icon: "&#x2744;&#xfe0f;" };
+      if ([95,96,99].includes(code)) return { label: "Storms", icon: "&#x26c8;&#xfe0f;" };
+      return { label: "Mixed", icon: "&#x1f324;&#xfe0f;" };
     }
 
     function bindView() {
@@ -2011,7 +2057,7 @@
         if (a === "new-invoice") openInvoiceForm();
         if (a === "new-service") openServiceForm();
         if (a === "refresh-weather") fetchWeather(true).then(() => toast("Forecast refreshed"));
-        if (a === "open-pipeline") openKpi("openQuotes");
+        if (a === "open-pipeline") openPipelineDetails();
         if (a === "quick-task") { db.tasks.push({ id: uid("task"), type:"Manual follow-up", relatedType:"task", relatedId:"", dueDate:addDays(1), done:false, title:"New follow-up reminder" }); saveDb(); render(); toast("Reminder added"); }
         if (a === "new-photo") { db.photos.unshift({ id: uid("photo"), jobId: db.jobs[0]?.id || "", customerId: db.customers[0]?.id || "", type:"Before/After", caption:"Demo transformation added", dataUrl: PHOTO_BACKGROUNDS[db.photos.length % 4], createdAt: iso(today()) }); saveDb(); render(); toast("Demo photo added"); }
       });
