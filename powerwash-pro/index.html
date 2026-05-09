@@ -8,12 +8,12 @@
   <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
   <style>
     :root {
-      --bg: #f5f7f4;
+      --bg: #edf2ee;
       --panel: #ffffff;
-      --panel-2: #f9fbf9;
+      --panel-2: #f7faf7;
       --ink: #17211f;
       --muted: #66736f;
-      --soft: #dfe7e2;
+      --soft: #cfd9d2;
       --brand: #127b79;
       --brand-2: #0d5f5d;
       --mint: #dff4ef;
@@ -22,10 +22,28 @@
       --red: #bd3b31;
       --blue: #3c6e91;
       --purple: #725ca0;
-      --shadow: 0 16px 45px rgba(28, 43, 38, .10);
+      --shadow: 0 18px 48px rgba(28, 43, 38, .15);
       --radius: 8px;
       --sidebar: 248px;
       --sidebar-mini: 76px;
+    }
+
+    body.dark-mode {
+      --bg: #1C1C1C;
+      --panel: #262320;
+      --panel-2: #302b26;
+      --ink: #F5E8D8;
+      --muted: #c9b9a4;
+      --soft: #4b4037;
+      --brand: #FF6F61;
+      --brand-2: #DAA520;
+      --mint: #3a2f2a;
+      --green: #7ec79a;
+      --amber: #DAA520;
+      --red: #FF6F61;
+      --blue: #9ec8df;
+      --purple: #c6addd;
+      --shadow: 0 18px 54px rgba(0, 0, 0, .45);
     }
 
     * { box-sizing: border-box; }
@@ -33,8 +51,8 @@
     body {
       margin: 0;
       background:
-        radial-gradient(circle at top left, rgba(18, 123, 121, .10), transparent 30rem),
-        linear-gradient(180deg, #f9faf7 0%, var(--bg) 100%);
+        radial-gradient(circle at top left, rgba(18, 123, 121, .12), transparent 30rem),
+        linear-gradient(180deg, #f8faf6 0%, var(--bg) 100%);
       color: var(--ink);
       font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
       line-height: 1.4;
@@ -48,7 +66,7 @@
       inset: 0 auto 0 0;
       width: var(--sidebar);
       padding: 14px 12px;
-      background: rgba(255, 255, 255, .92);
+      background: rgba(255, 255, 255, .96);
       border-right: 1px solid var(--soft);
       box-shadow: 0 12px 40px rgba(17, 33, 31, .08);
       z-index: 30;
@@ -94,7 +112,7 @@
       padding: 9px 12px;
       font-weight: 700;
       color: var(--ink);
-      background: #eef4f0;
+      background: #e7eee9;
       transition: transform .12s ease, background .12s ease, color .12s ease, box-shadow .12s ease;
     }
     .icon-btn { width: 40px; padding: 0; }
@@ -105,7 +123,7 @@
       box-shadow: 0 10px 22px rgba(18, 123, 121, .22);
     }
     .btn.secondary { background: #213c3a; }
-    .ghost-btn { background: #edf3ef; color: var(--ink); }
+    .ghost-btn { background: #e7eee9; color: var(--ink); }
     .danger-btn { background: #f8e6e3; color: var(--red); }
     .nav-list { display: grid; gap: 5px; }
     .nav-item {
@@ -122,7 +140,7 @@
       font-weight: 700;
     }
     .nav-item svg { margin: auto; }
-    .nav-item:hover { background: #eef5f0; }
+    .nav-item:hover { background: #e3eee7; }
     .nav-item.active {
       background: #dff4ef;
       color: var(--brand-2);
@@ -134,7 +152,7 @@
       padding: 12px;
       border: 1px solid var(--soft);
       border-radius: var(--radius);
-      background: #fbfcfa;
+      background: #f4f7f4;
       color: var(--muted);
       font-size: 12px;
     }
@@ -155,7 +173,7 @@
       align-items: center;
       margin: -18px -18px 18px;
       padding: 14px 18px;
-      background: rgba(245, 247, 244, .92);
+      background: rgba(237, 242, 238, .94);
       backdrop-filter: blur(16px);
       border-bottom: 1px solid rgba(223, 231, 226, .82);
     }
@@ -186,11 +204,11 @@
     .grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     .grid.four { grid-template-columns: repeat(4, minmax(0, 1fr)); }
     .card {
-      background: rgba(255, 255, 255, .92);
+      background: var(--panel);
       border: 1px solid var(--soft);
       border-radius: var(--radius);
       padding: 14px;
-      box-shadow: 0 1px 0 rgba(255,255,255,.9), 0 12px 28px rgba(36, 54, 49, .05);
+      box-shadow: 0 1px 0 rgba(255,255,255,.9), 0 14px 32px rgba(36, 54, 49, .09);
       min-width: 0;
     }
     .card.clickable { cursor: pointer; }
@@ -231,7 +249,7 @@
       padding: 12px;
       border: 1px solid var(--soft);
       border-radius: var(--radius);
-      background: #fff;
+      background: var(--panel);
     }
     .row-actions { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
     .meta { display: flex; gap: 7px; flex-wrap: wrap; align-items: center; margin-top: 6px; color: var(--muted); font-size: 12px; }
@@ -253,6 +271,24 @@
     .pill.risk { background: #fde7e3; color: var(--red); }
     .pill.info { background: #e5eff5; color: var(--blue); }
     .pill.purple { background: #eee8f7; color: var(--purple); }
+    .weather-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 30px;
+      border-radius: 999px;
+      padding: 4px 9px;
+      border: 1px solid var(--soft);
+      background: var(--panel-2);
+      color: var(--ink);
+      font-weight: 900;
+      white-space: nowrap;
+    }
+    .weather-chip .wx-icon { font-size: 17px; line-height: 1; }
+    .weather-chip .wx-temp { font-size: 13px; }
+    .weather-chip.good { border-color: rgba(33, 130, 93, .35); }
+    .weather-chip.warn { border-color: rgba(189, 122, 19, .42); }
+    .weather-chip.risk { border-color: rgba(189, 59, 49, .42); }
     .filters {
       display: grid;
       grid-template-columns: repeat(5, minmax(0, 1fr));
@@ -267,9 +303,48 @@
       border: 1px solid #d6e1db;
       border-radius: var(--radius);
       padding: 9px 10px;
-      background: #fff;
+      background: var(--panel);
       color: var(--ink);
       outline: none;
+    }
+    .select-note {
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 3px;
+    }
+    .service-picker {
+      border: 1px solid #d6e1db;
+      border-radius: var(--radius);
+      background: var(--panel);
+      padding: 8px;
+    }
+    .service-picker summary {
+      min-height: 34px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      font-weight: 900;
+      cursor: pointer;
+      list-style: none;
+    }
+    .service-picker summary::-webkit-details-marker { display: none; }
+    .service-options {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .check-tile {
+      min-height: 40px;
+      border: 1px solid var(--soft);
+      border-radius: var(--radius);
+      padding: 8px;
+      background: var(--panel-2);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 800;
     }
     textarea { min-height: 86px; resize: vertical; }
     input:focus, select:focus, textarea:focus { border-color: rgba(18, 123, 121, .65); box-shadow: 0 0 0 3px rgba(18, 123, 121, .12); }
@@ -316,7 +391,7 @@
       min-height: 78px;
       border: 1px solid var(--soft);
       border-radius: var(--radius);
-      background: #fff;
+      background: var(--panel);
       padding: 7px;
       display: grid;
       align-content: start;
@@ -337,7 +412,7 @@
       padding-bottom: 4px;
     }
     .kanban-col {
-      background: #f6f9f6;
+      background: var(--panel-2);
       border: 1px solid var(--soft);
       border-radius: var(--radius);
       padding: 10px;
@@ -345,7 +420,7 @@
     }
     .kanban-col h3 { font-size: 13px; margin-bottom: 8px; color: var(--muted); }
     .job-mini {
-      background: #fff;
+      background: var(--panel);
       border: 1px solid var(--soft);
       border-radius: var(--radius);
       padding: 10px;
@@ -396,7 +471,7 @@
     }
     .service-chip {
       border: 1px solid #d6e1db;
-      background: #fff;
+      background: var(--panel);
       border-radius: var(--radius);
       padding: 10px;
       display: grid;
@@ -412,7 +487,7 @@
       padding: 10px;
       border: 1px solid var(--soft);
       border-radius: var(--radius);
-      background: #fff;
+      background: var(--panel);
       margin-bottom: 8px;
     }
     .total-box {
@@ -422,7 +497,7 @@
       gap: 8px;
       padding: 12px;
       border-radius: var(--radius);
-      background: #f6faf8;
+      background: var(--panel-2);
       border: 1px solid var(--soft);
     }
     .total-line { display: flex; justify-content: space-between; gap: 10px; }
@@ -442,7 +517,7 @@
       width: min(980px, 100%);
       max-height: min(92vh, 920px);
       overflow: auto;
-      background: #fff;
+      background: var(--panel);
       border-radius: 10px;
       box-shadow: 0 30px 90px rgba(0, 0, 0, .28);
       border: 1px solid rgba(255,255,255,.7);
@@ -487,6 +562,91 @@
     }
     .print-shell { display: none; }
 
+    body.dark-mode {
+      background:
+        radial-gradient(circle at top left, rgba(255, 111, 97, .18), transparent 28rem),
+        linear-gradient(180deg, #241f1b 0%, var(--bg) 100%);
+    }
+    body.dark-mode .sidebar,
+    body.dark-mode .topbar {
+      background: rgba(33, 31, 29, .95);
+      border-color: var(--soft);
+    }
+    body.dark-mode .brand-mark,
+    body.dark-mode .btn,
+    body.dark-mode .progress > i,
+    body.dark-mode .bar {
+      background: linear-gradient(135deg, var(--brand), #FF4500);
+      color: #1C1C1C;
+    }
+    body.dark-mode .icon-btn,
+    body.dark-mode .ghost-btn,
+    body.dark-mode .nav-item:hover,
+    body.dark-mode .service-chip,
+    body.dark-mode .service-picker,
+    body.dark-mode input,
+    body.dark-mode select,
+    body.dark-mode textarea {
+      background: #342e29;
+      color: var(--ink);
+      border-color: var(--soft);
+    }
+    body.dark-mode .ghost-btn,
+    body.dark-mode .icon-btn {
+      color: var(--ink);
+      background: #463d35;
+    }
+    body.dark-mode .ghost-btn:hover,
+    body.dark-mode .icon-btn:hover {
+      background: #5a493d;
+      color: #fff5e8;
+    }
+    body.dark-mode input:focus,
+    body.dark-mode select:focus,
+    body.dark-mode textarea:focus {
+      border-color: var(--brand);
+      box-shadow: 0 0 0 3px rgba(255, 111, 97, .18);
+    }
+    body.dark-mode .card,
+    body.dark-mode .row-card,
+    body.dark-mode .table-wrap tr,
+    body.dark-mode .day,
+    body.dark-mode .job-mini,
+    body.dark-mode .line-item,
+    body.dark-mode .modal,
+    body.dark-mode .total-box {
+      background: var(--panel);
+      border-color: var(--soft);
+      box-shadow: var(--shadow);
+    }
+    body.dark-mode .modal-head {
+      background: rgba(38, 35, 32, .97);
+      border-color: var(--soft);
+    }
+    body.dark-mode .nav-item {
+      color: var(--muted);
+    }
+    body.dark-mode .nav-item.active {
+      background: #3a2f2a;
+      color: var(--brand-2);
+      box-shadow: inset 3px 0 0 var(--brand);
+    }
+    body.dark-mode .side-footer,
+    body.dark-mode .kanban-col,
+    body.dark-mode .day.muted,
+    body.dark-mode .check-tile {
+      background: var(--panel-2);
+      border-color: var(--soft);
+    }
+    body.dark-mode .pill { background: #3a332e; color: var(--ink); }
+    body.dark-mode .pill.good { background: #203a2d; color: #9be3b5; }
+    body.dark-mode .pill.warn { background: #42351c; color: #f2ca5c; }
+    body.dark-mode .pill.risk { background: #4a2725; color: #ffaaa1; }
+    body.dark-mode .pill.info { background: #243a44; color: #b5ddf0; }
+    body.dark-mode .pill.purple { background: #352d43; color: #d8c6ee; }
+    body.dark-mode .danger-btn { background: #4a2725; color: #ffaaa1; }
+    body.dark-mode .modal-backdrop { background: rgba(0, 0, 0, .68); }
+
     @media (max-width: 1100px) {
       .grid.four { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .grid.three { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -524,6 +684,7 @@
       .kanban { grid-template-columns: 1fr; overflow: visible; }
       .line-item { grid-template-columns: 1fr 1fr; }
       .line-item .remove-line { grid-column: 1 / -1; }
+      .service-options { grid-template-columns: 1fr; }
       .modal-backdrop { align-items: end; padding: 0; }
       .modal {
         width: 100%;
@@ -585,6 +746,7 @@
           <h1 id="pageTitle">Dashboard</h1>
         </div>
         <div class="toolbar">
+          <button class="ghost-btn" type="button" data-action="toggle-theme" title="Toggle dark mode"><i data-lucide="moon"></i><span>Theme</span></button>
           <button class="ghost-btn" type="button" data-action="quick-lead"><i data-lucide="plus"></i><span>Lead</span></button>
           <button class="btn" type="button" data-action="quote-builder"><i data-lucide="calculator"></i><span>Quote</span></button>
         </div>
@@ -602,6 +764,7 @@
        Quotes, QuoteItems, Jobs, Invoices, Payments, Photos, Services,
        PricingRules, Tasks, Settings. */
     const STORAGE_KEY = "formsmith.powerwashPro.v1";
+    const THEME_KEY = "formsmith.powerwashPro.theme";
     const STATUSES = ["Lead", "Quoted", "Scheduled", "In Progress", "Completed", "Invoiced", "Paid", "Follow-Up Needed"];
     const LEAD_SOURCES = ["Google", "Facebook", "Yard sign", "Referral", "Repeat customer", "Website"];
     const HOME_TYPES = ["Single-family", "Townhome", "Duplex", "Ranch", "Two-story", "Brick home", "Vinyl siding"];
@@ -613,6 +776,7 @@
     ];
     let db = loadDb();
     let ui = { view: "dashboard", filters: {}, selectedMonth: new Date(), weather: {}, weatherLoadedAt: null };
+    if (localStorage.getItem(THEME_KEY) === "dark") document.body.classList.add("dark-mode");
 
     function uid(prefix) {
       return prefix + "_" + Math.random().toString(36).slice(2, 8) + Date.now().toString(36).slice(-4);
@@ -829,6 +993,11 @@
         </div>`;
     }
     function paintIcons() { if (window.lucide) lucide.createIcons({ attrs: { width: 18, height: 18, strokeWidth: 2.2 } }); }
+    function toggleTheme() {
+      document.body.classList.toggle("dark-mode");
+      localStorage.setItem(THEME_KEY, document.body.classList.contains("dark-mode") ? "dark" : "light");
+      toast(document.body.classList.contains("dark-mode") ? "Dark mode on" : "Light mode on");
+    }
 
     function metrics() {
       const month = today().getMonth();
@@ -925,7 +1094,7 @@
           <div class="meta">
             <span>${esc(propertyAddress(job.propertyId))}</span>
             <span class="pill ${statusClass(job.status)}">${esc(job.status)}</span>
-            ${w ? `<span class="pill ${w.badgeClass}">${esc(w.label)} ${w.temp}F</span>` : `<span class="pill">Forecast loading</span>`}
+            ${weatherChip(w)}
           </div>
           <p class="subtle" style="margin-top:6px;">${esc(job.notes)}</p>
         </div>
@@ -935,6 +1104,10 @@
         </div>
       </div>`;
     }
+    function weatherChip(w, showDetail = false) {
+      if (!w) return `<span class="weather-chip"><span class="wx-icon">⏳</span><span class="wx-temp">Forecast</span></span>`;
+      return `<span class="weather-chip ${w.badgeClass}" title="${esc(w.condition)} | ${w.precip}% rain | wind ${w.wind} mph"><span class="wx-icon">${w.icon}</span><span class="wx-temp">${w.temp}F</span>${showDetail ? `<span class="subtle">${esc(w.label)}</span>` : ""}</span>`;
+    }
     function weatherRows(jobs) {
       if (!jobs.length) return emptyState("No forecasted jobs", "Schedule a job to see field-weather guidance.");
       return jobs.map(j => {
@@ -942,7 +1115,7 @@
         return `<div class="row-card">
           <div>
             <strong>${dateNice(j.scheduledDate)} - ${esc(customerName(j.customerId))}</strong>
-            <div class="meta"><span>${esc(propertyAddress(j.propertyId))}</span>${w ? `<span class="pill ${w.badgeClass}">${esc(w.label)}</span><span>${esc(w.condition)}, ${w.precip}% rain, wind ${w.wind} mph</span>` : `<span class="pill">Loading forecast</span>`}</div>
+            <div class="meta"><span>${esc(propertyAddress(j.propertyId))}</span>${weatherChip(w, true)}${w ? `<span>${esc(w.condition)}, ${w.precip}% rain, wind ${w.wind} mph</span>` : ""}</div>
           </div>
           <i data-lucide="cloud-sun"></i>
         </div>`;
@@ -956,7 +1129,7 @@
       </div>`;
     }
     function emptyState(title, text) {
-      return `<div class="card" style="box-shadow:none;background:#f9fbf9;"><strong>${esc(title)}</strong><p class="subtle">${esc(text)}</p></div>`;
+      return `<div class="card" style="box-shadow:none;background:var(--panel-2);"><strong>${esc(title)}</strong><p class="subtle">${esc(text)}</p></div>`;
     }
 
     function renderLeads() {
@@ -1061,9 +1234,11 @@
         day.setDate(start.getDate() + i);
         const key = iso(day);
         const jobs = db.jobs.filter(j => j.scheduledDate === key);
+        const w = jobs.length ? weatherFor(key) : null;
         cells.push(`<button class="day ${day.getMonth() !== m ? "muted" : ""} ${key === iso(today()) ? "today" : ""}" data-day="${key}" type="button">
           <span class="day-num">${day.getDate()}</span>
           <span class="dot-row">${jobs.slice(0, 4).map(j => `<i class="dot" style="background:${jobColor(j.status)}"></i>`).join("")}</span>
+          ${w ? weatherChip(w) : ""}
           ${!compact && jobs[0] ? `<span class="pill ${statusClass(jobs[0].status)}">${jobs.length} job${jobs.length > 1 ? "s" : ""}</span>` : ""}
         </button>`);
       }
@@ -1283,6 +1458,57 @@
       const [title, insight, rows] = map[key];
       openModal(title, `<div class="grid two"><div class="card"><h3>Insight</h3><p class="subtle" style="margin-top:8px;">${esc(insight)}</p></div><div class="card"><h3>Suggested action</h3><p class="subtle" style="margin-top:8px;">${key === "openQuotes" ? "Call or text the oldest sent quotes first and offer a bundled driveway/walkway slot." : key === "outstanding" ? "Mark payment received after an external transfer or send a reminder before scheduling new work." : "Use the detail list below to spot the next best action."}</p></div></div><div class="card" style="margin-top:14px;"><div class="section-title"><h2>Filtered Records</h2><span class="pill">${rows.length}</span></div><div class="list">${rows.map(recordSummary).join("") || emptyState("No records", "This metric has no matching records.")}</div></div>`);
     }
+    function openReport(key) {
+      if (key === "revenue") return openKpi("monthlyRevenue");
+      if (key === "conversion") return openKpi("winRate");
+      if (key === "outstanding") return openKpi("outstanding");
+      if (key === "services") return openServiceReport();
+      if (key === "sources") return openSourceReport();
+      if (key === "followups") return openFollowupReport();
+    }
+    function openServiceReport() {
+      const rows = db.services.map(service => {
+        const items = db.quoteItems.filter(i => i.serviceId === service.id);
+        const quoteIds = [...new Set(items.map(i => i.quoteId))];
+        const quotes = db.quotes.filter(q => quoteIds.includes(q.id));
+        const approved = quotes.filter(q => ["Approved", "Converted"].includes(q.status)).length;
+        return { service, items, quotes, approved, value: items.reduce((s, i) => s + Number(i.unitPrice || 0), 0) };
+      }).sort((a,b) => b.value - a.value);
+      openModal("Top Services", `<div class="grid three">${rows.slice(0,3).map(r => `<div class="card"><h3>${esc(r.service.name)}</h3><div class="kpi-value">${money(r.value)}</div><p class="subtle">${r.items.length} quoted line items | ${r.quotes.length ? pct(r.approved / r.quotes.length) : "0%"} approval rate</p></div>`).join("")}</div><div class="card" style="margin-top:14px;"><div class="section-title"><h2>Service Performance</h2><span class="pill">${rows.length} services</span></div><div class="list">${rows.map(r => `<div class="row-card"><div><strong>${esc(r.service.name)}</strong><div class="meta"><span>${r.items.length} quote items</span><span>${money(r.value)} quoted</span><span>${r.quotes.length} related quotes</span><span>${r.quotes.length ? pct(r.approved / r.quotes.length) : "0%"} approved</span></div><p class="subtle">${esc(r.service.optionalNotes || "")}</p></div></div>`).join("")}</div></div>`);
+    }
+    function openSourceReport() {
+      const rows = db.settings.leadSources.map(source => {
+        const leads = db.leads.filter(l => l.source === source);
+        const customers = db.customers.filter(c => c.leadSource === source);
+        const quoteTotal = db.quotes.filter(q => customers.some(c => c.id === q.customerId)).reduce((s,q) => s + q.total, 0);
+        const revenue = db.invoices.filter(i => customers.some(c => c.id === i.customerId)).reduce((s,i) => s + i.total, 0);
+        return { source, leads, customers, quoteTotal, revenue, conversion: customers.length / Math.max(leads.length + customers.length, 1) };
+      }).sort((a,b) => b.revenue - a.revenue);
+      openModal("Lead Source Performance", `<div class="grid two">${rows.map(r => `<div class="card"><div class="section-title"><h3>${esc(r.source)}</h3><span class="pill ${r.revenue ? "good" : "info"}">${money(r.revenue)}</span></div><div class="meta"><span>${r.leads.length} active leads</span><span>${r.customers.length} customers</span><span>${pct(r.conversion)} customer conversion</span><span>${money(r.quoteTotal)} quoted</span></div><div class="progress" style="margin-top:10px;"><i style="width:${Math.round(r.conversion * 100)}%"></i></div></div>`).join("")}</div><div class="card" style="margin-top:14px;"><div class="section-title"><h2>Source Records</h2><span class="pill">${rows.reduce((s,r)=>s+r.leads.length+r.customers.length,0)} records</span></div><div class="list">${rows.flatMap(r => [...r.leads.map(l => `<div class="row-card"><div><strong>${esc(l.name)}</strong><div class="meta"><span>${esc(r.source)}</span><span>${esc(l.status)}</span><span>Lead</span></div></div></div>`), ...r.customers.map(c => `<div class="row-card"><div><strong>${esc(c.name)}</strong><div class="meta"><span>${esc(r.source)}</span><span>${esc(c.customerType)}</span><span>Customer</span></div></div></div>`)]).join("")}</div></div>`);
+    }
+    function openFollowupReport() {
+      const quoteCutoff = new Date(today());
+      quoteCutoff.setDate(quoteCutoff.getDate() - db.settings.followUpDays);
+      const staleQuotes = db.quotes.filter(q => ["Draft", "Sent"].includes(q.status) && new Date(q.createdAt + "T12:00:00") <= quoteCutoff);
+      const unpaid = db.invoices.filter(i => i.status !== "Paid");
+      const seasonal = db.properties.filter(p => {
+        const d = new Date(p.lastCleaningDate + "T12:00:00");
+        d.setMonth(d.getMonth() + Number(db.settings.rebookMonths || 9));
+        return d <= today();
+      });
+      const tasks = db.tasks.filter(t => !t.done);
+      openModal("Follow-Up Opportunities", `<div class="grid four">
+        ${kpiCard("noop", "Open tasks", String(tasks.length), "Manual reminders", "check-circle-2", "warn").replace('data-kpi="noop"', "")}
+        ${kpiCard("noop", "Stale quotes", String(staleQuotes.length), "Need quote follow-up", "file-clock", "risk").replace('data-kpi="noop"', "")}
+        ${kpiCard("noop", "Unpaid invoices", String(unpaid.length), money(unpaid.reduce((s,i)=>s+i.total,0)), "receipt", "risk").replace('data-kpi="noop"', "")}
+        ${kpiCard("noop", "Seasonal rebooks", String(seasonal.length), "Properties due", "repeat-2", "good").replace('data-kpi="noop"', "")}
+      </div><div class="card" style="margin-top:14px;"><div class="section-title"><h2>Follow-Up Queue</h2><span class="pill warn">${tasks.length + staleQuotes.length + unpaid.length + seasonal.length} records</span></div><div class="list">
+        ${tasks.map(taskRow).join("")}
+        ${staleQuotes.map(q => `<div class="row-card"><div><strong>Quote follow-up: ${esc(customerName(q.customerId))}</strong><div class="meta"><span>${esc(q.status)}</span><span>${money(q.total)}</span><span>Created ${dateNice(q.createdAt)}</span></div></div></div>`).join("")}
+        ${unpaid.map(i => `<div class="row-card"><div><strong>Unpaid invoice: ${esc(customerName(i.customerId))}</strong><div class="meta"><span>${money(i.total)}</span><span>Issued ${dateNice(i.issueDate)}</span></div></div></div>`).join("")}
+        ${seasonal.map(p => `<div class="row-card"><div><strong>Seasonal rebooking: ${esc(customerName(p.customerId))}</strong><div class="meta"><span>${esc(p.address)}</span><span>Last cleaned ${dateNice(p.lastCleaningDate)}</span></div></div></div>`).join("")}
+      </div></div>`);
+    }
     function recordSummary(r) {
       if (r.id?.startsWith("q_")) return `<div class="row-card"><div><strong>${esc(customerName(r.customerId))}</strong><div class="meta"><span>${esc(r.status)}</span><span>${money(r.total)}</span><span>Created ${dateNice(r.createdAt)}</span></div></div></div>`;
       if (r.id?.startsWith("inv_")) return `<div class="row-card"><div><strong>${esc(customerName(r.customerId))}</strong><div class="meta"><span>${esc(r.status)}</span><span>${money(r.total)}</span><span>${dateNice(r.issueDate)}</span></div></div></div>`;
@@ -1292,7 +1518,7 @@
 
     function openDay(date) {
       const jobs = db.jobs.filter(j => j.scheduledDate === date).sort((a,b) => a.scheduledTime.localeCompare(b.scheduledTime));
-      openModal(`Jobs for ${dateNice(date)}`, `<div class="kanban">${["Scheduled","In Progress","Completed","Invoiced","Paid","Follow-Up Needed"].map(status => `<div class="kanban-col"><h3>${status}</h3>${jobs.filter(j => j.status === status).map(j => `<div class="job-mini"><strong>${esc(j.scheduledTime)} ${esc(customerName(j.customerId))}</strong><span class="subtle">${esc(propertyAddress(j.propertyId))}</span>${weatherFor(j.scheduledDate) ? `<span class="pill ${weatherFor(j.scheduledDate).badgeClass}">${weatherFor(j.scheduledDate).label}</span>` : ""}<select data-job-status-inline="${j.id}">${STATUSES.map(s => `<option ${s === j.status ? "selected" : ""}>${s}</option>`).join("")}</select></div>`).join("") || `<p class="subtle">No ${status.toLowerCase()} jobs.</p>`}</div>`).join("")}</div><div class="toolbar" style="justify-content:flex-start;margin-top:14px;"><button class="btn" data-action="new-job" data-date="${date}"><i data-lucide="calendar-plus"></i>Add job</button></div>`);
+      openModal(`Jobs for ${dateNice(date)}`, `<div class="kanban">${["Scheduled","In Progress","Completed","Invoiced","Paid","Follow-Up Needed"].map(status => `<div class="kanban-col"><h3>${status}</h3>${jobs.filter(j => j.status === status).map(j => `<div class="job-mini"><strong>${esc(j.scheduledTime)} ${esc(customerName(j.customerId))}</strong><span class="subtle">${esc(propertyAddress(j.propertyId))}</span>${weatherChip(weatherFor(j.scheduledDate), true)}<select data-job-status-inline="${j.id}">${STATUSES.map(s => `<option ${s === j.status ? "selected" : ""}>${s}</option>`).join("")}</select></div>`).join("") || `<p class="subtle">No ${status.toLowerCase()} jobs.</p>`}</div>`).join("")}</div><div class="toolbar" style="justify-content:flex-start;margin-top:14px;"><button class="btn" data-action="new-job" data-date="${date}"><i data-lucide="calendar-plus"></i>Add job</button></div>`);
     }
 
     function openLeadForm(id) {
@@ -1300,7 +1526,7 @@
       openModal(id ? "Edit Lead" : "Add Lead", `<form id="leadForm" data-id="${esc(id || "")}" class="form-grid">
         ${input("name","Lead name",l.name)}${input("phone","Phone",l.phone)}${input("email","Email",l.email)}${input("address","Address",l.address)}
         ${select("source","Lead source",db.settings.leadSources,l.source)}${select("status","Status",["New","Quoted","Follow-Up Needed","Converted","Lost"],l.status)}
-        ${input("requestedServices","Requested services",l.requestedServices.join(", "),"full")}${textarea("notes","Notes",l.notes,"full")}
+        ${serviceMultiSelect("requestedServices","Requested services",l.requestedServices)}${textarea("notes","Notes",l.notes,"full")}
         <div class="toolbar full"><button class="btn" type="submit"><i data-lucide="save"></i>Save lead</button></div>
       </form>`, { small: true });
     }
@@ -1308,7 +1534,7 @@
       const id = form.dataset.id || uid("lead");
       const item = {
         id, name: form.name.value, phone: form.phone.value, email: form.email.value, address: form.address.value,
-        source: form.source.value, status: form.status.value, requestedServices: form.requestedServices.value.split(",").map(s => s.trim()).filter(Boolean),
+        source: form.source.value, status: form.status.value, requestedServices: [...form.querySelectorAll("input[name='requestedServices']:checked")].map(x => x.value),
         createdAt: db.leads.find(x => x.id === id)?.createdAt || iso(today()), notes: form.notes.value
       };
       upsert(db.leads, item);
@@ -1351,17 +1577,34 @@
     }
 
     function openJobForm(id, presetDate) {
-      const j = id ? get.job(id) : { customerId: db.customers[0]?.id || "", propertyId: db.properties[0]?.id || "", quoteId:"", scheduledDate: presetDate || iso(today()), scheduledTime:"09:00", status:"Scheduled", notes:"", invoiceStatus:"Not invoiced", paymentStatus:"Unpaid", assignedTo:"Owner" };
+      const firstCustomer = db.customers[0]?.id || "";
+      const firstProperty = db.properties.find(p => p.customerId === firstCustomer)?.id || "";
+      const j = id ? get.job(id) : { customerId: firstCustomer, propertyId: firstProperty, quoteId:"", scheduledDate: presetDate || iso(today()), scheduledTime:"09:00", status:"Scheduled", notes:"", invoiceStatus:"Not invoiced", paymentStatus:"Unpaid", assignedTo:"Owner" };
       openModal(id ? "Edit Job" : "Add Job", `<form id="jobForm" data-id="${esc(id || "")}" class="form-grid">
-        ${select("customerId","Customer",db.customers.map(c=>[c.id,c.name]),j.customerId)}${select("propertyId","Property",db.properties.map(p=>[p.id,p.address]),j.propertyId)}
+        ${select("customerId","Customer",db.customers.map(c=>[c.id,c.name]),j.customerId)}<div id="jobPropertySlot">${jobPropertyField(j.customerId, j.propertyId)}</div>
         ${select("quoteId","Linked quote",[["","None"],...db.quotes.map(q=>[q.id, customerName(q.customerId)+" - "+money(q.total)])],j.quoteId)}
         ${input("scheduledDate","Scheduled date",j.scheduledDate,"","date")}${input("scheduledTime","Scheduled time",j.scheduledTime,"","time")}${select("status","Status",STATUSES,j.status)}
         ${textarea("notes","Job notes",j.notes,"full")}
         <div class="toolbar full"><button class="btn" type="submit"><i data-lucide="save"></i>Save job</button></div>
       </form>`);
+      const dateInput = document.querySelector("#jobForm input[name='scheduledDate']");
+      const timeInput = document.querySelector("#jobForm input[name='scheduledTime']");
+      if (dateInput) dateInput.min = iso(today());
+      if (timeInput) timeInput.step = 900;
     }
     function saveJob(form) {
       const id = form.dataset.id || uid("job");
+      if (form.scheduledDate.value < iso(today())) {
+        toast("Scheduled date cannot be in the past");
+        form.scheduledDate.focus();
+        return;
+      }
+      const [hours, minutes] = form.scheduledTime.value.split(":").map(Number);
+      if (!form.scheduledTime.value || Number.isNaN(minutes) || minutes % 15 !== 0) {
+        toast("Scheduled time must use 15-minute increments");
+        form.scheduledTime.focus();
+        return;
+      }
       const item = { id, customerId: form.customerId.value, propertyId: form.propertyId.value, quoteId: form.quoteId.value, scheduledDate: form.scheduledDate.value, scheduledTime: form.scheduledTime.value, status: form.status.value, notes: form.notes.value, invoiceStatus:"Not invoiced", paymentStatus:"Unpaid", assignedTo:"Owner", beforePhotos:[], afterPhotos:[] };
       const old = get.job(id);
       if (old) Object.assign(item, { invoiceStatus: old.invoiceStatus, paymentStatus: old.paymentStatus, beforePhotos: old.beforePhotos, afterPhotos: old.afterPhotos });
@@ -1438,7 +1681,7 @@
       </div>`;
     }
     function suggestionMarkup(suggestions) {
-      return suggestions.length ? `<div class="card" style="box-shadow:none;background:#f6faf8;margin-top:10px;"><div class="section-title"><h3>Smart add-ons</h3><span class="pill good">One tap</span></div><div class="toolbar" style="justify-content:flex-start;">${suggestions.map(s => `<button class="ghost-btn" type="button" data-add-suggestion="${esc(s.id)}"><i data-lucide="sparkles"></i>${esc(s.name)}</button>`).join("")}</div></div>` : "";
+      return suggestions.length ? `<div class="card" style="box-shadow:none;background:var(--panel-2);margin-top:10px;"><div class="section-title"><h3>Smart add-ons</h3><span class="pill good">One tap</span></div><div class="toolbar" style="justify-content:flex-start;">${suggestions.map(s => `<button class="ghost-btn" type="button" data-add-suggestion="${esc(s.id)}"><i data-lucide="sparkles"></i>${esc(s.name)}</button>`).join("")}</div></div>` : "";
     }
     function suggestUpsells(items) {
       const names = new Set(items.map(i => i.description));
@@ -1590,11 +1833,25 @@
     function textarea(name, label, value, cls = "") {
       return `<div class="field ${cls}"><label>${esc(label)}</label><textarea name="${name}">${esc(value ?? "")}</textarea></div>`;
     }
+    function serviceMultiSelect(name, label, selected = []) {
+      const chosen = new Set(selected);
+      const summary = chosen.size ? [...chosen].join(", ") : "Choose services";
+      return `<div class="field full"><label>${esc(label)}</label><details class="service-picker"><summary><span data-service-summary>${esc(summary)}</span><i data-lucide="chevron-down"></i></summary><div class="service-options">${db.services.filter(s => s.active !== false).map(s => `<label class="check-tile"><input type="checkbox" name="${name}" value="${esc(s.name)}" ${chosen.has(s.name) ? "checked" : ""}>${esc(s.name)}</label>`).join("")}</div><p class="select-note">Uses the configured service list from Settings.</p></details></div>`;
+    }
     function select(name, label, options, value) {
       return `<div class="field"><label>${esc(label)}</label><select name="${name}">${options.map(o => {
         const val = Array.isArray(o) ? o[0] : o, text = Array.isArray(o) ? o[1] : o;
         return `<option value="${esc(val)}" ${val === value ? "selected" : ""}>${esc(text)}</option>`;
       }).join("")}</select></div>`;
+    }
+    function jobPropertyField(customerId, selectedId) {
+      const props = db.properties.filter(p => p.customerId === customerId);
+      const selected = props.some(p => p.id === selectedId) ? selectedId : props[0]?.id || "";
+      if (props.length <= 1) {
+        const prop = props[0];
+        return `<div class="field"><label>Property</label><input type="hidden" name="propertyId" value="${esc(selected)}"><div class="row-card" style="box-shadow:none;"><div><strong>${esc(prop?.address || "No property on file")}</strong><div class="meta"><span>${esc(prop?.homeType || "Add property from customer profile")}</span>${prop ? `<span>${prop.sqft} sqft</span>` : ""}</div></div></div></div>`;
+      }
+      return `<div class="field"><label>Property</label><select name="propertyId">${props.map(p => `<option value="${esc(p.id)}" ${p.id === selected ? "selected" : ""}>${esc(p.address)}</option>`).join("")}</select><p class="select-note">Only properties linked to the selected customer are shown.</p></div>`;
     }
     function upsert(arr, item) {
       const idx = arr.findIndex(x => x.id === item.id);
@@ -1628,7 +1885,8 @@
           const temp = Math.round(data.daily.temperature_2m_max[idx] ?? 0);
           const code = data.daily.weather_code[idx];
           const risk = precip >= 60 || wind >= 22 ? "risk" : precip >= 35 || temp < 45 || wind >= 16 ? "caution" : "good";
-          ui.weather[date] = { temp, precip, wind: Math.round(wind), condition: weatherCode(code), label: risk === "good" ? "Good" : risk === "caution" ? "Caution" : "Risk", badgeClass: risk === "good" ? "good" : risk === "caution" ? "warn" : "risk" };
+          const condition = weatherCode(code);
+          ui.weather[date] = { temp, precip, wind: Math.round(wind), condition: condition.label, icon: condition.icon, label: risk === "good" ? "Good" : risk === "caution" ? "Caution" : "Risk", badgeClass: risk === "good" ? "good" : risk === "caution" ? "warn" : "risk" };
         });
         ui.weatherLoadedAt = Date.now();
         if (document.getElementById("view")) render();
@@ -1638,12 +1896,13 @@
     }
     function weatherFor(date) { return ui.weather[date]; }
     function weatherCode(code) {
-      if ([0,1].includes(code)) return "Clear";
-      if ([2,3].includes(code)) return "Clouds";
-      if ([45,48].includes(code)) return "Fog";
-      if ([51,53,55,61,63,65,80,81,82].includes(code)) return "Rain";
-      if ([95,96,99].includes(code)) return "Storms";
-      return "Mixed";
+      if ([0,1].includes(code)) return { label: "Clear", icon: "☀️" };
+      if ([2].includes(code)) return { label: "Partly cloudy", icon: "⛅" };
+      if ([3,45,48].includes(code)) return { label: "Clouds", icon: "☁️" };
+      if ([51,53,55,61,63,65,80,81,82].includes(code)) return { label: "Rain", icon: "🌧️" };
+      if ([71,73,75,77,85,86].includes(code)) return { label: "Snow", icon: "❄️" };
+      if ([95,96,99].includes(code)) return { label: "Storms", icon: "⛈️" };
+      return { label: "Mixed", icon: "🌤️" };
     }
 
     function bindView() {
@@ -1653,6 +1912,7 @@
         const a = btn.dataset.action;
         if (a === "collapse-nav") document.body.classList.toggle("nav-mini");
         if (a === "mobile-nav") document.body.classList.toggle("mobile-nav-open");
+        if (a === "toggle-theme") toggleTheme();
         if (a === "reset-demo") resetDemo();
         if (a === "quick-lead") openLeadForm();
         if (a === "quote-builder") openQuoteBuilder();
@@ -1666,7 +1926,7 @@
         if (a === "new-photo") { db.photos.unshift({ id: uid("photo"), jobId: db.jobs[0]?.id || "", customerId: db.customers[0]?.id || "", type:"Before/After", caption:"Demo transformation added", dataUrl: PHOTO_BACKGROUNDS[db.photos.length % 4], createdAt: iso(today()) }); saveDb(); render(); toast("Demo photo added"); }
       });
       document.querySelectorAll("[data-kpi]").forEach(el => el.onclick = () => openKpi(el.dataset.kpi));
-      document.querySelectorAll("[data-report]").forEach(el => el.onclick = () => openKpi(el.dataset.report === "outstanding" ? "outstanding" : el.dataset.report === "conversion" ? "winRate" : "monthlyRevenue"));
+      document.querySelectorAll("[data-report]").forEach(el => el.onclick = e => { if (!e.target.closest("button, select, input, textarea")) openReport(el.dataset.report); });
       document.querySelectorAll("[data-day]").forEach(el => el.onclick = () => openDay(el.dataset.day));
       document.querySelectorAll("[data-month-step]").forEach(btn => btn.onclick = () => { ui.selectedMonth.setMonth(ui.selectedMonth.getMonth() + Number(btn.dataset.monthStep)); render(); });
       document.querySelectorAll("[data-close-modal]").forEach(btn => btn.onclick = closeModal);
@@ -1696,6 +1956,19 @@
       document.querySelectorAll("[data-save-settings]").forEach(b => b.onclick = saveSettings);
       document.querySelectorAll("[data-complete-task]").forEach(b => b.onclick = () => { const t = db.tasks.find(x => x.id === b.dataset.completeTask); if (t) t.done = true; saveDb(); render(); toast("Reminder completed"); });
       document.querySelectorAll("[data-job-status-inline]").forEach(s => s.onchange = () => { const j = get.job(s.dataset.jobStatusInline); j.status = s.value; saveDb(); toast("Job status updated"); openDay(j.scheduledDate); });
+      const jobCustomer = document.querySelector("#jobForm select[name='customerId']");
+      if (jobCustomer) jobCustomer.onchange = () => {
+        document.getElementById("jobPropertySlot").innerHTML = jobPropertyField(jobCustomer.value, "");
+        paintIcons();
+      };
+      document.querySelectorAll("input[name='requestedServices']").forEach(box => box.onchange = () => {
+        const form = box.closest("form");
+        const summary = form?.querySelector("[data-service-summary]");
+        if (summary) {
+          const picked = [...form.querySelectorAll("input[name='requestedServices']:checked")].map(x => x.value);
+          summary.textContent = picked.length ? picked.join(", ") : "Choose services";
+        }
+      });
       document.querySelectorAll("[data-add-service]").forEach(b => b.onclick = () => { syncQuoteLinesFromDom(); const svc = get.service(b.dataset.addService); const prop = get.property(document.querySelector("#quoteForm select[name='propertyId']")?.value); window.activeQuoteItems.push(buildLine(svc, prop, document.getElementById("quoteForm").dataset.id)); document.getElementById("quoteLines").innerHTML = window.activeQuoteItems.map(lineMarkup).join(""); bindView(); recalcQuoteBuilder(); });
       document.querySelectorAll("[data-add-suggestion]").forEach(b => b.onclick = () => { syncQuoteLinesFromDom(); const svc = get.service(b.dataset.addSuggestion); window.activeQuoteItems.push(buildLine(svc, get.property(document.querySelector("#quoteForm select[name='propertyId']")?.value), document.getElementById("quoteForm").dataset.id)); document.getElementById("quoteLines").innerHTML = window.activeQuoteItems.map(lineMarkup).join(""); bindView(); recalcQuoteBuilder(); });
       document.querySelectorAll("[data-remove-line]").forEach(b => b.onclick = () => { window.activeQuoteItems = window.activeQuoteItems.filter(i => i.id !== b.dataset.removeLine); document.getElementById("quoteLines").innerHTML = window.activeQuoteItems.map(lineMarkup).join("") || emptyState("No services yet", "Tap a service preset to build the estimate."); bindView(); recalcQuoteBuilder(); });
