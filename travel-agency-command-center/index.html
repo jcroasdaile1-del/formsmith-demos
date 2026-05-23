@@ -23,6 +23,20 @@
       --brand: #19647e;
       --brand-dark: #12465c;
       --brand-soft: #e5f3f6;
+      --button-primary: #0b57d0;
+      --button-primary-hover: #0842a0;
+      --button-primary-text: #ffffff;
+      --button-primary-shadow: rgba(11, 87, 208, .2);
+      --button-secondary-bg: #e8f0fe;
+      --button-secondary-hover: #d2e3fc;
+      --button-secondary-text: #0b57d0;
+      --button-secondary-border: #c2d7ff;
+      --button-danger: #b3261e;
+      --button-danger-hover: #8c1d18;
+      --button-danger-text: #ffffff;
+      --button-success: #137333;
+      --button-success-hover: #0d652d;
+      --button-success-text: #ffffff;
       --coral: #c45546;
       --coral-soft: #fdebe7;
       --gold: #a96f16;
@@ -247,9 +261,9 @@
     }
 
     .theme-toggle {
-      color: var(--ink);
-      background: var(--panel);
-      border-color: var(--line);
+      color: var(--button-secondary-text);
+      background: var(--button-secondary-bg);
+      border-color: var(--button-secondary-border);
       box-shadow: none;
     }
 
@@ -273,6 +287,20 @@
       --violet-soft: #2e2544;
       --red: #f38ba8;
       --red-soft: #3a2028;
+      --button-primary: #89dceb;
+      --button-primary-hover: #94e2d5;
+      --button-primary-text: #11111b;
+      --button-primary-shadow: rgba(137, 220, 235, .2);
+      --button-secondary-bg: #313244;
+      --button-secondary-hover: #45475a;
+      --button-secondary-text: #89dceb;
+      --button-secondary-border: #45475a;
+      --button-danger: #f38ba8;
+      --button-danger-hover: #eba0ac;
+      --button-danger-text: #11111b;
+      --button-success: #a6e3a1;
+      --button-success-hover: #94e2d5;
+      --button-success-text: #11111b;
       --shadow: 0 18px 46px rgba(0, 0, 0, .45);
       --shadow-soft: 0 10px 28px rgba(0, 0, 0, .32);
     }
@@ -386,10 +414,11 @@
 
     body.dark-mode .nav-item:hover,
     body.dark-mode .btn.secondary:hover,
+    body.dark-mode .icon-btn.secondary:hover,
     body.dark-mode .chip:hover {
-      background: #313244;
-      color: var(--brand-dark);
-      border-color: #45475a;
+      background: var(--button-secondary-hover);
+      color: var(--button-secondary-text);
+      border-color: var(--button-secondary-border);
     }
 
     body.dark-mode .table-shell,
@@ -686,45 +715,57 @@
       gap: 8px;
       min-height: 39px;
       padding: 9px 12px;
-      color: #fff;
-      background: var(--brand);
+      color: var(--button-primary-text);
+      background: var(--button-primary);
       font-weight: 800;
       line-height: 1.1;
       text-decoration: none;
-      box-shadow: 0 5px 15px rgba(25, 100, 126, .18);
+      box-shadow: 0 5px 15px var(--button-primary-shadow);
       transition: transform .16s ease, box-shadow .16s ease, background .16s ease;
     }
 
     .btn:hover,
     .icon-btn:hover {
-      background: var(--brand-dark);
-      box-shadow: 0 8px 18px rgba(25, 100, 126, .22);
+      background: var(--button-primary-hover);
+      box-shadow: 0 8px 18px var(--button-primary-shadow);
       transform: translateY(-1px);
     }
 
     .btn.secondary,
+    .icon-btn.secondary,
     .chip {
-      color: var(--ink);
-      background: var(--panel);
-      border-color: var(--line);
+      color: var(--button-secondary-text);
+      background: var(--button-secondary-bg);
+      border-color: var(--button-secondary-border);
       box-shadow: none;
     }
 
     .btn.secondary:hover,
+    .icon-btn.secondary:hover,
     .chip:hover {
-      color: var(--brand-dark);
-      background: var(--brand-soft);
-      border-color: #bfdde5;
+      color: var(--button-secondary-text);
+      background: var(--button-secondary-hover);
+      border-color: var(--button-secondary-border);
     }
 
     .btn.danger {
-      background: var(--red);
-      box-shadow: 0 5px 15px rgba(182, 51, 51, .16);
+      color: var(--button-danger-text);
+      background: var(--button-danger);
+      box-shadow: 0 5px 15px rgba(179, 38, 30, .16);
+    }
+
+    .btn.danger:hover {
+      background: var(--button-danger-hover);
     }
 
     .btn.success {
-      background: var(--green);
+      color: var(--button-success-text);
+      background: var(--button-success);
       box-shadow: 0 5px 15px rgba(44, 122, 88, .16);
+    }
+
+    .btn.success:hover {
+      background: var(--button-success-hover);
     }
 
     .btn.small,
@@ -735,10 +776,10 @@
     }
 
     .chip.active {
-      color: var(--brand-dark);
-      background: var(--brand-soft);
-      border-color: #bfdde5;
-      box-shadow: inset 0 0 0 1px rgba(25, 100, 126, .1);
+      color: var(--button-primary-text);
+      background: var(--button-primary);
+      border-color: var(--button-primary);
+      box-shadow: 0 4px 12px var(--button-primary-shadow);
     }
 
     .icon-btn {
