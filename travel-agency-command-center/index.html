@@ -1620,10 +1620,17 @@
       document.addEventListener('submit', handleSubmit);
       document.addEventListener('input', handleInput);
       document.addEventListener('change', handleChange);
+      document.addEventListener('keydown', handleKeyDown);
       window.addEventListener('resize', function() {
         if (!isMobile()) document.body.classList.remove('mobile-nav-open');
         updateSidebarToggleIcon();
       });
+    }
+
+    function handleKeyDown(event) {
+      if (event.key === 'Escape' && document.getElementById('modalRoot').innerHTML.trim()) {
+        closeModal();
+      }
     }
 
     function loadState() {
@@ -1776,6 +1783,15 @@
 
     function applySettingsToChrome() {
       document.getElementById('brandName').textContent = state.settings.agencyName || 'Crosby Travel Adventures';
+      const brandIcon = document.getElementById('brandIcon');
+      if (brandIcon) {
+        const logoUrl = clean(state.settings.logoUrl);
+        if (logoUrl) {
+          brandIcon.innerHTML = '<img src="' + escapeAttr(logoUrl) + '" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit" onerror="this.parentElement.innerHTML=&quot;' + icon('plane').replace(/"/g, '&quot;') + '&quot;">';
+        } else {
+          brandIcon.innerHTML = icon('plane');
+        }
+      }
     }
 
     function applyThemePreference() {
@@ -1829,10 +1845,29 @@
         'close-mobile-nav': closeMobileNav,
         'close-modal': closeModal,
         'open-client-modal': function() { openClientModal(); },
+        'edit-client': function() { openClientModal(id); },
+        'delete-client': function() { deleteClient(id); },
         'open-lead-modal': function() { openLeadModal(); },
+        'edit-lead': function() { openLeadModal(id); },
+        'delete-lead': function() { deleteLead(id); },
         'open-quote-builder': function() { openQuoteBuilderModal(id); },
+        'edit-quote': function() { openQuoteBuilderModal('', id); },
+        'delete-quote': function() { deleteQuote(id); },
+        'open-trip-modal': function() { openTripModal(); },
+        'edit-trip': function() { openTripModal(id); },
+        'delete-trip': function() { deleteTrip(id); },
+        'open-group-cruise-modal': function() { openGroupCruiseModal(); },
+        'edit-group-cruise': function() { openGroupCruiseModal(id); },
+        'delete-group-cruise': function() { deleteGroupCruise(id); },
+        'open-traveler-modal': function() { openTravelerModal('', id); },
+        'edit-traveler': function() { openTravelerModal(id); },
+        'delete-traveler': function() { deleteTraveler(id); },
         'open-payment-modal': function() { openPaymentModal(); },
+        'delete-payment': function() { deletePayment(id); },
         'open-group-deposit-modal': function() { openGroupDepositModal(); },
+        'delete-group-deposit': function() { deleteGroupDeposit(id); },
+        'edit-document': function() { openDocumentEditModal(id); },
+        'delete-document': function() { deleteDocument(id); },
         'select-client': function() { selectedClientId = id; render(); },
         'quote-preview': function() { openQuotePreview(id); },
         'download-quote': function() { downloadQuote(id); },
@@ -1841,6 +1876,7 @@
         'edit-group-deposit': function() { openGroupDepositModal(id); },
         'set-alert-filter': function() { alertFilter = id; render(); },
         'dashboard-detail': function() { openDashboardDetail(id); },
+        'goto-section': function() { closeModal(); currentSection = id; render(); },
         'view-template': function() { openTemplateModal(id); },
         'generate-document': function() { openGenerateDocumentModal(id); },
         'open-document-generator': function() { openGenerateDocumentModal(); },
@@ -1863,18 +1899,23 @@
     }
 
     function handleChange(event) {
-      if (event.target.name !== 'clientId') return;
-      const paymentForm = event.target.closest('form[data-form="paymentAlert"]');
-      if (paymentForm) {
-        const tripSelect = paymentForm.querySelector('#tripId');
-        if (tripSelect) tripSelect.innerHTML = tripOptionsHtml('', event.target.value);
+      if (event.target && event.target.dataset && event.target.dataset.action === 'change-lead-status') {
+        const lead = state.leads.find(function(item) { return item.id === event.target.dataset.id; });
+        if (lead) {
+          lead.status = event.target.value;
+          saveState();
+          render();
+          toast('Lead status updated to ' + lead.status + '.');
+        }
         return;
       }
-      const documentForm = event.target.closest('form[data-form="generatedDocument"]');
-      if (documentForm) {
-        const sourceSelect = documentForm.querySelector('#sourceRecordId');
-        if (sourceSelect) sourceSelect.innerHTML = documentSourceOptionsHtml('', event.target.value);
-      }
+      if (event.target.name !== 'clientId') return;
+      const form = event.target.closest('form[data-form]');
+      if (!form) return;
+      const tripSelect = form.querySelector('#tripId');
+      if (tripSelect) tripSelect.innerHTML = tripOptionsHtml('', event.target.value);
+      const sourceSelect = form.querySelector('#sourceRecordId');
+      if (sourceSelect) sourceSelect.innerHTML = documentSourceOptionsHtml('', event.target.value);
     }
 
     function handleSubmit(event) {
@@ -1894,7 +1935,11 @@
         paymentAlert: savePaymentAlertFromForm,
         groupDepositAlert: saveGroupDepositFromForm,
         generatedDocument: saveGeneratedDocumentFromForm,
-        settings: saveSettingsFromForm
+        settings: saveSettingsFromForm,
+        trip: saveTripFromForm,
+        groupCruise: saveGroupCruiseFromForm,
+        traveler: saveTravelerFromForm,
+        documentEdit: saveDocumentEditFromForm
       };
       const handler = handlers[form.dataset.form];
       if (handler) handler(data, form);
@@ -1957,7 +2002,15 @@
     function openDashboardDetail(metricId) {
       const detail = getDashboardDetail(metricId);
       if (!detail) return;
-      openModal(detail.title, '<p class="panel-subtitle" style="margin-bottom:14px">' + escapeHtml(detail.subtitle) + '</p>' + detail.content + '<div class="modal-actions"><button class="btn secondary" type="button" data-action="close-modal">Close</button></div>', true);
+      const sectionMap = {
+        newLeads: 'leads', activeQuotes: 'quotes', upcomingTrips: 'trips',
+        clientPaymentsDue: 'payments', overdueClientPayments: 'payments',
+        groupCruiseDepositsDue: 'payments', agentGroupDepositsDue: 'payments',
+        documentsNeeded: 'documents', alertsDueToday: 'payments'
+      };
+      const targetSection = sectionMap[metricId];
+      const gotoBtn = targetSection ? '<button class="btn" type="button" data-action="goto-section" data-id="' + targetSection + '">' + icon('chevron-right', 'sm') + 'Open ' + escapeHtml(targetSection.charAt(0).toUpperCase() + targetSection.slice(1)) + '</button>' : '';
+      openModal(detail.title, '<p class="panel-subtitle" style="margin-bottom:14px">' + escapeHtml(detail.subtitle) + '</p>' + detail.content + '<div class="modal-actions"><button class="btn secondary" type="button" data-action="close-modal">Close</button>' + gotoBtn + '</div>', true);
     }
 
     function getDashboardDetail(metricId) {
@@ -2035,7 +2088,7 @@
         '<h3>' + escapeHtml(client.firstName + ' ' + client.lastName) + '</h3>' +
         '<div class="item-meta"><span>' + escapeHtml(client.email) + '</span><span>' + escapeHtml(client.phone) + '</span></div>' +
         '<div class="item-meta"><span>' + escapeHtml(client.preferredAirport) + '</span><span>' + escapeHtml(client.budgetRange) + '</span></div>' +
-        '<div class="button-row"><button class="btn small secondary" type="button" data-action="select-client" data-id="' + client.id + '">' + icon('eye', 'sm') + 'View</button></div>' +
+        '<div class="button-row"><button class="btn small secondary" type="button" data-action="select-client" data-id="' + client.id + '">' + icon('eye', 'sm') + 'View</button><button class="btn small secondary" type="button" data-action="edit-client" data-id="' + client.id + '">' + icon('edit', 'sm') + 'Edit</button><button class="btn small danger" type="button" data-action="delete-client" data-id="' + client.id + '">' + icon('x', 'sm') + 'Delete</button></div>' +
       '</article>';
     }
 
@@ -2047,7 +2100,7 @@
       const trips = state.trips.filter(function(trip) { return trip.clientId === client.id; });
       const payments = state.payments.filter(function(payment) { return payment.clientId === client.id; });
       const documents = state.documents.filter(function(documentRecord) { return documentRecord.clientId === client.id; });
-      return '<div class="panel-header"><div><h2 class="panel-title">' + escapeHtml(client.firstName + ' ' + client.lastName) + '</h2><p class="panel-subtitle">' + escapeHtml(client.id) + ' | Updated ' + formatDate(client.updatedDate) + '</p></div>' + passportBadge(client.passportStatus) + '</div>' +
+      return '<div class="panel-header"><div><h2 class="panel-title">' + escapeHtml(client.firstName + ' ' + client.lastName) + '</h2><p class="panel-subtitle">' + escapeHtml(client.id) + ' | Updated ' + formatDate(client.updatedDate) + '</p></div><div class="button-row">' + passportBadge(client.passportStatus) + '<button class="btn small secondary" type="button" data-action="edit-client" data-id="' + client.id + '">' + icon('edit', 'sm') + 'Edit</button><button class="btn small danger" type="button" data-action="delete-client" data-id="' + client.id + '">' + icon('x', 'sm') + 'Delete</button></div></div>' +
         '<div class="info-grid">' +
           infoTile('Phone', client.phone) +
           infoTile('Email', client.email) +
@@ -2061,7 +2114,7 @@
           miniPanel('Notes', '<p class="small muted">' + escapeHtml(client.notes) + '</p>') +
         '</div>' +
         '<div class="grid two" style="margin-top:14px">' +
-          miniPanel('Associated Travelers', travelers.length ? travelers.map(renderTravelerRow).join('') : emptyState('No associated travelers yet.')) +
+          miniPanel('Associated Travelers', (travelers.length ? travelers.map(renderTravelerRow).join('') : emptyState('No associated travelers yet.')) + '<div class="button-row" style="margin-top:8px"><button class="btn small" type="button" data-action="open-traveler-modal" data-id="' + client.id + '">' + icon('plus', 'sm') + 'Add Traveler</button></div>') +
           miniPanel('Active Leads', leads.length ? renderLeadRows(leads) : emptyState('No active leads.')) +
           miniPanel('Active Quotes', quotes.length ? renderQuoteMiniRows(quotes) : emptyState('No active quotes.')) +
           miniPanel('Booked Trips', trips.length ? renderTripRows(trips) : emptyState('No booked trips.')) +
@@ -2071,7 +2124,7 @@
     }
 
     function renderTravelerRow(traveler) {
-      return '<div class="item-row"><div><p class="item-title">' + escapeHtml(traveler.firstName + ' ' + traveler.lastName) + '</p><div class="item-meta"><span>DOB ' + formatDate(traveler.dateOfBirth) + '</span><span>' + escapeHtml(traveler.relationship) + '</span><span>Passport: ' + escapeHtml(traveler.passportStatus) + '</span></div></div></div>';
+      return '<div class="item-row"><div><p class="item-title">' + escapeHtml(traveler.firstName + ' ' + traveler.lastName) + '</p><div class="item-meta"><span>DOB ' + formatDate(traveler.dateOfBirth) + '</span><span>' + escapeHtml(traveler.relationship) + '</span><span>Passport: ' + escapeHtml(traveler.passportStatus) + '</span></div></div><div class="button-row"><button class="btn small secondary" type="button" data-action="edit-traveler" data-id="' + traveler.id + '">' + icon('edit', 'sm') + 'Edit</button><button class="btn small danger" type="button" data-action="delete-traveler" data-id="' + traveler.id + '">' + icon('x', 'sm') + 'Delete</button></div></div>';
     }
 
     function renderLeads() {
@@ -2091,12 +2144,14 @@
     }
 
     function renderLeadCard(lead) {
+      const statusOptions = leadStatuses.map(function(s) { return '<option value="' + escapeAttr(s) + '"' + (s === lead.status ? ' selected' : '') + '>' + escapeHtml(s) + '</option>'; }).join('');
       return '<article class="lead-card">' +
         '<div><h3>' + escapeHtml(lead.destination) + '</h3><div class="item-meta"><span>' + escapeHtml(lead.clientName) + '</span><span>' + formatDate(lead.travelStartDate) + ' - ' + formatDate(lead.travelEndDate) + '</span></div></div>' +
         '<div class="item-meta"><span>' + escapeHtml(lead.tripType) + '</span><span>' + lead.numberOfAdults + ' adults</span><span>' + lead.numberOfChildren + ' children</span></div>' +
         '<div class="item-meta"><span>Budget ' + escapeHtml(lead.budget) + '</span><span>Follow-up ' + formatDate(lead.followUpDate) + '</span></div>' +
         '<p class="small muted">' + escapeHtml(lead.mustHaves) + '</p>' +
-        '<div class="button-row"><button class="btn small" type="button" data-action="open-quote-builder" data-id="' + lead.id + '">' + icon('file-text', 'sm') + 'Build Quote</button></div>' +
+        '<div class="field" style="margin-top:8px"><label>Status</label><select data-action="change-lead-status" data-id="' + lead.id + '">' + statusOptions + '</select></div>' +
+        '<div class="button-row"><button class="btn small" type="button" data-action="open-quote-builder" data-id="' + lead.id + '">' + icon('file-text', 'sm') + 'Build Quote</button><button class="btn small secondary" type="button" data-action="edit-lead" data-id="' + lead.id + '">' + icon('edit', 'sm') + 'Edit</button><button class="btn small danger" type="button" data-action="delete-lead" data-id="' + lead.id + '">' + icon('x', 'sm') + 'Delete</button></div>' +
       '</article>';
     }
 
@@ -2120,13 +2175,18 @@
         '</div>' +
         '<p class="small muted" style="margin:12px 0 0">' + escapeHtml(quote.notes) + '</p>' +
         '<div class="quote-options">' + (options.length ? options.map(renderQuoteOption).join('') : emptyState('No quote options yet.')) + '</div>' +
-        '<div class="button-row" style="margin-top:13px"><button class="btn small" type="button" data-action="quote-preview" data-id="' + quote.id + '">' + icon('eye', 'sm') + 'Quote Preview</button><button class="btn small secondary" type="button" data-action="download-quote" data-id="' + quote.id + '">' + icon('download', 'sm') + 'Download</button></div>' +
+        '<div class="button-row" style="margin-top:13px"><button class="btn small" type="button" data-action="quote-preview" data-id="' + quote.id + '">' + icon('eye', 'sm') + 'Quote Preview</button><button class="btn small secondary" type="button" data-action="download-quote" data-id="' + quote.id + '">' + icon('download', 'sm') + 'Download (HTML \u2014 print to PDF)</button><button class="btn small secondary" type="button" data-action="edit-quote" data-id="' + quote.id + '">' + icon('edit', 'sm') + 'Edit</button><button class="btn small danger" type="button" data-action="delete-quote" data-id="' + quote.id + '">' + icon('x', 'sm') + 'Delete</button></div>' +
       '</article>';
     }
 
     function renderQuoteOption(option) {
+      const imageUrl = clean(option.imageUrlPlaceholder);
+      const isValidImg = imageUrl && /^https?:\/\//i.test(imageUrl);
+      const thumb = isValidImg
+        ? '<div class="option-thumb" style="background-image:linear-gradient(rgba(18,70,92,0.55),rgba(18,70,92,0.55)),url(\'' + escapeAttr(imageUrl) + '\');background-size:cover;background-position:center">' + escapeHtml(option.optionName) + '</div>'
+        : '<div class="option-thumb">' + escapeHtml(option.optionName) + '</div>';
       return '<div class="option-card">' +
-        '<div class="option-thumb">' + escapeHtml(option.optionName) + '</div>' +
+        thumb +
         '<div><p class="item-title">' + escapeHtml(option.resortHotelOrCruiseName) + '</p><div class="item-meta"><span>' + escapeHtml(option.destination) + '</span><span>' + escapeHtml(option.supplier) + '</span></div></div>' +
         '<div class="info-grid">' + infoTile('Total', formatMoney(option.totalPrice)) + infoTile('Deposit', formatMoney(option.depositAmount)) + infoTile('Final due', formatDate(option.finalPaymentDueDate)) + '</div>' +
         '<p class="small muted">' + escapeHtml(option.inclusions) + '</p>' +
@@ -2136,7 +2196,7 @@
     function renderTrips() {
       const rows = state.trips.slice().sort(function(a, b) { return compareIso(a.travelStartDate, b.travelStartDate); });
       return '<div class="section-grid">' +
-        panel('Booked Trips', 'Reservation status, final payments, insurance, and document readiness.', '<div class="table-shell responsive-table"><table><thead><tr><th>Client</th><th>Trip</th><th>Dates</th><th>Supplier</th><th>Final Payment</th><th>Status</th><th>Insurance</th></tr></thead><tbody>' + rows.map(renderTripTableRow).join('') + '</tbody></table></div>') +
+        '<section class="panel"><div class="panel-header"><div><h2 class="panel-title">Booked Trips</h2><p class="panel-subtitle">Reservation status, final payments, insurance, and document readiness.</p></div><button class="btn" type="button" data-action="open-trip-modal">' + icon('plus', 'sm') + 'Add Trip</button></div><div class="table-shell responsive-table"><table><thead><tr><th>Client</th><th>Trip</th><th>Dates</th><th>Supplier</th><th>Final Payment</th><th>Status</th><th>Insurance</th><th>Actions</th></tr></thead><tbody>' + rows.map(renderTripTableRow).join('') + '</tbody></table></div></section>' +
       '</div>';
     }
 
@@ -2149,6 +2209,7 @@
         '<td data-label="Final Payment">' + formatMoney(trip.finalPaymentAmount) + '<br><span class="small muted">' + formatDate(trip.finalPaymentDueDate) + '</span></td>' +
         '<td data-label="Status">' + tripStatusBadges(trip).join(' ') + '</td>' +
         '<td data-label="Insurance">' + escapeHtml(trip.insuranceOffered ? trip.insuranceStatus : 'Not offered') + '</td>' +
+        '<td data-label="Actions"><div class="button-row"><button class="btn small secondary" type="button" data-action="edit-trip" data-id="' + trip.id + '">' + icon('edit', 'sm') + 'Edit</button><button class="btn small danger" type="button" data-action="delete-trip" data-id="' + trip.id + '">' + icon('x', 'sm') + 'Delete</button></div></td>' +
       '</tr>';
     }
 
@@ -2167,8 +2228,9 @@
       const isPaid = alert.status === 'Paid';
       const cardClass = alert.status === 'Overdue' ? 'overdue' : isPaid ? 'paid' : alert.visualType;
       const applies = alert.appliesTo || 'Client Reservation';
-      const actions = isPaid ? '<button class="btn small secondary" type="button" data-action="' + (alert.kind === 'payment' ? 'edit-payment' : 'edit-group-deposit') + '" data-id="' + alert.id + '">' + icon('edit', 'sm') + 'Edit</button>' :
-        '<button class="btn small success" type="button" data-action="mark-paid" data-type="' + alert.kind + '" data-id="' + alert.id + '">' + icon('check', 'sm') + 'Mark Paid</button><button class="btn small secondary" type="button" data-action="' + (alert.kind === 'payment' ? 'edit-payment' : 'edit-group-deposit') + '" data-id="' + alert.id + '">' + icon('edit', 'sm') + 'Edit</button>';
+      const deleteBtn = '<button class="btn small danger" type="button" data-action="' + (alert.kind === 'payment' ? 'delete-payment' : 'delete-group-deposit') + '" data-id="' + alert.id + '">' + icon('x', 'sm') + 'Delete</button>';
+      const actions = isPaid ? '<button class="btn small secondary" type="button" data-action="' + (alert.kind === 'payment' ? 'edit-payment' : 'edit-group-deposit') + '" data-id="' + alert.id + '">' + icon('edit', 'sm') + 'Edit</button>' + deleteBtn :
+        '<button class="btn small success" type="button" data-action="mark-paid" data-type="' + alert.kind + '" data-id="' + alert.id + '">' + icon('check', 'sm') + 'Mark Paid</button><button class="btn small secondary" type="button" data-action="' + (alert.kind === 'payment' ? 'edit-payment' : 'edit-group-deposit') + '" data-id="' + alert.id + '">' + icon('edit', 'sm') + 'Edit</button>' + deleteBtn;
       return '<article class="alert-card ' + cardClass + '">' +
         '<div>' +
           '<div class="button-row" style="margin-bottom:8px">' + paymentContextBadge(alert) + statusBadge(alert.status) + '</div>' +
@@ -2182,7 +2244,7 @@
 
     function renderGroupCruises() {
       return '<div class="section-grid">' +
-        '<section class="panel"><div class="panel-header"><div><h2 class="panel-title">Group Cruise Tracker</h2><p class="panel-subtitle">Separate agent deposits, client payment rules, and group cabin-hold deadlines.</p></div><button class="btn small secondary" type="button" data-action="open-group-deposit-modal">' + icon('plus', 'sm') + 'Add Deposit Alert</button></div></section>' +
+        '<section class="panel"><div class="panel-header"><div><h2 class="panel-title">Group Cruise Tracker</h2><p class="panel-subtitle">Separate agent deposits, client payment rules, and group cabin-hold deadlines.</p></div><div class="button-row"><button class="btn" type="button" data-action="open-group-cruise-modal">' + icon('plus', 'sm') + 'Add Group Cruise</button><button class="btn small secondary" type="button" data-action="open-group-deposit-modal">' + icon('plus', 'sm') + 'Add Deposit Alert</button></div></div></section>' +
         state.groupCruises.map(renderGroupCruiseCard).join('') +
       '</div>';
     }
@@ -2192,7 +2254,7 @@
       const agentDeposits = deposits.filter(function(deposit) { return deposit.appliesTo === 'Agent'; });
       const linkedTrips = state.trips.filter(function(trip) { return trip.groupCruiseId === cruise.id; });
       return '<article class="panel">' +
-        '<div class="panel-header"><div><h2 class="panel-title">' + escapeHtml(cruise.cruiseName) + '</h2><p class="panel-subtitle">' + escapeHtml(cruise.cruiseLine) + ' | ' + escapeHtml(cruise.ship) + ' | Sails ' + formatDate(cruise.sailingDate) + '</p></div>' + statusBadge(cruise.groupHoldStatus) + '</div>' +
+        '<div class="panel-header"><div><h2 class="panel-title">' + escapeHtml(cruise.cruiseName) + '</h2><p class="panel-subtitle">' + escapeHtml(cruise.cruiseLine) + ' | ' + escapeHtml(cruise.ship) + ' | Sails ' + formatDate(cruise.sailingDate) + '</p></div><div class="button-row">' + statusBadge(cruise.groupHoldStatus) + '<button class="btn small secondary" type="button" data-action="edit-group-cruise" data-id="' + cruise.id + '">' + icon('edit', 'sm') + 'Edit</button><button class="btn small danger" type="button" data-action="delete-group-cruise" data-id="' + cruise.id + '">' + icon('x', 'sm') + 'Delete</button></div></div>' +
         '<div class="info-grid">' +
           infoTile('Return', formatDate(cruise.returnDate)) +
           infoTile('Cabins held', cruise.numberOfCabinsHeld) +
@@ -2234,7 +2296,7 @@
         '<div class="panel-header"><div><h3 class="panel-title">' + escapeHtml(documentRecord.documentName) + '</h3><p class="panel-subtitle">' + escapeHtml(documentRecord.clientName) + ' | ' + escapeHtml(documentRecord.tripDestination) + '</p></div>' + statusBadge(documentRecord.status) + '</div>' +
         '<div class="item-meta"><span>' + escapeHtml(documentRecord.documentType) + '</span><span>Created ' + formatDate(documentRecord.createdDate) + '</span></div>' +
         '<p class="small muted">' + escapeHtml(documentRecord.notes) + '</p>' +
-        '<div class="button-row"><button class="btn small" type="button" data-action="preview-document" data-id="' + documentRecord.id + '">' + icon('eye', 'sm') + 'Preview</button><button class="btn small secondary" type="button" data-action="download-document" data-id="' + documentRecord.id + '">' + icon('download', 'sm') + 'Download</button><button class="btn small secondary" type="button" data-action="demo-toast" data-message="Google Drive link placeholder opened for ' + escapeAttr(documentRecord.documentName) + '.">' + icon('folder', 'sm') + 'Drive Link</button><button class="btn small secondary" type="button" data-action="mark-document-sent" data-id="' + documentRecord.id + '">Mark Sent</button><button class="btn small" type="button" data-action="mark-document-completed" data-id="' + documentRecord.id + '">Mark Completed</button></div>' +
+        '<div class="button-row"><button class="btn small" type="button" data-action="preview-document" data-id="' + documentRecord.id + '">' + icon('eye', 'sm') + 'Preview</button><button class="btn small secondary" type="button" data-action="download-document" data-id="' + documentRecord.id + '">' + icon('download', 'sm') + 'Download</button><button class="btn small secondary" type="button" data-action="demo-toast" data-message="Google Drive link placeholder opened for ' + escapeAttr(documentRecord.documentName) + '.">' + icon('folder', 'sm') + 'Drive Link</button><button class="btn small secondary" type="button" data-action="mark-document-sent" data-id="' + documentRecord.id + '">Mark Sent</button><button class="btn small" type="button" data-action="mark-document-completed" data-id="' + documentRecord.id + '">Mark Completed</button><button class="btn small secondary" type="button" data-action="edit-document" data-id="' + documentRecord.id + '">' + icon('edit', 'sm') + 'Edit</button><button class="btn small danger" type="button" data-action="delete-document" data-id="' + documentRecord.id + '">' + icon('x', 'sm') + 'Delete</button></div>' +
       '</article>';
     }
 
@@ -2274,19 +2336,21 @@
       '</div>';
     }
 
-    function openClientModal() {
-      openModal('Add Client', '<form data-form="client"><div class="form-grid">' +
-        field('firstName', 'First name', '', 'text', true) +
-        field('lastName', 'Last name', '', 'text', true) +
-        field('phone', 'Phone', '', 'tel', true) +
-        field('email', 'Email', '', 'email', true) +
-        field('address', 'Address', '', 'text', false, 'full') +
-        field('preferredAirport', 'Preferred airport', state.settings.primaryAirport || '', 'text', false) +
-        field('budgetRange', 'Budget range', '', 'text', false) +
-        selectField('passportStatus', 'Passport status', ['Valid', 'Expired', 'Needs Renewal', 'Unknown'], 'Unknown') +
-        textareaField('travelPreferences', 'Travel preferences', '', false, 'full') +
-        textareaField('notes', 'Notes', '', false, 'full') +
-      '</div><div class="modal-actions"><button class="btn secondary" type="button" data-action="close-modal">Cancel</button><button class="btn" type="submit">' + icon('check', 'sm') + 'Save Client</button></div></form>');
+    function openClientModal(clientId) {
+      const existing = clientId ? state.clients.find(function(item) { return item.id === clientId; }) : null;
+      const c = existing || { firstName:'', lastName:'', phone:'', email:'', address:'', preferredAirport: state.settings.primaryAirport || '', budgetRange:'', passportStatus:'Unknown', travelPreferences:'', notes:'' };
+      openModal(existing ? 'Edit Client' : 'Add Client', '<form data-form="client"><input type="hidden" name="id" value="' + escapeAttr(existing ? existing.id : '') + '"><div class="form-grid">' +
+        field('firstName', 'First name', c.firstName, 'text', true) +
+        field('lastName', 'Last name', c.lastName, 'text', true) +
+        field('phone', 'Phone', c.phone, 'tel', true) +
+        field('email', 'Email', c.email, 'email', true) +
+        field('address', 'Address', c.address, 'text', false, 'full') +
+        field('preferredAirport', 'Preferred airport', c.preferredAirport, 'text', false) +
+        field('budgetRange', 'Budget range', c.budgetRange, 'text', false) +
+        selectField('passportStatus', 'Passport status', ['Valid', 'Expired', 'Needs Renewal', 'Unknown'], c.passportStatus) +
+        textareaField('travelPreferences', 'Travel preferences', c.travelPreferences, false, 'full') +
+        textareaField('notes', 'Notes', c.notes, false, 'full') +
+      '</div><div class="modal-actions"><button class="btn secondary" type="button" data-action="close-modal">Cancel</button><button class="btn" type="submit">' + icon('check', 'sm') + (existing ? 'Save Changes' : 'Save Client') + '</button></div></form>');
     }
 
     function saveClientFromForm(data) {
@@ -2295,6 +2359,25 @@
         return;
       }
       const now = todayIso();
+      const existing = data.id ? state.clients.find(function(item) { return item.id === data.id; }) : null;
+      if (existing) {
+        existing.firstName = clean(data.firstName);
+        existing.lastName = clean(data.lastName);
+        existing.phone = clean(data.phone);
+        existing.email = clean(data.email);
+        existing.address = clean(data.address);
+        existing.preferredAirport = clean(data.preferredAirport);
+        existing.travelPreferences = clean(data.travelPreferences);
+        existing.budgetRange = clean(data.budgetRange);
+        existing.passportStatus = clean(data.passportStatus);
+        existing.notes = clean(data.notes);
+        existing.updatedDate = now;
+        saveState();
+        closeModal();
+        render();
+        toast('Client updated.');
+        return;
+      }
       const client = {
         id: makeId('C'),
         firstName: clean(data.firstName),
@@ -2319,25 +2402,27 @@
       toast('Client added.');
     }
 
-    function openLeadModal() {
-      openModal('Add Lead / Trip Request', '<form data-form="lead"><div class="form-grid">' +
-        clientSelectField() +
-        field('destination', 'Destination', '', 'text', true) +
-        field('travelStartDate', 'Travel start date', addDays(90), 'date', true) +
-        field('travelEndDate', 'Travel end date', addDays(97), 'date', true) +
-        yesNoField('flexibleDates', 'Flexible dates', 'Yes') +
-        field('numberOfAdults', 'Number of adults', '2', 'number', true) +
-        field('numberOfChildren', 'Number of children', '0', 'number', true) +
-        field('departingAirport', 'Departing airport', state.settings.primaryAirport || '', 'text', false) +
-        field('budget', 'Budget', '', 'text', false) +
-        selectField('tripType', 'Trip type', ['All-Inclusive', 'Cruise', 'Disney', 'Honeymoon', 'Family Vacation', 'Europe', 'Other'], 'All-Inclusive') +
-        field('source', 'Source', 'Manual entry', 'text', false) +
-        field('followUpDate', 'Follow-up date', addDays(Number(state.settings.defaultFollowUpDays || 3)), 'date', true) +
-        selectField('status', 'Status', leadStatuses, 'New') +
-        textareaField('mustHaves', 'Must-haves', '', false, 'full') +
-        textareaField('dealbreakers', 'Dealbreakers', '', false, 'full') +
-        textareaField('notes', 'Notes', '', false, 'full') +
-      '</div><div class="modal-actions"><button class="btn secondary" type="button" data-action="close-modal">Cancel</button><button class="btn" type="submit">' + icon('check', 'sm') + 'Save Lead</button></div></form>');
+    function openLeadModal(leadId) {
+      const existing = leadId ? state.leads.find(function(item) { return item.id === leadId; }) : null;
+      const l = existing || { clientId:'', destination:'', travelStartDate: addDays(90), travelEndDate: addDays(97), flexibleDates:'Yes', numberOfAdults:2, numberOfChildren:0, departingAirport: state.settings.primaryAirport || '', budget:'', tripType:'All-Inclusive', source:'Manual entry', followUpDate: addDays(Number(state.settings.defaultFollowUpDays || 3)), status:'New', mustHaves:'', dealbreakers:'', notes:'' };
+      openModal(existing ? 'Edit Lead / Trip Request' : 'Add Lead / Trip Request', '<form data-form="lead"><input type="hidden" name="id" value="' + escapeAttr(existing ? existing.id : '') + '"><div class="form-grid">' +
+        clientSelectField(l.clientId) +
+        field('destination', 'Destination', l.destination, 'text', true) +
+        field('travelStartDate', 'Travel start date', l.travelStartDate, 'date', true) +
+        field('travelEndDate', 'Travel end date', l.travelEndDate, 'date', true) +
+        yesNoField('flexibleDates', 'Flexible dates', l.flexibleDates) +
+        field('numberOfAdults', 'Number of adults', l.numberOfAdults, 'number', true) +
+        field('numberOfChildren', 'Number of children', l.numberOfChildren, 'number', true) +
+        field('departingAirport', 'Departing airport', l.departingAirport, 'text', false) +
+        field('budget', 'Budget', l.budget, 'text', false) +
+        selectField('tripType', 'Trip type', ['All-Inclusive', 'Cruise', 'Disney', 'Honeymoon', 'Family Vacation', 'Europe', 'Other'], l.tripType) +
+        field('source', 'Source', l.source, 'text', false) +
+        field('followUpDate', 'Follow-up date', l.followUpDate, 'date', true) +
+        selectField('status', 'Status', leadStatuses, l.status) +
+        textareaField('mustHaves', 'Must-haves', l.mustHaves, false, 'full') +
+        textareaField('dealbreakers', 'Dealbreakers', l.dealbreakers, false, 'full') +
+        textareaField('notes', 'Notes', l.notes, false, 'full') +
+      '</div><div class="modal-actions"><button class="btn secondary" type="button" data-action="close-modal">Cancel</button><button class="btn" type="submit">' + icon('check', 'sm') + (existing ? 'Save Changes' : 'Save Lead') + '</button></div></form>');
     }
 
     function saveLeadFromForm(data) {
@@ -2346,8 +2431,8 @@
         toast('Please choose a client and enter destination and travel dates.');
         return;
       }
-      state.leads.unshift({
-        id: makeId('L'),
+      const existing = data.id ? state.leads.find(function(item) { return item.id === data.id; }) : null;
+      const payload = {
         clientId: client.id,
         clientName: client.firstName + ' ' + client.lastName,
         destination: clean(data.destination),
@@ -2364,9 +2449,19 @@
         source: clean(data.source),
         followUpDate: data.followUpDate,
         status: clean(data.status),
-        notes: clean(data.notes),
-        createdDate: todayIso()
-      });
+        notes: clean(data.notes)
+      };
+      if (existing) {
+        Object.assign(existing, payload);
+        saveState();
+        closeModal();
+        render();
+        toast('Lead updated.');
+        return;
+      }
+      payload.id = makeId('L');
+      payload.createdDate = todayIso();
+      state.leads.unshift(payload);
       saveState();
       closeModal();
       currentSection = 'leads';
@@ -2374,27 +2469,57 @@
       toast('Lead added.');
     }
 
-    function openQuoteBuilderModal(leadId) {
-      const lead = state.leads.find(function(item) { return item.id === leadId; }) ||
+    function openQuoteBuilderModal(leadId, quoteId) {
+      const editingQuote = quoteId ? state.quotes.find(function(item) { return item.id === quoteId; }) : null;
+      const resolvedLeadId = editingQuote ? editingQuote.leadId : leadId;
+      const lead = state.leads.find(function(item) { return item.id === resolvedLeadId; }) ||
         state.leads.find(function(item) { return item.status !== 'Booked' && item.status !== 'Lost'; }) ||
         state.leads[0];
       if (!lead) {
         toast('Add a lead before building a quote.');
         return;
       }
-      openModal('Build Client Quote', '<form data-form="quoteBuilder"><div class="form-grid">' +
+      const existingOptions = editingQuote ? state.quoteOptions.filter(function(o) { return o.quoteId === editingQuote.id; }) : [];
+      const optionFields = function(index, defaultName, required) {
+        const existing = existingOptions[index - 1];
+        return quoteOptionFieldsFromExisting(index, defaultName, lead, required, existing);
+      };
+      const opt1 = optionFields(1, 'Best Value', true);
+      const opt2 = '<details class="quote-option-collapse"' + (existingOptions[1] ? ' open' : '') + '><summary style="cursor:pointer;padding:8px 0;font-weight:700;color:var(--accent)">+ Add Quote Option 2 (optional)</summary>' + optionFields(2, '', false) + '</details>';
+      const opt3 = '<details class="quote-option-collapse"' + (existingOptions[2] ? ' open' : '') + '><summary style="cursor:pointer;padding:8px 0;font-weight:700;color:var(--accent)">+ Add Quote Option 3 (optional)</summary>' + optionFields(3, '', false) + '</details>';
+      openModal(editingQuote ? 'Edit Client Quote' : 'Build Client Quote', '<form data-form="quoteBuilder"><input type="hidden" name="id" value="' + escapeAttr(editingQuote ? editingQuote.id : '') + '"><div class="form-grid">' +
         formSection('Quote Package', 'Choose the lead, set quote dates, and add the advisor notes that should appear in the client preview.') +
         leadSelectField(lead.id) +
-        selectField('quoteStatus', 'Quote status', ['Draft', 'Sent', 'Pending Client', 'Accepted', 'Expired'], 'Draft') +
-        dateField('dateCreated', 'Date created', todayIso(), true) +
-        dateField('dateSent', 'Date sent', '', false) +
-        dateField('expirationDate', 'Expiration date', addDays(Number(state.settings.defaultQuoteExpirationDays || 10)), true) +
-        dateField('followUpDate', 'Follow-up date', addDays(Number(state.settings.defaultFollowUpDays || 3)), true) +
-        textareaField('notes', 'Client-facing quote notes', buildQuoteNotesFromLead(lead), false, 'full') +
-        quoteOptionFields(1, 'Best Value', lead, true) +
-        quoteOptionFields(2, '', lead, false) +
-        quoteOptionFields(3, '', lead, false) +
-      '</div><div class="settings-note" style="margin-top:14px">The first option is required. Optional second and third options are saved only when an option name, supplier, property/cruise, or price is entered.</div><div class="modal-actions"><button class="btn secondary" type="button" data-action="close-modal">Cancel</button><button class="btn" type="submit">' + icon('file-text', 'sm') + 'Generate & Preview Quote</button></div></form>', true);
+        selectField('quoteStatus', 'Quote status', ['Draft', 'Sent', 'Pending Client', 'Accepted', 'Expired'], editingQuote ? editingQuote.quoteStatus : 'Draft') +
+        dateField('dateCreated', 'Date created', editingQuote ? editingQuote.dateCreated : todayIso(), true) +
+        dateField('dateSent', 'Date sent', editingQuote ? editingQuote.dateSent : '', false) +
+        dateField('expirationDate', 'Expiration date', editingQuote ? editingQuote.expirationDate : addDays(Number(state.settings.defaultQuoteExpirationDays || 10)), true) +
+        dateField('followUpDate', 'Follow-up date', editingQuote ? editingQuote.followUpDate : addDays(Number(state.settings.defaultFollowUpDays || 3)), true) +
+        textareaField('notes', 'Client-facing quote notes', editingQuote ? editingQuote.notes : buildQuoteNotesFromLead(lead), false, 'full') +
+        opt1 +
+        '<div class="full">' + opt2 + '</div>' +
+        '<div class="full">' + opt3 + '</div>' +
+      '</div><div class="settings-note" style="margin-top:14px">The first option is required. Optional second and third options are saved only when an option name, supplier, property/cruise, or price is entered.</div><div class="modal-actions"><button class="btn secondary" type="button" data-action="close-modal">Cancel</button><button class="btn" type="submit">' + icon('file-text', 'sm') + (editingQuote ? 'Save Quote Changes' : 'Generate & Preview Quote') + '</button></div></form>', true);
+    }
+
+    function quoteOptionFieldsFromExisting(index, defaultName, lead, required, existing) {
+      const prefix = 'option ' + index + ': ';
+      const e = existing || {};
+      return formSection('Quote Option ' + index, required ? 'Required client-facing option.' : 'Optional comparison option.') +
+        field('optionName' + index, prefix + 'option name', e.optionName || defaultName, 'text', required) +
+        field('optionDestination' + index, prefix + 'destination', e.destination || lead.destination || '', 'text', required) +
+        field('resortHotelOrCruiseName' + index, prefix + 'resort, hotel, or cruise', e.resortHotelOrCruiseName || '', 'text', required) +
+        field('roomTypeOrCabinType' + index, prefix + 'room or cabin type', e.roomTypeOrCabinType || '', 'text', false) +
+        field('supplier' + index, prefix + 'supplier', e.supplier || '', 'text', required) +
+        field('travelDates' + index, prefix + 'travel dates', e.travelDates || dateRange(lead.travelStartDate, lead.travelEndDate), 'text', false) +
+        field('totalPrice' + index, prefix + 'total price', e.totalPrice || '', 'number', required) +
+        field('depositAmount' + index, prefix + 'deposit amount', e.depositAmount || '', 'number', false) +
+        dateField('finalPaymentDueDate' + index, prefix + 'final payment due date', e.finalPaymentDueDate || addDays(45), false) +
+        field('imageUrlPlaceholder' + index, prefix + 'image URL placeholder', e.imageUrlPlaceholder || '', 'url', false) +
+        textareaField('inclusions' + index, prefix + 'inclusions', e.inclusions || '', false, 'full') +
+        textareaField('pros' + index, prefix + 'pros', e.pros || '', false, 'full') +
+        textareaField('cons' + index, prefix + 'cons', e.cons || '', false, 'full') +
+        textareaField('internalNotes' + index, prefix + 'internal notes', e.internalNotes || '', false, 'full');
     }
 
     function saveQuoteFromForm(data) {
@@ -2409,19 +2534,25 @@
         toast('Add at least one quote option before generating the quote.');
         return;
       }
-      const quote = {
+      const existing = data.id ? state.quotes.find(function(item) { return item.id === data.id; }) : null;
+      const quote = existing || {
         id: makeId('Q'),
         leadId: lead.id,
         clientId: client.id,
-        clientName: client.firstName + ' ' + client.lastName,
-        quoteStatus: clean(data.quoteStatus || 'Draft'),
-        dateCreated: data.dateCreated || todayIso(),
-        dateSent: data.dateSent || (data.quoteStatus === 'Sent' ? todayIso() : ''),
-        expirationDate: data.expirationDate || addDays(Number(state.settings.defaultQuoteExpirationDays || 10)),
-        followUpDate: data.followUpDate || addDays(Number(state.settings.defaultFollowUpDays || 3)),
-        notes: clean(data.notes)
+        clientName: client.firstName + ' ' + client.lastName
       };
-      state.quotes.unshift(quote);
+      quote.leadId = lead.id;
+      quote.clientId = client.id;
+      quote.clientName = client.firstName + ' ' + client.lastName;
+      quote.quoteStatus = clean(data.quoteStatus || 'Draft');
+      quote.dateCreated = data.dateCreated || quote.dateCreated || todayIso();
+      quote.dateSent = data.dateSent || (data.quoteStatus === 'Sent' ? todayIso() : (quote.dateSent || ''));
+      quote.expirationDate = data.expirationDate || addDays(Number(state.settings.defaultQuoteExpirationDays || 10));
+      quote.followUpDate = data.followUpDate || addDays(Number(state.settings.defaultFollowUpDays || 3));
+      quote.notes = clean(data.notes);
+      if (!existing) state.quotes.unshift(quote);
+      // Replace all options for this quote
+      state.quoteOptions = state.quoteOptions.filter(function(o) { return o.quoteId !== quote.id; });
       options.forEach(function(option) {
         option.id = makeId('QO');
         option.quoteId = quote.id;
@@ -2436,8 +2567,9 @@
       saveState();
       currentSection = 'quotes';
       render();
-      openQuotePreview(quote.id);
-      toast('Quote generated and saved.');
+      if (!existing) openQuotePreview(quote.id);
+      else closeModal();
+      toast(existing ? 'Quote updated.' : 'Quote generated and saved.');
     }
 
     function collectQuoteOptionsFromForm(data) {
@@ -2701,7 +2833,7 @@
       const quote = state.quotes.find(function(item) { return item.id === quoteId; });
       if (!quote) return;
       const options = state.quoteOptions.filter(function(option) { return option.quoteId === quote.id; });
-      const html = buildQuotePreviewHtml(quote, options) + '<div class="modal-actions"><button class="btn secondary" type="button" data-action="close-modal">Close</button><button class="btn secondary" type="button" data-action="download-quote" data-id="' + quote.id + '">' + icon('download', 'sm') + 'Download Quote</button><button class="btn" type="button" data-action="demo-toast" data-message="Client-facing quote preview is ready to send in a future workflow.">' + icon('send', 'sm') + 'Send Preview</button></div>';
+      const html = buildQuotePreviewHtml(quote, options) + '<div class="modal-actions"><button class="btn secondary" type="button" data-action="close-modal">Close</button><button class="btn secondary" type="button" data-action="download-quote" data-id="' + quote.id + '">' + icon('download', 'sm') + 'Download (HTML \u2014 print to PDF)</button><button class="btn" type="button" data-action="demo-toast" data-message="Client-facing quote preview is ready to send in a future workflow.">' + icon('send', 'sm') + 'Send Preview</button></div>';
       openModal('Client-Facing Quote Preview', html, true);
     }
 
@@ -2720,7 +2852,7 @@
       const quote = state.quotes.find(function(item) { return item.id === quoteId; });
       if (!quote) return;
       const options = state.quoteOptions.filter(function(option) { return option.quoteId === quote.id; });
-      const html = '<!doctype html><html><head><meta charset="utf-8"><title>' + escapeHtml(quote.clientName + ' Quote') + '</title><style>body{margin:0;background:#eef2f7;color:#1d2736;font-family:Arial,Helvetica,sans-serif;line-height:1.45}.quote-preview{max-width:980px;margin:24px auto;background:#fff;border:1px solid #d5dde8;border-radius:14px;overflow:hidden}.quote-preview-hero{padding:32px;background:#12465c;color:#fff}.quote-preview-hero h2{margin:0 0 8px;font-size:28px}.quote-preview-body{padding:24px}.quote-options{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px}.option-card{border:1px solid #d5dde8;border-radius:12px;padding:14px;background:#fff}.option-thumb{min-height:86px;border-radius:10px;background:#19647e;color:#fff;display:grid;place-items:center;text-align:center;font-weight:800;padding:12px;margin-bottom:12px}.panel-title{margin:0 0 8px;color:#12465c}.item-title{font-weight:800}.info-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.info-tile{border:1px solid #d5dde8;border-radius:10px;padding:9px;background:#f7fafc}.info-tile span{display:block;color:#647187;font-size:11px;text-transform:uppercase;font-weight:800}.info-tile strong{display:block;margin-top:4px}.muted{color:#647187}.small{font-size:13px}@media print{body{background:#fff}.quote-preview{margin:0;border:0}}</style></head><body>' + buildQuotePreviewHtml(quote, options) + '</body></html>';
+      const html = '<!doctype html><html><head><meta charset="utf-8"><title>' + escapeHtml(quote.clientName + ' Quote') + '</title><style>body{margin:0;background:#eef2f7;color:#1d2736;font-family:Arial,Helvetica,sans-serif;line-height:1.45}.quote-preview{max-width:980px;margin:24px auto;background:#fff;border:1px solid #d5dde8;border-radius:14px;overflow:hidden}.quote-preview-hero{padding:32px;background:#12465c;color:#fff}.quote-preview-hero h2{margin:0 0 8px;font-size:28px}.quote-preview-body{padding:24px}.quote-options{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px}.option-card{border:1px solid #d5dde8;border-radius:12px;padding:14px;background:#fff}.option-thumb{min-height:86px;border-radius:10px;background:#19647e;color:#fff;display:grid;place-items:center;text-align:center;font-weight:800;padding:12px;margin-bottom:12px}.panel-title{margin:0 0 8px;color:#12465c}.item-title{font-weight:800}.info-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.info-tile{border:1px solid #d5dde8;border-radius:10px;padding:9px;background:#f7fafc}.info-tile span{display:block;color:#647187;font-size:11px;text-transform:uppercase;font-weight:800}.info-tile strong{display:block;margin-top:4px}.muted{color:#647187}.small{font-size:13px}.print-bar{position:fixed;top:12px;right:12px;background:#12465c;color:#fff;border:0;padding:10px 16px;border-radius:8px;font-weight:700;cursor:pointer;z-index:10;box-shadow:0 4px 12px rgba(0,0,0,0.15)}@media print{body{background:#fff}.quote-preview{margin:0;border:0}.print-bar{display:none}}</style></head><body><button class="print-bar" type="button" onclick="window.print()">Print to PDF</button>' + buildQuotePreviewHtml(quote, options) + '</body></html>';
       const blob = new Blob([html], { type: 'text/html' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -2763,10 +2895,9 @@
       const source = resolveDocumentSource(data.clientId, data.sourceRecordId);
       const client = source.client;
       const trip = source.trip;
-      if (!template || !client || !trip) {
-        toast('Please choose a template and client.');
-        return;
-      }
+      if (!template) { toast('Please choose a template.'); return; }
+      if (!client) { toast('Please choose a client.'); return; }
+      if (!trip) { toast('Please choose a trip, lead, or client profile as the source.'); return; }
       const mergeData = buildPlaceholderData(template, trip, client);
       const documentName = clean(data.documentName) || trip.clientName + ' - ' + template.templateName;
       const documentRecord = {
@@ -3424,6 +3555,320 @@
       } catch (error) {
         toast('Copy blocked by browser. Select the link field and copy it manually.');
       }
+    }
+
+    // ---- Edit / Delete CRUD additions ----
+
+    function deleteClient(id) {
+      const client = state.clients.find(function(c) { return c.id === id; });
+      if (!client) return;
+      const linkedLeads = state.leads.filter(function(l) { return l.clientId === id; }).map(function(l) { return l.id; });
+      const linkedQuotes = state.quotes.filter(function(q) { return q.clientId === id; }).map(function(q) { return q.id; });
+      const linkedTrips = state.trips.filter(function(t) { return t.clientId === id; }).length;
+      const msg = 'Delete client ' + client.firstName + ' ' + client.lastName + '?\n\nThis will also remove:\n- ' + linkedLeads.length + ' lead(s)\n- ' + linkedQuotes.length + ' quote(s)\n- ' + linkedTrips + ' trip(s)\n- All linked travelers, payments, and documents.';
+      if (!confirm(msg)) return;
+      state.clients = state.clients.filter(function(c) { return c.id !== id; });
+      state.leads = state.leads.filter(function(l) { return l.clientId !== id; });
+      state.quotes = state.quotes.filter(function(q) { return q.clientId !== id; });
+      state.quoteOptions = state.quoteOptions.filter(function(o) { return linkedQuotes.indexOf(o.quoteId) === -1; });
+      state.trips = state.trips.filter(function(t) { return t.clientId !== id; });
+      state.payments = state.payments.filter(function(p) { return p.clientId !== id; });
+      state.travelers = state.travelers.filter(function(tr) { return tr.clientId !== id; });
+      state.documents = state.documents.filter(function(d) { return d.clientId !== id; });
+      if (selectedClientId === id) selectedClientId = state.clients[0] ? state.clients[0].id : '';
+      saveState();
+      render();
+      toast('Client and linked records deleted.');
+    }
+
+    function deleteLead(id) {
+      const lead = state.leads.find(function(l) { return l.id === id; });
+      if (!lead) return;
+      const linkedQuotes = state.quotes.filter(function(q) { return q.leadId === id; }).map(function(q) { return q.id; });
+      if (!confirm('Delete lead "' + lead.destination + '" for ' + lead.clientName + '?\n\nThis will also remove ' + linkedQuotes.length + ' linked quote(s).')) return;
+      state.leads = state.leads.filter(function(l) { return l.id !== id; });
+      state.quotes = state.quotes.filter(function(q) { return q.leadId !== id; });
+      state.quoteOptions = state.quoteOptions.filter(function(o) { return linkedQuotes.indexOf(o.quoteId) === -1; });
+      saveState();
+      render();
+      toast('Lead deleted.');
+    }
+
+    function deleteQuote(id) {
+      const quote = state.quotes.find(function(q) { return q.id === id; });
+      if (!quote) return;
+      if (!confirm('Delete quote for ' + quote.clientName + '?')) return;
+      state.quotes = state.quotes.filter(function(q) { return q.id !== id; });
+      state.quoteOptions = state.quoteOptions.filter(function(o) { return o.quoteId !== id; });
+      saveState();
+      render();
+      toast('Quote deleted.');
+    }
+
+    function openTripModal(tripId) {
+      const existing = tripId ? state.trips.find(function(t) { return t.id === tripId; }) : null;
+      const t = existing || { clientId:'', destination:'', tripType:'All-Inclusive', travelStartDate: addDays(60), travelEndDate: addDays(67), supplier:'', bookingNumber:'', totalPrice:'', depositPaid:'', finalPaymentAmount:'', finalPaymentDueDate: addDays(45), reservationStatus:'Booked', insuranceOffered:true, insuranceStatus:'Pending', documentsSent:'No', internalNotes:'', groupCruiseId:'' };
+      openModal(existing ? 'Edit Booked Trip' : 'Add Booked Trip', '<form data-form="trip"><input type="hidden" name="id" value="' + escapeAttr(existing ? existing.id : '') + '"><div class="form-grid">' +
+        clientSelectField(t.clientId) +
+        field('destination', 'Destination', t.destination, 'text', true) +
+        selectField('tripType', 'Trip type', ['All-Inclusive', 'Cruise', 'Disney', 'Honeymoon', 'Family Vacation', 'Europe', 'Other'], t.tripType) +
+        dateField('travelStartDate', 'Travel start date', t.travelStartDate, true) +
+        dateField('travelEndDate', 'Travel end date', t.travelEndDate, true) +
+        field('supplier', 'Supplier', t.supplier, 'text', true) +
+        field('bookingNumber', 'Booking number', t.bookingNumber, 'text', false) +
+        field('totalPrice', 'Total price', t.totalPrice, 'number', false) +
+        field('depositPaid', 'Deposit paid', t.depositPaid, 'number', false) +
+        field('finalPaymentAmount', 'Final payment amount', t.finalPaymentAmount, 'number', false) +
+        dateField('finalPaymentDueDate', 'Final payment due date', t.finalPaymentDueDate, false) +
+        selectField('reservationStatus', 'Reservation status', ['Booked', 'Pending', 'Cancelled', 'Completed'], t.reservationStatus) +
+        yesNoField('insuranceOffered', 'Insurance offered', t.insuranceOffered ? 'Yes' : 'No') +
+        selectField('insuranceStatus', 'Insurance status', ['Accepted', 'Declined', 'Pending', 'N/A'], t.insuranceStatus) +
+        yesNoField('documentsSent', 'Documents sent', t.documentsSent) +
+        '<div class="field"><label for="groupCruiseId">Linked group cruise (optional)</label><select id="groupCruiseId" name="groupCruiseId"><option value="">None</option>' + state.groupCruises.map(function(cruise) { return '<option value="' + cruise.id + '" ' + selected(t.groupCruiseId, cruise.id) + '>' + escapeHtml(cruise.cruiseName) + '</option>'; }).join('') + '</select></div>' +
+        textareaField('internalNotes', 'Internal notes', t.internalNotes, false, 'full') +
+      '</div><div class="modal-actions"><button class="btn secondary" type="button" data-action="close-modal">Cancel</button><button class="btn" type="submit">' + icon('check', 'sm') + (existing ? 'Save Changes' : 'Save Trip') + '</button></div></form>');
+    }
+
+    function saveTripFromForm(data) {
+      const client = state.clients.find(function(c) { return c.id === data.clientId; });
+      if (!client || !data.destination || !data.travelStartDate || !data.travelEndDate || !data.supplier) {
+        toast('Please choose a client and enter destination, dates, and supplier.');
+        return;
+      }
+      const existing = data.id ? state.trips.find(function(t) { return t.id === data.id; }) : null;
+      const payload = {
+        clientId: client.id,
+        clientName: client.firstName + ' ' + client.lastName,
+        destination: clean(data.destination),
+        tripType: clean(data.tripType),
+        travelStartDate: data.travelStartDate,
+        travelEndDate: data.travelEndDate,
+        supplier: clean(data.supplier),
+        bookingNumber: clean(data.bookingNumber),
+        totalPrice: Number(data.totalPrice || 0),
+        depositPaid: Number(data.depositPaid || 0),
+        finalPaymentAmount: Number(data.finalPaymentAmount || 0),
+        finalPaymentDueDate: data.finalPaymentDueDate || '',
+        reservationStatus: clean(data.reservationStatus),
+        insuranceOffered: data.insuranceOffered === 'Yes',
+        insuranceStatus: clean(data.insuranceStatus),
+        documentsSent: clean(data.documentsSent),
+        internalNotes: clean(data.internalNotes),
+        groupCruiseId: clean(data.groupCruiseId)
+      };
+      if (existing) {
+        Object.assign(existing, payload);
+        saveState();
+        closeModal();
+        render();
+        toast('Trip updated.');
+        return;
+      }
+      payload.id = makeId('TR');
+      state.trips.unshift(payload);
+      saveState();
+      closeModal();
+      currentSection = 'trips';
+      render();
+      toast('Trip added.');
+    }
+
+    function deleteTrip(id) {
+      const trip = state.trips.find(function(t) { return t.id === id; });
+      if (!trip) return;
+      if (!confirm('Delete trip "' + trip.destination + '" for ' + trip.clientName + '?')) return;
+      state.trips = state.trips.filter(function(t) { return t.id !== id; });
+      saveState();
+      render();
+      toast('Trip deleted.');
+    }
+
+    function openGroupCruiseModal(cruiseId) {
+      const existing = cruiseId ? state.groupCruises.find(function(c) { return c.id === cruiseId; }) : null;
+      const g = existing || { cruiseName:'', cruiseLine:'', ship:'', sailingDate: addDays(180), returnDate: addDays(187), itinerary:'', groupLeaderContact:'', numberOfCabinsHeld:0, numberOfCabinsBooked:0, depositDeadline: addDays(14), finalPaymentDeadline: addDays(120), agentSpecificDepositAmount:0, clientDepositAmount:0, clientFinalPaymentDeadline: addDays(115), groupHoldStatus:'Hold Active', notes:'' };
+      openModal(existing ? 'Edit Group Cruise' : 'Add Group Cruise', '<form data-form="groupCruise"><input type="hidden" name="id" value="' + escapeAttr(existing ? existing.id : '') + '"><div class="form-grid">' +
+        field('cruiseName', 'Cruise name', g.cruiseName, 'text', true) +
+        field('cruiseLine', 'Cruise line', g.cruiseLine, 'text', true) +
+        field('ship', 'Ship', g.ship, 'text', false) +
+        dateField('sailingDate', 'Sailing date', g.sailingDate, true) +
+        dateField('returnDate', 'Return date', g.returnDate, true) +
+        field('itinerary', 'Itinerary', g.itinerary, 'text', false, 'full') +
+        field('groupLeaderContact', 'Group leader contact', g.groupLeaderContact, 'text', false) +
+        field('numberOfCabinsHeld', 'Cabins held', g.numberOfCabinsHeld, 'number', false) +
+        field('numberOfCabinsBooked', 'Cabins booked', g.numberOfCabinsBooked, 'number', false) +
+        dateField('depositDeadline', 'Agent / hold deposit deadline', g.depositDeadline, false) +
+        dateField('finalPaymentDeadline', 'Group final payment deadline', g.finalPaymentDeadline, false) +
+        field('agentSpecificDepositAmount', 'Agent deposit amount', g.agentSpecificDepositAmount, 'number', false) +
+        field('clientDepositAmount', 'Client deposit amount', g.clientDepositAmount, 'number', false) +
+        dateField('clientFinalPaymentDeadline', 'Client final payment deadline', g.clientFinalPaymentDeadline, false) +
+        selectField('groupHoldStatus', 'Group hold status', ['Hold Active', 'Review Needed', 'Released', 'Final Paid'], g.groupHoldStatus) +
+        textareaField('notes', 'Notes', g.notes, false, 'full') +
+      '</div><div class="modal-actions"><button class="btn secondary" type="button" data-action="close-modal">Cancel</button><button class="btn" type="submit">' + icon('check', 'sm') + (existing ? 'Save Changes' : 'Save Cruise') + '</button></div></form>');
+    }
+
+    function saveGroupCruiseFromForm(data) {
+      if (!data.cruiseName || !data.cruiseLine || !data.sailingDate || !data.returnDate) {
+        toast('Please enter cruise name, line, and dates.');
+        return;
+      }
+      const existing = data.id ? state.groupCruises.find(function(c) { return c.id === data.id; }) : null;
+      const payload = {
+        cruiseName: clean(data.cruiseName),
+        cruiseLine: clean(data.cruiseLine),
+        ship: clean(data.ship),
+        sailingDate: data.sailingDate,
+        returnDate: data.returnDate,
+        itinerary: clean(data.itinerary),
+        groupLeaderContact: clean(data.groupLeaderContact),
+        numberOfCabinsHeld: Number(data.numberOfCabinsHeld || 0),
+        numberOfCabinsBooked: Number(data.numberOfCabinsBooked || 0),
+        depositDeadline: data.depositDeadline || '',
+        finalPaymentDeadline: data.finalPaymentDeadline || '',
+        agentSpecificDepositAmount: Number(data.agentSpecificDepositAmount || 0),
+        clientDepositAmount: Number(data.clientDepositAmount || 0),
+        clientFinalPaymentDeadline: data.clientFinalPaymentDeadline || '',
+        groupHoldStatus: clean(data.groupHoldStatus),
+        notes: clean(data.notes)
+      };
+      if (existing) {
+        Object.assign(existing, payload);
+        saveState();
+        closeModal();
+        render();
+        toast('Group cruise updated.');
+        return;
+      }
+      payload.id = makeId('GC');
+      state.groupCruises.unshift(payload);
+      saveState();
+      closeModal();
+      currentSection = 'groupCruises';
+      render();
+      toast('Group cruise added.');
+    }
+
+    function deleteGroupCruise(id) {
+      const cruise = state.groupCruises.find(function(c) { return c.id === id; });
+      if (!cruise) return;
+      const linkedTrips = state.trips.filter(function(t) { return t.groupCruiseId === id; }).length;
+      const linkedDeposits = state.groupDeposits.filter(function(d) { return d.groupCruiseId === id; }).length;
+      if (!confirm('Delete group cruise "' + cruise.cruiseName + '"?\n\nThis will also remove ' + linkedDeposits + ' linked deposit alert(s). ' + linkedTrips + ' linked trip(s) will lose their group link but remain.')) return;
+      state.groupCruises = state.groupCruises.filter(function(c) { return c.id !== id; });
+      state.groupDeposits = state.groupDeposits.filter(function(d) { return d.groupCruiseId !== id; });
+      state.trips.forEach(function(t) { if (t.groupCruiseId === id) t.groupCruiseId = ''; });
+      saveState();
+      render();
+      toast('Group cruise deleted.');
+    }
+
+    function openTravelerModal(travelerId, clientId) {
+      const existing = travelerId ? state.travelers.find(function(t) { return t.id === travelerId; }) : null;
+      const t = existing || { clientId: clientId || selectedClientId || '', firstName:'', lastName:'', dateOfBirth:'', relationship:'Spouse', passportStatus:'Unknown', passportExpirationDate:'', notes:'' };
+      openModal(existing ? 'Edit Traveler' : 'Add Traveler', '<form data-form="traveler"><input type="hidden" name="id" value="' + escapeAttr(existing ? existing.id : '') + '"><div class="form-grid">' +
+        clientSelectField(t.clientId) +
+        field('firstName', 'First name', t.firstName, 'text', true) +
+        field('lastName', 'Last name', t.lastName, 'text', true) +
+        dateField('dateOfBirth', 'Date of birth', t.dateOfBirth, false) +
+        selectField('relationship', 'Relationship', ['Spouse', 'Child', 'Parent', 'Mother', 'Father', 'Sibling', 'Sister', 'Brother', 'Friend', 'Other'], t.relationship) +
+        selectField('passportStatus', 'Passport status', ['Valid', 'Expired', 'Needs Renewal', 'Unknown'], t.passportStatus) +
+        dateField('passportExpirationDate', 'Passport expiration date', t.passportExpirationDate, false) +
+        textareaField('notes', 'Notes', t.notes, false, 'full') +
+      '</div><div class="modal-actions"><button class="btn secondary" type="button" data-action="close-modal">Cancel</button><button class="btn" type="submit">' + icon('check', 'sm') + (existing ? 'Save Changes' : 'Save Traveler') + '</button></div></form>');
+    }
+
+    function saveTravelerFromForm(data) {
+      const client = state.clients.find(function(c) { return c.id === data.clientId; });
+      if (!client || !data.firstName || !data.lastName) {
+        toast('Please choose a client and enter first and last name.');
+        return;
+      }
+      const existing = data.id ? state.travelers.find(function(t) { return t.id === data.id; }) : null;
+      const payload = {
+        clientId: client.id,
+        firstName: clean(data.firstName),
+        lastName: clean(data.lastName),
+        dateOfBirth: data.dateOfBirth || '',
+        relationship: clean(data.relationship),
+        passportStatus: clean(data.passportStatus),
+        passportExpirationDate: data.passportExpirationDate || '',
+        notes: clean(data.notes)
+      };
+      if (existing) {
+        Object.assign(existing, payload);
+        saveState();
+        closeModal();
+        render();
+        toast('Traveler updated.');
+        return;
+      }
+      payload.id = makeId('T');
+      state.travelers.unshift(payload);
+      saveState();
+      closeModal();
+      render();
+      toast('Traveler added.');
+    }
+
+    function deleteTraveler(id) {
+      const traveler = state.travelers.find(function(t) { return t.id === id; });
+      if (!traveler) return;
+      if (!confirm('Delete traveler ' + traveler.firstName + ' ' + traveler.lastName + '?')) return;
+      state.travelers = state.travelers.filter(function(t) { return t.id !== id; });
+      saveState();
+      render();
+      toast('Traveler deleted.');
+    }
+
+    function deletePayment(id) {
+      const payment = state.payments.find(function(p) { return p.id === id; });
+      if (!payment) return;
+      if (!confirm('Delete payment alert "' + payment.title + '"?')) return;
+      state.payments = state.payments.filter(function(p) { return p.id !== id; });
+      saveState();
+      render();
+      toast('Payment alert deleted.');
+    }
+
+    function deleteGroupDeposit(id) {
+      const deposit = state.groupDeposits.find(function(d) { return d.id === id; });
+      if (!deposit) return;
+      if (!confirm('Delete deposit alert "' + deposit.title + '"?')) return;
+      state.groupDeposits = state.groupDeposits.filter(function(d) { return d.id !== id; });
+      saveState();
+      render();
+      toast('Deposit alert deleted.');
+    }
+
+    function openDocumentEditModal(id) {
+      const doc = state.documents.find(function(d) { return d.id === id; });
+      if (!doc) { toast('Document not found.'); return; }
+      openModal('Edit Generated Document', '<form data-form="documentEdit"><input type="hidden" name="id" value="' + escapeAttr(doc.id) + '"><div class="form-grid">' +
+        field('documentName', 'Document name', doc.documentName, 'text', true) +
+        selectField('status', 'Status', ['Generated', 'Sent', 'Signed/Completed', 'Archived'], doc.status) +
+        textareaField('notes', 'Notes', doc.notes, false, 'full') +
+      '</div><div class="modal-actions"><button class="btn secondary" type="button" data-action="close-modal">Cancel</button><button class="btn" type="submit">' + icon('check', 'sm') + 'Save Changes</button></div></form>');
+    }
+
+    function saveDocumentEditFromForm(data) {
+      const doc = state.documents.find(function(d) { return d.id === data.id; });
+      if (!doc) { toast('Document not found.'); return; }
+      doc.documentName = clean(data.documentName);
+      doc.status = clean(data.status);
+      doc.notes = clean(data.notes);
+      saveState();
+      closeModal();
+      render();
+      toast('Document updated.');
+    }
+
+    function deleteDocument(id) {
+      const doc = state.documents.find(function(d) { return d.id === id; });
+      if (!doc) return;
+      if (!confirm('Delete generated document "' + doc.documentName + '"?')) return;
+      state.documents = state.documents.filter(function(d) { return d.id !== id; });
+      saveState();
+      render();
+      toast('Document deleted.');
     }
 
     function selected(value, option) {
