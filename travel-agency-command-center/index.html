@@ -1889,6 +1889,7 @@
         'open-date-picker': function() { openDatePicker(id); },
         'reset-demo-data': resetDemoData,
         'go-public-form': function() { currentSection = 'publicForm'; render(); },
+        'add-inline-traveler': function() { const form = actionButton.closest('form[data-form]'); if (form) addInlineTravelerToTrip(form); },
         'demo-toast': function() { toast(actionButton.dataset.message || 'Demo action recorded.'); }
       };
       if (actions[action]) actions[action]();
@@ -1916,6 +1917,10 @@
       if (tripSelect) tripSelect.innerHTML = tripOptionsHtml('', event.target.value);
       const sourceSelect = form.querySelector('#sourceRecordId');
       if (sourceSelect) sourceSelect.innerHTML = documentSourceOptionsHtml('', event.target.value);
+      if (form.dataset.form === 'trip') {
+        // Different client -> different traveler list; do not preserve old selections
+        refreshTripTravelersSection(form, event.target.value, []);
+      }
     }
 
     function handleSubmit(event) {
@@ -2124,7 +2129,10 @@
     }
 
     function renderTravelerRow(traveler) {
-      return '<div class="item-row"><div><p class="item-title">' + escapeHtml(traveler.firstName + ' ' + traveler.lastName) + '</p><div class="item-meta"><span>DOB ' + formatDate(traveler.dateOfBirth) + '</span><span>' + escapeHtml(traveler.relationship) + '</span><span>Passport: ' + escapeHtml(traveler.passportStatus) + '</span></div></div><div class="button-row"><button class="btn small secondary" type="button" data-action="edit-traveler" data-id="' + traveler.id + '">' + icon('edit', 'sm') + 'Edit</button><button class="btn small danger" type="button" data-action="delete-traveler" data-id="' + traveler.id + '">' + icon('x', 'sm') + 'Delete</button></div></div>';
+      const contactBits = [traveler.phone, traveler.email].filter(Boolean).map(function(v) { return '<span>' + escapeHtml(v) + '</span>'; }).join('');
+      const contactMeta = contactBits ? '<div class="item-meta">' + contactBits + '</div>' : '';
+      const addressMeta = traveler.address ? '<div class="item-meta"><span>' + escapeHtml(traveler.address) + '</span></div>' : '';
+      return '<div class="item-row"><div><p class="item-title">' + escapeHtml(traveler.firstName + ' ' + traveler.lastName) + '</p><div class="item-meta"><span>DOB ' + formatDate(traveler.dateOfBirth) + '</span><span>' + escapeHtml(traveler.relationship) + '</span><span>Passport: ' + escapeHtml(traveler.passportStatus) + '</span></div>' + contactMeta + addressMeta + '</div><div class="button-row"><button class="btn small secondary" type="button" data-action="edit-traveler" data-id="' + traveler.id + '">' + icon('edit', 'sm') + 'Edit</button><button class="btn small danger" type="button" data-action="delete-traveler" data-id="' + traveler.id + '">' + icon('x', 'sm') + 'Delete</button></div></div>';
     }
 
     function renderLeads() {
@@ -2196,16 +2204,21 @@
     function renderTrips() {
       const rows = state.trips.slice().sort(function(a, b) { return compareIso(a.travelStartDate, b.travelStartDate); });
       return '<div class="section-grid">' +
-        '<section class="panel"><div class="panel-header"><div><h2 class="panel-title">Booked Trips</h2><p class="panel-subtitle">Reservation status, final payments, insurance, and document readiness.</p></div><button class="btn" type="button" data-action="open-trip-modal">' + icon('plus', 'sm') + 'Add Trip</button></div><div class="table-shell responsive-table"><table><thead><tr><th>Client</th><th>Trip</th><th>Dates</th><th>Supplier</th><th>Final Payment</th><th>Status</th><th>Insurance</th><th>Actions</th></tr></thead><tbody>' + rows.map(renderTripTableRow).join('') + '</tbody></table></div></section>' +
+        '<section class="panel"><div class="panel-header"><div><h2 class="panel-title">Booked Trips</h2><p class="panel-subtitle">Reservation status, final payments, insurance, and document readiness.</p></div><button class="btn" type="button" data-action="open-trip-modal">' + icon('plus', 'sm') + 'Add Trip</button></div><div class="table-shell responsive-table"><table><thead><tr><th>Client</th><th>Trip</th><th>Dates</th><th>Supplier</th><th>Travelers</th><th>Final Payment</th><th>Status</th><th>Insurance</th><th>Actions</th></tr></thead><tbody>' + rows.map(renderTripTableRow).join('') + '</tbody></table></div></section>' +
       '</div>';
     }
 
     function renderTripTableRow(trip) {
+      const tripTravelers = (trip.travelerIds || []).map(function(id) { return state.travelers.find(function(t) { return t.id === id; }); }).filter(Boolean);
+      const travelersCell = tripTravelers.length
+        ? '<strong>' + tripTravelers.length + ' on reservation</strong><br><span class="small muted">' + escapeHtml(tripTravelers.map(function(t) { return t.firstName + ' ' + t.lastName; }).join(', ')) + '</span>'
+        : '<span class="small muted">Primary client only</span>';
       return '<tr>' +
         '<td data-label="Client"><strong>' + escapeHtml(trip.clientName) + '</strong><br><span class="small muted">' + escapeHtml(trip.bookingNumber) + '</span></td>' +
         '<td data-label="Trip">' + escapeHtml(trip.destination) + '<br><span class="small muted">' + escapeHtml(trip.tripType) + '</span></td>' +
         '<td data-label="Dates">' + formatDate(trip.travelStartDate) + '<br><span class="small muted">to ' + formatDate(trip.travelEndDate) + '</span></td>' +
         '<td data-label="Supplier">' + escapeHtml(trip.supplier) + '</td>' +
+        '<td data-label="Travelers">' + travelersCell + '</td>' +
         '<td data-label="Final Payment">' + formatMoney(trip.finalPaymentAmount) + '<br><span class="small muted">' + formatDate(trip.finalPaymentDueDate) + '</span></td>' +
         '<td data-label="Status">' + tripStatusBadges(trip).join(' ') + '</td>' +
         '<td data-label="Insurance">' + escapeHtml(trip.insuranceOffered ? trip.insuranceStatus : 'Not offered') + '</td>' +
@@ -3607,7 +3620,8 @@
 
     function openTripModal(tripId) {
       const existing = tripId ? state.trips.find(function(t) { return t.id === tripId; }) : null;
-      const t = existing || { clientId:'', destination:'', tripType:'All-Inclusive', travelStartDate: addDays(60), travelEndDate: addDays(67), supplier:'', bookingNumber:'', totalPrice:'', depositPaid:'', finalPaymentAmount:'', finalPaymentDueDate: addDays(45), reservationStatus:'Booked', insuranceOffered:true, insuranceStatus:'Pending', documentsSent:'No', internalNotes:'', groupCruiseId:'' };
+      const t = existing || { clientId:'', destination:'', tripType:'All-Inclusive', travelStartDate: addDays(60), travelEndDate: addDays(67), supplier:'', bookingNumber:'', totalPrice:'', depositPaid:'', finalPaymentAmount:'', finalPaymentDueDate: addDays(45), reservationStatus:'Booked', insuranceOffered:true, insuranceStatus:'Pending', documentsSent:'No', internalNotes:'', groupCruiseId:'', travelerIds: [] };
+      const initialClientId = t.clientId || (state.clients[0] ? state.clients[0].id : '');
       openModal(existing ? 'Edit Booked Trip' : 'Add Booked Trip', '<form data-form="trip"><input type="hidden" name="id" value="' + escapeAttr(existing ? existing.id : '') + '"><div class="form-grid">' +
         clientSelectField(t.clientId) +
         field('destination', 'Destination', t.destination, 'text', true) +
@@ -3625,16 +3639,85 @@
         selectField('insuranceStatus', 'Insurance status', ['Accepted', 'Declined', 'Pending', 'N/A'], t.insuranceStatus) +
         yesNoField('documentsSent', 'Documents sent', t.documentsSent) +
         '<div class="field"><label for="groupCruiseId">Linked group cruise (optional)</label><select id="groupCruiseId" name="groupCruiseId"><option value="">None</option>' + state.groupCruises.map(function(cruise) { return '<option value="' + cruise.id + '" ' + selected(t.groupCruiseId, cruise.id) + '>' + escapeHtml(cruise.cruiseName) + '</option>'; }).join('') + '</select></div>' +
+        '<div class="full">' + formSection('Travelers on this Reservation', 'Tick everyone who should be held under this booking. Use the form below to add brand-new travelers for this client without leaving this page.') + '</div>' +
+        '<div class="full" id="tripTravelersContainer">' + tripTravelersSection(initialClientId, t.travelerIds || []) + '</div>' +
         textareaField('internalNotes', 'Internal notes', t.internalNotes, false, 'full') +
-      '</div><div class="modal-actions"><button class="btn secondary" type="button" data-action="close-modal">Cancel</button><button class="btn" type="submit">' + icon('check', 'sm') + (existing ? 'Save Changes' : 'Save Trip') + '</button></div></form>');
+      '</div><div class="modal-actions"><button class="btn secondary" type="button" data-action="close-modal">Cancel</button><button class="btn" type="submit">' + icon('check', 'sm') + (existing ? 'Save Changes' : 'Save Trip') + '</button></div></form>', true);
     }
 
-    function saveTripFromForm(data) {
+    function tripTravelersSection(clientId, selectedIds) {
+      const travelers = state.travelers.filter(function(tr) { return tr.clientId === clientId; });
+      const sel = selectedIds || [];
+      const checkboxes = travelers.length
+        ? '<div class="checkbox-grid">' + travelers.map(function(tr) {
+            const checked = sel.indexOf(tr.id) >= 0 ? ' checked' : '';
+            const meta = [formatDate(tr.dateOfBirth) ? 'DOB ' + formatDate(tr.dateOfBirth) : '', tr.phone, tr.email, tr.address].filter(Boolean).join(' \u2022 ');
+            return '<label class="choice-card" for="trip-tr-' + escapeAttr(tr.id) + '"><input id="trip-tr-' + escapeAttr(tr.id) + '" type="checkbox" name="tripTravelerId" value="' + escapeAttr(tr.id) + '"' + checked + '><span><strong>' + escapeHtml(tr.firstName + ' ' + tr.lastName) + '</strong>' + (meta ? '<br><span class="small muted">' + escapeHtml(meta) + '</span>' : '') + '</span></label>';
+          }).join('') + '</div>'
+        : '<p class="small muted">No travelers saved for this client yet. Add one below.</p>';
+      const inline = '<details class="quote-option-collapse" style="margin-top:12px"><summary style="cursor:pointer;padding:8px 0;font-weight:700;color:var(--accent)">+ Add another person to this reservation</summary>' +
+        '<div class="form-grid" style="margin-top:10px">' +
+          '<div class="field"><label for="newTravelerFirstName">First name</label><input id="newTravelerFirstName" type="text"></div>' +
+          '<div class="field"><label for="newTravelerLastName">Last name</label><input id="newTravelerLastName" type="text"></div>' +
+          '<div class="field"><label for="newTravelerDob">Date of birth</label><input id="newTravelerDob" type="date"></div>' +
+          '<div class="field"><label for="newTravelerPhone">Phone</label><input id="newTravelerPhone" type="tel"></div>' +
+          '<div class="field"><label for="newTravelerEmail">Email</label><input id="newTravelerEmail" type="email"></div>' +
+          '<div class="field full"><label for="newTravelerAddress">Address</label><input id="newTravelerAddress" type="text"></div>' +
+        '</div>' +
+        '<div class="button-row" style="margin-top:8px"><button class="btn small" type="button" data-action="add-inline-traveler">' + icon('plus', 'sm') + 'Add Traveler to This Client</button></div>' +
+        '<p class="small muted" style="margin-top:6px">The new person will be saved to the client and auto-checked on this reservation.</p>' +
+      '</details>';
+      return checkboxes + inline;
+    }
+
+    function refreshTripTravelersSection(form, clientId, keepSelectedIds) {
+      const container = form.querySelector('#tripTravelersContainer');
+      if (!container) return;
+      // Preserve any boxes still ticked
+      const previousChecked = keepSelectedIds || Array.prototype.slice.call(form.querySelectorAll('input[name="tripTravelerId"]:checked')).map(function(input) { return input.value; });
+      container.innerHTML = tripTravelersSection(clientId, previousChecked);
+    }
+
+    function addInlineTravelerToTrip(form) {
+      const clientSelect = form.querySelector('#clientId');
+      const clientId = clientSelect ? clientSelect.value : '';
+      const client = state.clients.find(function(c) { return c.id === clientId; });
+      if (!client) { toast('Please choose a client first.'); return; }
+      const firstName = (form.querySelector('#newTravelerFirstName') || {}).value || '';
+      const lastName = (form.querySelector('#newTravelerLastName') || {}).value || '';
+      if (!firstName.trim() || !lastName.trim()) { toast('Enter a first and last name for the new traveler.'); return; }
+      const traveler = {
+        id: makeId('T'),
+        clientId: client.id,
+        firstName: clean(firstName),
+        lastName: clean(lastName),
+        dateOfBirth: (form.querySelector('#newTravelerDob') || {}).value || '',
+        phone: clean((form.querySelector('#newTravelerPhone') || {}).value),
+        email: clean((form.querySelector('#newTravelerEmail') || {}).value),
+        address: clean((form.querySelector('#newTravelerAddress') || {}).value),
+        relationship: 'Other',
+        passportStatus: 'Unknown',
+        passportExpirationDate: '',
+        notes: ''
+      };
+      state.travelers.unshift(traveler);
+      saveState();
+      // Capture currently checked IDs and add the new one
+      const stillChecked = Array.prototype.slice.call(form.querySelectorAll('input[name="tripTravelerId"]:checked')).map(function(input) { return input.value; });
+      stillChecked.push(traveler.id);
+      refreshTripTravelersSection(form, client.id, stillChecked);
+      toast('Traveler added to this client and ticked on this reservation.');
+    }
+
+    function saveTripFromForm(data, form) {
       const client = state.clients.find(function(c) { return c.id === data.clientId; });
       if (!client || !data.destination || !data.travelStartDate || !data.travelEndDate || !data.supplier) {
         toast('Please choose a client and enter destination, dates, and supplier.');
         return;
       }
+      const travelerIds = form
+        ? Array.prototype.slice.call(form.querySelectorAll('input[name="tripTravelerId"]:checked')).map(function(input) { return input.value; })
+        : [];
       const existing = data.id ? state.trips.find(function(t) { return t.id === data.id; }) : null;
       const payload = {
         clientId: client.id,
@@ -3654,14 +3737,15 @@
         insuranceStatus: clean(data.insuranceStatus),
         documentsSent: clean(data.documentsSent),
         internalNotes: clean(data.internalNotes),
-        groupCruiseId: clean(data.groupCruiseId)
+        groupCruiseId: clean(data.groupCruiseId),
+        travelerIds: travelerIds
       };
       if (existing) {
         Object.assign(existing, payload);
         saveState();
         closeModal();
         render();
-        toast('Trip updated.');
+        toast('Trip updated. ' + travelerIds.length + ' traveler(s) on reservation.');
         return;
       }
       payload.id = makeId('TR');
@@ -3670,7 +3754,7 @@
       closeModal();
       currentSection = 'trips';
       render();
-      toast('Trip added.');
+      toast('Trip added with ' + travelerIds.length + ' traveler(s) on reservation.');
     }
 
     function deleteTrip(id) {
@@ -3763,12 +3847,15 @@
 
     function openTravelerModal(travelerId, clientId) {
       const existing = travelerId ? state.travelers.find(function(t) { return t.id === travelerId; }) : null;
-      const t = existing || { clientId: clientId || selectedClientId || '', firstName:'', lastName:'', dateOfBirth:'', relationship:'Spouse', passportStatus:'Unknown', passportExpirationDate:'', notes:'' };
+      const t = existing || { clientId: clientId || selectedClientId || '', firstName:'', lastName:'', dateOfBirth:'', address:'', phone:'', email:'', relationship:'Spouse', passportStatus:'Unknown', passportExpirationDate:'', notes:'' };
       openModal(existing ? 'Edit Traveler' : 'Add Traveler', '<form data-form="traveler"><input type="hidden" name="id" value="' + escapeAttr(existing ? existing.id : '') + '"><div class="form-grid">' +
         clientSelectField(t.clientId) +
         field('firstName', 'First name', t.firstName, 'text', true) +
         field('lastName', 'Last name', t.lastName, 'text', true) +
         dateField('dateOfBirth', 'Date of birth', t.dateOfBirth, false) +
+        field('phone', 'Phone', t.phone || '', 'tel', false) +
+        field('email', 'Email', t.email || '', 'email', false) +
+        field('address', 'Address', t.address || '', 'text', false, 'full') +
         selectField('relationship', 'Relationship', ['Spouse', 'Child', 'Parent', 'Mother', 'Father', 'Sibling', 'Sister', 'Brother', 'Friend', 'Other'], t.relationship) +
         selectField('passportStatus', 'Passport status', ['Valid', 'Expired', 'Needs Renewal', 'Unknown'], t.passportStatus) +
         dateField('passportExpirationDate', 'Passport expiration date', t.passportExpirationDate, false) +
@@ -3788,6 +3875,9 @@
         firstName: clean(data.firstName),
         lastName: clean(data.lastName),
         dateOfBirth: data.dateOfBirth || '',
+        phone: clean(data.phone),
+        email: clean(data.email),
+        address: clean(data.address),
         relationship: clean(data.relationship),
         passportStatus: clean(data.passportStatus),
         passportExpirationDate: data.passportExpirationDate || '',
