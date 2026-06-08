@@ -416,7 +416,7 @@
       display: grid; place-items: center;
       font-size: 28px; font-weight: 800;
       cursor: pointer;
-      z-index: 35;
+      z-index: 45;
     }
     .fab:active { background: var(--accent-press); }
 
@@ -783,7 +783,10 @@
 
       <div class="section-title">
         <h2>Inventory</h2>
-        <span class="count" id="invCount">0 items</span>
+        <div style="display:flex;align-items:center;gap:10px">
+          <span class="count" id="invCount">0 items</span>
+          <button class="btn primary small" id="addItemBtn" type="button">+ Add Item</button>
+        </div>
       </div>
 
       <div class="inv-grid" id="invGrid"></div>
@@ -1887,6 +1890,8 @@
 
     // FAB -> add item
     $('#fab').addEventListener('click', function(){ openItemForm(); });
+    var addBtn = document.getElementById('addItemBtn');
+    if (addBtn) addBtn.addEventListener('click', function(){ openItemForm(); });
 
     // Inventory filter / sort / search
     $('#searchInput').addEventListener('input', function(ev){ view.search = ev.target.value; renderInventory(); });
