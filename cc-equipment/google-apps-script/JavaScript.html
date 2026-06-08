@@ -813,8 +813,6 @@ function init() {
   });
 
   $('#fab').addEventListener('click', function(){ openItemForm(); });
-  var addBtn = document.getElementById('addItemBtn');
-  if (addBtn) addBtn.addEventListener('click', function(){ openItemForm(); });
 
   $('#searchInput').addEventListener('input', function(ev){ view.search = ev.target.value; renderInventory(); });
   $('#sortSelect').addEventListener('change', function(ev){ view.sort = ev.target.value; renderInventory(); });
