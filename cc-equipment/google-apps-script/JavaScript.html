@@ -1,0 +1,867 @@
+<script>
+/* ====================================================================
+   C&C EQUIPMENT — frontend logic (Google Apps Script edition)
+   Backend: google.script.run -> Code.gs (Google Sheets database).
+   ==================================================================== */
+'use strict';
+
+// ---------- Constants ---------------------------------------------------
+const THEME_KEY = 'ccEquipment.theme';
+const EXPENSE_TYPES = ['Repairs','Parts','Labor','Delivery/Fuel','Listing Fees','Auction Fees','Payment Fees','Cleaning/Detailing','Other'];
+const STATUSES = ['Available','Pending','Sold'];
+
+// ---------- State (in-memory cache of the sheet) -----------------------
+let state = { inventory: [], expenses: [], sales: [], categories: [], settings: { currency: '$' } };
+let view  = { tab: 'inventory', invFilter: 'active', category: '', search: '', sort: 'newest', statusFilter: '' };
+let booted = false;
+
+// ---------- Server bridge ----------------------------------------------
+function gas(fn, args, onOk, onErr) {
+  // Convenience wrapper around google.script.run.
+  return google.script.run
+    .withSuccessHandler(function(res){ if (onOk) onOk(res); })
+    .withFailureHandler(function(err){
+      console.error(fn, err);
+      if (onErr) onErr(err);
+      else toast('Error: ' + (err && err.message ? err.message : 'request failed.'));
+    })[fn].apply(null, args || []);
+}
+
+function bootLoad() {
+  showBoot(true);
+  gas('getAllData', [], function(res){
+    state.inventory  = res.inventory  || [];
+    state.expenses   = res.expenses   || [];
+    state.sales      = res.sales      || [];
+    state.categories = res.categories || [];
+    state.settings   = res.settings   || { currency: '$' };
+    booted = true;
+    showBoot(false);
+    renderInventory();
+  }, function(err){
+    showBoot(false);
+    toast('Could not load data: ' + (err && err.message ? err.message : err));
+  });
+}
+
+function showBoot(on) {
+  let el = document.getElementById('boot');
+  if (on) {
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'boot'; el.className = 'boot';
+      el.innerHTML = '<div class="pulse"></div>';
+      document.body.appendChild(el);
+    }
+  } else if (el) {
+    el.remove();
+  }
+}
+
+// ---------- Helpers -----------------------------------------------------
+function todayIso() { return new Date().toISOString().slice(0, 10); }
+
+function money(n) {
+  n = Number(n) || 0;
+  return (state.settings.currency || '$') + n.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+}
+function moneyShort(n) {
+  n = Number(n) || 0;
+  if (Math.abs(n) >= 1000) return (state.settings.currency || '$') + (n / 1000).toFixed(n % 1000 ? 1 : 0) + 'k';
+  return money(n);
+}
+function fmtDate(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return '—';
+  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+}
+function daysBetween(a, b) {
+  if (!a) return 0;
+  const start = new Date(a).getTime();
+  const end = (b ? new Date(b).getTime() : Date.now());
+  return Math.max(0, Math.floor((end - start) / (1000 * 60 * 60 * 24)));
+}
+
+function itemExpenses(itemId) { return state.expenses.filter(function(e){ return e.itemId === itemId; }); }
+function itemExpensesTotal(itemId) { return itemExpenses(itemId).reduce(function(t,e){ return t + (Number(e.amount)||0); }, 0); }
+function itemSale(itemId) { return state.sales.find(function(s){ return s.itemId === itemId; }) || null; }
+function itemDaysHeld(item) {
+  const sale = itemSale(item.id);
+  if (sale) return daysBetween(item.datePurchased, sale.dateSold);
+  return daysBetween(item.datePurchased);
+}
+function itemProfit(item) {
+  const expTotal = itemExpensesTotal(item.id);
+  const sale = itemSale(item.id);
+  if (sale) {
+    const profit = (Number(sale.finalSalePrice) || 0) - (Number(item.purchaseCost) || 0) - expTotal;
+    return { type: 'actual', profit: profit, expenses: expTotal, sale: sale };
+  }
+  const est = (Number(item.askingPrice) || 0) - (Number(item.purchaseCost) || 0) - expTotal;
+  return { type: 'estimate', profit: est, expenses: expTotal, sale: null };
+}
+
+const $  = function(sel, ctx){ return (ctx || document).querySelector(sel); };
+const $$ = function(sel, ctx){ return Array.prototype.slice.call((ctx || document).querySelectorAll(sel)); };
+function escapeHtml(s) {
+  return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+function escapeAttr(s) { return escapeHtml(s); }
+
+// ---------- Toast / confirm / sheet ------------------------------------
+let toastTimer = null;
+function toast(msg) {
+  const t = $('#toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(function(){ t.classList.remove('show'); }, 2400);
+}
+function confirmDialog(title, body, okLabel, okClass) {
+  return new Promise(function(resolve){
+    const wrap = $('#confirm');
+    $('#confirmTitle').textContent = title;
+    $('#confirmBody').textContent = body;
+    const okBtn = $('#confirmOk');
+    okBtn.textContent = okLabel || 'Delete';
+    okBtn.className = 'btn ' + (okClass || 'danger');
+    wrap.classList.add('open');
+    const close = function(answer){
+      wrap.classList.remove('open');
+      okBtn.removeEventListener('click', onOk);
+      $('#confirmCancel').removeEventListener('click', onCancel);
+      resolve(answer);
+    };
+    const onOk = function(){ close(true); };
+    const onCancel = function(){ close(false); };
+    okBtn.addEventListener('click', onOk);
+    $('#confirmCancel').addEventListener('click', onCancel);
+  });
+}
+function openSheet(title, html) {
+  $('#sheetTitle').textContent = title;
+  $('#sheetBody').innerHTML = html;
+  $('#scrim').classList.add('open');
+  $('#sheet').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeSheet() {
+  $('#scrim').classList.remove('open');
+  $('#sheet').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+// ---------- Theme ------------------------------------------------------
+function setTheme(t) {
+  document.body.dataset.theme = t;
+  try { localStorage.setItem(THEME_KEY, t); } catch(_) {}
+  $('#themeIcon').innerHTML = (t === 'dark')
+    ? '<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>'
+    : '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>';
+}
+function initTheme() {
+  let stored = null;
+  try { stored = localStorage.getItem(THEME_KEY); } catch(_) {}
+  setTheme(stored === 'light' ? 'light' : 'dark');
+}
+
+// ---------- Tabs -------------------------------------------------------
+function switchTab(tab) {
+  view.tab = tab;
+  $$('.view').forEach(function(v){ v.classList.remove('active'); });
+  const target = $('#view-' + tab);
+  if (target) target.classList.add('active');
+  $$('.tabbar button').forEach(function(b){ b.classList.toggle('active', b.dataset.tab === tab); });
+  $('#fab').style.display = (tab === 'inventory') ? 'grid' : 'none';
+  if (tab === 'finances') renderFinances();
+  if (tab === 'settings') renderSettings();
+  if (tab === 'inventory') renderInventory();
+  window.scrollTo({ top: 0 });
+}
+
+// ---------- Renderers --------------------------------------------------
+function renderCategoryChips() {
+  const wrap = $('#catChips');
+  const cats = state.categories.filter(function(c){ return c.active !== false; });
+  wrap.innerHTML = ['<button class="chip ' + (view.category === '' ? 'active' : '') + '" data-cat="">All</button>']
+    .concat(cats.map(function(c){
+      return '<button class="chip ' + (view.category === c.name ? 'active' : '') + '" data-cat="' + escapeAttr(c.name) + '">' + escapeHtml(c.name) + '</button>';
+    })).join('');
+}
+
+function renderInventory() {
+  renderCategoryChips();
+
+  const q = (view.search || '').toLowerCase().trim();
+  let items = state.inventory.slice();
+
+  if (view.invFilter === 'active') items = items.filter(function(it){ return it.status !== 'Sold'; });
+  if (view.invFilter === 'sold')   items = items.filter(function(it){ return it.status === 'Sold'; });
+
+  if (view.category) items = items.filter(function(it){ return it.category === view.category; });
+  if (view.statusFilter) items = items.filter(function(it){ return it.status === view.statusFilter; });
+  if (q) items = items.filter(function(it){ return [it.name, it.brand, it.model].join(' ').toLowerCase().indexOf(q) >= 0; });
+
+  items.sort(function(a, b){
+    switch (view.sort) {
+      case 'oldest':     return (a.datePurchased || '').localeCompare(b.datePurchased || '');
+      case 'price-high': return (Number(b.askingPrice)||0) - (Number(a.askingPrice)||0);
+      case 'price-low':  return (Number(a.askingPrice)||0) - (Number(b.askingPrice)||0);
+      case 'profit-high':return itemProfit(b).profit - itemProfit(a).profit;
+      case 'newest':
+      default:           return (b.datePurchased || '').localeCompare(a.datePurchased || '');
+    }
+  });
+
+  $('#invCount').textContent = items.length + ' ' + (items.length === 1 ? 'item' : 'items');
+  const grid = $('#invGrid');
+  if (!items.length) {
+    grid.innerHTML = '<div class="empty">No items match. Try clearing filters or tap <b>+</b> to add inventory.</div>';
+    return;
+  }
+  grid.innerHTML = items.map(renderItemCard).join('');
+}
+
+function renderItemCard(item) {
+  const exps = itemExpenses(item.id);
+  const profit = itemProfit(item);
+  const isSale = profit.type === 'actual';
+  const profitClass = isSale ? (profit.profit >= 0 ? 'win' : 'loss') : 'est';
+  const profitLabel = isSale ? (profit.profit >= 0 ? 'Profit' : 'Loss') : 'Estimated profit';
+  const days = itemDaysHeld(item);
+  const dayBadge = item.status !== 'Sold' && days >= 90 ? '<span class="badge days-warn">' + days + ' days</span>'
+                  : item.status !== 'Sold' && days >= 60 ? '<span class="badge days-soft">' + days + ' days</span>'
+                  : '<span class="badge cat">' + days + ' days</span>';
+  const photoStyle = item.photo ? 'style="background-image:url(\'' + escapeAttr(item.photo) + '\')"' : '';
+  const photoEmpty = item.photo ? '' : 'empty';
+  const photoInner = item.photo ? '' : '<span>No photo yet</span>';
+
+  return [
+    '<article class="card-item">',
+      '<div class="photo ' + photoEmpty + '" ' + photoStyle + '>',
+        photoInner,
+        item.status === 'Sold' && profit.sale ? '<span class="photo-badge">Sold ' + fmtDate(profit.sale.dateSold) + '</span>' : '',
+      '</div>',
+      '<div class="body">',
+        '<h3><span>' + escapeHtml(item.name) + '</span></h3>',
+        '<div class="badges">',
+          '<span class="badge cat">' + escapeHtml(item.category) + '</span>',
+          '<span class="badge status-' + escapeAttr(item.status) + '">' + escapeHtml(item.status) + '</span>',
+          dayBadge,
+        '</div>',
+        '<div class="meta">',
+          (item.brand ? '<span>' + escapeHtml(item.brand) + (item.model ? ' &middot; ' + escapeHtml(item.model) : '') + '</span>' : ''),
+          (item.year ? '<span>Year ' + escapeHtml(item.year) + '</span>' : ''),
+        '</div>',
+        '<div class="price-row">',
+          '<div class="price-tile"><div class="label">Paid</div><div class="val">' + money(item.purchaseCost) + '</div></div>',
+          isSale
+            ? '<div class="price-tile"><div class="label">Sold for</div><div class="val">' + money(profit.sale.finalSalePrice) + '</div></div>'
+            : '<div class="price-tile"><div class="label">Asking</div><div class="val">' + money(item.askingPrice) + '</div></div>',
+        '</div>',
+        '<div class="profit-row ' + profitClass + '">',
+          '<span>' + profitLabel + (profit.expenses ? ' (after ' + money(profit.expenses) + ' expenses)' : '') + '</span>',
+          '<b>' + (profit.profit >= 0 ? '+' : '−') + money(Math.abs(profit.profit)) + '</b>',
+        '</div>',
+        '<div class="card-actions three">',
+          '<button class="btn" data-act="view" data-id="' + item.id + '">View / Edit</button>',
+          '<button class="btn" data-act="expense" data-id="' + item.id + '">Add Expense</button>',
+          item.status === 'Sold'
+            ? '<button class="btn ghost" data-act="unsold" data-id="' + item.id + '">Undo Sale</button>'
+            : '<button class="btn green" data-act="sell" data-id="' + item.id + '">Mark Sold</button>',
+        '</div>',
+        '<details class="card-collapse">',
+          '<summary>More details &amp; expenses</summary>',
+          '<div class="kv">',
+            '<span class="k">Date purchased</span><span class="v">' + fmtDate(item.datePurchased) + '</span>',
+            '<span class="k">Serial #</span><span class="v">' + (escapeHtml(item.serial) || '—') + '</span>',
+            '<span class="k">Notes</span><span class="v">' + (escapeHtml(item.notes) || '—') + '</span>',
+            isSale ? '<span class="k">Buyer</span><span class="v">' + (escapeHtml(profit.sale.buyerName) || '—') + '</span>' : '',
+            isSale && profit.sale.notes ? '<span class="k">Sale notes</span><span class="v">' + escapeHtml(profit.sale.notes) + '</span>' : '',
+          '</div>',
+          '<div style="font-size:12px;color:var(--text-3);font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin-top:6px">Expenses (' + exps.length + ')</div>',
+          exps.length
+            ? '<ul class="exp-list">' + exps.map(function(e){
+                return '<li><span>' + escapeHtml(e.type) + (e.description ? ' &middot; ' + escapeHtml(e.description) : '') + ' &middot; ' + fmtDate(e.date) + '</span><span><b>' + money(e.amount) + '</b> <button class="x" data-act="del-expense" data-id="' + e.id + '" aria-label="Delete expense">×</button></span></li>';
+              }).join('') + '</ul>'
+            : '<div class="empty" style="margin-top:6px;padding:12px">No expenses on this item yet.</div>',
+          '<div class="card-actions" style="margin-top:10px;grid-template-columns:1fr 1fr">',
+            '<button class="btn ghost" data-act="edit" data-id="' + item.id + '">Edit</button>',
+            '<button class="btn danger" data-act="delete" data-id="' + item.id + '">Delete item</button>',
+          '</div>',
+        '</details>',
+      '</div>',
+    '</article>'
+  ].join('');
+}
+
+// ---------- Finances ---------------------------------------------------
+function renderFinances() {
+  const inv = state.inventory;
+  const sales = state.sales;
+  const expensesTotal = state.expenses.reduce(function(t,e){ return t + (Number(e.amount)||0); }, 0);
+  const invested = inv.reduce(function(t,it){ return t + (Number(it.purchaseCost)||0); }, 0) + expensesTotal;
+  const askingValue = inv.filter(function(it){return it.status!=='Sold';}).reduce(function(t,it){return t + (Number(it.askingPrice)||0);}, 0);
+  const unsoldCost = inv.filter(function(it){return it.status!=='Sold';}).reduce(function(t,it){return t + (Number(it.purchaseCost)||0) + itemExpensesTotal(it.id);}, 0);
+  const activeCount = inv.filter(function(it){return it.status!=='Sold';}).length;
+  const revenue = sales.reduce(function(t,s){ return t + (Number(s.finalSalePrice)||0); }, 0);
+  const realizedProfit = sales.reduce(function(t,s){ return t + (Number(s.profitLoss)||0); }, 0);
+  const avgDaysToSell = sales.length ? Math.round(sales.reduce(function(t,s){return t+(s.daysHeld||0);},0) / sales.length) : 0;
+  const avgProfitPerItem = sales.length ? realizedProfit / sales.length : 0;
+
+  const monthly = monthlyBuckets(6, function(d){
+    const sold = sales.filter(function(s){ return inMonth(s.dateSold, d); });
+    return sold.reduce(function(t,s){ return t + (Number(s.profitLoss)||0); }, 0);
+  });
+
+  const now = new Date();
+  const monthProfit = sales.filter(function(s){ return inMonth(s.dateSold, now); }).reduce(function(t,s){ return t + (Number(s.profitLoss)||0); }, 0);
+
+  const catProfit = {};
+  sales.forEach(function(s){
+    const it = inv.find(function(i){ return i.id === s.itemId; });
+    const c = it ? it.category : 'Other';
+    catProfit[c] = (catProfit[c] || 0) + (Number(s.profitLoss)||0);
+  });
+  let bestCat = '—', bestVal = -Infinity;
+  Object.keys(catProfit).forEach(function(k){ if (catProfit[k] > bestVal) { bestVal = catProfit[k]; bestCat = k; } });
+  if (!sales.length) bestCat = '—';
+
+  $('#kpiPrimary').innerHTML = [
+    kpi('Total profit / loss', (realizedProfit>=0?'+':'−') + money(Math.abs(realizedProfit)), realizedProfit>=0?'green':'warn', sales.length + ' sold'),
+    kpi('This month profit', (monthProfit>=0?'+':'−') + money(Math.abs(monthProfit)), monthProfit>=0?'green':'warn', now.toLocaleDateString(undefined,{month:'long'})),
+    kpi('Sales revenue', money(revenue), 'accent', sales.length + ' sales'),
+    kpi('Total expenses', money(expensesTotal), '', state.expenses.length + ' line items')
+  ].join('');
+
+  $('#kpiSecondary').innerHTML = [
+    kpi('Active inventory', String(activeCount), '', 'items in stock'),
+    kpi('Total invested', money(invested), '', 'cost + expenses'),
+    kpi('Unsold value (cost)', money(unsoldCost), '', 'money tied up'),
+    kpi('Asking-price value', money(askingValue), '', 'if all sold at asking'),
+    kpi('Avg days to sell', String(avgDaysToSell), '', 'from purchase to sale'),
+    kpi('Avg profit per item', money(avgProfitPerItem), avgProfitPerItem>=0?'green':'warn', 'over all sales'),
+    kpi('Best category', bestCat, 'accent', sales.length ? money(bestVal) : 'no sales yet'),
+    kpi('Categories', String(state.categories.filter(function(c){return c.active!==false;}).length), '', 'available')
+  ].join('');
+
+  const max = Math.max.apply(null, monthly.map(function(m){return Math.abs(m.value);})) || 1;
+  $('#chartMonthly').innerHTML = monthly.map(function(m){
+    const h = Math.max(2, Math.round((Math.abs(m.value) / max) * 130));
+    const cls = m.value < 0 ? 'loss' : (m.value > 0 ? 'win' : '');
+    return '<div class="col"><div class="bar ' + cls + '" style="height:' + h + 'px"></div><div class="val">' + (m.value>=0?'+':'−') + moneyShort(Math.abs(m.value)) + '</div><div class="lbl">' + m.label + '</div></div>';
+  }).join('');
+  $('#chartMonthlyLegend').textContent = 'Each bar is one month. Empty months mean no sales that month.';
+
+  const boughtSold = monthlyBuckets(6, function(d){
+    const b = inv.filter(function(it){ return inMonth(it.datePurchased, d); }).length;
+    const s = sales.filter(function(s){ return inMonth(s.dateSold, d); }).length;
+    return { bought: b, sold: s };
+  });
+  const maxBS = Math.max.apply(null, boughtSold.map(function(m){return Math.max(m.value.bought, m.value.sold);})) || 1;
+  $('#chartBoughtSold').innerHTML = boughtSold.map(function(m){
+    const hB = Math.max(2, Math.round((m.value.bought / maxBS) * 130));
+    const hS = Math.max(2, Math.round((m.value.sold / maxBS) * 130));
+    return '<div class="col">'
+      + '<div style="display:flex;gap:3px;align-items:flex-end;height:130px;width:100%;justify-content:center">'
+      +   '<div class="bar" style="height:' + hB + 'px;width:14px"></div>'
+      +   '<div class="bar" style="background:var(--green);height:' + hS + 'px;width:14px"></div>'
+      + '</div>'
+      + '<div class="val">' + m.value.bought + ' / ' + m.value.sold + '</div>'
+      + '<div class="lbl">' + m.label + '</div>'
+    + '</div>';
+  }).join('');
+
+  const allCats = state.categories.filter(function(c){return c.active!==false;}).map(function(c){return c.name;});
+  const byCatHtml = allCats.map(function(c){
+    const soldInCat = sales.filter(function(s){
+      const it = inv.find(function(i){return i.id === s.itemId;});
+      return it && it.category === c;
+    });
+    const p = soldInCat.reduce(function(t,s){ return t + (Number(s.profitLoss)||0); }, 0);
+    const cls = soldInCat.length ? (p>=0?'win':'loss') : '';
+    return '<div class="row-card">'
+      + '<div class="left"><span class="t">' + escapeHtml(c) + '</span><span class="s">' + soldInCat.length + ' sold</span></div>'
+      + '<div class="right ' + cls + '">' + (soldInCat.length ? (p>=0?'+':'−') + money(Math.abs(p)) : '—') + '</div>'
+      + '</div>';
+  }).join('');
+  $('#byCategory').innerHTML = byCatHtml || '<div class="empty">No categories yet.</div>';
+
+  const buckets = { d30: 0, d60: 0, d90: 0 };
+  inv.filter(function(it){return it.status!=='Sold';}).forEach(function(it){
+    const d = itemDaysHeld(it);
+    if (d >= 90) buckets.d90++;
+    else if (d >= 60) buckets.d60++;
+    else if (d >= 30) buckets.d30++;
+  });
+  $('#slowGrid').innerHTML = [
+    '<div class="slow ' + (buckets.d30 ? 'pending' : '') + '"><div class="n">' + buckets.d30 + '</div><div class="l">30+ days</div></div>',
+    '<div class="slow ' + (buckets.d60 ? 'pending' : '') + '"><div class="n">' + buckets.d60 + '</div><div class="l">60+ days</div></div>',
+    '<div class="slow ' + (buckets.d90 ? 'warn' : '') + '"><div class="n">' + buckets.d90 + '</div><div class="l">90+ days</div></div>'
+  ].join('');
+}
+
+function kpi(lbl, val, cls, sub) {
+  return '<div class="kpi ' + (cls || '') + '"><div class="lbl">' + escapeHtml(lbl) + '</div><div class="val">' + escapeHtml(val) + '</div>' + (sub ? '<div class="sub">' + escapeHtml(sub) + '</div>' : '') + '</div>';
+}
+function monthlyBuckets(count, valueFn) {
+  const out = [];
+  const now = new Date();
+  for (let i = count - 1; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    out.push({ label: d.toLocaleDateString(undefined, { month: 'short' }), value: valueFn(d) });
+  }
+  return out;
+}
+function inMonth(iso, d) {
+  if (!iso) return false;
+  const x = new Date(iso);
+  return x.getFullYear() === d.getFullYear() && x.getMonth() === d.getMonth();
+}
+
+// ---------- Settings ---------------------------------------------------
+function renderSettings() {
+  const cats = state.categories;
+  $('#catList').innerHTML = cats.length
+    ? cats.map(function(c){
+        return '<div class="settings-item"><div class="nm">' + escapeHtml(c.name) + '</div><button class="del" data-act="del-cat" data-id="' + c.id + '" aria-label="Delete category">🗑</button></div>';
+      }).join('')
+    : '<div class="empty">No categories yet.</div>';
+}
+
+// ---------- Item form --------------------------------------------------
+function itemFormHtml(item) {
+  const isEdit = !!item;
+  item = item || { name:'', category: state.categories[0] ? state.categories[0].name : '', brand:'', model:'', year:'', serial:'', datePurchased: todayIso(), purchaseCost:'', askingPrice:'', status:'Available', photo:'', notes:'' };
+
+  const catOpts = state.categories.filter(function(c){return c.active!==false;})
+    .map(function(c){ return '<option value="' + escapeAttr(c.name) + '"' + (c.name === item.category ? ' selected' : '') + '>' + escapeHtml(c.name) + '</option>'; }).join('');
+  const statusOpts = STATUSES.map(function(s){ return '<option value="' + s + '"' + (s === item.status ? ' selected' : '') + '>' + s + '</option>'; }).join('');
+
+  return '<form id="itemForm" autocomplete="off">'
+    + '<input type="hidden" name="id" value="' + escapeAttr(item.id || '') + '">'
+    + '<div class="form-grid">'
+
+    + '<div class="field full"><label for="if-name">Item name <span class="req">*</span></label>'
+    +   '<input id="if-name" name="name" type="text" required value="' + escapeAttr(item.name) + '" placeholder="e.g. Ford 8N Tractor"></div>'
+
+    + '<div class="field"><label for="if-cat">Category <span class="req">*</span></label>'
+    +   '<select id="if-cat" name="category" required>' + catOpts + '</select></div>'
+
+    + '<div class="field"><label for="if-status">Status</label>'
+    +   '<select id="if-status" name="status">' + statusOpts + '</select></div>'
+
+    + '<div class="field"><label for="if-brand">Brand</label>'
+    +   '<input id="if-brand" name="brand" type="text" value="' + escapeAttr(item.brand) + '"></div>'
+
+    + '<div class="field"><label for="if-model">Model</label>'
+    +   '<input id="if-model" name="model" type="text" value="' + escapeAttr(item.model) + '"></div>'
+
+    + '<div class="field"><label for="if-year">Year</label>'
+    +   '<input id="if-year" name="year" type="number" inputmode="numeric" value="' + escapeAttr(item.year) + '"></div>'
+
+    + '<div class="field"><label for="if-serial">Serial #</label>'
+    +   '<input id="if-serial" name="serial" type="text" value="' + escapeAttr(item.serial) + '"></div>'
+
+    + '<div class="field"><label for="if-date">Date purchased <span class="req">*</span></label>'
+    +   '<input id="if-date" name="datePurchased" type="date" required value="' + escapeAttr(item.datePurchased) + '"></div>'
+
+    + '<div class="field"><label for="if-paid">Purchase cost <span class="req">*</span></label>'
+    +   '<input id="if-paid" name="purchaseCost" type="number" inputmode="decimal" step="0.01" required value="' + escapeAttr(item.purchaseCost) + '" placeholder="0.00"></div>'
+
+    + '<div class="field"><label for="if-asking">Asking price <span class="req">*</span></label>'
+    +   '<input id="if-asking" name="askingPrice" type="number" inputmode="decimal" step="0.01" required value="' + escapeAttr(item.askingPrice) + '" placeholder="0.00"></div>'
+
+    + '<div class="field full"><label>Photo</label>'
+    +   '<div class="photo-picker" id="photoPicker">'
+    +     '<div class="preview" id="photoPreview"' + (item.photo ? ' style="background-image:url(\'' + escapeAttr(item.photo) + '\')"' : '') + '>' + (item.photo ? '' : '<span>No photo yet</span>') + '</div>'
+    +     '<div class="row">'
+    +       '<input id="photoFile" type="file" accept="image/*" capture="environment">'
+    +       '<button class="btn" type="button" id="photoCameraBtn">Take / Choose Photo</button>'
+    +       '<button class="btn ghost" type="button" id="photoUrlToggle">Paste URL</button>'
+    +     '</div>'
+    +     '<div class="row full" id="photoUrlRow" style="display:none">'
+    +       '<input class="url-input" id="photoUrlInput" type="url" placeholder="https://..." value="' + escapeAttr(item.photo && /^https?:/.test(item.photo) ? item.photo : '') + '">'
+    +     '</div>'
+    +     '<div class="uploading" id="photoStatus" style="display:none">Uploading photo to Google Drive…</div>'
+    +     '<input type="hidden" name="photo" id="photoValue" value="' + escapeAttr(item.photo) + '">'
+    +   '</div>'
+    + '</div>'
+
+    + '<div class="field full"><label for="if-notes">Notes</label>'
+    +   '<textarea id="if-notes" name="notes">' + escapeHtml(item.notes) + '</textarea></div>'
+
+    + '<div class="calc-preview full" id="calcPreview">'
+    +   '<span>Estimated profit if sold at asking</span>'
+    +   '<b id="calcProfit">' + money(0) + '</b>'
+    + '</div>'
+
+    + '</div>'
+
+    + '<div class="card-actions" style="margin-top:16px">'
+    +   '<button class="btn" type="button" id="cancelItem">Cancel</button>'
+    +   '<button class="btn primary" type="submit" id="saveItemBtn">' + (isEdit ? 'Save Changes' : 'Add Item') + '</button>'
+    + '</div>'
+
+    + (isEdit ? '<button class="btn danger block" type="button" id="deleteItemBtn" style="margin-top:10px">Delete this item</button>' : '')
+
+  + '</form>';
+}
+
+function openItemForm(itemId) {
+  const item = itemId ? state.inventory.find(function(it){ return it.id === itemId; }) : null;
+  openSheet(item ? 'Edit Item' : 'Add Item', itemFormHtml(item));
+  bindItemForm();
+}
+
+function bindItemForm() {
+  const form = $('#itemForm');
+  if (!form) return;
+
+  const paid = $('#if-paid'), ask = $('#if-asking'), preview = $('#calcProfit'), wrap = $('#calcPreview');
+  const recalc = function(){
+    const id = form.querySelector('input[name="id"]').value;
+    const expTotal = id ? itemExpensesTotal(id) : 0;
+    const p = (Number(ask.value)||0) - (Number(paid.value)||0) - expTotal;
+    preview.textContent = (p>=0?'+':'−') + money(Math.abs(p));
+    wrap.style.background = p >= 0 ? 'var(--ok-soft)' : 'var(--warn-soft)';
+    wrap.style.color = p >= 0 ? 'var(--ok)' : 'var(--warn)';
+  };
+  paid.addEventListener('input', recalc); ask.addEventListener('input', recalc); recalc();
+
+  $('#photoCameraBtn').addEventListener('click', function(){ $('#photoFile').click(); });
+  $('#photoFile').addEventListener('change', function(ev){
+    const file = ev.target.files && ev.target.files[0];
+    if (!file) return;
+    downsizeImage(file, 1000, 0.82).then(function(dataUrl){
+      // Show local preview immediately for snappy feel
+      $('#photoPreview').style.backgroundImage = 'url("' + dataUrl + '")';
+      $('#photoPreview').innerHTML = '';
+      $('#photoStatus').style.display = 'block';
+      gas('uploadPhoto', [dataUrl, (file.name || ('photo-' + Date.now() + '.jpg'))], function(url){
+        $('#photoValue').value = url;
+        $('#photoPreview').style.backgroundImage = 'url("' + url + '")';
+        $('#photoStatus').style.display = 'none';
+        toast('Photo uploaded.');
+      }, function(err){
+        $('#photoStatus').style.display = 'none';
+        // Fall back to data URL so the user isn't blocked
+        $('#photoValue').value = dataUrl;
+        toast('Photo upload failed — keeping local copy. ' + (err && err.message ? err.message : ''));
+      });
+    }).catch(function(){ toast('Could not read that image.'); });
+  });
+  $('#photoUrlToggle').addEventListener('click', function(){
+    const row = $('#photoUrlRow');
+    row.style.display = row.style.display === 'none' ? 'grid' : 'none';
+    if (row.style.display !== 'none') setTimeout(function(){ $('#photoUrlInput').focus(); }, 50);
+  });
+  $('#photoUrlInput').addEventListener('input', function(ev){
+    const url = (ev.target.value || '').trim();
+    if (!url) return;
+    $('#photoValue').value = url;
+    $('#photoPreview').style.backgroundImage = 'url("' + url.replace(/"/g, '%22') + '")';
+    $('#photoPreview').innerHTML = '';
+  });
+
+  $('#cancelItem').addEventListener('click', closeSheet);
+  const delBtn = $('#deleteItemBtn');
+  if (delBtn) {
+    delBtn.addEventListener('click', function(){
+      const id = form.querySelector('input[name="id"]').value;
+      confirmDialog('Delete this item?', 'All linked expenses and its sale record will also be deleted.', 'Delete', 'danger').then(function(ok){
+        if (ok) { deleteItemFlow(id); closeSheet(); }
+      });
+    });
+  }
+
+  form.addEventListener('submit', function(ev){
+    ev.preventDefault();
+    const data = Object.fromEntries(new FormData(form).entries());
+    saveItemFlow(data);
+  });
+}
+
+function downsizeImage(file, maxDim, quality) {
+  return new Promise(function(resolve, reject){
+    const reader = new FileReader();
+    reader.onerror = reject;
+    reader.onload = function(){
+      const img = new Image();
+      img.onload = function(){
+        const ratio = Math.min(1, maxDim / Math.max(img.width, img.height));
+        const w = Math.round(img.width * ratio);
+        const h = Math.round(img.height * ratio);
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        try { resolve(canvas.toDataURL('image/jpeg', quality || 0.8)); }
+        catch (e) { reject(e); }
+      };
+      img.onerror = reject;
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function saveItemFlow(data) {
+  if (!data.name || !data.category || !data.datePurchased || data.purchaseCost === '' || data.askingPrice === '') {
+    toast('Please fill in name, category, date, paid, and asking price.');
+    return;
+  }
+  const btn = $('#saveItemBtn'); if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
+  const payload = {
+    id: data.id || '',
+    name: data.name.trim(),
+    category: data.category,
+    brand: (data.brand||'').trim(),
+    model: (data.model||'').trim(),
+    year: data.year ? Number(data.year) : '',
+    serial: (data.serial||'').trim(),
+    datePurchased: data.datePurchased,
+    purchaseCost: Number(data.purchaseCost) || 0,
+    askingPrice: Number(data.askingPrice) || 0,
+    status: data.status || 'Available',
+    photo: (data.photo||'').trim(),
+    notes: (data.notes||'').trim()
+  };
+  gas('saveItem', [payload], function(res){
+    // Refresh state from server so any computed fields (id) come back
+    closeSheet();
+    bootLoad();
+    toast(payload.id ? 'Item saved.' : 'Item added.');
+  }, function(err){
+    if (btn) { btn.disabled = false; btn.textContent = payload.id ? 'Save Changes' : 'Add Item'; }
+    toast('Could not save: ' + (err && err.message ? err.message : err));
+  });
+}
+
+function deleteItemFlow(id) {
+  gas('deleteItem', [id], function(){ bootLoad(); toast('Item deleted.'); });
+}
+
+// ---------- Expense form -----------------------------------------------
+function openExpenseForm(itemId) {
+  const item = state.inventory.find(function(it){ return it.id === itemId; });
+  if (!item) return;
+  const typeOpts = EXPENSE_TYPES.map(function(t){ return '<option value="' + t + '">' + t + '</option>'; }).join('');
+  openSheet('Add Expense — ' + item.name,
+    '<form id="expForm">'
+    + '<input type="hidden" name="itemId" value="' + escapeAttr(itemId) + '">'
+    + '<div class="form-grid">'
+    +   '<div class="field"><label for="ef-type">Expense type</label><select id="ef-type" name="type" required>' + typeOpts + '</select></div>'
+    +   '<div class="field"><label for="ef-amount">Amount</label><input id="ef-amount" name="amount" type="number" inputmode="decimal" step="0.01" required placeholder="0.00"></div>'
+    +   '<div class="field"><label for="ef-date">Date</label><input id="ef-date" name="date" type="date" required value="' + todayIso() + '"></div>'
+    +   '<div class="field"><label for="ef-desc">Description</label><input id="ef-desc" name="description" type="text" placeholder="e.g. New blades"></div>'
+    +   '<div class="field full"><label for="ef-notes">Notes</label><textarea id="ef-notes" name="notes"></textarea></div>'
+    + '</div>'
+    + '<div class="card-actions" style="margin-top:16px">'
+    +   '<button class="btn" type="button" id="cancelExp">Cancel</button>'
+    +   '<button class="btn primary" type="submit" id="saveExpBtn">Save Expense</button>'
+    + '</div>'
+    + '</form>'
+  );
+  $('#cancelExp').addEventListener('click', closeSheet);
+  $('#expForm').addEventListener('submit', function(ev){
+    ev.preventDefault();
+    const data = Object.fromEntries(new FormData(ev.target).entries());
+    if (!data.type || !data.amount || !data.date) { toast('Type, amount and date are required.'); return; }
+    const btn = $('#saveExpBtn'); if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
+    const payload = {
+      itemId: data.itemId,
+      date: data.date,
+      type: data.type,
+      description: (data.description||'').trim(),
+      amount: Number(data.amount) || 0,
+      notes: (data.notes||'').trim()
+    };
+    gas('saveExpense', [payload], function(){
+      closeSheet(); bootLoad(); toast('Expense added.');
+    }, function(err){
+      if (btn) { btn.disabled = false; btn.textContent = 'Save Expense'; }
+      toast('Could not save: ' + (err && err.message ? err.message : err));
+    });
+  });
+}
+
+function deleteExpenseFlow(id) {
+  gas('deleteExpense', [id], function(){ bootLoad(); toast('Expense removed.'); });
+}
+
+// ---------- Mark Sold --------------------------------------------------
+function openSellForm(itemId) {
+  const item = state.inventory.find(function(it){ return it.id === itemId; });
+  if (!item) return;
+  const expTotal = itemExpensesTotal(item.id);
+  openSheet('Mark Sold — ' + item.name,
+    '<form id="sellForm">'
+    + '<input type="hidden" name="itemId" value="' + escapeAttr(itemId) + '">'
+    + '<div class="form-grid">'
+    +   '<div class="field"><label for="sf-date">Date sold</label><input id="sf-date" name="dateSold" type="date" required value="' + todayIso() + '"></div>'
+    +   '<div class="field"><label for="sf-price">Final sale price</label><input id="sf-price" name="finalSalePrice" type="number" inputmode="decimal" step="0.01" required placeholder="0.00" value="' + escapeAttr(item.askingPrice) + '"></div>'
+    +   '<div class="field full"><label for="sf-buyer">Buyer name (optional)</label><input id="sf-buyer" name="buyerName" type="text"></div>'
+    +   '<div class="field full"><label for="sf-notes">Sale notes (optional)</label><textarea id="sf-notes" name="notes"></textarea></div>'
+    + '</div>'
+    + '<div class="calc-preview" style="margin-top:14px" id="sellCalc"><span>Profit at this price (after ' + money(expTotal) + ' expenses)</span><b id="sellCalcVal">' + money(0) + '</b></div>'
+    + '<div class="card-actions" style="margin-top:16px">'
+    +   '<button class="btn" type="button" id="cancelSell">Cancel</button>'
+    +   '<button class="btn green" type="submit" id="markSoldBtn">Mark as Sold</button>'
+    + '</div>'
+    + '</form>'
+  );
+  const update = function(){
+    const price = Number($('#sf-price').value) || 0;
+    const p = price - (Number(item.purchaseCost)||0) - expTotal;
+    $('#sellCalcVal').textContent = (p>=0?'+':'−') + money(Math.abs(p));
+    const wrap = $('#sellCalc');
+    wrap.style.background = p >= 0 ? 'var(--ok-soft)' : 'var(--warn-soft)';
+    wrap.style.color = p >= 0 ? 'var(--ok)' : 'var(--warn)';
+  };
+  $('#sf-price').addEventListener('input', update); update();
+  $('#cancelSell').addEventListener('click', closeSheet);
+  $('#sellForm').addEventListener('submit', function(ev){
+    ev.preventDefault();
+    const data = Object.fromEntries(new FormData(ev.target).entries());
+    const btn = $('#markSoldBtn'); if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
+    gas('markSold', [{
+      itemId: data.itemId,
+      dateSold: data.dateSold,
+      finalSalePrice: Number(data.finalSalePrice) || 0,
+      buyerName: (data.buyerName||'').trim(),
+      notes: (data.notes||'').trim()
+    }], function(res){
+      closeSheet(); bootLoad();
+      const p = Number(res.profit) || 0;
+      toast('Marked sold. ' + (p >= 0 ? 'Profit ' : 'Loss ') + money(Math.abs(p)) + '.');
+    }, function(err){
+      if (btn) { btn.disabled = false; btn.textContent = 'Mark as Sold'; }
+      toast('Could not save: ' + (err && err.message ? err.message : err));
+    });
+  });
+}
+
+function undoSaleFlow(itemId) {
+  gas('undoSale', [itemId], function(){ bootLoad(); toast('Sale undone.'); });
+}
+
+// ---------- Categories -------------------------------------------------
+function addCategoryFlow(name) {
+  name = (name || '').trim();
+  if (!name) { toast('Enter a category name.'); return; }
+  gas('addCategory', [name], function(res){
+    if (res && res.ok === false) { toast(res.error || 'Could not add category.'); return; }
+    bootLoad(); toast('Category added.');
+  });
+}
+function deleteCategoryFlow(id) {
+  const cat = state.categories.find(function(c){ return c.id === id; });
+  if (!cat) return;
+  const inUse = state.inventory.some(function(it){ return it.category === cat.name; });
+  confirmDialog(
+    'Delete "' + cat.name + '"?',
+    inUse ? 'Some items use this category. They will be moved to "Misc. Equipment".' : 'This will remove the category.',
+    'Delete'
+  ).then(function(ok){
+    if (!ok) return;
+    gas('deleteCategory', [id], function(res){
+      if (res && res.ok === false) { toast(res.error || 'Could not delete category.'); return; }
+      bootLoad(); toast('Category deleted.');
+    });
+  });
+}
+
+// ---------- CSV export -------------------------------------------------
+function downloadCsvText(filename, csv) {
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click();
+  setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); }, 0);
+}
+function exportInventoryCsv() {
+  toast('Building CSV…');
+  gas('exportInventoryCsv', [], function(csv){
+    downloadCsvText('cc-equipment-inventory.csv', csv || '');
+    toast('Inventory CSV downloaded.');
+  });
+}
+function exportProfitLossCsv() {
+  toast('Building CSV…');
+  gas('exportProfitLossCsv', [], function(csv){
+    downloadCsvText('cc-equipment-profit-loss.csv', csv || '');
+    toast('Profit/loss CSV downloaded.');
+  });
+}
+
+// ---------- Event wiring -----------------------------------------------
+function init() {
+  initTheme();
+
+  $$('.tabbar button').forEach(function(b){ b.addEventListener('click', function(){ switchTab(b.dataset.tab); }); });
+
+  $('#themeBtn').addEventListener('click', function(){ setTheme(document.body.dataset.theme === 'dark' ? 'light' : 'dark'); });
+  $('#themeBtn2').addEventListener('click', function(){ setTheme(document.body.dataset.theme === 'dark' ? 'light' : 'dark'); });
+
+  $('#scrim').addEventListener('click', closeSheet);
+  $('#sheetClose').addEventListener('click', closeSheet);
+  document.addEventListener('keydown', function(ev){
+    if (ev.key === 'Escape') { closeSheet(); $('#confirm').classList.remove('open'); }
+  });
+
+  $('#fab').addEventListener('click', function(){ openItemForm(); });
+
+  $('#searchInput').addEventListener('input', function(ev){ view.search = ev.target.value; renderInventory(); });
+  $('#sortSelect').addEventListener('change', function(ev){ view.sort = ev.target.value; renderInventory(); });
+  $('#statusSelect').addEventListener('change', function(ev){ view.statusFilter = ev.target.value; renderInventory(); });
+  $$('[data-inv-filter]').forEach(function(b){
+    b.addEventListener('click', function(){
+      view.invFilter = b.dataset.invFilter;
+      $$('[data-inv-filter]').forEach(function(x){ x.classList.toggle('active', x === b); });
+      renderInventory();
+    });
+  });
+
+  $('#catChips').addEventListener('click', function(ev){
+    const btn = ev.target.closest('.chip');
+    if (!btn) return;
+    view.category = btn.dataset.cat || '';
+    renderInventory();
+  });
+
+  $('#invGrid').addEventListener('click', function(ev){
+    const btn = ev.target.closest('[data-act]');
+    if (!btn) return;
+    const id = btn.dataset.id;
+    const act = btn.dataset.act;
+    if (act === 'view' || act === 'edit') openItemForm(id);
+    else if (act === 'expense') openExpenseForm(id);
+    else if (act === 'sell') openSellForm(id);
+    else if (act === 'unsold') confirmDialog('Undo this sale?', 'The item will go back to Available.', 'Undo', 'primary').then(function(ok){ if (ok) undoSaleFlow(id); });
+    else if (act === 'delete') confirmDialog('Delete this item?', 'All linked expenses and its sale record will also be deleted.', 'Delete').then(function(ok){ if (ok) deleteItemFlow(id); });
+    else if (act === 'del-expense') confirmDialog('Remove this expense?', 'It will no longer be counted in profit/loss.', 'Remove').then(function(ok){ if (ok) deleteExpenseFlow(id); });
+  });
+
+  $('#catForm').addEventListener('submit', function(ev){
+    ev.preventDefault();
+    const input = $('#catName');
+    addCategoryFlow(input.value);
+    input.value = '';
+  });
+  $('#catList').addEventListener('click', function(ev){
+    const btn = ev.target.closest('[data-act="del-cat"]');
+    if (!btn) return;
+    deleteCategoryFlow(btn.dataset.id);
+  });
+
+  $('#exportInv').addEventListener('click', exportInventoryCsv);
+  $('#exportPL').addEventListener('click', exportProfitLossCsv);
+
+  bootLoad();
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
