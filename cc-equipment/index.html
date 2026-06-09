@@ -1446,39 +1446,39 @@
       .map(function(c){ return '<option value="' + escapeAttr(c.name) + '"' + (c.name === item.category ? ' selected' : '') + '>' + escapeHtml(c.name) + '</option>'; }).join('');
     const statusOpts = STATUSES.map(function(s){ return '<option value="' + s + '"' + (s === item.status ? ' selected' : '') + '>' + s + '</option>'; }).join('');
 
-    return '<form id="itemForm" autocomplete="off">'
-      + '<input type="hidden" name="id" value="' + escapeAttr(item.id || '') + '">'
+    return '<form id="itemForm" autocomplete="off" novalidate>'
+      + '<input type="hidden" id="if-id" value="' + escapeAttr(item.id || '') + '">'
       + '<div class="form-grid">'
 
       + '<div class="field full"><label for="if-name">Item name <span class="req">*</span></label>'
-      +   '<input id="if-name" name="name" type="text" required value="' + escapeAttr(item.name) + '" placeholder="e.g. Ford 8N Tractor"></div>'
+      +   '<input id="if-name" type="text" value="' + escapeAttr(item.name) + '" placeholder="e.g. Ford 8N Tractor"></div>'
 
       + '<div class="field"><label for="if-cat">Category <span class="req">*</span></label>'
-      +   '<select id="if-cat" name="category" required>' + catOpts + '</select></div>'
+      +   '<select id="if-cat">' + catOpts + '</select></div>'
 
       + '<div class="field"><label for="if-status">Status</label>'
-      +   '<select id="if-status" name="status">' + statusOpts + '</select></div>'
+      +   '<select id="if-status">' + statusOpts + '</select></div>'
 
       + '<div class="field"><label for="if-brand">Brand</label>'
-      +   '<input id="if-brand" name="brand" type="text" value="' + escapeAttr(item.brand) + '"></div>'
+      +   '<input id="if-brand" type="text" value="' + escapeAttr(item.brand) + '"></div>'
 
       + '<div class="field"><label for="if-model">Model</label>'
-      +   '<input id="if-model" name="model" type="text" value="' + escapeAttr(item.model) + '"></div>'
+      +   '<input id="if-model" type="text" value="' + escapeAttr(item.model) + '"></div>'
 
       + '<div class="field"><label for="if-year">Year</label>'
-      +   '<input id="if-year" name="year" type="number" inputmode="numeric" value="' + escapeAttr(item.year) + '"></div>'
+      +   '<input id="if-year" type="text" inputmode="numeric" value="' + escapeAttr(item.year) + '"></div>'
 
       + '<div class="field"><label for="if-serial">Serial #</label>'
-      +   '<input id="if-serial" name="serial" type="text" value="' + escapeAttr(item.serial) + '"></div>'
+      +   '<input id="if-serial" type="text" value="' + escapeAttr(item.serial) + '"></div>'
 
       + '<div class="field"><label for="if-date">Date purchased <span class="req">*</span></label>'
-      +   '<input id="if-date" name="datePurchased" type="date" required value="' + escapeAttr(item.datePurchased) + '"></div>'
+      +   '<input id="if-date" type="date" value="' + escapeAttr(item.datePurchased) + '"></div>'
 
       + '<div class="field"><label for="if-paid">Purchase cost <span class="req">*</span></label>'
-      +   '<input id="if-paid" name="purchaseCost" type="number" inputmode="decimal" step="0.01" required value="' + escapeAttr(item.purchaseCost) + '" placeholder="0.00"></div>'
+      +   '<input id="if-paid" type="text" inputmode="decimal" value="' + escapeAttr(item.purchaseCost) + '" placeholder="0.00"></div>'
 
       + '<div class="field"><label for="if-asking">Asking price <span class="req">*</span></label>'
-      +   '<input id="if-asking" name="askingPrice" type="number" inputmode="decimal" step="0.01" required value="' + escapeAttr(item.askingPrice) + '" placeholder="0.00"></div>'
+      +   '<input id="if-asking" type="text" inputmode="decimal" value="' + escapeAttr(item.askingPrice) + '" placeholder="0.00"></div>'
 
       + '<div class="field full"><label>Photo</label>'
       +   '<div class="photo-picker" id="photoPicker">'
@@ -1489,14 +1489,14 @@
       +       '<button class="btn ghost" type="button" id="photoUrlToggle">Paste URL</button>'
       +     '</div>'
       +     '<div class="row full" id="photoUrlRow" style="display:none">'
-      +       '<input class="url-input" id="photoUrlInput" type="url" placeholder="https://..." value="' + escapeAttr(item.photo && /^https?:/.test(item.photo) ? item.photo : '') + '">'
+      +       '<input class="url-input" id="photoUrlInput" type="text" placeholder="https://..." value="' + escapeAttr(item.photo && /^https?:/.test(item.photo) ? item.photo : '') + '">'
       +     '</div>'
-      +     '<input type="hidden" name="photo" id="photoValue" value="' + escapeAttr(item.photo) + '">'
+      +     '<input type="hidden" id="photoValue" value="' + escapeAttr(item.photo) + '">'
       +   '</div>'
       + '</div>'
 
       + '<div class="field full"><label for="if-notes">Notes</label>'
-      +   '<textarea id="if-notes" name="notes">' + escapeHtml(item.notes) + '</textarea></div>'
+      +   '<textarea id="if-notes">' + escapeHtml(item.notes) + '</textarea></div>'
 
       + '<div class="calc-preview full" id="calcPreview">'
       +   '<span>Estimated profit if sold at asking</span>'
@@ -1507,7 +1507,7 @@
 
       + '<div class="card-actions" style="margin-top:16px">'
       +   '<button class="btn" type="button" id="cancelItem">Cancel</button>'
-      +   '<button class="btn primary" type="submit">' + (isEdit ? 'Save Changes' : 'Add Item') + '</button>'
+      +   '<button class="btn primary" type="button" id="saveItemBtn">' + (isEdit ? 'Save Changes' : 'Add Item') + '</button>'
       + '</div>'
 
       + (isEdit ? '<button class="btn danger block" type="button" id="deleteItemBtn" style="margin-top:10px">Delete this item</button>' : '')
@@ -1528,7 +1528,7 @@
     // Live profit preview
     const paid = $('#if-paid'), ask = $('#if-asking'), preview = $('#calcProfit'), wrap = $('#calcPreview');
     const recalc = function(){
-      const id = form.querySelector('input[name="id"]').value;
+      const id = ($('#if-id') || {}).value || '';
       const expTotal = id ? itemExpensesTotal(id) : 0;
       const p = (Number(ask.value)||0) - (Number(paid.value)||0) - expTotal;
       preview.textContent = (p>=0?'+':'−') + money(Math.abs(p));
@@ -1566,18 +1566,36 @@
     const delBtn = $('#deleteItemBtn');
     if (delBtn) {
       delBtn.addEventListener('click', function(){
-        const id = form.querySelector('input[name="id"]').value;
+        const id = ($('#if-id') || {}).value || '';
         confirmDialog('Delete this item?', 'All linked expenses and its sale record will also be deleted.', 'Delete', 'danger').then(function(ok){
           if (ok) { deleteItem(id); closeSheet(); }
         });
       });
     }
 
-    // Save
-    form.addEventListener('submit', function(ev){
-      ev.preventDefault();
-      const data = Object.fromEntries(new FormData(form).entries());
-      saveItem(data);
+    // Save — read values directly from DOM (avoids FormData quirks on mobile)
+    $('#saveItemBtn').addEventListener('click', function(){
+      try {
+        var data = {
+          id:            ($('#if-id')      || {}).value || '',
+          name:          ($('#if-name')    || {}).value || '',
+          category:      ($('#if-cat')     || {}).value || '',
+          status:        ($('#if-status')  || {}).value || 'Available',
+          brand:         ($('#if-brand')   || {}).value || '',
+          model:         ($('#if-model')   || {}).value || '',
+          year:          ($('#if-year')    || {}).value || '',
+          serial:        ($('#if-serial')  || {}).value || '',
+          datePurchased: ($('#if-date')    || {}).value || '',
+          purchaseCost:  ($('#if-paid')    || {}).value || '',
+          askingPrice:   ($('#if-asking')  || {}).value || '',
+          photo:         ($('#photoValue') || {}).value || '',
+          notes:         ($('#if-notes')   || {}).value || ''
+        };
+        saveItem(data);
+      } catch(err) {
+        toast('Could not save: ' + (err && err.message ? err.message : 'unknown error'));
+        console.error('saveItem error', err);
+      }
     });
   }
 
@@ -1607,9 +1625,20 @@
   }
 
   function saveItem(data) {
-    if (!data.name || !data.category || !data.datePurchased || data.purchaseCost === '' || data.askingPrice === '') {
-      toast('Please fill in name, category, date, paid, and asking price.');
-      return;
+    if (!data.name || !data.name.trim()) {
+      toast('Please enter an item name.'); return;
+    }
+    if (!data.category) {
+      toast('Please select a category.'); return;
+    }
+    if (!data.datePurchased) {
+      toast('Please enter the date purchased.'); return;
+    }
+    if (data.purchaseCost === '' || data.purchaseCost == null) {
+      toast('Please enter the purchase cost (enter 0 if free).'); return;
+    }
+    if (data.askingPrice === '' || data.askingPrice == null) {
+      toast('Please enter an asking price.'); return;
     }
     const now = new Date().toISOString();
     if (data.id) {
