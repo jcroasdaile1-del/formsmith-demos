@@ -337,7 +337,7 @@
   .scrim.open { display: block; }
   .sheet {
     position: fixed; left: 0; right: 0; bottom: 0;
-    max-height: 92vh;
+    max-height: 92svh;
     background: var(--card-elev);
     border-top-left-radius: 18px; border-top-right-radius: 18px;
     box-shadow: var(--shadow); z-index: 51;
@@ -369,6 +369,7 @@
     padding: 14px 16px calc(14px + var(--safe-bottom));
     overflow-y: auto; flex: 1;
     -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
   }
   .sheet-foot {
     position: sticky; bottom: 0;
@@ -407,6 +408,17 @@
     border: 1px solid var(--line); border-radius: 12px;
     padding: 12px 14px; font-size: 16px;
     font-family: inherit; min-height: var(--tap);
+    box-sizing: border-box;
+  }
+  /* Prevent date/time inputs from rendering taller than other fields */
+  .field input[type="date"],
+  .field input[type="time"],
+  .field input[type="datetime-local"] {
+    -webkit-appearance: none;
+    appearance: none;
+    height: var(--tap);
+    line-height: normal;
+    padding: 0 14px;
   }
   .field select {
     appearance: none;
