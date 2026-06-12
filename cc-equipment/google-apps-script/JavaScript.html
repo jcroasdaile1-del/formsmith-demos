@@ -350,9 +350,9 @@ function renderFinances() {
   $('#chartMonthly').innerHTML = monthly.map(function(m){
     const h = Math.max(2, Math.round((Math.abs(m.value) / max) * 130));
     const cls = m.value < 0 ? 'loss' : (m.value > 0 ? 'win' : '');
-    return '<div class="col"><div class="bar ' + cls + '" style="height:' + h + 'px"></div><div class="val">' + (m.value>=0?'+':'−') + moneyShort(Math.abs(m.value)) + '</div><div class="lbl">' + m.label + '</div></div>';
+    return '<div class="col" data-full-label="' + m.fullLabel + '" data-value="' + m.value + '"><div class="bar ' + cls + '" style="height:' + h + 'px"></div><div class="val">' + (m.value>=0?'+':'−') + moneyShort(Math.abs(m.value)) + '</div><div class="lbl">' + m.label + '</div></div>';
   }).join('');
-  $('#chartMonthlyLegend').textContent = 'Each bar is one month. Empty months mean no sales that month.';
+  $('#chartMonthlyLegend').textContent = 'Hover or tap a bar for details. Empty months mean no sales that month.';
 
   const boughtSold = monthlyBuckets(6, function(d){
     const b = inv.filter(function(it){ return inMonth(it.datePurchased, d); }).length;
@@ -410,7 +410,11 @@ function monthlyBuckets(count, valueFn) {
   const now = new Date();
   for (let i = count - 1; i >= 0; i--) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    out.push({ label: d.toLocaleDateString(undefined, { month: 'short' }), value: valueFn(d) });
+    out.push({
+      label: d.toLocaleDateString(undefined, { month: 'short' }),
+      fullLabel: d.toLocaleDateString(undefined, { month: 'long', year: 'numeric' }),
+      value: valueFn(d)
+    });
   }
   return out;
 }
@@ -878,6 +882,26 @@ function init() {
 
   $('#exportInv').addEventListener('click', exportInventoryCsv);
   $('#exportPL').addEventListener('click', exportProfitLossCsv);
+
+  // Monthly chart hover/tap
+  const chartDefaultHint = 'Hover or tap a bar for details. Empty months mean no sales that month.';
+  $('#chartMonthly').addEventListener('pointerover', function(ev) {
+    const col = ev.target.closest('.col');
+    if (!col) return;
+    const full = col.dataset.fullLabel;
+    const val = Number(col.dataset.value);
+    $('#chartMonthlyLegend').textContent = full + ' — ' + (val >= 0 ? '+' : '−') + money(Math.abs(val)) + (val === 0 ? ' (no sales)' : '');
+  });
+  $('#chartMonthly').addEventListener('mouseleave', function() {
+    $('#chartMonthlyLegend').textContent = chartDefaultHint;
+  });
+  $('#chartMonthly').addEventListener('click', function(ev) {
+    const col = ev.target.closest('.col');
+    if (!col) return;
+    const full = col.dataset.fullLabel;
+    const val = Number(col.dataset.value);
+    $('#chartMonthlyLegend').textContent = full + ' — ' + (val >= 0 ? '+' : '−') + money(Math.abs(val)) + (val === 0 ? ' (no sales)' : '');
+  });
 
   bootLoad();
 }
