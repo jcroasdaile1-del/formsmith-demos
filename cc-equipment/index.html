@@ -1124,6 +1124,7 @@
   function openSheet(title, html) {
     $('#sheetTitle').textContent = title;
     $('#sheetBody').innerHTML = html;
+    $('#sheetBody').scrollTop = 0;
     $('#scrim').classList.add('open');
     $('#sheet').classList.add('open');
     document.body.style.overflow = 'hidden';
@@ -1132,6 +1133,7 @@
     $('#scrim').classList.remove('open');
     $('#sheet').classList.remove('open');
     document.body.style.overflow = '';
+    window.scrollTo(0, 0);
   }
 
   // ---------- Theme ------------------------------------------------------
