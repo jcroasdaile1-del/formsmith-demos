@@ -1,6 +1,6 @@
 # C&C Equipment — Google Apps Script files
 
-These four files are the deployable backend + frontend for the C&C Equipment app.
+These files are the deployable backend + frontend for the C&C Equipment app.
 
 | File | Purpose |
 | ---- | ---- |
@@ -8,6 +8,7 @@ These four files are the deployable backend + frontend for the C&C Equipment app
 | `Index.html`      | The HTML body. Pulls in `Stylesheet` and `JavaScript` via Apps Script template `include()` calls. |
 | `Stylesheet.html` | All CSS (wrapped in `<style>` tags). |
 | `JavaScript.html` | All frontend logic (wrapped in `<script>` tags). Calls server functions via `google.script.run`. |
+| `appsscript.json` | Manifest. Declares OAuth scopes (Sheets + Drive) and the web-app config so permissions are approved in one prompt. Optional but recommended. |
 
 **Setup instructions:** see [`../SETUP.md`](../SETUP.md).
 

@@ -36,7 +36,7 @@ The demo runs entirely in your browser. Sample inventory is pre-loaded so you ca
 1. In the new sheet, click **Extensions → Apps Script**.
 2. You'll see a blank `Code.gs` file. Delete its contents.
 
-### Step 3 — Paste the four files
+### Step 3 — Paste the files
 From `google-apps-script/` in this folder:
 
 | In Apps Script editor | Paste the contents of |
@@ -49,6 +49,15 @@ From `google-apps-script/` in this folder:
 > File names **must match exactly** (case-sensitive, no `.html` suffix when you create them — Apps Script adds it automatically).
 
 Click the floppy-disk **Save** icon.
+
+### Step 3b — Paste the manifest (recommended)
+This makes Google ask for permissions **once** instead of twice (once for the Sheet, again the first time you upload a photo).
+
+1. Click the **gear ⚙ (Project Settings)** in the left sidebar.
+2. Tick **“Show "appsscript.json" manifest file in the editor.”**
+3. Go back to the **Editor** (`< >` icon). You'll now see an `appsscript.json` file.
+4. Replace its contents with the contents of `appsscript.json` from the `google-apps-script/` folder.
+5. **Save**.
 
 ### Step 4 — Run setup once
 1. In the editor's function dropdown (top toolbar), pick **`setup`**.
@@ -105,8 +114,10 @@ Photos are stored in a Drive folder named **C&C Equipment Photos** (auto-created
 ---
 
 ## Updating to a newer version
-1. Replace the contents of `Code.gs`, `Index.html`, `Stylesheet.html`, `JavaScript.html` with the new files.
-2. **Deploy → Manage deployments → Edit pencil → New version → Deploy**.
+**Your data is safe.** All inventory, expenses, and sales live in the Google Sheet — *not* in the code. Replacing the code never touches the Sheet, so you can push updates as often as you like.
+
+1. Replace the contents of `Code.gs`, `Index.html`, `Stylesheet.html`, `JavaScript.html` (and `appsscript.json` if it changed) with the new files.
+2. **Deploy → Manage deployments → Edit pencil → New version → Deploy**. (Editing the *existing* deployment keeps the **same URL**, so the home-screen icon keeps working.)
 3. Reload the app on your phone.
 
 ---
