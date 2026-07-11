@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Formsmith — Custom Business Dashboards &amp; Web Apps</title>
+<style>
+  :root {
+    --red: #c0392b;
+    --dark: #1a1a1a;
+    --gray: #555;
+    --light: #f7f5f3;
+    --border: #e5e1db;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--light);
+    color: var(--dark);
+    line-height: 1.5;
+  }
+  header {
+    background: var(--dark);
+    color: #fff;
+    padding: 64px 24px 56px;
+    text-align: center;
+  }
+  header .kicker {
+    color: var(--red);
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-size: 13px;
+    margin-bottom: 14px;
+  }
+  header h1 {
+    font-size: 2.4rem;
+    margin: 0 0 16px;
+    font-weight: 800;
+  }
+  header p {
+    max-width: 620px;
+    margin: 0 auto;
+    color: #cfcfcf;
+    font-size: 1.05rem;
+  }
+  header .cta {
+    display: inline-block;
+    margin-top: 28px;
+    background: var(--red);
+    color: #fff;
+    text-decoration: none;
+    font-weight: 700;
+    padding: 14px 30px;
+    border-radius: 6px;
+    font-size: 0.95rem;
+  }
+  main {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 56px 24px 80px;
+  }
+  .demo {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 32px;
+    margin-bottom: 40px;
+  }
+  .demo-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+  .demo-head h2 {
+    margin: 0 0 6px;
+    font-size: 1.5rem;
+  }
+  .demo-head .tag {
+    display: inline-block;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--red);
+    background: rgba(192,57,43,0.08);
+    padding: 4px 10px;
+    border-radius: 4px;
+    margin-bottom: 8px;
+  }
+  .demo-head p {
+    color: var(--gray);
+    max-width: 560px;
+    margin: 0;
+  }
+  .demo-head a.demo-link {
+    white-space: nowrap;
+    background: var(--dark);
+    color: #fff;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.9rem;
+    padding: 10px 18px;
+    border-radius: 6px;
+  }
+  .shots {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .shots img {
+    width: 100%;
+    display: block;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+  }
+  .shots figcaption {
+    font-size: 0.8rem;
+    color: var(--gray);
+    margin-top: 6px;
+    text-align: center;
+  }
+  @media (max-width: 640px) {
+    .shots { grid-template-columns: 1fr; }
+    header h1 { font-size: 1.8rem; }
+  }
+  footer {
+    text-align: center;
+    padding: 48px 24px 64px;
+    color: var(--gray);
+    font-size: 0.9rem;
+  }
+  footer a { color: var(--red); font-weight: 600; text-decoration: none; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="kicker">Formsmith &middot; Forged to Order</div>
+  <h1>Real business dashboards, built from scratch</h1>
+  <p>Every app below was custom-built for one business's exact workflow &mdash; live data, real charts, real forms. No templates. Click into any demo to try it yourself.</p>
+  <a class="cta" href="https://www.etsy.com/shop/FormsmithCustomForms" target="_blank" rel="noopener">See pricing on Etsy</a>
+</header>
+
+<main>
+
+  <div class="demo">
+    <div class="demo-head">
+      <div>
+        <div class="tag">Pressure Washing</div>
+        <h2>PowerWash Pro</h2>
+        <p>A solo operator's command center &mdash; route, revenue, quotes, and weather conditions in one dashboard.</p>
+      </div>
+      <a class="demo-link" href="https://jcroasdaile1-del.github.io/formsmith-demos/powerwash-pro/" target="_blank" rel="noopener">Try live demo &rarr;</a>
+    </div>
+    <div class="shots">
+      <figure>
+        <img src="portfolio-assets/powerwash-dashboard.png" alt="PowerWash Pro dashboard showing monthly revenue, quote win rate, and today's jobs">
+        <figcaption>Dashboard &mdash; revenue, jobs, quote win rate</figcaption>
+      </figure>
+      <figure>
+        <img src="portfolio-assets/powerwash-quotes.png" alt="PowerWash Pro quotes list with pricing and status">
+        <figcaption>Fast estimating with configurable pricing</figcaption>
+      </figure>
+    </div>
+  </div>
+
+  <div class="demo">
+    <div class="demo-head">
+      <div>
+        <div class="tag">House Cleaning</div>
+        <h2>CleanSlate</h2>
+        <p>Full business manager for a cleaning company &mdash; revenue charts, service breakdowns, and a color-coded job calendar.</p>
+      </div>
+      <a class="demo-link" href="https://jcroasdaile1-del.github.io/formsmith-demos/house-cleaning-demo.html" target="_blank" rel="noopener">Try live demo &rarr;</a>
+    </div>
+    <div class="shots">
+      <figure>
+        <img src="portfolio-assets/cleanslate-dashboard.png" alt="CleanSlate dashboard showing weekly revenue chart and service breakdown">
+        <figcaption>Dashboard &mdash; weekly revenue &amp; service mix</figcaption>
+      </figure>
+      <figure>
+        <img src="portfolio-assets/cleanslate-schedule.png" alt="CleanSlate monthly schedule calendar with color-coded jobs">
+        <figcaption>Full month calendar view</figcaption>
+      </figure>
+    </div>
+  </div>
+
+  <div class="demo">
+    <div class="demo-head">
+      <div>
+        <div class="tag">Pet Sitting &amp; Dog Walking</div>
+        <h2>PawTracker</h2>
+        <p>Booking, revenue, and client management for a pet sitting business, plus a weather snapshot for walk conditions.</p>
+      </div>
+      <a class="demo-link" href="https://jcroasdaile1-del.github.io/formsmith-demos/pet-sitter-demo.html" target="_blank" rel="noopener">Try live demo &rarr;</a>
+    </div>
+    <div class="shots">
+      <figure>
+        <img src="portfolio-assets/pawtracker-dashboard.png" alt="PawTracker dashboard showing today's walks, revenue, and client rating">
+        <figcaption>Dashboard &mdash; today's walks &amp; client rating</figcaption>
+      </figure>
+      <figure>
+        <img src="portfolio-assets/pawtracker-clients-and-pets.png" alt="PawTracker clients and pets management view">
+        <figcaption>Client &amp; pet records</figcaption>
+      </figure>
+    </div>
+  </div>
+
+  <div class="demo">
+    <div class="demo-head">
+      <div>
+        <div class="tag">Sports League Management</div>
+        <h2>Buckskin Bowmen League Manager</h2>
+        <p>Season dashboard and score tracker for a 23-team archery league &mdash; automatic averages, brackets, and standings.</p>
+      </div>
+      <a class="demo-link" href="https://jcroasdaile1-del.github.io/formsmith-demos/archery-league-demo.html" target="_blank" rel="noopener">Try live demo &rarr;</a>
+    </div>
+    <div class="shots">
+      <figure>
+        <img src="portfolio-assets/archery-dashboard.png" alt="Archery league dashboard with score distribution chart and season stats">
+        <figcaption>Season dashboard &mdash; scores &amp; stats</figcaption>
+      </figure>
+      <figure>
+        <img src="portfolio-assets/archery-teams.png" alt="Archery league team roster with 23 teams and qualifying averages">
+        <figcaption>Full 23-team roster with live averages</figcaption>
+      </figure>
+    </div>
+  </div>
+
+  <div class="demo">
+    <div class="demo-head">
+      <div>
+        <div class="tag">Contractor / Concrete</div>
+        <h2>Concrete Job Manager</h2>
+        <p>Job tracking and revenue dashboard for a concrete contractor, with a dense intake form for new jobs.</p>
+      </div>
+      <a class="demo-link" href="https://jcroasdaile1-del.github.io/formsmith-demos/contractor-dashboard-demo.html" target="_blank" rel="noopener">Try live demo &rarr;</a>
+    </div>
+    <div class="shots">
+      <figure>
+        <img src="portfolio-assets/concrete-dashboard.png" alt="Concrete Job Manager dashboard with monthly revenue and job types">
+        <figcaption>Dashboard &mdash; revenue &amp; job types</figcaption>
+      </figure>
+      <figure>
+        <img src="portfolio-assets/concrete-job-form.png" alt="Concrete Job Manager job intake form with client details">
+        <figcaption>Job intake form</figcaption>
+      </figure>
+    </div>
+  </div>
+
+  <div class="demo">
+    <div class="demo-head">
+      <div>
+        <div class="tag">Pet Grooming</div>
+        <h2>Grooming Salon Client Manager</h2>
+        <p>Client &amp; pet records, checkout, and a CSV import wizard so a salon can bring in existing client data in minutes.</p>
+      </div>
+      <a class="demo-link" href="https://jcroasdaile1-del.github.io/formsmith-demos/import-wizard-demo.html" target="_blank" rel="noopener">Try live demo &rarr;</a>
+    </div>
+    <div class="shots">
+      <figure>
+        <img src="portfolio-assets/grooming-dashboard1.png" alt="Grooming salon dashboard with revenue by service and services breakdown">
+        <figcaption>Dashboard &mdash; revenue by service</figcaption>
+      </figure>
+      <figure>
+        <img src="portfolio-assets/grooming-client-form.png" alt="Grooming salon client and pet intake form">
+        <figcaption>Client &amp; multi-pet intake form</figcaption>
+      </figure>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  Every app above started as a message describing a workflow. <a href="https://www.etsy.com/shop/FormsmithCustomForms" target="_blank" rel="noopener">Message Formsmith on Etsy</a> to build yours.
+</footer>
+
+</body>
+</html>
