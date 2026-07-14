@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#101923">
+  <meta name="description" content="YardStack equipment rental operations demo — reservations, digital agreements, payments, fleet availability, inspections, and maintenance in one polished workspace.">
+  <title>YardStack — Equipment Rental Operations</title>
+  <?!= include('Stylesheet'); ?>
+</head>
+<body>
+  <svg class="svg-sprite" aria-hidden="true">
+    <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/></symbol>
+    <symbol id="i-calendar" viewBox="0 0 24 24"><path d="M7 2v3M17 2v3M3.5 9h17M5.5 4h13a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z"/><path d="m8 14 2 2 5-5"/></symbol>
+    <symbol id="i-file" viewBox="0 0 24 24"><path d="M6 2.8h8l4 4V21H6z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></symbol>
+    <symbol id="i-truck" viewBox="0 0 24 24"><path d="M3 5h11v12H3zM14 10h4l3 3v4h-7z"/><circle cx="7" cy="18" r="2"/><circle cx="18" cy="18" r="2"/></symbol>
+    <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M3 20c.3-4 2.3-6 6-6s5.7 2 6 6M16 5.5a3.2 3.2 0 0 1 0 6.2M16.5 14c2.8.5 4.3 2.5 4.5 5"/></symbol>
+    <symbol id="i-wrench" viewBox="0 0 24 24"><path d="M14.5 6.5a5 5 0 0 0-6.3 6.3L3 18l3 3 5.2-5.2a5 5 0 0 0 6.3-6.3l-3 3-3-3z"/></symbol>
+    <symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></symbol>
+    <symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2.8 2.8-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6v.2h-4V21a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1L4.2 17l.1-.1a1.7 1.7 0 0 0 .3-1.9A1.7 1.7 0 0 0 3 14H2.8v-4H3a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9L4.2 7 7 4.2l.1.1A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-1.6v-.2h4V3a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1L19.8 7l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1h.2v4H21a1.7 1.7 0 0 0-1.6 1Z"/></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-bell" viewBox="0 0 24 24"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 8h18c0-1-3-1-3-8ZM10 21h4"/></symbol>
+    <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></symbol>
+    <symbol id="i-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+    <symbol id="i-pin" viewBox="0 0 24 24"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></symbol>
+    <symbol id="i-card" viewBox="0 0 24 24"><rect x="2.5" y="5" width="19" height="14" rx="2"/><path d="M3 9h18M7 15h3"/></symbol>
+    <symbol id="i-camera" viewBox="0 0 24 24"><path d="M4 7h4l1.5-2h5L16 7h4a2 2 0 0 1 2 2v10H2V9a2 2 0 0 1 2-2Z"/><circle cx="12" cy="13" r="4"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12m0 0 5-5m-5 5-5-5M4 21h16"/></symbol>
+    <symbol id="i-send" viewBox="0 0 24 24"><path d="m3 11 18-8-8 18-2-8zM11 13 21 3"/></symbol>
+    <symbol id="i-dollar" viewBox="0 0 24 24"><path d="M12 2v20M17 6.5C16 5.5 14.5 5 12.5 5 10 5 8 6.2 8 8.2c0 5 9 2.3 9 7 0 2.2-2 3.8-5 3.8-2.1 0-4-.7-5-2"/></symbol>
+    <symbol id="i-filter" viewBox="0 0 24 24"><path d="M3 5h18l-7 8v6l-4 2v-8z"/></symbol>
+    <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 6v5h-5M4 18v-5h5"/><path d="M6.1 9a7 7 0 0 1 11.8-2.2L20 11M4 13l2.1 4.2A7 7 0 0 0 17.9 15"/></symbol>
+    <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="i-edit" viewBox="0 0 24 24"><path d="m4 16-1 5 5-1L20 8l-4-4zM14 6l4 4"/></symbol>
+    <symbol id="i-more" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></symbol>
+    <symbol id="i-cart" viewBox="0 0 24 24"><path d="M3 4h2l2.2 10.5a2 2 0 0 0 2 1.5H18a2 2 0 0 0 2-1.6L21 8H6"/><circle cx="10" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/></symbol>
+    <symbol id="i-phone" viewBox="0 0 24 24"><path d="M7 3H4a1 1 0 0 0-1 1c0 9.4 7.6 17 17 17a1 1 0 0 0 1-1v-3l-5-2-1.5 2a14 14 0 0 1-7.5-7.5L9 8z"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14m-5-5 5 5-5 5"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 2 4 5v6c0 5.5 3.3 9 8 11 4.7-2 8-5.5 8-11V5z"/><path d="m8.5 12 2.2 2.2 4.8-5"/></symbol>
+    <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 14a4.5 4.5 0 0 0 6.4.1l3-3a4.5 4.5 0 0 0-6.4-6.4l-1.7 1.7M14 10a4.5 4.5 0 0 0-6.4-.1l-3 3a4.5 4.5 0 0 0 6.4 6.4l1.7-1.7"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 3 2 21h20zM12 9v5M12 18h.01"/></symbol>
+    <symbol id="i-spark" viewBox="0 0 24 24"><path d="m12 2 1.6 5.4L19 9l-5.4 1.6L12 16l-1.6-5.4L5 9l5.4-1.6zM19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z"/></symbol>
+  </svg>
+
+  <div id="app" class="app-shell">
+    <div class="demo-ribbon" id="demoRibbon">
+      <div><span class="live-dot"></span><strong>Interactive demo</strong><span class="demo-ribbon-copy">Your changes save on this device.</span></div>
+      <div class="demo-ribbon-actions">
+        <button class="ribbon-btn" data-action="tour"><svg><use href="#i-spark"/></svg> Guided tour</button>
+        <button class="ribbon-btn" data-action="reset-demo"><svg><use href="#i-refresh"/></svg> Reset</button>
+        <button class="ribbon-close" data-action="dismiss-ribbon" aria-label="Dismiss demo message"><svg><use href="#i-close"/></svg></button>
+      </div>
+    </div>
+
+    <aside class="sidebar" id="sidebar">
+      <div class="product-brand">
+        <div class="product-mark" aria-hidden="true"><span></span><span></span><span></span></div>
+        <div class="product-wordmark"><strong>YardStack</strong><small>Rental operations</small></div>
+        <button class="mobile-close icon-button" data-action="close-nav" aria-label="Close navigation"><svg><use href="#i-close"/></svg></button>
+      </div>
+
+      <nav class="primary-nav" aria-label="Main navigation">
+        <p class="nav-label">Workspace</p>
+        <button class="nav-item is-active" data-view="dashboard"><svg><use href="#i-grid"/></svg><span>Overview</span></button>
+        <button class="nav-item" data-view="schedule"><svg><use href="#i-calendar"/></svg><span>Schedule</span><em id="scheduleBadge">4</em></button>
+        <button class="nav-item" data-view="reservations"><svg><use href="#i-file"/></svg><span>Reservations</span></button>
+        <button class="nav-item" data-view="fleet"><svg><use href="#i-truck"/></svg><span>Fleet</span></button>
+        <button class="nav-item" data-view="customers"><svg><use href="#i-users"/></svg><span>Customers</span></button>
+        <p class="nav-label nav-label-gap">Operations</p>
+        <button class="nav-item" data-view="returns"><svg><use href="#i-refresh"/></svg><span>Returns</span><em class="warning" id="returnsBadge">2</em></button>
+        <button class="nav-item" data-view="payments"><svg><use href="#i-card"/></svg><span>Payments</span></button>
+        <button class="nav-item" data-view="agreements"><svg><use href="#i-file"/></svg><span>Agreements</span></button>
+        <button class="nav-item" data-view="maintenance"><svg><use href="#i-wrench"/></svg><span>Maintenance</span><em class="warning" id="maintenanceBadge">3</em></button>
+        <button class="nav-item" data-view="reports"><svg><use href="#i-chart"/></svg><span>Reports</span></button>
+        <button class="nav-item" data-view="settings"><svg><use href="#i-settings"/></svg><span>Settings</span></button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="location-switcher">
+          <span class="location-avatar">NS</span>
+          <span><strong>Northstar Equipment</strong><small>Madison Yard</small></span>
+          <svg><use href="#i-down"/></svg>
+        </div>
+        <button class="booking-link" data-action="open-booking"><span class="booking-link-icon"><svg><use href="#i-link"/></svg></span><span><strong>Customer booking site</strong><small>Preview your storefront</small></span><svg class="booking-arrow"><use href="#i-arrow"/></svg></button>
+      </div>
+    </aside>
+
+    <div class="nav-scrim" data-action="close-nav"></div>
+
+    <section class="workspace">
+      <header class="topbar">
+        <button class="menu-button icon-button" data-action="open-nav" aria-label="Open navigation"><svg><use href="#i-menu"/></svg></button>
+        <div class="mobile-product"><div class="product-mark small"><span></span><span></span><span></span></div><strong>YardStack</strong></div>
+        <div class="topbar-search"><svg><use href="#i-search"/></svg><input id="globalSearch" type="search" placeholder="Search reservations, customers, fleet…" aria-label="Search"><kbd>⌘ K</kbd></div>
+        <button class="mobile-search icon-button" data-action="mobile-search" aria-label="Search"><svg><use href="#i-search"/></svg></button>
+        <button class="storefront-button" data-action="open-booking"><svg><use href="#i-eye"/></svg><span>Booking site</span></button>
+        <button class="notification-button icon-button" data-action="notifications" aria-label="Notifications"><svg><use href="#i-bell"/></svg><i></i></button>
+        <button class="profile-button" data-action="profile"><span>JM</span><span class="profile-copy"><strong>Jamie Morgan</strong><small>Owner</small></span><svg><use href="#i-down"/></svg></button>
+      </header>
+
+      <main class="main-content" id="mainContent" tabindex="-1"></main>
+    </section>
+
+    <nav class="mobile-nav" aria-label="Mobile navigation">
+      <button class="is-active" data-view="dashboard"><svg><use href="#i-grid"/></svg><span>Home</span></button>
+      <button data-view="schedule"><svg><use href="#i-calendar"/></svg><span>Schedule</span></button>
+      <button class="mobile-create" data-action="new-reservation" aria-label="New reservation"><span><svg><use href="#i-plus"/></svg></span></button>
+      <button data-view="reservations"><svg><use href="#i-file"/></svg><span>Rentals</span></button>
+      <button data-action="mobile-more"><svg><use href="#i-more"/></svg><span>More</span></button>
+    </nav>
+  </div>
+
+  <section id="bookingApp" class="booking-app" hidden></section>
+
+  <div class="modal-layer" id="modalLayer" aria-hidden="true">
+    <div class="modal-scrim" data-action="close-modal"></div>
+    <section class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <header class="modal-header"><div><p id="modalEyebrow"></p><h2 id="modalTitle">Details</h2></div><button class="icon-button" data-action="close-modal" aria-label="Close"><svg><use href="#i-close"/></svg></button></header>
+      <div class="modal-body" id="modalBody"></div>
+      <footer class="modal-footer" id="modalFooter"></footer>
+    </section>
+  </div>
+
+  <div class="drawer-layer" id="drawerLayer" aria-hidden="true">
+    <div class="drawer-scrim" data-action="close-drawer"></div>
+    <aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="drawerTitle">
+      <header class="drawer-header"><div><p id="drawerEyebrow"></p><h2 id="drawerTitle">Details</h2></div><button class="icon-button" data-action="close-drawer" aria-label="Close"><svg><use href="#i-close"/></svg></button></header>
+      <div class="drawer-body" id="drawerBody"></div>
+      <footer class="drawer-footer" id="drawerFooter"></footer>
+    </aside>
+  </div>
+
+  <div class="toast-region" id="toastRegion" aria-live="polite"></div>
+  <div class="confetti" id="confetti" aria-hidden="true"></div>
+  <?!= include('JavaScript'); ?>
+</body>
+</html>
