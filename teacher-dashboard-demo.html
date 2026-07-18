@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex,follow">
+<link rel="canonical" href="https://jcroasdaile1-del.github.io/formsmith-demos/projects/teacher-tracker.html">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 <title>Teacher — Student Data Command Center + Dashboard</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <style>
@@ -75,6 +78,7 @@
   .dash-card.full-width { grid-column: 1 / -1; }
   .chart-wrap { position: relative; height: 250px; width: 100%; }
   .chart-wrap-sm { position: relative; height: 200px; width: 100%; }
+  .chart-fallback { height: 100%; display: grid; place-items: center; padding: 1rem; color: var(--text-light); font-size: 0.82rem; text-align: center; }
 
   .mini-table { width: 100%; border-collapse: collapse; }
   .mini-table th { text-align: left; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-light); padding: 8px 10px; border-bottom: 2px solid var(--border); font-weight: 700; }
@@ -150,9 +154,10 @@
   .app-footer a:hover { text-decoration: underline; }
 
   [data-help] { position: relative; }
-  [data-help]::after { content: attr(data-help); position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%); background: #1e293b; color: #fff; font-size: 0.75rem; font-weight: 500; line-height: 1.4; padding: 8px 12px; border-radius: 8px; white-space: normal; width: max-content; max-width: 260px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); opacity: 0; visibility: hidden; transition: opacity 0.2s, visibility 0.2s; z-index: 200; pointer-events: none; text-transform: none; letter-spacing: normal; }
+  [data-help]::after { content: attr(data-help); position: absolute; box-sizing: border-box; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%); background: #1e293b; color: #fff; font-size: 0.75rem; font-weight: 500; line-height: 1.4; padding: 8px 12px; border-radius: 8px; white-space: normal; width: max-content; max-width: 260px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); opacity: 0; visibility: hidden; transition: opacity 0.2s, visibility 0.2s; z-index: 200; pointer-events: none; text-transform: none; letter-spacing: normal; }
   [data-help]::before { content: ''; position: absolute; bottom: calc(100% + 2px); left: 50%; transform: translateX(-50%); border: 6px solid transparent; border-top-color: #1e293b; opacity: 0; visibility: hidden; transition: opacity 0.2s, visibility 0.2s; z-index: 200; pointer-events: none; }
   [data-help]:hover::after, [data-help]:hover::before { opacity: 1; visibility: visible; }
+  .date-filter [data-help]:first-child::after, .dash-grid .dash-card:nth-child(odd) [data-help]::after { right: auto; left: 0; transform: none; }
   .field-group:last-child [data-help]::after, .submit-bar [data-help]::after { left: auto; right: 0; transform: none; }
   .field-group:last-child [data-help]::before, .submit-bar [data-help]::before { left: auto; right: 12px; transform: none; }
   .help-icon { display: inline-block; width: 16px; height: 16px; border-radius: 50%; background: var(--teal-light); color: var(--teal); font-size: 0.65rem; font-weight: 800; text-align: center; line-height: 16px; margin-left: 4px; cursor: help; vertical-align: middle; }
@@ -435,8 +440,8 @@
 </div>
 
 <footer class="app-footer">
-  Built by <strong>Formsmith</strong> · <a href="https://www.etsy.com/shop/FormsmithCustomForms" target="_blank">Etsy Shop</a> · <a href="mailto:formsmithcustomforms@gmail.com">formsmithcustomforms@gmail.com</a>
-  <br>Every field, tab, chart, and dashboard card is 100% customized to your classroom.
+  <strong>Formsmith concept demo</strong> · <a href="demos.html">Return to Formsmith demos</a>
+  <br>A real build can tailor the fields, tabs, charts, and dashboard cards to the classroom workflow.
 </footer>
 
 <div class="toast" id="toast"></div>
@@ -636,6 +641,13 @@ function dl(b,f){const a=document.createElement('a');a.href=URL.createObjectURL(
 function ds(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 
 function initCharts() {
+  if (!window.Chart) {
+    document.querySelectorAll('.chart-wrap, .chart-wrap-sm').forEach(container => {
+      container.innerHTML = '<p class="chart-fallback">Charts are unavailable while the chart library is offline. The rest of this demo still works.</p>';
+    });
+    return;
+  }
+
   new Chart(document.getElementById('gradeChart'),{type:'bar',data:{labels:['A (90-100)','B (80-89)','C (70-79)','D (60-69)','F (<60)'],datasets:[{label:'Students',data:[6,8,7,4,3],backgroundColor:['#10b981','#0d9488','#f59e0b','#f97316','#ef4444'],borderRadius:6,borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{stepSize:2},grid:{color:'#f1f5f9'}},x:{grid:{display:false}}}}});
   new Chart(document.getElementById('trendChart'),{type:'line',data:{labels:['Sep','Oct','Nov','Dec','Jan','Feb','Mar'],datasets:[{label:'Class Average',data:[72,74,75,76,78,79,82],borderColor:'#0d9488',backgroundColor:'rgba(13,148,136,0.1)',fill:true,tension:0.3,pointBackgroundColor:'#0d9488',pointRadius:5,pointHoverRadius:7}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.parsed.y+'%'}}},scales:{y:{min:60,max:100,ticks:{callback:v=>v+'%'},grid:{color:'#f1f5f9'}},x:{grid:{display:false}}}}});
   new Chart(document.getElementById('attendChart'),{type:'line',data:{labels:['Sep','Oct','Nov','Dec','Jan','Feb','Mar'],datasets:[{label:'Attendance %',data:[96,95,93,91,92,93,94],borderColor:'#2563eb',backgroundColor:'rgba(37,99,235,0.1)',fill:true,tension:0.3,pointBackgroundColor:'#2563eb',pointRadius:5,pointHoverRadius:7}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.parsed.y+'%'}}},scales:{y:{min:80,max:100,ticks:{callback:v=>v+'%'},grid:{color:'#f1f5f9'}},x:{grid:{display:false}}}}});

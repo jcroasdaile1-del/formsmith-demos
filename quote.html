@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Request a Custom Software Quote | Formsmith</title>
+  <meta name="description" content="Tell Formsmith what is slowing your business down. Use the free guided quote request to describe your workflow and custom software needs.">
+  <link rel="canonical" href="https://jcroasdaile1-del.github.io/formsmith-demos/quote.html">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Request a Custom Software Quote | Formsmith">
+  <meta property="og:description" content="Start with the process that is not working. Formsmith will help explore what a better custom system could look like.">
+  <meta property="og:url" content="https://jcroasdaile1-del.github.io/formsmith-demos/quote.html">
+  <meta name="theme-color" content="#173f4d">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="assets/css/site.css">
+</head>
+<body data-base="." data-page="quote" class="quote-page">
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  <div data-site-header></div>
+  <main id="main-content">
+    <section class="quote-intro section--first">
+      <div class="shell quote-intro__inner">
+        <div><div class="eyebrow"><span class="eyebrow-dot"></span>Free initial quote request</div><h1>Tell us what is slowing the business down.</h1><p class="lede">You do not need to know exactly what software you want. Share the current process, the frustrating parts, and what you hope a better system will help you do.</p></div>
+        <div class="quote-intro__note"><svg class="icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m5 12 4 4L19 6"/></svg><p><strong>Your unfinished answers stay in this page while you work.</strong> This site does not write them to localStorage.</p></div>
+      </div>
+    </section>
+
+    <section class="section quote-section">
+      <div class="shell wizard-layout">
+        <aside class="quote-progress" aria-label="Quote request progress">
+          <div class="progress-heading"><span>Your quote request</span><strong>Five clear steps</strong></div>
+          <div class="progress-track" aria-hidden="true"><span data-progress-bar></span></div>
+          <ol>
+            <li data-progress-step><span>1</span><div><strong>Business</strong><small>Who you are</small></div></li>
+            <li data-progress-step><span>2</span><div><strong>Current process</strong><small>What is not working</small></div></li>
+            <li data-progress-step><span>3</span><div><strong>Desired solution</strong><small>What may help</small></div></li>
+            <li data-progress-step><span>4</span><div><strong>Expectations</strong><small>Timing and context</small></div></li>
+            <li data-progress-step><span>5</span><div><strong>Review</strong><small>Confirm your answers</small></div></li>
+          </ol>
+          <div class="progress-help"><span>Not sure about an answer?</span><p>Use your best estimate or choose “I am not sure.” The form starts a conversation; it does not lock the project scope.</p></div>
+        </aside>
+
+        <div class="quote-card">
+          <div class="notice-box form-availability" data-quote-availability hidden></div>
+          <form data-quote-wizard>
+            <section class="form-step" data-form-step aria-labelledby="quote-step-1-title">
+              <div class="form-step__heading"><span>Step 1 of 5</span><h2 id="quote-step-1-title">Tell us about the business.</h2><p>This gives Formsmith enough context to understand who the software would serve.</p></div>
+              <div class="field-grid field-grid--two">
+                <div class="field"><label for="business-name">Business or organization name <span aria-hidden="true">*</span></label><input id="business-name" name="businessName" type="text" autocomplete="organization" required maxlength="120"></div>
+                <div class="field"><label for="contact-name">Contact name <span aria-hidden="true">*</span></label><input id="contact-name" name="contactName" type="text" autocomplete="name" required maxlength="120"></div>
+              </div>
+              <div class="field-grid field-grid--two">
+                <div class="field"><label for="quote-email">Email <span aria-hidden="true">*</span></label><input id="quote-email" name="email" type="email" autocomplete="email" required maxlength="200"></div>
+                <div class="field"><label for="quote-phone">Phone <span class="optional">Optional</span></label><input id="quote-phone" name="phone" type="tel" autocomplete="tel" maxlength="40"></div>
+              </div>
+              <div class="field"><label for="business-website">Business website <span class="optional">Optional</span></label><input id="business-website" name="website" type="url" autocomplete="url" inputmode="url" placeholder="https://example.com"><small>If you have one, include the full web address.</small></div>
+              <div class="field-grid field-grid--two">
+                <div class="field"><label for="business-type">Industry, organization type, or role <span aria-hidden="true">*</span></label><input id="business-type" name="businessType" type="text" required maxlength="120" placeholder="Example: equipment rental, teacher, or club"></div>
+                <div class="field"><label for="employee-count">Team size <span aria-hidden="true">*</span></label><select id="employee-count" name="employeeCount" data-select-options="employeeCounts" data-placeholder="Choose team size" required></select></div>
+              </div>
+              <div class="form-actions form-actions--end"><button class="button" type="button" data-next-step>Continue to Current Process</button></div>
+            </section>
+
+            <section class="form-step" data-form-step aria-labelledby="quote-step-2-title" hidden>
+              <div class="form-step__heading"><span>Step 2 of 5</span><h2 id="quote-step-2-title">What is happening today?</h2><p>Describe the process as it really works—even if it feels messy or inconsistent.</p></div>
+              <div class="field"><label for="process-improve">What part of your business are you trying to improve? <span aria-hidden="true">*</span></label><textarea id="process-improve" name="processToImprove" rows="5" required minlength="20" maxlength="2500" placeholder="Example: We track equipment availability in one spreadsheet, reservations in a calendar, and customer details on paper…"></textarea><small>A few sentences are enough to begin.</small></div>
+              <fieldset class="choice-field" data-required-choice aria-required="true" aria-describedby="tools-help tools-error"><legend>What tools do you currently use? <span aria-hidden="true">*</span></legend><p id="tools-help">Choose all that apply.</p><div class="choice-grid choice-grid--tools" data-choice-options="currentTools" data-name="currentTools" data-type="checkbox"></div><p class="choice-error" id="tools-error" data-choice-error role="alert"></p></fieldset>
+              <div class="field"><label for="tools-other">Other tools <span class="optional">Optional</span></label><input id="tools-other" name="currentToolsOther" type="text" maxlength="200" placeholder="Add anything not listed above"></div>
+              <div class="field"><label for="biggest-frustration">What is the biggest frustration with the current process? <span aria-hidden="true">*</span></label><textarea id="biggest-frustration" name="biggestFrustration" rows="4" required minlength="10" maxlength="2000" placeholder="What takes too long, gets missed, or makes the work harder?"></textarea></div>
+              <div class="field"><label for="process-frequency">How often do you perform this process? <span aria-hidden="true">*</span></label><select id="process-frequency" name="processFrequency" data-select-options="processFrequencies" data-placeholder="Choose a frequency" required></select></div>
+              <div class="form-actions"><button class="button button--ghost" type="button" data-previous-step>Back</button><button class="button" type="button" data-next-step>Continue to Desired Solution</button></div>
+            </section>
+
+            <section class="form-step" data-form-step aria-labelledby="quote-step-3-title" hidden>
+              <div class="form-step__heading"><span>Step 3 of 5</span><h2 id="quote-step-3-title">What might a better system do?</h2><p>You can choose possibilities without committing to the final feature list.</p></div>
+              <fieldset class="choice-field" data-required-choice aria-required="true" aria-describedby="capabilities-help capabilities-error"><legend>Which capabilities may be useful? <span aria-hidden="true">*</span></legend><p id="capabilities-help">Choose everything that might help, or choose “I am not sure yet.”</p><div class="choice-grid choice-grid--capabilities" data-choice-options="capabilities" data-name="capabilities" data-type="checkbox"></div><p class="choice-error" id="capabilities-error" data-choice-error role="alert"></p></fieldset>
+              <div class="field"><label for="capabilities-other">Something else <span class="optional">Optional</span></label><input id="capabilities-other" name="capabilitiesOther" type="text" maxlength="300" placeholder="Describe another capability"></div>
+              <fieldset class="choice-field" data-required-choice aria-required="true" aria-describedby="mobile-help mobile-error"><legend>Does the software need to work well on mobile devices? <span aria-hidden="true">*</span></legend><p id="mobile-help">Think about phones or tablets used away from a desk.</p><div class="choice-grid choice-grid--three" data-choice-options="yesNoUnsure" data-name="mobileNeeded" data-type="radio"></div><p class="choice-error" id="mobile-error" data-choice-error role="alert"></p></fieldset>
+              <fieldset class="choice-field" data-required-choice aria-required="true" aria-describedby="import-help import-error"><legend>Do you have existing spreadsheet data that may need to be imported? <span aria-hidden="true">*</span></legend><p id="import-help">The data can be reviewed later before any import is confirmed.</p><div class="choice-grid choice-grid--three" data-choice-options="yesNoUnsure" data-name="dataImportNeeded" data-type="radio"></div><p class="choice-error" id="import-error" data-choice-error role="alert"></p></fieldset>
+              <div class="field"><label for="ideal-outcome">Describe what your ideal system would help you accomplish. <span aria-hidden="true">*</span></label><textarea id="ideal-outcome" name="idealOutcome" rows="5" required minlength="20" maxlength="2500" placeholder="Example: I want one place to see what is available, prepare an agreement, and know which returns need attention…"></textarea></div>
+              <div class="form-actions"><button class="button button--ghost" type="button" data-previous-step>Back</button><button class="button" type="button" data-next-step>Continue to Expectations</button></div>
+            </section>
+
+            <section class="form-step" data-form-step aria-labelledby="quote-step-4-title" hidden>
+              <div class="form-step__heading"><span>Step 4 of 5</span><h2 id="quote-step-4-title">What should we know about the project?</h2><p>Estimates are useful here. Timing and budget can be refined after the workflow is reviewed.</p></div>
+              <div class="field-grid field-grid--two">
+                <div class="field"><label for="ideal-start">When would you ideally like to begin? <span aria-hidden="true">*</span></label><select id="ideal-start" name="idealStart" data-select-options="startTimeframes" data-placeholder="Choose a timeframe" required></select></div>
+                <div class="field"><label for="target-date">Is there a target completion date? <span class="optional">Optional</span></label><input id="target-date" name="targetCompletionDate" type="date"></div>
+              </div>
+              <div class="field"><label for="budget-range">Approximate build budget <span class="optional">Optional</span></label><select id="budget-range" name="budgetRange" data-select-options="budgetRanges" data-placeholder="Choose a range or leave blank"></select><small>Custom build budgets are capped at $5,000. This estimate helps frame options but does not make the final quote.</small></div>
+              <div class="field"><label for="additional-notes">Is there anything else Formsmith should know? <span class="optional">Optional</span></label><textarea id="additional-notes" name="additionalNotes" rows="6" maxlength="3000" placeholder="Important deadlines, existing data, special terminology, workflow details, or questions…"></textarea></div>
+              <div class="expectation-note"><svg class="icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg><p>A requested date is helpful context, not a guaranteed delivery commitment. Schedule and scope are discussed before work begins.</p></div>
+              <div class="form-actions"><button class="button button--ghost" type="button" data-previous-step>Back</button><button class="button" type="button" data-next-step>Review Your Request</button></div>
+            </section>
+
+            <section class="form-step" data-form-step aria-labelledby="quote-step-5-title" hidden>
+              <div class="form-step__heading"><span>Step 5 of 5</span><h2 id="quote-step-5-title">Review your quote request.</h2><p>Check the answers below. Use any Edit button to return to that section.</p></div>
+              <div class="review-list" data-review-list></div>
+              <div class="privacy-agreement"><label for="privacy-agreement"><input id="privacy-agreement" name="privacyAgreement" type="checkbox" value="agreed" required><span class="choice-control" aria-hidden="true"></span><span>I agree that Formsmith may use the information in this request to respond about my project. I have read the <a href="privacy.html" target="_blank" rel="noopener">privacy notice<span class="visually-hidden"> (opens in a new tab)</span></a>.</span></label><p>This site does not save unfinished answers in localStorage.</p></div>
+              <div class="form-actions"><button class="button button--ghost" type="button" data-previous-step>Back</button><button class="button" type="submit" data-submit-quote>Submit Quote Request</button></div>
+              <div class="form-status" data-quote-status role="status" aria-live="polite" tabindex="-1"></div>
+            </section>
+          </form>
+
+          <div class="success-panel" data-quote-success hidden tabindex="-1">
+            <span class="success-icon"><svg class="icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m5 12 4 4L19 6"/></svg></span><div class="eyebrow">Request received</div><h2>Thank you for telling us about the project.</h2><p>Your request was sent successfully. Formsmith will review the information and follow up using the contact details you provided.</p><a class="button button--ghost" href="index.html">Return to Home</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+  <div data-site-footer></div>
+  <noscript><style>[data-quote-wizard]{display:none!important}</style><div class="noscript">The quote wizard requires JavaScript for step navigation, review, validation, and submission. Please enable JavaScript to continue.</div></noscript>
+  <script src="assets/js/site-data.js" defer></script>
+  <script src="assets/js/site.js" defer></script>
+  <script src="assets/js/quote-wizard.js" defer></script>
+</body>
+</html>

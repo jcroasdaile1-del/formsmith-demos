@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex,follow">
+<link rel="canonical" href="https://jcroasdaile1-del.github.io/formsmith-demos/projects/house-cleaning-manager.html">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 <title>CleanSlate — House Cleaning Business Manager</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -222,6 +225,7 @@ body.dark-mode #toast { background: #e5e7eb; color: #111827; }
 
 /* ── Chart ── */
 .chart-wrap { position: relative; height: 220px; }
+.chart-fallback { height: 100%; display: grid; place-items: center; padding: 1rem; color: var(--text-light); font-size: 0.82rem; text-align: center; }
 
 /* ── Sections ── */
 .page-section { display: none; }
@@ -652,6 +656,7 @@ function renderDashboard() {
 
 function renderWeeklyChart() {
   const canvas = document.getElementById('weeklyChart'); if (!canvas) return;
+  if (!window.Chart) { canvas.parentElement.innerHTML = '<p class="chart-fallback">Charts are unavailable while the chart library is offline. The rest of this demo still works.</p>'; return; }
   const labels = [], data = [];
   for (let i = 6; i >= 0; i--) { const d = new Date(); d.setDate(d.getDate()-i); const ds = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); labels.push(d.toLocaleDateString('en-US',{weekday:'short'})); data.push(invoices.filter(inv=>inv.date===ds&&inv.status==='paid').reduce((s,inv)=>s+inv.total,0)); }
   if (canvas._chart) canvas._chart.destroy();
@@ -659,6 +664,7 @@ function renderWeeklyChart() {
 }
 function renderServiceChart() {
   const canvas = document.getElementById('serviceChart'); if (!canvas) return;
+  if (!window.Chart) { canvas.parentElement.innerHTML = '<p class="chart-fallback">Charts are unavailable while the chart library is offline. The rest of this demo still works.</p>'; return; }
   const svc = {}; jobs.filter(j => j.status !== 'cancelled').forEach(j => { svc[j.service] = (svc[j.service]||0)+1; });
   const labels = Object.keys(svc), data = Object.values(svc);
   const colors = ['#2563eb','#10b981','#f59e0b','#ef4444','#8b5cf6','#3b82f6'];

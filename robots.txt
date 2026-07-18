@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+# Update this URL if a custom domain is connected.
+Sitemap: https://jcroasdaile1-del.github.io/formsmith-demos/sitemap.xml

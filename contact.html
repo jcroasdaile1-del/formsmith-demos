@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Contact Formsmith | Custom Business Software Inquiry</title>
+  <meta name="description" content="Contact Formsmith about a general question or start a detailed quote request for custom small-business software.">
+  <link rel="canonical" href="https://jcroasdaile1-del.github.io/formsmith-demos/contact.html">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Contact Formsmith">
+  <meta property="og:description" content="Ask a question about custom business software or tell Formsmith what is slowing your business down.">
+  <meta property="og:url" content="https://jcroasdaile1-del.github.io/formsmith-demos/contact.html">
+  <meta name="theme-color" content="#173f4d">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="assets/css/site.css">
+</head>
+<body data-base="." data-page="contact">
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  <div data-site-header></div>
+  <main id="main-content">
+    <section class="page-hero page-hero--compact section--first">
+      <div class="shell page-hero__center"><div class="eyebrow"><span class="eyebrow-dot"></span>Contact Formsmith</div><h1>Start with the question—or the messy process.</h1><p class="lede">Have a general question? Send a short message here. Ready to describe a project? The quote wizard will help you share the details that matter.</p><div class="button-row"><a class="button button--large" href="quote.html">Request a Quote</a><a class="button button--large button--ghost" href="#general-inquiry">Send a General Inquiry</a></div></div>
+    </section>
+
+    <section class="section contact-section" id="general-inquiry">
+      <div class="shell contact-layout">
+        <div class="contact-copy">
+          <div class="eyebrow">Other ways to connect</div><h2>Choose the channel that fits.</h2><p>Use the form for a general inquiry, or reach Formsmith by email, Facebook Messenger, or phone once the final contact details below are configured.</p>
+          <div class="contact-options" data-contact-options></div>
+          <div class="contact-tip"><span>Project question?</span><p>The detailed <a href="quote.html">Request a Quote wizard</a> asks about the current process, desired capabilities, and timing so the conversation can start with useful context.</p></div>
+        </div>
+
+        <div class="form-card">
+          <div class="form-card__heading"><span>General inquiry</span><h2>Send Formsmith a message</h2><p>For project pricing, the quote wizard is the better starting point.</p></div>
+          <div class="notice-box form-availability" data-contact-availability hidden></div>
+          <form data-contact-form>
+            <div class="field-grid field-grid--two">
+              <div class="field"><label for="contact-name">Name <span aria-hidden="true">*</span></label><input id="contact-name" name="name" type="text" autocomplete="name" required maxlength="120"><small>How should we address you?</small></div>
+              <div class="field"><label for="contact-email">Email <span aria-hidden="true">*</span></label><input id="contact-email" name="email" type="email" autocomplete="email" required maxlength="200"><small>Where should we reply?</small></div>
+            </div>
+            <div class="field-grid field-grid--two">
+              <div class="field"><label for="contact-phone">Phone <span class="optional">Optional</span></label><input id="contact-phone" name="phone" type="tel" autocomplete="tel" maxlength="40"></div>
+              <div class="field"><label for="contact-business">Business or organization <span class="optional">Optional</span></label><input id="contact-business" name="businessName" type="text" autocomplete="organization" maxlength="120"></div>
+            </div>
+            <div class="field"><label for="contact-subject">What is your question about? <span aria-hidden="true">*</span></label><select id="contact-subject" name="subject" required><option value="">Select a topic</option><option>General question</option><option>Existing demo</option><option>Potential project</option><option>Partnership or other inquiry</option></select></div>
+            <div class="field"><label for="contact-message">Message <span aria-hidden="true">*</span></label><textarea id="contact-message" name="message" rows="6" required minlength="10" maxlength="3000" placeholder="Share your question or a little context…"></textarea></div>
+            <div class="privacy-agreement"><label for="contact-privacy-agreement"><input id="contact-privacy-agreement" name="privacyAgreement" type="checkbox" value="agreed" required><span class="choice-control" aria-hidden="true"></span><span>I agree that Formsmith may use this information to respond to my inquiry. I have read the <a href="privacy.html" target="_blank" rel="noopener">privacy notice<span class="visually-hidden"> (opens in a new tab)</span></a>.</span></label><p>This site does not save unfinished form entries in localStorage.</p></div>
+            <div class="form-submit-row"><button class="button" type="submit">Send Inquiry</button></div>
+            <div class="form-status" data-form-status role="status" aria-live="polite" tabindex="-1"></div>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section--tint"><div class="shell contact-bottom"><div><span>Not sure what to ask?</span><h2>“Here is what is frustrating me” is enough.</h2></div><p>You do not need to know which features or technology you need. Describe the task, spreadsheet, or workflow that takes too much time, and Formsmith can help frame the next questions.</p><a class="text-link" href="quote.html">Start the quote request</a></div></section>
+  </main>
+  <div data-site-footer></div>
+  <noscript><style>[data-contact-form]{display:none!important}</style><div class="noscript">Please enable JavaScript to use the inquiry form and view configured contact options.</div></noscript>
+  <script src="assets/js/site-data.js" defer></script>
+  <script src="assets/js/site.js" defer></script>
+</body>
+</html>

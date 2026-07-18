@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex,follow">
+<link rel="canonical" href="https://jcroasdaile1-del.github.io/formsmith-demos/projects/dog-grooming-manager.html">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 <title>Grooming Salon — Client Manager + Dashboard</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <style>
@@ -234,6 +237,15 @@
     position: relative;
     height: 200px;
     width: 100%;
+  }
+  .chart-fallback {
+    height: 100%;
+    display: grid;
+    place-items: center;
+    padding: 1rem;
+    color: var(--text-light);
+    font-size: 0.82rem;
+    text-align: center;
   }
 
   /* ── Mini Tables ── */
@@ -555,6 +567,7 @@
   [data-help]::after {
     content: attr(data-help);
     position: absolute;
+    box-sizing: border-box;
     bottom: calc(100% + 8px);
     left: 50%;
     transform: translateX(-50%);
@@ -608,6 +621,12 @@
   [data-help]:hover::before {
     opacity: 1;
     visibility: visible;
+  }
+  .date-filter [data-help]:first-child::after,
+  .dash-grid .dash-card:nth-child(odd) [data-help]::after {
+    right: auto;
+    left: 0;
+    transform: none;
   }
   /* Help icon indicator */
   .help-icon {
@@ -1173,8 +1192,8 @@
 
 <!-- ═══════ FOOTER ═══════ -->
 <footer class="app-footer">
-  Built by <strong>Formsmith</strong> · <a href="https://www.etsy.com/shop/FormsmithCustomForms" target="_blank">Etsy Shop</a> · <a href="mailto:formsmithcustomforms@gmail.com">formsmithcustomforms@gmail.com</a>
-  <br>Every field, tab, chart, and dashboard card is 100% customized to your business.
+  <strong>Formsmith concept demo</strong> · <a href="demos.html">Return to Formsmith demos</a>
+  <br>A real build can tailor the fields, tabs, charts, and dashboard cards to the business workflow.
 </footer>
 
 <!-- ═══════ TOAST ═══════ -->
@@ -1483,6 +1502,13 @@ function setDateRange(btn, range) {
 
 // ═══════ CHARTS ═══════
 function initCharts() {
+  if (!window.Chart) {
+    document.querySelectorAll('.chart-wrap, .chart-wrap-sm').forEach(container => {
+      container.innerHTML = '<p class="chart-fallback">Charts are unavailable while the chart library is offline. The rest of this demo still works.</p>';
+    });
+    return;
+  }
+
   // Revenue Bar Chart
   new Chart(document.getElementById('revenueChart'), {
     type: 'bar',

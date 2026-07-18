@@ -1,306 +1,124 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Formsmith — Custom Business Dashboards &amp; Web Apps</title>
-<style>
-  :root {
-    --red: #c0392b;
-    --dark: #1a1a1a;
-    --gray: #555;
-    --light: #f7f5f3;
-    --border: #e5e1db;
-  }
-  * { box-sizing: border-box; }
-  body {
-    margin: 0;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    background: var(--light);
-    color: var(--dark);
-    line-height: 1.5;
-  }
-  header {
-    background: var(--dark);
-    color: #fff;
-    padding: 64px 24px 56px;
-    text-align: center;
-  }
-  header .kicker {
-    color: var(--red);
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    font-size: 13px;
-    margin-bottom: 14px;
-  }
-  header h1 {
-    font-size: 2.4rem;
-    margin: 0 0 16px;
-    font-weight: 800;
-  }
-  header p {
-    max-width: 620px;
-    margin: 0 auto;
-    color: #cfcfcf;
-    font-size: 1.05rem;
-  }
-  header .cta {
-    display: inline-block;
-    margin-top: 28px;
-    background: var(--red);
-    color: #fff;
-    text-decoration: none;
-    font-weight: 700;
-    padding: 14px 30px;
-    border-radius: 6px;
-    font-size: 0.95rem;
-  }
-  main {
-    max-width: 1080px;
-    margin: 0 auto;
-    padding: 56px 24px 80px;
-  }
-  .demo {
-    background: #fff;
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 32px;
-    margin-bottom: 40px;
-  }
-  .demo-head {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    flex-wrap: wrap;
-    gap: 16px;
-    margin-bottom: 20px;
-  }
-  .demo-head h2 {
-    margin: 0 0 6px;
-    font-size: 1.5rem;
-  }
-  .demo-head .tag {
-    display: inline-block;
-    font-size: 0.75rem;
-    font-weight: 700;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    color: var(--red);
-    background: rgba(192,57,43,0.08);
-    padding: 4px 10px;
-    border-radius: 4px;
-    margin-bottom: 8px;
-  }
-  .demo-head p {
-    color: var(--gray);
-    max-width: 560px;
-    margin: 0;
-  }
-  .demo-head a.demo-link {
-    white-space: nowrap;
-    background: var(--dark);
-    color: #fff;
-    text-decoration: none;
-    font-weight: 600;
-    font-size: 0.9rem;
-    padding: 10px 18px;
-    border-radius: 6px;
-  }
-  .shots {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-  }
-  .shots img {
-    width: 100%;
-    display: block;
-    border-radius: 8px;
-    border: 1px solid var(--border);
-  }
-  .shots figcaption {
-    font-size: 0.8rem;
-    color: var(--gray);
-    margin-top: 6px;
-    text-align: center;
-  }
-  .shots figure { margin: 0; }
-  @media (max-width: 640px) {
-    .shots { grid-template-columns: 1fr; }
-    header h1 { font-size: 1.8rem; }
-  }
-  footer {
-    text-align: center;
-    padding: 48px 24px 64px;
-    color: var(--gray);
-    font-size: 0.9rem;
-  }
-  footer a { color: var(--red); font-weight: 600; text-decoration: none; }
-</style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Custom Software Projects | Formsmith Portfolio</title>
+  <meta name="description" content="Explore Formsmith custom software projects, live demonstrations, and in-development builds for practical small-business workflows.">
+  <link rel="canonical" href="https://jcroasdaile1-del.github.io/formsmith-demos/portfolio.html">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Custom Business Software Projects | Formsmith">
+  <meta property="og:description" content="Browse live demonstrations and current builds shaped around equipment rental, local services, travel, education, leagues, and inventory workflows.">
+  <meta property="og:url" content="https://jcroasdaile1-del.github.io/formsmith-demos/portfolio.html">
+  <meta property="og:image" content="https://jcroasdaile1-del.github.io/formsmith-demos/portfolio-assets/yardstack-dashboard.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="theme-color" content="#173f4d">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="assets/css/site.css">
 </head>
-<body>
+<body data-base="." data-page="portfolio">
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  <div data-site-header></div>
 
-<header>
-  <div class="kicker">Formsmith &middot; Forged to Order</div>
-  <h1>Real business dashboards, built from scratch</h1>
-  <p>Every app below was custom-built for one business's exact workflow &mdash; live data, real charts, real forms. No templates. Click into any demo to try it yourself.</p>
-  <a class="cta" href="https://www.etsy.com/shop/FormsmithCustomForms" target="_blank" rel="noopener">See pricing on Etsy</a>
-</header>
-
-<main>
-
-  <div class="demo">
-    <div class="demo-head">
-      <div>
-        <div class="tag">Equipment Rental</div>
-        <h2>YardStack</h2>
-        <p>A complete rental-operations platform with live customer booking, availability control, e-signed agreements, deposits, check-out and return inspections, maintenance, and utilization reporting.</p>
+  <main id="main-content">
+    <section class="page-hero section--first">
+      <div class="page-hero__backdrop" aria-hidden="true"></div>
+      <div class="shell page-hero__grid">
+        <div class="page-hero__copy reveal is-visible">
+          <div class="eyebrow"><span class="eyebrow-dot"></span>Formsmith project portfolio</div>
+          <h1>Practical software shaped around real business workflows.</h1>
+          <p class="hero-lede">This portfolio includes interactive demonstrations and work still in development. Each project is labeled with its current status so you can see what is available to explore and what is still taking shape.</p>
+          <div class="button-row">
+            <a class="button button--large" href="#project-list">Explore Projects</a>
+            <a class="button button--large button--ghost" href="demos.html">Open Live Demos</a>
+          </div>
+        </div>
+        <aside class="page-hero__aside reveal is-visible" aria-label="What the project portfolio includes">
+          <div class="eyebrow">A clear view of the work</div>
+          <h2>See what is live, what is evolving, and what each system is designed to manage.</h2>
+          <div class="page-hero__stat"><span>01</span><div><strong>Interactive demos</strong><small>Open current sample applications and try the workflows.</small></div></div>
+          <div class="page-hero__stat"><span>02</span><div><strong>In-development builds</strong><small>Review concepts whose scope and interface may still change.</small></div></div>
+          <div class="page-hero__stat"><span>03</span><div><strong>Project details</strong><small>Understand the problem, previous process, and proposed system.</small></div></div>
+        </aside>
       </div>
-      <a class="demo-link" href="https://jcroasdaile1-del.github.io/formsmith-demos/yardstack/" target="_blank" rel="noopener">Try live demo &rarr;</a>
-    </div>
-    <div class="shots">
-      <figure>
-        <img src="portfolio-assets/yardstack-dashboard.png" alt="YardStack owner dashboard showing today's equipment pickups and returns, rental revenue, fleet utilization, and operational alerts">
-        <figcaption>Owner workspace &mdash; bookings, fleet &amp; revenue</figcaption>
-      </figure>
-      <figure>
-        <img src="portfolio-assets/yardstack-booking.png" alt="Northstar Equipment customer booking catalog showing live availability, rental pricing, and a reservation cart">
-        <figcaption>Customer booking with live availability &amp; checkout</figcaption>
-      </figure>
-    </div>
-  </div>
+    </section>
 
-  <div class="demo">
-    <div class="demo-head">
-      <div>
-        <div class="tag">Pressure Washing</div>
-        <h2>PowerWash Pro</h2>
-        <p>A solo operator's command center &mdash; route, revenue, quotes, and weather conditions in one dashboard.</p>
+    <section class="section section--compact" aria-labelledby="portfolio-status-title">
+      <div class="shell status-guide">
+        <div>
+          <div class="eyebrow">Clear project status</div>
+          <h2 id="portfolio-status-title">A transparent look at the work</h2>
+        </div>
+        <div class="status-guide__items">
+          <div><span class="status status--live-demo">Live Demo</span><p>An interactive sample you can open and click through using demonstration data.</p></div>
+          <div><span class="status status--in-development">In Development</span><p>A current build or concept whose scope and interface may continue to change.</p></div>
+        </div>
       </div>
-      <a class="demo-link" href="https://jcroasdaile1-del.github.io/formsmith-demos/powerwash-pro/" target="_blank" rel="noopener">Try live demo &rarr;</a>
-    </div>
-    <div class="shots">
-      <figure>
-        <img src="portfolio-assets/powerwash-dashboard.png" alt="PowerWash Pro dashboard showing monthly revenue, quote win rate, and today's jobs">
-        <figcaption>Dashboard &mdash; revenue, jobs, quote win rate</figcaption>
-      </figure>
-      <figure>
-        <img src="portfolio-assets/powerwash-quotes.png" alt="PowerWash Pro quotes list with pricing and status">
-        <figcaption>Fast estimating with configurable pricing</figcaption>
-      </figure>
-    </div>
-  </div>
+    </section>
 
-  <div class="demo">
-    <div class="demo-head">
-      <div>
-        <div class="tag">House Cleaning</div>
-        <h2>CleanSlate</h2>
-        <p>Full business manager for a cleaning company &mdash; revenue charts, service breakdowns, and a color-coded job calendar.</p>
+    <section class="section" id="project-list">
+      <div class="shell split-heading">
+        <div>
+          <div class="eyebrow">Current portfolio</div>
+          <h2>Explore the projects</h2>
+        </div>
+        <p>Use the filters to browse every entry, open the live demonstrations, or focus on projects that are still being developed.</p>
       </div>
-      <a class="demo-link" href="https://jcroasdaile1-del.github.io/formsmith-demos/house-cleaning-demo.html" target="_blank" rel="noopener">Try live demo &rarr;</a>
-    </div>
-    <div class="shots">
-      <figure>
-        <img src="portfolio-assets/cleanslate-dashboard.png" alt="CleanSlate dashboard showing weekly revenue chart and service breakdown">
-        <figcaption>Dashboard &mdash; weekly revenue &amp; service mix</figcaption>
-      </figure>
-      <figure>
-        <img src="portfolio-assets/cleanslate-schedule.png" alt="CleanSlate monthly schedule calendar with color-coded jobs">
-        <figcaption>Full month calendar view</figcaption>
-      </figure>
-    </div>
-  </div>
 
-  <div class="demo">
-    <div class="demo-head">
-      <div>
-        <div class="tag">Pet Sitting &amp; Dog Walking</div>
-        <h2>PawTracker</h2>
-        <p>Booking, revenue, and client management for a pet sitting business, plus a weather snapshot for walk conditions.</p>
+      <div class="shell project-toolbar" data-project-filters role="group" aria-label="Filter projects by status" aria-controls="portfolio-project-grid">
+        <span>Show:</span>
+        <button class="filter-button is-active" type="button" data-filter="all" aria-pressed="true">All projects</button>
+        <button class="filter-button" type="button" data-filter="live-demo" aria-pressed="false">Live demos</button>
+        <button class="filter-button" type="button" data-filter="in-development" aria-pressed="false">In development</button>
       </div>
-      <a class="demo-link" href="https://jcroasdaile1-del.github.io/formsmith-demos/pet-sitter-demo.html" target="_blank" rel="noopener">Try live demo &rarr;</a>
-    </div>
-    <div class="shots">
-      <figure>
-        <img src="portfolio-assets/pawtracker-dashboard.png" alt="PawTracker dashboard showing today's walks, revenue, and client rating">
-        <figcaption>Dashboard &mdash; today's walks &amp; client rating</figcaption>
-      </figure>
-      <figure>
-        <img src="portfolio-assets/pawtracker-clients-and-pets.png" alt="PawTracker clients and pets management view">
-        <figcaption>Client &amp; pet records</figcaption>
-      </figure>
-    </div>
-  </div>
+      <p class="shell filter-results" data-filter-results aria-live="polite">Loading projects…</p>
 
-  <div class="demo">
-    <div class="demo-head">
-      <div>
-        <div class="tag">Sports League Management</div>
-        <h2>Buckskin Bowmen League Manager</h2>
-        <p>Season dashboard and score tracker for a 23-team archery league &mdash; automatic averages, brackets, and standings.</p>
+      <div class="shell project-grid" id="portfolio-project-grid" data-project-grid="portfolio"></div>
+    </section>
+
+    <section class="section section--tint">
+      <div class="shell comparison-grid portfolio-principles">
+        <div class="comparison-copy">
+          <div class="eyebrow">Built from the workflow outward</div>
+          <h2>The interface is only part of the project</h2>
+          <p>Each concept begins with the work: what information needs to be captured, who uses it, what happens next, and where the current process becomes frustrating.</p>
+          <p>The result can borrow useful patterns from previous builds while still using the terminology, screens, and priorities that make sense for that business.</p>
+        </div>
+        <div class="comparison-cards">
+          <article class="comparison-card comparison-card--before">
+            <span>Start with the problem</span>
+            <h3>Understand the current process</h3>
+            <ul><li>Where information lives now</li><li>Which steps are repeated</li><li>What is difficult to find</li><li>Where follow-up breaks down</li></ul>
+          </article>
+          <article class="comparison-card comparison-card--after">
+            <span>Shape the system</span>
+            <h3>Support the useful workflow</h3>
+            <ul><li>Focused screens and fields</li><li>Familiar business language</li><li>Clear next actions</li><li>Useful operational visibility</li></ul>
+          </article>
+        </div>
       </div>
-      <a class="demo-link" href="https://jcroasdaile1-del.github.io/formsmith-demos/archery-league-demo.html" target="_blank" rel="noopener">Try live demo &rarr;</a>
-    </div>
-    <div class="shots">
-      <figure>
-        <img src="portfolio-assets/archery-dashboard.png" alt="Archery league dashboard with score distribution chart and season stats">
-        <figcaption>Season dashboard &mdash; scores &amp; stats</figcaption>
-      </figure>
-      <figure>
-        <img src="portfolio-assets/archery-teams.png" alt="Archery league team roster with 23 teams and qualifying averages">
-        <figcaption>Full 23-team roster with live averages</figcaption>
-      </figure>
-    </div>
-  </div>
+    </section>
 
-  <div class="demo">
-    <div class="demo-head">
-      <div>
-        <div class="tag">Contractor / Concrete</div>
-        <h2>Concrete Job Manager</h2>
-        <p>Job tracking and revenue dashboard for a concrete contractor, with a dense intake form for new jobs.</p>
+    <section class="section section--cta">
+      <div class="shell cta-panel">
+        <div>
+          <div class="eyebrow eyebrow--light">Your workflow will be different</div>
+          <h2>Need something shaped around your business?</h2>
+          <p>Tell Formsmith what you manage today, what keeps slowing you down, and what a more useful system should help you accomplish.</p>
+        </div>
+        <div class="button-row">
+          <a class="button button--light" href="quote.html">Request a Quote
+            <svg class="icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </a>
+          <a class="button button--outline-light" href="demos.html">Explore Live Demos</a>
+        </div>
       </div>
-      <a class="demo-link" href="https://jcroasdaile1-del.github.io/formsmith-demos/contractor-dashboard-demo.html" target="_blank" rel="noopener">Try live demo &rarr;</a>
-    </div>
-    <div class="shots">
-      <figure>
-        <img src="portfolio-assets/concrete-dashboard.png" alt="Concrete Job Manager dashboard with monthly revenue and job types">
-        <figcaption>Dashboard &mdash; revenue &amp; job types</figcaption>
-      </figure>
-      <figure>
-        <img src="portfolio-assets/concrete-job-form.png" alt="Concrete Job Manager job intake form with client details">
-        <figcaption>Job intake form</figcaption>
-      </figure>
-    </div>
-  </div>
+    </section>
+  </main>
 
-  <div class="demo">
-    <div class="demo-head">
-      <div>
-        <div class="tag">Pet Grooming</div>
-        <h2>Grooming Salon Client Manager</h2>
-        <p>Client &amp; pet records, checkout, and a CSV import wizard so a salon can bring in existing client data in minutes.</p>
-      </div>
-      <a class="demo-link" href="https://jcroasdaile1-del.github.io/formsmith-demos/import-wizard-demo.html" target="_blank" rel="noopener">Try live demo &rarr;</a>
-    </div>
-    <div class="shots">
-      <figure>
-        <img src="portfolio-assets/grooming-dashboard1.png" alt="Grooming salon dashboard with revenue by service and services breakdown">
-        <figcaption>Dashboard &mdash; revenue by service</figcaption>
-      </figure>
-      <figure>
-        <img src="portfolio-assets/grooming-client-form.png" alt="Grooming salon client and pet intake form">
-        <figcaption>Client &amp; multi-pet intake form</figcaption>
-      </figure>
-    </div>
-  </div>
-
-</main>
-
-<footer>
-  Every app above started as a message describing a workflow. <a href="https://www.etsy.com/shop/FormsmithCustomForms" target="_blank" rel="noopener">Message Formsmith on Etsy</a> to build yours.
-</footer>
-
+  <div data-site-footer></div>
+  <noscript><div class="noscript">This site uses lightweight JavaScript to display navigation and project information. Please enable JavaScript for the complete experience.</div></noscript>
+  <script src="assets/js/site-data.js" defer></script>
+  <script src="assets/js/site.js" defer></script>
 </body>
 </html>

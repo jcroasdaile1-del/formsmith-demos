@@ -1,637 +1,142 @@
-<!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Grooming Salon — Client &amp; Pet Manager (Sample)</title>
-    <style>
-      :root {
-        --bg: #f4f6f8;
-        --card: #ffffff;
-        --text: #1b2331;
-        --muted: #5a6477;
-        --line: #dce1e8;
-        --brand: #3b82c4;
-        --brand-dark: #2a5f94;
-        --brand-light: #ebf3fb;
-        --ok: #2d7a3a;
-        --warn: #8a5a00;
-      }
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Formsmith | Custom Business Software for Small Businesses</title>
+  <meta name="description" content="Formsmith builds practical custom business software that replaces frustrating spreadsheets, paper forms, and disconnected workflows for small businesses.">
+  <link rel="canonical" href="https://jcroasdaile1-del.github.io/formsmith-demos/">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Formsmith | Custom Business Software Built Around Your Work">
+  <meta property="og:description" content="Replace frustrating spreadsheets with practical software designed around the way your business already operates.">
+  <meta property="og:url" content="https://jcroasdaile1-del.github.io/formsmith-demos/">
+  <meta property="og:image" content="https://jcroasdaile1-del.github.io/formsmith-demos/portfolio-assets/yardstack-dashboard.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="theme-color" content="#173f4d">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="assets/css/site.css">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "ProfessionalService",
+    "name": "Formsmith",
+    "url": "https://jcroasdaile1-del.github.io/formsmith-demos/",
+    "description": "Custom business software for small businesses, solo entrepreneurs, contractors, local service businesses, and teachers.",
+    "slogan": "Forged to order."
+  }
+  </script>
+</head>
+<body data-base="." data-page="home">
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  <div data-site-header></div>
 
-      * { box-sizing: border-box; }
-
-      body {
-        margin: 0;
-        padding: 24px;
-        background: var(--bg);
-        color: var(--text);
-        font-family: Arial, Helvetica, sans-serif;
-      }
-
-      .wrap {
-        max-width: 980px;
-        margin: 0 auto;
-      }
-
-      .card {
-        background: var(--card);
-        border: 1px solid var(--line);
-        border-radius: 12px;
-        padding: 18px;
-        margin-bottom: 14px;
-      }
-
-      h1 {
-        margin: 0 0 4px;
-        font-size: 22px;
-        color: var(--brand-dark);
-      }
-
-      .sub {
-        margin: 0;
-        color: var(--muted);
-        font-size: 14px;
-      }
-
-      .helper {
-        margin-top: 10px;
-        background: var(--brand-light);
-        border: 1px solid #c2d9f0;
-        color: var(--brand-dark);
-        padding: 10px 12px;
-        border-radius: 8px;
-        font-size: 13px;
-      }
-
-      .lookup {
-        display: grid;
-        grid-template-columns: 1fr auto auto auto;
-        gap: 8px;
-        align-items: end;
-      }
-
-      .lookup > .field { margin-bottom: 0; }
-      .lookup > button { margin-bottom: 6px; }
-
-      .grid {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 10px;
-      }
-
-      .grid3 {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 10px;
-      }
-
-      .field {
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-        margin-bottom: 6px;
-      }
-
-      label {
-        font-size: 13px;
-        color: var(--muted);
-      }
-
-      input, select, textarea, button { font: inherit; }
-
-      input, select, textarea {
-        width: 100%;
-        padding: 12px 14px;
-        border: 2px solid #b4bcc8;
-        border-radius: 8px;
-        background: #fff;
-      }
-
-      textarea {
-        min-height: 88px;
-        resize: vertical;
-      }
-
-      .section-title {
-        margin: 16px 0 10px;
-        font-size: 16px;
-        color: var(--brand-dark);
-        border-bottom: 2px solid var(--brand-light);
-        padding-bottom: 6px;
-      }
-
-      .actions {
-        display: flex;
-        gap: 8px;
-        flex-wrap: wrap;
-      }
-
-      button {
-        border: 0;
-        border-radius: 8px;
-        padding: 10px 14px;
-        cursor: pointer;
-        color: #fff;
-        background: var(--brand);
-        font-weight: bold;
-      }
-
-      button:hover { background: var(--brand-dark); }
-      button.secondary { background: #6b7585; }
-      button.secondary:hover { background: #545d6a; }
-
-      #status { margin-top: 10px; font-size: 14px; }
-      #status.ok { color: var(--ok); }
-      #status.warn { color: var(--warn); }
-
-      @media (max-width: 800px) {
-        .grid, .grid3, .lookup { grid-template-columns: 1fr; }
-      }
-
-      /* History modal */
-      .modal-overlay {
-        display: none;
-        position: fixed;
-        inset: 0;
-        background: rgba(0,0,0,0.45);
-        z-index: 1000;
-        justify-content: center;
-        align-items: center;
-      }
-      .modal-overlay.open { display: flex; }
-      .modal {
-        background: #fff;
-        border-radius: 14px;
-        width: 94%;
-        max-width: 640px;
-        max-height: 80vh;
-        display: flex;
-        flex-direction: column;
-        box-shadow: 0 8px 30px rgba(0,0,0,0.25);
-      }
-      .modal-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 16px 20px;
-        border-bottom: 1px solid var(--line);
-      }
-      .modal-header h2 { margin: 0; font-size: 18px; }
-      .modal-close {
-        background: none;
-        border: 0;
-        font-size: 22px;
-        color: var(--muted);
-        cursor: pointer;
-        padding: 4px 8px;
-        line-height: 1;
-      }
-      .modal-close:hover { color: var(--text); background: none; }
-      .modal-body {
-        padding: 16px 20px;
-        overflow-y: auto;
-        flex: 1;
-      }
-      .history-empty {
-        text-align: center;
-        color: var(--muted);
-        padding: 30px 0;
-        font-size: 14px;
-      }
-      .history-entry {
-        border-left: 3px solid var(--brand);
-        padding: 10px 14px;
-        margin-bottom: 12px;
-        background: var(--brand-light);
-        border-radius: 0 8px 8px 0;
-      }
-      .history-entry:last-child { margin-bottom: 0; }
-      .history-meta {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 6px;
-      }
-      .history-date {
-        font-weight: bold;
-        font-size: 13px;
-        color: var(--text);
-      }
-      .history-badge {
-        background: var(--brand);
-        color: #fff;
-        font-size: 11px;
-        padding: 2px 8px;
-        border-radius: 10px;
-      }
-      .history-changes {
-        font-size: 13px;
-        color: var(--muted);
-        line-height: 1.55;
-      }
-      .history-changes .change-item { padding: 2px 0; }
-      .history-changes .field-name { font-weight: 600; color: var(--text); }
-      .history-changes .arrow { color: var(--brand); margin: 0 4px; }
-
-      /* Sample banner */
-      .sample-banner {
-        background: #fff3cd;
-        border: 1px solid #ffc107;
-        border-radius: 8px;
-        padding: 12px 16px;
-        margin-bottom: 14px;
-        font-size: 13px;
-        color: #664d03;
-        text-align: center;
-      }
-      .sample-banner strong { color: #5a4304; }
-
-      .built-by {
-        text-align: center;
-        margin-top: 10px;
-        font-size: 12px;
-        color: var(--muted);
-      }
-      .built-by a { color: var(--brand); text-decoration: none; }
-      .built-by a:hover { text-decoration: underline; }
-    </style>
-  </head>
-  <body>
-    <div class="wrap">
-
-      <div class="sample-banner">
-        <strong>INTERACTIVE SAMPLE</strong> — This is a demo of a custom grooming salon management app. Every field, section, and dropdown can be customized to match your exact workflow.<br>
-        The finished version connects to your Google Sheet and saves every record automatically.
-      </div>
-
-      <!-- Header card -->
-      <div class="card">
-        <h1>🐾 Grooming Salon — Client &amp; Pet Manager</h1>
-        <p class="sub">Custom web app that saves directly to your Google Sheet. Look up any client, update their info, and track every visit.</p>
-        <div class="helper">Tip: Enter a Client ID and click "Load Client" to pull up an existing record. Click "View History" to see all past changes for that client.</div>
-      </div>
-
-      <!-- Lookup bar -->
-      <div class="card">
-        <div class="lookup">
-          <div class="field">
-            <label for="lookupClientId">Client ID (lookup)</label>
-            <input id="lookupClientId" type="text" placeholder="Example: CL-1042" onkeydown="if(event.key==='Enter'){event.preventDefault();lookupClient();}" />
+  <main id="main-content">
+    <section class="hero section--first">
+      <div class="hero-backdrop" aria-hidden="true"></div>
+      <div class="shell hero-grid">
+        <div class="hero-copy reveal is-visible">
+          <div class="eyebrow"><span class="eyebrow-dot"></span>Practical software. Forged to order.</div>
+          <h1>Custom business software built around the way you already work.</h1>
+          <p class="hero-lede">Formsmith builds focused systems for small businesses, with custom build budgets capped at $5,000—so customers, schedules, jobs, inventory, quotes, and reports no longer have to live across a maze of spreadsheets and paper.</p>
+          <div class="button-row">
+            <a class="button button--large" href="quote.html">Request a Quote <svg class="icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+            <a class="button button--large button--ghost" href="demos.html">Explore Live Demos</a>
           </div>
-          <button type="button" onclick="lookupClient()">Load Client</button>
-          <button type="button" class="secondary" onclick="clearForm()">Clear Form</button>
-          <button type="button" class="secondary" onclick="viewHistory()">View History</button>
+          <p class="hero-note"><svg class="icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m5 12 4 4L19 6"/></svg> The initial quote request is free. You do not need a finished software plan.</p>
+        </div>
+
+        <div class="hero-interface reveal is-visible">
+          <img src="portfolio-assets/yardstack-dashboard.png" alt="Equipment rental operations dashboard with reservations, fleet activity, returns, maintenance alerts, and reporting" width="1920" height="946" fetchpriority="high" decoding="async">
+          <div class="hero-float-card"><span class="float-icon"><svg class="icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m5 12 4 4L19 6"/></svg></span><div><small>One focused workspace</small><strong>Built around the operation</strong></div></div>
         </div>
       </div>
+      <div class="shell workflow-strip" aria-label="Examples of workflows Formsmith can improve"><span>Customer records</span><i></i><span>Scheduling</span><i></i><span>Quotes</span><i></i><span>Job tracking</span><i></i><span>Inventory</span><i></i><span>Reporting</span></div>
+    </section>
 
-      <!-- Main form -->
-      <form id="groomForm" class="card">
-
-        <!-- Section 1: Client Info -->
-        <h2 class="section-title">1) Client Information</h2>
-        <div class="grid3">
-          <div class="field"><label>Client ID</label><input name="clientId" type="text" value="CL-1042" /></div>
-          <div class="field"><label>First Name</label><input name="ownerFirstName" type="text" value="Sarah" /></div>
-          <div class="field"><label>Last Name</label><input name="ownerLastName" type="text" value="Jennings" /></div>
+    <section class="section problem-section">
+      <div class="shell">
+        <div class="split-heading">
+          <div><div class="eyebrow">The spreadsheet ceiling</div><h2>Is your business still running on spreadsheets?</h2></div>
+          <p>Spreadsheets are useful—until the business depends on them for work they were never designed to manage.</p>
         </div>
-        <div class="grid3">
-          <div class="field"><label>Phone Number</label><input name="phone" type="tel" value="(414) 555-8821" /></div>
-          <div class="field"><label>Email</label><input name="email" type="email" value="sarah.jennings@email.com" /></div>
-          <div class="field">
-            <label>Preferred Contact</label>
-            <select name="preferredContact">
-              <option value="">Select</option>
-              <option>Phone Call</option>
-              <option selected>Text</option>
-              <option>Email</option>
-            </select>
-          </div>
+        <div class="problem-grid">
+          <article class="problem-card reveal"><span>01</span><div class="problem-icon"><svg class="icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m12 2 9 5-9 5-9-5zM3 12l9 5 9-5M3 17l9 5 9-5"/></svg></div><h3>Information is scattered</h3><p>Customer details, job notes, schedules, and photos live in different sheets, inboxes, texts, and paper files.</p><ul><li>Hard-to-find records</li><li>No clear source of truth</li><li>Limited mobile access</li></ul></article>
+          <article class="problem-card reveal"><span>02</span><div class="problem-icon"><svg class="icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4h16v16H4zM4 9h16M9 4v16M14 9v11"/></svg></div><h3>Manual work keeps multiplying</h3><p>The same data gets entered more than once while formulas, totals, reminders, and documents are handled by hand.</p><ul><li>Repeated data entry</li><li>Manual calculations</li><li>Missed follow-ups</li></ul></article>
+          <article class="problem-card reveal"><span>03</span><div class="problem-icon"><svg class="icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 3v18h18M7 16l4-5 4 3 5-8"/></svg></div><h3>The process is hard to see</h3><p>When work is buried in rows and tabs, it is difficult to know what is scheduled, overdue, available, or profitable.</p><ul><li>Confusing scheduling</li><li>Inconsistent processes</li><li>No useful dashboard</li></ul></article>
         </div>
-        <div class="grid">
-          <div class="field"><label>Address</label><input name="address" type="text" value="2847 N Oakland Ave, Milwaukee WI 53211" /></div>
-          <div class="field">
-            <label>How Did They Find Us?</label>
-            <select name="referralSource">
-              <option value="">Select</option>
-              <option>Walk-in</option>
-              <option selected>Google Search</option>
-              <option>Facebook</option>
-              <option>Instagram</option>
-              <option>Referral from Client</option>
-              <option>Flyer / Print</option>
-              <option>Other</option>
-            </select>
-          </div>
-        </div>
-
-        <!-- Section 2: Pet Details -->
-        <h2 class="section-title">2) Pet Details</h2>
-        <div class="grid3">
-          <div class="field"><label>Pet Name</label><input name="petName" type="text" value="Biscuit" /></div>
-          <div class="field">
-            <label>Species</label>
-            <select name="species">
-              <option value="">Select</option>
-              <option selected>Dog</option>
-              <option>Cat</option>
-            </select>
-          </div>
-          <div class="field"><label>Breed</label><input name="breed" type="text" value="Golden Retriever" /></div>
-        </div>
-        <div class="grid3">
-          <div class="field">
-            <label>Size</label>
-            <select name="size">
-              <option value="">Select</option>
-              <option>Small (Under 20 lbs)</option>
-              <option>Medium (20–50 lbs)</option>
-              <option selected>Large (50–90 lbs)</option>
-              <option>X-Large (90+ lbs)</option>
-            </select>
-          </div>
-          <div class="field"><label>Weight (lbs)</label><input name="weight" type="text" value="72" /></div>
-          <div class="field"><label>Date of Birth / Age</label><input name="petDob" type="text" value="03/15/2021" /></div>
-        </div>
-        <div class="grid3">
-          <div class="field">
-            <label>Spayed / Neutered</label>
-            <select name="spayedNeutered">
-              <option value="">Select</option>
-              <option selected>Yes</option>
-              <option>No</option>
-            </select>
-          </div>
-          <div class="field">
-            <label>Temperament</label>
-            <select name="temperament">
-              <option value="">Select</option>
-              <option selected>Friendly</option>
-              <option>Nervous / Anxious</option>
-              <option>Aggressive — Muzzle Required</option>
-              <option>Shy / Timid</option>
-              <option>Excitable / Jumpy</option>
-            </select>
-          </div>
-          <div class="field">
-            <label>Vaccination Status</label>
-            <select name="vaccinationStatus">
-              <option value="">Select</option>
-              <option selected>Up to Date</option>
-              <option>Expired — Needs Update</option>
-              <option>Unverified</option>
-            </select>
-          </div>
-        </div>
-        <div class="grid">
-          <div class="field"><label>Known Allergies / Skin Conditions</label><input name="allergies" type="text" value="Sensitive around ears — use hypoallergenic shampoo" /></div>
-          <div class="field"><label>Vet Name / Clinic</label><input name="vetInfo" type="text" value="Bayshore Animal Hospital — Dr. Patel" /></div>
-        </div>
-
-        <!-- Section 3: Grooming Preferences -->
-        <h2 class="section-title">3) Grooming Preferences</h2>
-        <div class="grid3">
-          <div class="field">
-            <label>Coat Type</label>
-            <select name="coatType">
-              <option value="">Select</option>
-              <option>Short / Smooth</option>
-              <option selected>Long / Flowing</option>
-              <option>Double Coat</option>
-              <option>Curly / Poodle-Type</option>
-              <option>Wire / Rough</option>
-            </select>
-          </div>
-          <div class="field">
-            <label>Preferred Cut Style</label>
-            <select name="cutStyle">
-              <option value="">Select</option>
-              <option>Breed Standard</option>
-              <option selected>Puppy Cut (even all over)</option>
-              <option>Teddy Bear</option>
-              <option>Lion Cut</option>
-              <option>Sanitary Trim Only</option>
-              <option>Owner Will Describe</option>
-            </select>
-          </div>
-          <div class="field">
-            <label>Preferred Shampoo</label>
-            <select name="shampoo">
-              <option value="">Select</option>
-              <option>Standard</option>
-              <option selected>Hypoallergenic</option>
-              <option>Oatmeal / Soothing</option>
-              <option>Flea &amp; Tick</option>
-              <option>De-shedding</option>
-              <option>Whitening</option>
-            </select>
-          </div>
-        </div>
-        <div class="grid3">
-          <div class="field">
-            <label>Nail Trim</label>
-            <select name="nailTrim">
-              <option value="">Select</option>
-              <option selected>Yes — Standard Clip</option>
-              <option>Yes — Dremel / Grind</option>
-              <option>No</option>
-            </select>
-          </div>
-          <div class="field">
-            <label>Ear Cleaning</label>
-            <select name="earCleaning">
-              <option value="">Select</option>
-              <option selected>Yes</option>
-              <option>No</option>
-            </select>
-          </div>
-          <div class="field">
-            <label>Teeth Brushing</label>
-            <select name="teethBrushing">
-              <option value="">Select</option>
-              <option>Yes</option>
-              <option selected>No</option>
-            </select>
-          </div>
-        </div>
-        <div class="grid">
-          <div class="field">
-            <label>Add-Ons</label>
-            <select name="addOns">
-              <option value="">None</option>
-              <option selected>Blueberry Facial</option>
-              <option>De-shedding Treatment</option>
-              <option>Pawdicure (nail polish)</option>
-              <option>Bandana / Bow</option>
-              <option>Cologne Spritz</option>
-            </select>
-          </div>
-          <div class="field"><label>Special Grooming Notes</label><input name="groomingNotes" type="text" value="Trim around paws carefully — ticklish on back feet" /></div>
-        </div>
-
-        <!-- Section 4: Appointment & Scheduling -->
-        <h2 class="section-title">4) Appointment &amp; Scheduling</h2>
-        <div class="grid3">
-          <div class="field"><label>Last Visit Date</label><input name="lastVisit" type="date" value="2026-02-08" /></div>
-          <div class="field"><label>Next Appointment</label><input name="nextAppointment" type="date" value="2026-04-05" /></div>
-          <div class="field">
-            <label>Visit Frequency</label>
-            <select name="visitFrequency">
-              <option value="">Select</option>
-              <option>Every 4 weeks</option>
-              <option selected>Every 6 weeks</option>
-              <option>Every 8 weeks</option>
-              <option>As needed</option>
-            </select>
-          </div>
-        </div>
-        <div class="grid3">
-          <div class="field">
-            <label>Preferred Day</label>
-            <select name="preferredDay">
-              <option value="">No Preference</option>
-              <option>Monday</option>
-              <option>Tuesday</option>
-              <option>Wednesday</option>
-              <option>Thursday</option>
-              <option>Friday</option>
-              <option selected>Saturday</option>
-            </select>
-          </div>
-          <div class="field">
-            <label>Preferred Time</label>
-            <select name="preferredTime">
-              <option value="">No Preference</option>
-              <option selected>Morning (8am–11am)</option>
-              <option>Midday (11am–1pm)</option>
-              <option>Afternoon (1pm–4pm)</option>
-            </select>
-          </div>
-          <div class="field">
-            <label>Drop-Off or Wait?</label>
-            <select name="dropOff">
-              <option value="">Select</option>
-              <option selected>Drop-Off</option>
-              <option>Wait in Lobby</option>
-            </select>
-          </div>
-        </div>
-        <div class="grid">
-          <div class="field">
-            <label>Appointment Status</label>
-            <select name="appointmentStatus" onchange="colorStatus(this)">
-              <option value="">Select</option>
-              <option selected value="Confirmed">Confirmed</option>
-              <option value="Pending">Pending</option>
-              <option value="No Show">No Show</option>
-              <option value="Cancelled">Cancelled</option>
-              <option value="Completed">Completed</option>
-            </select>
-          </div>
-          <div class="field"><label>Internal Notes</label><textarea name="internalNotes">Biscuit does great when you talk to him during the bath. Needs extra drying time — thick coat. Mom usually arrives 10 min early for pickup.</textarea></div>
-        </div>
-
-        <div class="actions">
-          <button type="button" onclick="demoSave()">Save / Update Client</button>
-        </div>
-        <div id="status"></div>
-      </form>
-
-      <div class="built-by">
-        Built by <strong>Formsmith</strong> — Custom forms &amp; web apps built for your workflow<br>
-        <a href="https://www.etsy.com/shop/FormsmithCustomForms">www.etsy.com/shop/FormsmithCustomForms</a> · formsmithcustomforms@gmail.com
+        <div class="statement-panel reveal"><span class="statement-mark">F</span><p><strong>Your business has outgrown the spreadsheet.</strong> Your software should match the way you work.</p><a class="text-link" href="quote.html">Show us what is not working <svg class="icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a></div>
       </div>
+    </section>
 
-      <!-- History modal -->
-      <div id="historyOverlay" class="modal-overlay" onclick="if(event.target===this)closeHistory()">
-        <div class="modal">
-          <div class="modal-header">
-            <h2 id="historyTitle">Change History — Biscuit (CL-1042)</h2>
-            <button class="modal-close" onclick="closeHistory()">&times;</button>
-          </div>
-          <div class="modal-body" id="historyBody">
-            <div class="history-entry">
-              <div class="history-meta">
-                <span class="history-date">Mar 8, 2026 — 2:14 PM</span>
-                <span class="history-badge">3 fields</span>
-              </div>
-              <div class="history-changes">
-                <div class="change-item"><span class="field-name">Last Visit Date:</span> 01/04/2026 <span class="arrow">→</span> 02/08/2026</div>
-                <div class="change-item"><span class="field-name">Next Appointment:</span> 02/08/2026 <span class="arrow">→</span> 04/05/2026</div>
-                <div class="change-item"><span class="field-name">Weight:</span> 70 <span class="arrow">→</span> 72</div>
-              </div>
-            </div>
-            <div class="history-entry">
-              <div class="history-meta">
-                <span class="history-date">Jan 4, 2026 — 10:32 AM</span>
-                <span class="history-badge">2 fields</span>
-              </div>
-              <div class="history-changes">
-                <div class="change-item"><span class="field-name">Shampoo:</span> Standard <span class="arrow">→</span> Hypoallergenic</div>
-                <div class="change-item"><span class="field-name">Allergies:</span> None <span class="arrow">→</span> Sensitive around ears — use hypoallergenic shampoo</div>
-              </div>
-            </div>
-            <div class="history-entry">
-              <div class="history-meta">
-                <span class="history-date">Nov 22, 2025 — 9:47 AM</span>
-                <span class="history-badge">1 field</span>
-              </div>
-              <div class="history-changes">
-                <div class="change-item"><span class="field-name">Temperament:</span> Nervous / Anxious <span class="arrow">→</span> Friendly</div>
-              </div>
-            </div>
-            <div class="history-entry">
-              <div class="history-meta">
-                <span class="history-date">Oct 12, 2025 — 11:20 AM</span>
-                <span class="history-badge">New Record</span>
-              </div>
-              <div class="history-changes">
-                <div class="change-item">Initial record created for Biscuit — Sarah Jennings</div>
-              </div>
-            </div>
-          </div>
+    <section class="section section--tint solutions-section">
+      <div class="shell section-heading section-heading--center"><div class="eyebrow">Built to fit</div><h2>Software built for your business</h2><p>Bring the work that is slowing you down. Formsmith shapes the screens, terminology, and workflow around what your business actually needs.</p></div>
+      <div class="shell solution-grid">
+        <article class="solution-card reveal"><span>CM</span><h3>Customer management</h3><p>Keep contact details, history, notes, and follow-ups together.</p></article>
+        <article class="solution-card reveal"><span>CR</span><h3>Custom CRM systems</h3><p>Track leads and opportunities without a bloated sales platform.</p></article>
+        <article class="solution-card reveal"><span>SC</span><h3>Scheduling &amp; calendars</h3><p>See upcoming work, assignments, availability, and conflicts.</p></article>
+        <article class="solution-card reveal"><span>QE</span><h3>Quotes &amp; estimates</h3><p>Prepare consistent pricing and move approved work forward.</p></article>
+        <article class="solution-card reveal"><span>JT</span><h3>Job tracking</h3><p>Follow work from the first request through completion.</p></article>
+        <article class="solution-card reveal"><span>IM</span><h3>Inventory management</h3><p>Know what is available, low, reserved, sold, or in use.</p></article>
+        <article class="solution-card reveal"><span>ET</span><h3>Equipment tracking</h3><p>Organize equipment details, location, condition, and maintenance.</p></article>
+        <article class="solution-card reveal"><span>RM</span><h3>Rental management</h3><p>Coordinate reservations, availability, returns, and records.</p></article>
+        <article class="solution-card reveal"><span>FI</span><h3>Forms &amp; inspections</h3><p>Capture consistent information from the office or the field.</p></article>
+        <article class="solution-card reveal"><span>DR</span><h3>Dashboards &amp; reporting</h3><p>Turn daily business data into a clear operational view.</p></article>
+        <article class="solution-card reveal"><span>WA</span><h3>Workflow automation</h3><p>Reduce repeat entry, reminders, calculations, and document work.</p></article>
+        <article class="solution-card reveal"><span>GS</span><h3>Google Sheets apps</h3><p>Give familiar spreadsheet data a focused, easier-to-use interface.</p></article>
+      </div>
+    </section>
+
+    <section class="section featured-section">
+      <div class="shell featured-project" data-featured-project></div>
+    </section>
+
+    <section class="section section--tint">
+      <div class="shell split-heading">
+        <div><div class="eyebrow">Open the software</div><h2>Explore working demos</h2></div>
+        <div><p>Click through realistic sample workflows and see what custom small-business software can feel like.</p><a class="text-link" href="demos.html">Explore all live demos <svg class="icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a></div>
+      </div>
+      <div class="shell project-grid project-grid--home" data-project-grid="home" data-limit="4"></div>
+    </section>
+
+    <section class="section process-section">
+      <div class="shell section-heading section-heading--center"><div class="eyebrow">A practical path forward</div><h2>From frustration to a system that fits</h2><p>The process starts with a free quote request—not a technical specification.</p></div>
+      <div class="shell process-line">
+        <article class="process-step reveal"><span>1</span><div class="process-icon"><svg class="icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 12a8 8 0 0 1-8 8H5l-3 2 1-5a9 9 0 1 1 18-5Z"/></svg></div><h3>Tell us what is not working</h3><p>Describe the spreadsheet, paperwork, or manual process getting in the way.</p></article>
+        <article class="process-step reveal"><span>2</span><div class="process-icon"><svg class="icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4h6v6H4zM14 14h6v6h-6zM10 7h4a3 3 0 0 1 3 3v4M7 10v7a3 3 0 0 0 3 3h4"/></svg></div><h3>We map your workflow</h3><p>We learn how the work moves today, what needs to stay familiar, and where it can improve.</p></article>
+        <article class="process-step reveal"><span>3</span><div class="process-icon"><svg class="icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14.7 6.3a4 4 0 0 0-5-5L12 3.6 9.6 6 7.3 3.7a4 4 0 0 0 5 5l8.4 8.4a2.1 2.1 0 0 1-3 3Z"/></svg></div><h3>We build and refine</h3><p>Your software takes shape around real screens, real language, and useful feedback.</p></article>
+        <article class="process-step reveal"><span>4</span><div class="process-icon"><svg class="icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m12 2 9 5-9 5-9-5zM3 12l9 5 9-5M3 17l9 5 9-5"/></svg></div><h3>Receive a system built for you</h3><p>Use one focused system shaped around how your business operates.</p></article>
+      </div>
+      <div class="centered-action"><a class="button" href="quote.html">Start with a Free Quote <svg class="icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a></div>
+    </section>
+
+    <section class="section comparison-section">
+      <div class="shell comparison-grid">
+        <div class="comparison-copy"><div class="eyebrow">Why custom software?</div><h2>Generic tools make you adapt. Custom software adapts to the work.</h2><p>Many small businesses piece together tools that are too complicated, too expensive, or still missing the exact workflow they need.</p><p>Formsmith focuses on the useful middle ground: practical software with the features and language that make sense for your business.</p><a class="text-link" href="about.html">Why Formsmith builds this way <svg class="icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a></div>
+        <div class="comparison-cards">
+          <article class="comparison-card comparison-card--before"><span>Patched together</span><h3>Work spread across tools</h3><ul><li>Spreadsheets and tabs</li><li>Paper forms and notes</li><li>Texts and email threads</li><li>Generic subscriptions</li><li>Repeated data entry</li></ul></article>
+          <article class="comparison-card comparison-card--after"><span>Shaped around you</span><h3>One focused system</h3><ul><li>Only the features you need</li><li>Familiar business terminology</li><li>Mobile-friendly workflows</li><li>Centralized information</li><li>Clearer daily operations</li></ul></article>
         </div>
       </div>
-    </div>
+      <p class="shell fine-print">A custom system may work alongside other business platforms; the right solution does not need to replace every tool you use.</p>
+    </section>
 
-    <script>
-      function lookupClient() {
-        var id = document.getElementById('lookupClientId').value.trim();
-        if (!id) { setStatus('Enter a Client ID first.', 'warn'); return; }
-        setStatus('\u2713 Client loaded — CL-1042: Sarah Jennings / Biscuit (Golden Retriever)', 'ok');
-      }
+    <section class="section section--tint industries-section">
+      <div class="shell split-heading"><div><div class="eyebrow">Who we build for</div><h2>Small businesses with real workflows</h2></div><p>Formsmith builds around the operation—not around a one-size-fits-all industry template.</p></div>
+      <div class="shell industry-grid" data-industry-grid data-limit="11"></div>
+      <div class="shell industry-callout"><div><strong>Don’t see your industry?</strong><p>Every Formsmith application is built around the business, not a template.</p></div><a class="button button--ghost" href="industries.html">Explore Industries</a></div>
+    </section>
 
-      function clearForm() {
-        document.getElementById('groomForm').reset();
-        document.getElementById('lookupClientId').value = '';
-        setStatus('Form cleared.', 'ok');
-      }
+    <section class="section section--cta">
+      <div class="shell cta-panel">
+        <div><div class="eyebrow eyebrow--light">A better workflow starts here</div><h2>Ready to replace the spreadsheet?</h2><p>Tell Formsmith what is slowing your business down, and we will explore what a better system could look like.</p></div>
+        <div class="button-row"><a class="button button--light" href="quote.html">Request a Quote <svg class="icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a><a class="button button--outline-light" href="demos.html">Explore Live Demos</a></div>
+      </div>
+    </section>
+  </main>
 
-      function demoSave() {
-        setStatus('\u2713 Record saved to Google Sheets — Biscuit (CL-1042) updated successfully.', 'ok');
-      }
-
-      function viewHistory() {
-        document.getElementById('historyOverlay').classList.add('open');
-      }
-
-      function closeHistory() {
-        document.getElementById('historyOverlay').classList.remove('open');
-      }
-
-      function setStatus(message, tone) {
-        var el = document.getElementById('status');
-        el.className = tone || '';
-        el.textContent = message;
-      }
-
-      function colorStatus(el) {
-        var colors = { 'Confirmed': '#d4edda', 'Pending': '#fef3cd', 'No Show': '#f8d0d0', 'Cancelled': '#f8d0d0', 'Completed': '#d1ecf1' };
-        el.style.backgroundColor = colors[el.value] || '#fff';
-      }
-
-      // Auto-color on load
-      var statusSelect = document.querySelector('[name="appointmentStatus"]');
-      if (statusSelect) colorStatus(statusSelect);
-    </script>
-  </body>
+  <div data-site-footer></div>
+  <noscript><div class="noscript">This site uses lightweight JavaScript to display navigation and project information. Please enable JavaScript for the complete experience.</div></noscript>
+  <script src="assets/js/site-data.js" defer></script>
+  <script src="assets/js/site.js" defer></script>
+</body>
 </html>
