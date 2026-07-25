@@ -4,11 +4,13 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "npm run test:site && npm run test:photography && npm run test:browser",
-    "test:all": "npm run test:site && npm run test:archery && npm run test:photography && npm run test:browser",
+    "test": "npm run test:site && npm run test:photography && npm run test:piano && npm run test:browser",
+    "test:all": "npm run test:site && npm run test:archery && npm run test:photography && npm run test:piano && npm run test:browser",
     "test:site": "node tests/site-check.mjs",
     "test:archery": "node syntax-check.cjs && node test-import.mjs && node test-seasons.mjs",
     "test:photography": "node tests/photography-studio-check.mjs",
+    "test:piano": "node tests/piano-studio-check.mjs && npm run test:piano-backend",
+    "test:piano-backend": "node piano-studio/google-apps-script/Code.contract.test.cjs",
     "capture:photography": "node tests/capture-photography-portfolio.mjs",
     "test:production": "node tests/site-check.mjs --production",
     "test:browser": "node tests/browser-audit.mjs"

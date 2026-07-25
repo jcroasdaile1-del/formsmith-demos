@@ -162,6 +162,71 @@ window.FORMSMITH_DATA = {
       technology: ["Interactive browser demo"]
     },
     {
+      slug: "piano-studio-manager",
+      title: "Piano Studio Manager",
+      demoName: "Harmony House",
+      shortTitle: "Harmony House",
+      industry: "Music education",
+      status: "Live Demo",
+      classification: "Concept Demo",
+      featured: false,
+      homepage: false,
+      homepageOrder: null,
+      demoOrder: 2,
+      eyebrow: "Interactive Demo",
+      theme: "violet",
+      summary:
+        "A purpose-built command center for a solo private piano teacher to manage students, guardians, recurring lessons, lesson work, tuition records, inquiries, makeup lessons, and recitals.",
+      overview:
+        "Piano Studio Manager demonstrates how a solo private piano teacher could keep the teaching and business sides of a studio together, from an inquiry and trial lesson through recurring scheduling, weekly lesson work, tuition records, makeup credits, and recital planning.",
+      problem:
+        "Student details, guardian communication, recurring schedules, lesson notes, repertoire progress, assignments, tuition records, makeup credits, and recital plans can become difficult to coordinate when they live in separate calendars, notebooks, messages, and spreadsheets.",
+      previousProcess:
+        "This concept represents a common solo-studio workflow built around a calendar, teaching notebook, payment spreadsheet, and parent messages rather than a claimed client process.",
+      solution:
+        "One connected workspace can preserve each student's teaching history while giving the teacher a clear view of today's lessons, studio capacity, follow-ups, tuition records, makeup obligations, and upcoming recital work.",
+      features: [
+        "Student and guardian records",
+        "Recurring weekly lesson scheduling",
+        "Lesson workspace and permanent history",
+        "Repertoire progress tracking",
+        "Practice assignments",
+        "Tuition charges and payment history",
+        "Makeup lesson credits",
+        "Inquiry and trial lesson pipeline",
+        "Recital planning",
+        "Expenses and studio reporting"
+      ],
+      demo: {
+        url: "piano-studio/index.html",
+        label: "Launch Harmony House Demo",
+        external: false,
+        placeholder: false,
+        notice: "Uses fictional students, guardians, lesson schedules, repertoire, assignments, payments, inquiries, expenses, and recital information."
+      },
+      detailPath: "projects/piano-studio-manager.html",
+      screenshots: [
+        {
+          src: "portfolio-assets/harmony-house-dashboard.png",
+          alt: "Harmony House piano studio dashboard showing today's lessons, active students, monthly revenue, outstanding tuition, and upcoming studio events",
+          caption: "A calm daily command center for teaching work and studio operations",
+          width: 1440,
+          height: 900,
+          placeholder: false
+        },
+        {
+          src: "portfolio-assets/harmony-house-lesson-workspace.png",
+          alt: "Harmony House lesson workspace showing previous lesson context, the previous assignment, attendance status, and repertoire progress fields",
+          caption: "A focused lesson workspace that turns teaching notes into permanent history",
+          width: 1440,
+          height: 900,
+          placeholder: false
+        }
+      ],
+      screenshotPlaceholder: null,
+      technology: ["Interactive browser demo"]
+    },
+    {
       slug: "equipment-rental-manager",
       title: "Equipment Rental Manager",
       demoName: "YardStack",
