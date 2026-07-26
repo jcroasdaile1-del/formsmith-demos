@@ -1309,6 +1309,14 @@ async function testResponsiveViews(page) {
     for (const [view, heading, selector] of views) {
       console.log(`  ${width}px · ${view}`);
       await navigate(page, view, heading, selector);
+      if (view === "reports") {
+        await page.click('[data-action="report-range"][data-range="12"]');
+        await page.waitForFunction(() => document.querySelectorAll(".bar-group").length === 12);
+        await page.waitForFunction(() => {
+          const scroller = document.querySelector(".revenue-chart-scroll");
+          return scroller && (scroller.scrollWidth <= scroller.clientWidth || scroller.scrollLeft > 0);
+        });
+      }
       const layout = await page.evaluate((activeView) => {
         const rootElement = document.documentElement;
         const isVisible = (element) => {
@@ -1344,7 +1352,15 @@ async function testResponsiveViews(page) {
               label: element.getAttribute("aria-label") || element.textContent.trim(),
               height: element.getBoundingClientRect().height
             }))
-            .filter((item) => item.height < 43.5)
+            .filter((item) => item.height < 43.5),
+          reportChart: activeView === "reports" ? {
+            monthCount: document.querySelectorAll(".bar-group").length,
+            rowTops: [...new Set([...document.querySelectorAll(".bar-group")].map((element) => Math.round(element.getBoundingClientRect().top)))],
+            scrollerClientWidth: document.querySelector(".revenue-chart-scroll")?.clientWidth || 0,
+            scrollerScrollWidth: document.querySelector(".revenue-chart-scroll")?.scrollWidth || 0,
+            scrollerLeft: document.querySelector(".revenue-chart-scroll")?.scrollLeft || 0,
+            cardHeight: Math.round(document.querySelector(".revenue-chart-scroll")?.closest(".card")?.getBoundingClientRect().height || 0)
+          } : null
         };
       }, view);
       assert.ok(
@@ -1354,6 +1370,15 @@ async function testResponsiveViews(page) {
       assert.deepEqual(layout.duplicateIds, [], `${width}px ${view} view should not render duplicate IDs`);
       assert.equal(layout.mainHeadingCount, 1, `${width}px ${view} view should expose one main page heading`);
       assert.equal(layout.mainHasFocusTarget, true, `${width}px ${view} main content should remain programmatically focusable`);
+      if (view === "reports") {
+        assert.equal(layout.reportChart.monthCount, 12, `${width}px reports should render all 12 requested months`);
+        assert.equal(layout.reportChart.rowTops.length, 1, `${width}px 12-month revenue bars should stay on one continuous month axis`);
+        assert.ok(layout.reportChart.scrollerScrollWidth >= layout.reportChart.scrollerClientWidth, `${width}px revenue chart should contain its month axis inside the dedicated scroller`);
+        if (layout.reportChart.scrollerScrollWidth > layout.reportChart.scrollerClientWidth) {
+          assert.ok(layout.reportChart.scrollerLeft > 0, `${width}px 12-month chart should initially reveal the newest months when horizontal scrolling is needed`);
+        }
+        assert.ok(layout.reportChart.cardHeight < 500, `${width}px 12-month revenue card should remain compact (${layout.reportChart.cardHeight}px)`);
+      }
       if (width === 390) {
         assert.equal(layout.mobileNavVisible, true, `${view} should keep mobile navigation visible at 390px`);
         assert.equal(layout.mobileNavItems, 5, `${view} should expose five mobile navigation destinations`);

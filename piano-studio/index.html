@@ -700,21 +700,92 @@
     .recital-select span { margin-top: 2px; color: var(--muted); font-size: 10px; }
     .program-order { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 50%; background: var(--brand-soft); color: var(--brand-strong); font-family: Georgia, serif; font-size: 15px; }
 
-    .chart-card { min-height: 300px; }
+    .chart-card { min-height: 0; overflow: hidden; }
     .chart-body { padding: 18px; }
-    .bar-chart { min-height: 215px; display: grid; grid-template-columns: repeat(6, minmax(32px, 1fr)); align-items: end; gap: 9px; padding-top: 24px; border-bottom: 1px solid var(--line); }
-    .bar-group { height: 190px; display: flex; align-items: end; justify-content: center; gap: 4px; position: relative; }
-    .bar { width: min(29px, 42%); min-height: 3px; border-radius: 6px 6px 0 0; background: var(--brand); }
-    .bar.alt { background: var(--accent); }
-    .bar-label { position: absolute; top: calc(100% + 7px); left: 50%; transform: translateX(-50%); color: var(--muted); font-size: 9px; white-space: nowrap; }
-    .chart-legend { margin-top: 25px; display: flex; justify-content: center; gap: 17px; color: var(--muted); font-size: 10px; }
+    .report-span-2 { grid-column: 1 / -1; }
+    .report-card .card-head { min-height: 70px; }
+    .report-badge { min-height: 28px; padding: 5px 10px; display: inline-flex; align-items: center; flex: 0 0 auto; border-radius: 999px; background: var(--brand-soft); color: var(--brand-strong); font-size: 10px; font-weight: 820; }
+    .report-badge.success { background: var(--success-soft); color: var(--success-strong); }
+    .report-badge.warning { background: var(--warning-soft); color: var(--warning-strong); }
+    .revenue-chart-body { padding-top: 15px; }
+    .revenue-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; margin-bottom: 14px; }
+    .revenue-stat { min-width: 0; padding: 11px 13px; border: 1px solid var(--line); border-radius: 11px; background: var(--paper-soft); }
+    .revenue-stat span, .snapshot-tile span, .capacity-stat span { display: block; color: var(--muted); font-size: 9px; font-weight: 820; letter-spacing: .06em; text-transform: uppercase; }
+    .revenue-stat strong { display: block; margin-top: 3px; font-family: Georgia, serif; font-size: 20px; font-weight: 500; }
+    .revenue-stat.balance strong { color: var(--warning-strong); }
+    .revenue-chart-scroll { max-width: 100%; overflow-x: auto; overscroll-behavior-inline: contain; scrollbar-width: thin; }
+    .bar-chart {
+      width: 100%;
+      min-width: var(--chart-width, 500px);
+      height: 218px;
+      padding: 20px 8px 0;
+      display: grid;
+      grid-template-columns: repeat(var(--chart-columns, 6), minmax(52px, 1fr));
+      align-items: stretch;
+      gap: 8px;
+      border-bottom: 1px solid var(--line);
+      background: repeating-linear-gradient(to top, transparent 0, transparent calc(25% - 1px), color-mix(in srgb, var(--line) 72%, transparent) 25%);
+    }
+    .bar-group { min-width: 0; height: 100%; display: grid; grid-template-rows: minmax(0, 1fr) 39px; position: relative; }
+    .bar-pair { min-height: 0; display: flex; align-items: end; justify-content: center; gap: 5px; }
+    .bar { width: min(27px, 40%); min-height: 0; border-radius: 6px 6px 2px 2px; background: var(--brand); box-shadow: 0 -1px 0 color-mix(in srgb, var(--brand-strong) 35%, transparent); }
+    .bar.alt { background: var(--accent); box-shadow: 0 -1px 0 color-mix(in srgb, var(--accent-strong) 35%, transparent); }
+    .bar-label { padding-top: 7px; color: var(--muted); font-size: 9px; line-height: 1.15; text-align: center; white-space: nowrap; }
+    .bar-label strong, .bar-label span { display: block; }
+    .bar-label strong { color: var(--muted-strong); font-size: 9px; }
+    .bar-label span { margin-top: 2px; font-size: 8px; }
+    .chart-legend { margin-top: 11px; display: flex; justify-content: center; gap: 17px; color: var(--muted); font-size: 10px; }
     .legend-key { display: inline-flex; align-items: center; gap: 6px; }
     .legend-key::before { content: ""; width: 9px; height: 9px; border-radius: 3px; background: var(--brand); }
     .legend-key.alt::before { background: var(--accent); }
-    .horizontal-chart { display: grid; gap: 11px; }
-    .horizontal-bar { display: grid; grid-template-columns: minmax(88px, 130px) minmax(0, 1fr) 38px; gap: 10px; align-items: center; font-size: 10px; }
-    .horizontal-bar .track { height: 10px; border-radius: 999px; background: var(--slate-soft); overflow: hidden; }
-    .horizontal-bar .fill { height: 100%; border-radius: inherit; background: var(--brand); }
+    .distribution-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 13px 18px; }
+    .distribution-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 7px 10px; align-items: center; }
+    .distribution-label strong, .distribution-label span { display: block; }
+    .distribution-label strong { font-size: 11px; }
+    .distribution-label span { margin-top: 2px; color: var(--muted); font-size: 9px; }
+    .distribution-track, .capacity-track { height: 10px; overflow: hidden; border-radius: 999px; background: var(--slate-soft); }
+    .distribution-fill, .capacity-fill { height: 100%; display: block; border-radius: inherit; background: linear-gradient(90deg, var(--brand), color-mix(in srgb, var(--brand) 72%, var(--info))); }
+    .distribution-track { grid-column: 1 / -1; grid-row: 2; }
+    .distribution-value { grid-column: 2; grid-row: 1; color: var(--muted); font-size: 9px; text-align: right; }
+    .distribution-value strong { margin-right: 3px; color: var(--ink); font-size: 12px; }
+    .workload-layout { display: grid; grid-template-columns: 145px minmax(0, 1fr); gap: 20px; align-items: center; }
+    .insight-ring { width: 132px; aspect-ratio: 1; display: grid; place-items: center; border-radius: 50%; background: conic-gradient(var(--ring-color, var(--success)) 0 var(--ring-value), var(--slate-soft) var(--ring-value) 100%); }
+    .insight-ring::before { content: ""; width: 92px; aspect-ratio: 1; grid-area: 1 / 1; border-radius: 50%; background: var(--paper); box-shadow: inset 0 0 0 1px var(--line); }
+    .ring-copy { z-index: 1; grid-area: 1 / 1; text-align: center; }
+    .ring-copy strong, .ring-copy span { display: block; }
+    .ring-copy strong { font-family: Georgia, serif; font-size: 25px; font-weight: 500; }
+    .ring-copy span { margin-top: 2px; color: var(--muted); font-size: 9px; }
+    .breakdown-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+    .breakdown-item { min-width: 0; padding: 11px; border: 1px solid var(--line); border-radius: 10px; background: var(--paper-soft); }
+    .breakdown-label { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 9px; white-space: nowrap; }
+    .breakdown-dot { width: 7px; height: 7px; flex: 0 0 auto; border-radius: 50%; background: var(--item-color, var(--brand)); }
+    .breakdown-item strong { display: block; margin-top: 5px; font-family: Georgia, serif; font-size: 21px; font-weight: 500; }
+    .breakdown-item small { margin-left: 4px; color: var(--muted); font-family: inherit; font-size: 9px; }
+    .funnel-summary { margin-bottom: 12px; display: flex; flex-wrap: wrap; gap: 8px; }
+    .funnel-summary span { padding: 7px 9px; border-radius: 8px; background: var(--paper-soft); color: var(--muted); font-size: 9px; }
+    .funnel-summary strong { margin-right: 3px; color: var(--ink); font-size: 11px; }
+    .funnel-flow { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+    .funnel-step { min-width: 0; padding: 11px; display: grid; grid-template-columns: 24px minmax(0, 1fr) auto; gap: 8px; align-items: center; border: 1px solid var(--line); border-radius: 10px; background: var(--paper-soft); }
+    .funnel-index { width: 24px; height: 24px; display: grid; place-items: center; border-radius: 7px; background: var(--info-soft); color: var(--info-strong); font-size: 9px; font-weight: 850; }
+    .funnel-label { min-width: 0; color: var(--muted-strong); font-size: 9px; line-height: 1.25; }
+    .funnel-count { font-family: Georgia, serif; font-size: 18px; font-weight: 500; }
+    .capacity-overview { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
+    .capacity-stat { padding: 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--paper-soft); }
+    .capacity-stat strong { display: block; margin-top: 4px; font-family: Georgia, serif; font-size: 24px; font-weight: 500; }
+    .capacity-meter { margin: 15px 0 13px; }
+    .capacity-meter-head { margin-bottom: 6px; display: flex; justify-content: space-between; gap: 10px; color: var(--muted); font-size: 9px; }
+    .capacity-fill { background: linear-gradient(90deg, var(--accent), var(--brand)); }
+    .day-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; }
+    .day-chip { padding: 8px 9px; display: flex; align-items: center; justify-content: space-between; gap: 8px; border-radius: 9px; background: var(--paper-soft); color: var(--muted); font-size: 9px; }
+    .day-chip strong { color: var(--ink); font-size: 11px; }
+    .snapshot-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 9px; }
+    .snapshot-tile { min-width: 0; padding: 14px; border: 1px solid var(--line); border-radius: 11px; background: var(--paper-soft); }
+    .snapshot-top { display: flex; align-items: center; justify-content: space-between; gap: 9px; }
+    .snapshot-icon { width: 28px; height: 28px; display: grid; place-items: center; flex: 0 0 auto; border-radius: 8px; background: var(--brand-soft); color: var(--brand-strong); }
+    .snapshot-icon .icon { width: 14px; height: 14px; }
+    .snapshot-tile strong { display: block; margin-top: 10px; font-family: Georgia, serif; font-size: 24px; font-weight: 500; }
+    .snapshot-tile p { margin-top: 4px; color: var(--muted); font-size: 9px; }
+    .report-note { margin-top: 10px; padding: 9px 11px; border-radius: 9px; background: var(--paper-soft); color: var(--muted); font-size: 9px; line-height: 1.45; }
     .donut-layout { display: grid; grid-template-columns: 160px minmax(0, 1fr); gap: 20px; align-items: center; }
     .donut {
       width: 150px;
@@ -949,7 +1020,9 @@
       .stage-track { overflow-x: auto; grid-template-columns: repeat(6, 100px); padding-bottom: 4px; }
       .pipeline { grid-template-columns: repeat(6, minmax(255px, 82vw)); }
       .donut-layout { grid-template-columns: minmax(0, 1fr); justify-items: center; }
-      .horizontal-bar { grid-template-columns: 82px minmax(0, 1fr) 32px; }
+      .workload-layout { grid-template-columns: minmax(0, 1fr); justify-items: center; }
+      .breakdown-list { width: 100%; }
+      .snapshot-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .drawer-scrim { place-items: end stretch; }
       .drawer { width: 100%; height: min(92svh, 900px); border: 1px solid var(--line); border-radius: 20px 20px 0 0; transform: translateY(35px); }
       .drawer-scrim.open .drawer { transform: translateY(0); }
@@ -976,6 +1049,15 @@
       .student-card-meta { grid-template-columns: minmax(0, 1fr); }
       .check-grid { grid-template-columns: minmax(0, 1fr); }
       .profile-actions .btn { flex: 1 1 calc(50% - 5px); }
+      .report-card .card-head { align-items: flex-start; }
+      .revenue-stat { padding: 10px; }
+      .revenue-stat strong { font-size: 17px; }
+      .distribution-list { grid-template-columns: minmax(0, 1fr); }
+      .distribution-row { grid-template-columns: minmax(0, 1fr) auto; gap: 7px 10px; }
+      .distribution-track { grid-column: 1 / -1; grid-row: 2; }
+      .distribution-value { grid-column: 2; grid-row: 1; }
+      .funnel-flow { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .day-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -2914,18 +2996,30 @@
       const levelCounts = LEVELS.map((level) => ({ label: level, value: activeStudents.filter((student) => student.level === level).length })).filter((item) => item.value);
       const maxLevel = Math.max(1, ...levelCounts.map((item) => item.value));
       const lessonStatuses = ['Completed', 'Student Cancelled', 'Teacher Cancelled', 'No Show'].map((status) => ({ label: status, value: rangeLessons.filter((lesson) => lesson.status === status).length }));
-      const maxLesson = Math.max(1, ...lessonStatuses.map((item) => item.value));
       const leadCounts = ['New Inquiry', 'Contacted', 'Trial Scheduled', 'Trial Completed', 'Enrolling', 'Converted'].map((status) => ({ label: status.replace(' Inquiry', ''), value: state.data.inquiries.filter((inquiry) => inquiry.status === status).length }));
-      const maxLead = Math.max(1, ...leadCounts.map((item) => item.value));
+      const totalBilled = sum(revenue, (item) => item.billed);
       const totalCollected = sum(revenue, (item) => item.collected);
       const totalExpenses = sum(revenue, (item) => item.expenses);
       const net = totalCollected - totalExpenses;
       const completed = rangeLessons.filter((lesson) => lesson.status === 'Completed').length;
       const cancelled = rangeLessons.filter((lesson) => ['Student Cancelled', 'Teacher Cancelled', 'No Show'].includes(lesson.status)).length;
+      const workloadTotal = completed + cancelled;
+      const completionRate = workloadTotal ? Math.round(completed / workloadTotal * 100) : 0;
+      const totalLeads = sum(leadCounts, (item) => item.value);
+      const convertedLeads = leadCounts.find((item) => item.label === 'Converted')?.value || 0;
+      const openLeads = totalLeads - convertedLeads;
+      const conversionRate = totalLeads ? Math.round(convertedLeads / totalLeads * 100) : 0;
       const avgRevenue = activeStudents.length ? totalCollected / activeStudents.length / state.reportRange : 0;
-      const capacity = Math.round(activeStudents.length / Math.max(1, state.data.settings.targetWeeklySlots) * 100);
-      const dayCounts = unique(state.data.recurringSchedules.filter((schedule) => schedule.active !== false).map((schedule) => schedule.day)).map((day) => ({ label: day, value: state.data.recurringSchedules.filter((schedule) => schedule.active !== false && schedule.day === day).length }));
-      const maxDay = Math.max(1, ...dayCounts.map((item) => item.value));
+      const activeSchedules = state.data.recurringSchedules.filter((schedule) => schedule.active !== false);
+      const targetSlots = Math.max(1, state.data.settings.targetWeeklySlots);
+      const capacity = Math.round(activeSchedules.length / targetSlots * 100);
+      const openings = Math.max(0, targetSlots - activeSchedules.length);
+      const dayCounts = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((day) => ({ label: day, value: activeSchedules.filter((schedule) => schedule.day === day).length })).filter((item) => item.value);
+      const retention = state.data.students.length ? Math.round(activeStudents.length / state.data.students.length * 100) : 0;
+      const openMakeups = state.data.makeupCredits.filter((credit) => ['Owed', 'Scheduled'].includes(credit.status)).length;
+      const currentRepertoire = state.data.repertoire.filter((item) => item.status !== 'Completed').length;
+      const collectionRate = totalBilled ? Math.round(totalCollected / totalBilled * 100) : 0;
+      const ledgerGap = Math.max(0, totalBilled - totalCollected);
       return `
         ${pageHead('Owner insights', 'Reports', 'A practical studio-health snapshot built from actual students, lesson occurrences, charges, payments, inquiries, and expenses.', `<div class="segmented" aria-label="Report range"><button type="button" data-action="report-range" data-range="3" class="${state.reportRange === 3 ? 'active' : ''}">3 months</button><button type="button" data-action="report-range" data-range="6" class="${state.reportRange === 6 ? 'active' : ''}">6 months</button><button type="button" data-action="report-range" data-range="12" class="${state.reportRange === 12 ? 'active' : ''}">12 months</button></div>`)}
         <section class="metric-grid">
@@ -2935,12 +3029,12 @@
           ${metricCard('Avg. monthly / student', money(avgRevenue), `${activeStudents.length} active students`, 'students', 'info')}
         </section>
         <section class="grid two">
-          <article class="card chart-card"><header class="card-head"><div><h2>Billed vs. collected</h2><p>Monthly tuition ledger</p></div></header><div class="chart-body"><div class="bar-chart">${revenue.map((item) => `<div class="bar-group"><span class="bar" title="${escapeAttr(monthLabel(item.period))} billed ${money(item.billed)}" style="height:${Math.max(2, item.billed / maxRevenue * 100)}%"></span><span class="bar alt" title="${escapeAttr(monthLabel(item.period))} collected ${money(item.collected)}" style="height:${Math.max(2, item.collected / maxRevenue * 100)}%"></span><span class="bar-label">${escapeHtml(formatDate(`${item.period}-01`, { month: 'short' }))}</span></div>`).join('')}</div><div class="chart-legend"><span class="legend-key">Billed</span><span class="legend-key alt">Collected</span></div></div></article>
-          <article class="card chart-card"><header class="card-head"><div><h2>Students by level</h2><p>Current active enrollment</p></div></header><div class="chart-body horizontal-chart">${levelCounts.map((item) => `<div class="horizontal-bar"><span>${escapeHtml(item.label)}</span><span class="track"><span class="fill" style="width:${item.value / maxLevel * 100}%"></span></span><strong>${item.value}</strong></div>`).join('')}</div></article>
-          <article class="card chart-card"><header class="card-head"><div><h2>Teaching workload</h2><p>${completed} completed · ${cancelled} cancellations / no-shows</p></div></header><div class="chart-body horizontal-chart">${lessonStatuses.map((item) => `<div class="horizontal-bar"><span>${escapeHtml(item.label)}</span><span class="track"><span class="fill" style="width:${item.value / maxLesson * 100}%;background:${item.label === 'Completed' ? 'var(--success)' : item.label === 'No Show' ? 'var(--danger)' : 'var(--warning)'}"></span></span><strong>${item.value}</strong></div>`).join('')}</div></article>
-          <article class="card chart-card"><header class="card-head"><div><h2>Inquiry funnel</h2><p>Current and historical lead stages</p></div></header><div class="chart-body horizontal-chart">${leadCounts.map((item) => `<div class="horizontal-bar"><span>${escapeHtml(item.label)}</span><span class="track"><span class="fill" style="width:${item.value / maxLead * 100}%;background:var(--info)"></span></span><strong>${item.value}</strong></div>`).join('')}</div></article>
-          <article class="card chart-card"><header class="card-head"><div><h2>Studio capacity</h2><p>${capacity}% of ${state.data.settings.targetWeeklySlots} desired weekly slots</p></div></header><div class="chart-body horizontal-chart">${dayCounts.map((item) => `<div class="horizontal-bar"><span>${escapeHtml(item.label)}</span><span class="track"><span class="fill" style="width:${item.value / maxDay * 100}%;background:var(--accent)"></span></span><strong>${item.value}</strong></div>`).join('')}</div></article>
-          <article class="card chart-card"><header class="card-head"><div><h2>Studio snapshot</h2><p>Key owner-operator context</p></div></header><div class="chart-body"><div class="detail-grid"><div class="detail-block"><span class="detail-label">Active students</span><p class="detail-value">${activeStudents.length}</p></div><div class="detail-block"><span class="detail-label">Retention view</span><p class="detail-value">${state.data.students.length ? Math.round(activeStudents.length / state.data.students.length * 100) : 0}% active in demo records</p></div><div class="detail-block"><span class="detail-label">Open makeups</span><p class="detail-value">${state.data.makeupCredits.filter((credit) => ['Owed', 'Scheduled'].includes(credit.status)).length}</p></div><div class="detail-block"><span class="detail-label">Current repertoire</span><p class="detail-value">${state.data.repertoire.filter((item) => item.status !== 'Completed').length} pieces</p></div><div class="detail-block full"><span class="detail-label">Accounting note</span><p class="detail-value">This is an operating snapshot from recorded tuition, payments, and expenses. It is not a formal tax or accounting report.</p></div></div></div></article>
+          <article class="card chart-card report-card report-span-2"><header class="card-head"><div><h2>Billed vs. collected</h2><p>${monthLabel(months[0])} through ${monthLabel(months.at(-1))}</p></div><span class="report-badge ${collectionRate >= 90 ? 'success' : 'warning'}">${collectionRate}% collected</span></header><div class="chart-body revenue-chart-body"><div class="revenue-summary"><div class="revenue-stat"><span>Total billed</span><strong>${money(totalBilled)}</strong></div><div class="revenue-stat"><span>Total collected</span><strong>${money(totalCollected)}</strong></div><div class="revenue-stat balance"><span>Ledger gap</span><strong>${money(ledgerGap)}</strong></div></div>${state.reportRange === 12 ? '<p class="scroll-note" style="margin:-2px 0 9px">Swipe or scroll the chart to see all 12 months.</p>' : ''}<div class="revenue-chart-scroll" tabindex="0" aria-label="Monthly billed and collected chart"><div class="bar-chart" style="--chart-columns:${revenue.length};--chart-width:${Math.max(500, revenue.length * 70)}px">${revenue.map((item) => `<div class="bar-group"><div class="bar-pair" role="img" aria-label="${escapeAttr(`${monthLabel(item.period)}: ${money(item.billed)} billed and ${money(item.collected)} collected`)}"><span class="bar" title="${escapeAttr(`${monthLabel(item.period)} billed ${money(item.billed)}`)}" style="height:${item.billed ? Math.max(3, item.billed / maxRevenue * 100) : 0}%"></span><span class="bar alt" title="${escapeAttr(`${monthLabel(item.period)} collected ${money(item.collected)}`)}" style="height:${item.collected ? Math.max(3, item.collected / maxRevenue * 100) : 0}%"></span></div><span class="bar-label"><strong>${escapeHtml(formatDate(`${item.period}-01`, state.reportRange === 12 ? { month: 'short', year: '2-digit' } : { month: 'short' }))}</strong><span>${escapeHtml(money(item.collected))}</span></span></div>`).join('')}</div></div><div class="chart-legend"><span class="legend-key">Billed</span><span class="legend-key alt">Collected</span></div></div></article>
+          <article class="card chart-card report-card"><header class="card-head"><div><h2>Students by level</h2><p>Current active enrollment mix</p></div><span class="report-badge">${activeStudents.length} active</span></header><div class="chart-body distribution-list">${levelCounts.map((item) => `<div class="distribution-row"><span class="distribution-label"><strong>${escapeHtml(item.label)}</strong><span>Current students</span></span><span class="distribution-track"><span class="distribution-fill" style="width:${item.value / maxLevel * 100}%"></span></span><span class="distribution-value"><strong>${item.value}</strong>${Math.round(item.value / activeStudents.length * 100)}%</span></div>`).join('')}</div></article>
+          <article class="card chart-card report-card"><header class="card-head"><div><h2>Teaching workload</h2><p>Recorded lesson outcomes in this range</p></div><span class="report-badge success">${completionRate}% completed</span></header><div class="chart-body workload-layout"><div class="insight-ring" style="--ring-value:${completionRate}%;--ring-color:var(--success)"><span class="ring-copy"><strong>${completionRate}%</strong><span>completion rate</span></span></div><div class="breakdown-list">${lessonStatuses.map((item) => { const color = item.label === 'Completed' ? 'var(--success)' : item.label === 'No Show' ? 'var(--danger)' : 'var(--warning)'; const share = workloadTotal ? Math.round(item.value / workloadTotal * 100) : 0; return `<div class="breakdown-item"><span class="breakdown-label"><i class="breakdown-dot" style="--item-color:${color}"></i>${escapeHtml(item.label)}</span><strong>${item.value}<small>${share}%</small></strong></div>`; }).join('')}</div></div></article>
+          <article class="card chart-card report-card"><header class="card-head"><div><h2>Inquiry funnel</h2><p>Where each recorded inquiry currently sits</p></div><span class="report-badge">${openLeads} active</span></header><div class="chart-body"><div class="funnel-summary"><span><strong>${totalLeads}</strong> recorded</span><span><strong>${convertedLeads}</strong> converted</span><span><strong>${conversionRate}%</strong> conversion</span></div><div class="funnel-flow">${leadCounts.map((item, index) => `<div class="funnel-step"><span class="funnel-index">${index + 1}</span><span class="funnel-label">${escapeHtml(item.label)}</span><strong class="funnel-count">${item.value}</strong></div>`).join('')}</div></div></article>
+          <article class="card chart-card report-card"><header class="card-head"><div><h2>Studio capacity</h2><p>Reserved recurring teaching time</p></div><span class="report-badge ${capacity >= 80 && capacity <= 100 ? 'success' : 'warning'}">${capacity}% full</span></header><div class="chart-body"><div class="capacity-overview"><div class="capacity-stat"><span>Reserved slots</span><strong>${activeSchedules.length} / ${targetSlots}</strong></div><div class="capacity-stat"><span>Openings</span><strong>${openings}</strong></div></div><div class="capacity-meter"><div class="capacity-meter-head"><span>Weekly target</span><strong>${Math.min(100, capacity)}%</strong></div><div class="capacity-track"><div class="capacity-fill" style="width:${Math.min(100, capacity)}%"></div></div></div><div class="day-grid">${dayCounts.map((item) => `<span class="day-chip">${escapeHtml(item.label.slice(0, 3))}<strong>${item.value}</strong></span>`).join('')}</div></div></article>
+          <article class="card chart-card report-card report-span-2"><header class="card-head"><div><h2>Studio snapshot</h2><p>Useful counts that may need owner attention</p></div><span class="report-badge ${openMakeups ? 'warning' : 'success'}">${plural(openMakeups, 'makeup')} open</span></header><div class="chart-body"><div class="snapshot-grid"><div class="snapshot-tile"><div class="snapshot-top"><span>Active students</span><i class="snapshot-icon">${icon('students')}</i></div><strong>${activeStudents.length}</strong><p>${activeStudents.length} of ${state.data.students.length} student records are active.</p></div><div class="snapshot-tile"><div class="snapshot-top"><span>Retention view</span><i class="snapshot-icon">${icon('reports')}</i></div><strong>${retention}%</strong><p>Share of recorded students currently active.</p></div><div class="snapshot-tile"><div class="snapshot-top"><span>Open makeups</span><i class="snapshot-icon">${icon('clock')}</i></div><strong>${openMakeups}</strong><p>Owed or scheduled credits still in progress.</p></div><div class="snapshot-tile"><div class="snapshot-top"><span>Current repertoire</span><i class="snapshot-icon">${icon('music')}</i></div><strong>${currentRepertoire}</strong><p>Pieces actively moving through the studio.</p></div></div><p class="report-note">Operating snapshot based on recorded tuition, payments, and expenses. It is intended for studio planning, not formal tax or accounting reporting.</p></div></article>
         </section>`;
     }
 
@@ -5041,6 +5135,10 @@
       requestAnimationFrame(() => {
         if (state.view === 'students' && state.routeId && studentById(state.routeId)) showStudentProfile(state.routeId);
         if (state.view === 'inquiries' && state.routeId && state.data.inquiries.some((item) => item.id === state.routeId)) showInquiryDetail(state.routeId);
+        if (state.view === 'reports' && state.reportRange === 12) {
+          const revenueScroller = page.querySelector('.revenue-chart-scroll');
+          if (revenueScroller && revenueScroller.scrollWidth > revenueScroller.clientWidth) revenueScroller.scrollLeft = revenueScroller.scrollWidth - revenueScroller.clientWidth;
+        }
       });
     }
 
