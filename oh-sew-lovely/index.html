@@ -413,21 +413,24 @@
       .mobile-record-meta strong { margin-top: 2px; font-size: 11px; }
       .customer-grid { grid-template-columns: 1fr; }
       .form-grid, .form-grid.cols-3, .detail-grid { grid-template-columns: 1fr; }
-      #orderForm .order-info-grid { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px 10px; }
-      #orderForm .order-number-field { grid-column: 1 / -1; }
-      #orderForm .order-info-grid .span-2 { grid-column: 1 / -1; }
-      input[type="date"] { height: 40px; min-height: 40px; padding: 5px 7px; font-size: 16px; line-height: 1.15; }
+      #orderForm .order-info-grid { grid-template-columns: 1fr; gap: 12px; }
+      #orderForm .order-number-field, #orderForm .date-field, #orderForm .order-info-grid .span-2 { grid-column: 1 / -1; }
+      input[type="date"] { display: block; width: min(100%,210px); max-width: 210px; min-width: 0; height: 40px; min-height: 40px; padding: 5px 7px; font-size: 16px; line-height: 1.15; }
       input[type="date"]::-webkit-calendar-picker-indicator { width: 18px; height: 18px; margin: 0; padding: 1px; }
       .field.span-2 { grid-column: auto; }
       .detail-panel.span-full { grid-column: auto; }
       .summary-strip { grid-template-columns: repeat(2,1fr); }
       .financial-preview { grid-template-columns: repeat(2,1fr); }
-      .modal-shell, .modal-shell.wide { width: 100%; max-height: calc(100vh - var(--demo-bar)); inset: auto 0 0; transform: translateZ(0); border-radius: 20px 20px 0 0; }
+      .modal-root { inset: auto 0 auto 0; top: var(--visual-viewport-top,0px); width: 100%; height: var(--visual-viewport-height,100dvh); }
+      .modal-backdrop { display: none; }
+      .modal-shell, .modal-shell.wide { width: 100%; height: 100%; max-height: none; inset: 0; transform: none; border: 0; border-radius: 0; box-shadow: none; }
+      .modal-head, .modal-foot { flex: 0 0 auto; }
+      .modal-body { min-height: 0; }
       .modal-body { padding: 17px 15px; }
       .modal-head { padding: 16px 15px; }
       .modal-foot { padding: 11px 15px max(11px,env(safe-area-inset-bottom)); flex-wrap: wrap; }
       .modal-foot .btn:not(.icon-only) { flex: 1 1 auto; }
-      .financial-preview { margin: 18px -15px -17px; padding-inline: 15px; }
+      .financial-preview { position: static; bottom: auto; margin: 18px -15px -17px; padding-inline: 15px; }
       .mobile-nav { height: calc(66px + env(safe-area-inset-bottom)); padding: 5px 7px max(5px,env(safe-area-inset-bottom)); position: fixed; z-index: 48; inset: auto 0 0; display: grid; grid-template-columns: repeat(5,1fr); border-top: 1px solid var(--line); background: var(--paper); box-shadow: 0 -4px 18px rgba(43,38,33,.08); backdrop-filter: none; transform: translateZ(0); }
       .mobile-nav button { min-width: 0; border: 0; border-radius: 10px; padding: 4px 2px; display: grid; place-items: center; align-content: center; gap: 2px; background: transparent; color: var(--muted); font-size: 9px; font-weight: 780; }
       .mobile-nav button.active { color: var(--rose-dark); background: var(--rose-soft); }
@@ -442,7 +445,8 @@
       body { min-height: 100dvh; }
       .app-shell, .workspace { min-height: calc(100dvh - var(--demo-bar)); }
       @media (max-width: 760px) {
-        .modal-shell, .modal-shell.wide { max-height: calc(100dvh - var(--demo-bar)); }
+        .modal-root { height: var(--visual-viewport-height,100dvh); }
+        .modal-shell, .modal-shell.wide { height: 100%; max-height: none; }
       }
     }
     @media (max-width: 390px) {
@@ -1075,6 +1079,7 @@
   }
   function openModal({ title, subtitle = '', subtitleHtml = '', body = '', footer = '', wide = false, initialFocus = '' }) {
     state.lastTrigger = document.activeElement;
+    syncVisualViewport();
     const root = $('#modalRoot');
     root.innerHTML = `<button class="modal-backdrop" type="button" data-action="close-modal" aria-label="Close dialog"></button><section class="modal-shell ${wide ? 'wide' : ''}" role="dialog" aria-modal="true" aria-labelledby="modalTitle"><header class="modal-head"><div><h2 id="modalTitle">${esc(title)}</h2>${subtitleHtml || subtitle ? `<p>${subtitleHtml || esc(subtitle)}</p>` : ''}</div><button class="close-btn" type="button" data-action="close-modal" aria-label="Close dialog">${ico('x')}</button></header><div class="modal-body">${body}</div>${footer ? `<footer class="modal-foot">${footer}</footer>` : ''}</section>`;
     root.classList.add('open'); root.setAttribute('aria-hidden','false'); document.body.classList.add('overlay-open'); setAppInert(true);
@@ -1318,6 +1323,13 @@
     sidebar.setAttribute('aria-hidden',mobile ? 'true' : 'false'); sidebar.inert = mobile;
     $('[data-action="toggle-nav"]')?.setAttribute('aria-expanded','false');
   }
+  function syncVisualViewport() {
+    const viewport = window.visualViewport;
+    const height = Math.round(viewport?.height || window.innerHeight);
+    const top = Math.round(viewport?.offsetTop || 0);
+    document.documentElement.style.setProperty('--visual-viewport-height',`${height}px`);
+    document.documentElement.style.setProperty('--visual-viewport-top',`${top}px`);
+  }
   function renderGlobalSearch(query) {
     const host = $('#searchResults'); const value = normalizeText(query);
     if (!value) { host.classList.remove('open'); host.innerHTML = ''; return; }
@@ -1466,7 +1478,9 @@
     }
   });
   window.addEventListener('hashchange',() => { const view = location.hash.replace('#',''); if (VIEWS.includes(view) && view !== state.view) { state.view = view; render(true); } });
-  window.addEventListener('resize',() => { if (!matchMedia('(max-width: 980px)').matches) closeNav(); else if (!document.body.classList.contains('nav-open')) closeNav(); });
+  window.addEventListener('resize',() => { syncVisualViewport(); if (!matchMedia('(max-width: 980px)').matches) closeNav(); else if (!document.body.classList.contains('nav-open')) closeNav(); });
+  window.visualViewport?.addEventListener('resize',syncVisualViewport);
+  window.visualViewport?.addEventListener('scroll',syncVisualViewport);
   window.addEventListener('storage',(event) => {
     if (event.key !== STORAGE_KEY || storageMode !== 'browser' || state.saving || !event.newValue) return;
     try { state.data = normalizeData(JSON.parse(event.newValue)); state.committed = deepClone(state.data); render(false); toast('Data refreshed','Another tab saved newer changes.'); } catch (_) { /* Ignore malformed external values. */ }
@@ -1474,6 +1488,7 @@
 
   async function init() {
     try {
+      syncVisualViewport();
       state.data = normalizeData(await Repository.load()); state.committed = deepClone(state.data); updateStorageMode(); setSync('Saved',false);
       const requested = location.hash.replace('#',''); state.view = VIEWS.includes(requested) ? requested : 'dashboard';
       if (!location.hash) history.replaceState(null,'','#dashboard');
