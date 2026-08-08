@@ -1,0 +1,1477 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex,follow">
+  <link rel="canonical" href="https://jcroasdaile1-del.github.io/formsmith-demos/oh-sew-lovely/">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 rx=%229%22 fill=%22%2334483b%22/%3E%3Cpath d=%22M8 9l16 14M8 23L24 9%22 stroke=%22%23f3e2e3%22 stroke-width=%222%22/%3E%3Ccircle cx=%228%22 cy=%229%22 r=%223%22 fill=%22none%22 stroke=%22%23dfa0a4%22 stroke-width=%222%22/%3E%3Ccircle cx=%228%22 cy=%2223%22 r=%223%22 fill=%22none%22 stroke=%22%23dfa0a4%22 stroke-width=%222%22/%3E%3C/svg%3E" type="image/svg+xml">
+  <meta name="description" content="Oh Sew Lovely by Mara is a friendly order, customer, expense, and profit tracker for a handmade sewing business.">
+  <meta name="theme-color" content="#37483f">
+  <title>Oh Sew Lovely by Mara — Order &amp; Profit Tracker</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #29322d;
+      --ink-soft: #445048;
+      --canvas: #f5f1eb;
+      --paper: #fffdf9;
+      --paper-soft: #faf7f2;
+      --line: #ded8cf;
+      --line-strong: #c8c0b5;
+      --muted: #706f69;
+      --sage: #607b6b;
+      --sage-dark: #405a4b;
+      --sage-soft: #e3ece6;
+      --rose: #a56269;
+      --rose-dark: #81464d;
+      --rose-soft: #f3e2e3;
+      --gold: #a97937;
+      --gold-soft: #f5ead3;
+      --blue: #557481;
+      --blue-soft: #e1ecef;
+      --danger: #a4453f;
+      --danger-soft: #f8e2df;
+      --success: #49745c;
+      --shadow-sm: 0 1px 2px rgba(51,45,39,.04), 0 8px 24px rgba(51,45,39,.045);
+      --shadow-md: 0 20px 55px rgba(43,38,33,.16);
+      --radius: 17px;
+      --radius-sm: 11px;
+      --sidebar: 258px;
+      --topbar: 74px;
+      --demo-bar: 32px;
+      --ease: cubic-bezier(.2,.8,.2,1);
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      min-width: 320px;
+      min-height: 100vh;
+      overflow-x: hidden;
+      background: var(--canvas);
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+    body.overlay-open { overflow: hidden; }
+    body.storage-warning .save-dot { background: #e7b050; }
+    button, input, select, textarea { font: inherit; }
+    button, [role="button"] { cursor: pointer; }
+    button { color: inherit; }
+    img, svg { display: block; }
+    h1, h2, h3, h4, p { margin: 0; }
+    h1, h2, h3, .display { font-family: Georgia, "Times New Roman", serif; font-weight: 500; letter-spacing: -.025em; }
+    a { color: inherit; }
+    :focus-visible { outline: 3px solid rgba(165,98,105,.32); outline-offset: 2px; }
+    .icon { width: 19px; height: 19px; display: inline-block; flex: 0 0 auto; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+    .sr-only { position: absolute !important; left: 0 !important; top: 0 !important; width: 1px !important; height: 1px !important; padding: 0 !important; margin: -1px !important; overflow: hidden !important; clip: rect(0,0,0,0) !important; clip-path: inset(50%) !important; white-space: nowrap !important; border: 0 !important; }
+    .skip-link { position: fixed; z-index: 300; top: -100px; left: 12px; padding: 10px 14px; border-radius: 9px; background: var(--ink); color: white; }
+    .skip-link:focus { top: 12px; }
+
+    .demo-bar {
+      height: var(--demo-bar); padding: 0 14px; display: flex; align-items: center; justify-content: center; gap: 12px;
+      position: relative; z-index: 80; background: #26352d; color: #f8f4ed; font-size: 11px;
+    }
+    .demo-state { display: inline-flex; align-items: center; gap: 7px; }
+    .save-dot { width: 7px; height: 7px; border-radius: 50%; background: #8fd0a7; box-shadow: 0 0 0 4px rgba(143,208,167,.12); }
+    .demo-reset { position: absolute; right: 8px; min-height: 26px; border: 0; border-radius: 7px; padding: 3px 8px; background: transparent; color: inherit; font-size: 10px; font-weight: 750; }
+    .demo-reset:hover { background: rgba(255,255,255,.1); }
+    .app-shell { min-height: calc(100vh - var(--demo-bar)); }
+
+    .sidebar {
+      position: fixed; z-index: 55; inset: var(--demo-bar) auto 0 0; width: var(--sidebar); display: flex; flex-direction: column;
+      background: #34443b; color: #f7f2eb; border-right: 1px solid rgba(255,255,255,.06); transition: transform .24s var(--ease);
+    }
+    .brand { min-height: 94px; padding: 17px 18px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid rgba(255,255,255,.08); }
+    .brand-mark { width: 46px; height: 46px; border-radius: 15px; display: grid; place-items: center; position: relative; background: #f4e6e4; color: var(--rose-dark); box-shadow: inset 0 0 0 1px rgba(255,255,255,.6); transform: rotate(-2deg); }
+    .brand-mark .icon { width: 27px; height: 27px; stroke-width: 1.5; }
+    .brand-copy strong { display: block; font-family: Georgia, serif; font-size: 18px; font-weight: 500; line-height: 1.05; }
+    .brand-copy span { display: block; margin-top: 5px; color: #c1c9c3; font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: .15em; }
+    .nav-wrap { flex: 1; padding: 19px 13px; overflow-y: auto; }
+    .nav-label { margin: 0 10px 8px; color: #9fada5; font-size: 10px; font-weight: 850; text-transform: uppercase; letter-spacing: .14em; }
+    .nav-list { display: grid; gap: 4px; margin-bottom: 22px; }
+    .nav-item { width: 100%; min-height: 45px; border: 0; border-radius: 11px; padding: 0 11px; display: grid; grid-template-columns: 29px 1fr auto; align-items: center; gap: 5px; background: transparent; color: #c7d0ca; text-align: left; font-weight: 720; transition: .15s ease; }
+    .nav-item:hover { color: white; background: rgba(255,255,255,.055); }
+    .nav-item.active { color: white; background: rgba(255,255,255,.11); box-shadow: inset 3px 0 #dfa0a4; }
+    .nav-item .icon { width: 18px; height: 18px; }
+    .nav-count { min-width: 22px; height: 21px; padding: 0 6px; border-radius: 999px; display: grid; place-items: center; background: rgba(255,255,255,.09); color: white; font-size: 10px; }
+    .side-quick { margin: 0 13px 13px; padding: 15px; border: 1px solid rgba(232,178,181,.28); border-radius: 15px; background: linear-gradient(145deg, rgba(165,98,105,.23), rgba(255,255,255,.035)); }
+    .side-quick span { color: #f0bdc0; font-size: 9px; font-weight: 850; text-transform: uppercase; letter-spacing: .13em; }
+    .side-quick strong { display: block; margin: 6px 0 4px; font-family: Georgia, serif; font-size: 16px; font-weight: 500; }
+    .side-quick p { color: #bdc7c0; font-size: 11px; }
+    .side-quick .btn { width: 100%; margin-top: 12px; }
+    .owner-chip { margin: 0 13px 14px; padding: 10px; display: grid; grid-template-columns: 36px 1fr; gap: 10px; align-items: center; border-radius: 12px; background: rgba(255,255,255,.055); }
+    .owner-avatar { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; background: #a56269; color: white; font-weight: 850; }
+    .owner-chip strong { display: block; font-size: 12px; }
+    .owner-chip span { display: block; color: #aebbb3; font-size: 10px; }
+
+    .workspace { min-height: calc(100vh - var(--demo-bar)); margin-left: var(--sidebar); }
+    .topbar { height: var(--topbar); padding: 0 28px; display: flex; align-items: center; gap: 14px; position: sticky; top: var(--demo-bar); z-index: 38; background: rgba(245,241,235,.92); border-bottom: 1px solid rgba(200,192,181,.7); backdrop-filter: blur(17px); }
+    .menu-btn { display: none !important; }
+    .global-search { width: min(440px, 43vw); position: relative; }
+    .global-search > .icon { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); width: 17px; color: var(--muted); pointer-events: none; }
+    .global-search input { width: 100%; height: 43px; padding: 0 70px 0 41px; border: 1px solid var(--line); border-radius: 12px; outline: none; background: rgba(255,253,249,.84); color: var(--ink); }
+    .global-search input:focus { border-color: var(--rose); box-shadow: 0 0 0 3px rgba(165,98,105,.1); background: white; }
+    .key-hint { position: absolute; right: 9px; top: 50%; transform: translateY(-50%); padding: 2px 7px; border: 1px solid var(--line); border-radius: 6px; background: var(--paper); color: var(--muted); font-size: 10px; }
+    .search-results { position: absolute; top: calc(100% + 8px); left: 0; right: 0; max-height: min(430px,70vh); overflow-y: auto; display: none; padding: 7px; border: 1px solid var(--line); border-radius: 13px; background: var(--paper); box-shadow: var(--shadow-md); }
+    .search-results.open { display: grid; gap: 2px; }
+    .search-result { width: 100%; border: 0; padding: 9px; border-radius: 9px; display: grid; grid-template-columns: 34px 1fr; gap: 9px; align-items: center; background: transparent; text-align: left; }
+    .search-result:hover { background: var(--paper-soft); }
+    .result-icon { width: 33px; height: 33px; border-radius: 9px; display: grid; place-items: center; background: var(--sage-soft); color: var(--sage-dark); }
+    .search-result strong, .search-result span { display: block; }
+    .search-result strong { font-size: 12px; }
+    .search-result span { color: var(--muted); font-size: 10px; }
+    .topbar-spacer { flex: 1; }
+    .topbar-actions { display: flex; align-items: center; gap: 8px; }
+    .sync-label { display: inline-flex; align-items: center; gap: 7px; color: var(--muted); font-size: 11px; }
+    .sync-label .save-dot { box-shadow: none; }
+
+    .page { width: min(1540px,100%); margin: 0 auto; padding: 31px 30px 54px; }
+    .page-head { min-height: 66px; margin-bottom: 24px; display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; }
+    .page-head h1 { font-size: clamp(31px,3vw,43px); line-height: 1; }
+    .page-head p { max-width: 680px; margin-top: 8px; color: var(--muted); }
+    .page-actions { display: flex; justify-content: flex-end; align-items: center; flex-wrap: wrap; gap: 8px; }
+    .eyebrow { color: var(--rose-dark); font-size: 10px; font-weight: 880; text-transform: uppercase; letter-spacing: .14em; }
+    .subtle { color: var(--muted); }
+    .small-copy { font-size: 12px; }
+    .nowrap { white-space: nowrap; }
+    .text-right { text-align: right; }
+
+    .btn { min-height: 43px; padding: 9px 15px; border: 1px solid transparent; border-radius: 11px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: var(--sage-dark); color: white; font-weight: 760; text-decoration: none; transition: transform .15s ease, box-shadow .15s ease, background .15s ease; }
+    .btn:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(41,50,45,.13); background: #344c3e; }
+    .btn.rose { background: var(--rose); }
+    .btn.rose:hover { background: var(--rose-dark); }
+    .btn.secondary { border-color: var(--line); background: var(--paper); color: var(--ink); }
+    .btn.secondary:hover { background: white; }
+    .btn.ghost { background: transparent; color: var(--ink); }
+    .btn.ghost:hover { background: rgba(41,50,45,.06); box-shadow: none; }
+    .btn.danger { background: var(--danger-soft); color: var(--danger); }
+    .btn.small { min-height: 35px; padding: 6px 10px; border-radius: 9px; font-size: 12px; }
+    .btn.icon-only { width: 43px; padding: 0; }
+    .btn:disabled { cursor: not-allowed; opacity: .5; transform: none; box-shadow: none; }
+    .btn .icon { width: 16px; height: 16px; }
+
+    .grid { display: grid; gap: 16px; }
+    .cols-6 { grid-template-columns: repeat(6,minmax(0,1fr)); }
+    .cols-4 { grid-template-columns: repeat(4,minmax(0,1fr)); }
+    .cols-3 { grid-template-columns: repeat(3,minmax(0,1fr)); }
+    .cols-2 { grid-template-columns: repeat(2,minmax(0,1fr)); }
+    .card { min-width: 0; border: 1px solid var(--line); border-radius: var(--radius); background: var(--paper); box-shadow: var(--shadow-sm); }
+    .card-pad { padding: 18px; }
+    .card-head { min-height: 66px; padding: 16px 18px; display: flex; align-items: center; justify-content: space-between; gap: 12px; border-bottom: 1px solid var(--line); }
+    .card-head h2 { font-family: Inter,sans-serif; font-size: 15px; font-weight: 820; letter-spacing: -.01em; }
+    .card-head p { margin-top: 3px; color: var(--muted); font-size: 11px; }
+    .card-empty { min-height: 150px; padding: 30px 18px; display: grid; place-items: center; align-content: center; gap: 8px; color: var(--muted); text-align: center; }
+    .empty-icon { width: 46px; height: 46px; border-radius: 14px; display: grid; place-items: center; background: var(--sage-soft); color: var(--sage); }
+
+    .period-switch { padding: 4px; display: inline-flex; flex-wrap: wrap; gap: 2px; border: 1px solid var(--line); border-radius: 12px; background: var(--paper); }
+    .period-switch button { min-height: 34px; border: 0; border-radius: 8px; padding: 5px 10px; background: transparent; color: var(--muted); font-size: 11px; font-weight: 750; }
+    .period-switch button.active { background: var(--sage-dark); color: white; }
+
+    .metric-grid { display: grid; grid-template-columns: repeat(6,minmax(0,1fr)); gap: 13px; }
+    .metric-card { min-height: 128px; padding: 16px; position: relative; overflow: hidden; }
+    .metric-card::after { content: ""; position: absolute; width: 72px; height: 72px; right: -25px; bottom: -30px; border-radius: 50%; background: var(--sage-soft); opacity: .7; }
+    .metric-card.rose-tint::after { background: var(--rose-soft); }
+    .metric-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .metric-label { color: var(--muted); font-size: 11px; font-weight: 700; }
+    .metric-icon { width: 31px; height: 31px; border-radius: 9px; display: grid; place-items: center; background: var(--paper-soft); color: var(--sage); }
+    .metric-icon .icon { width: 15px; height: 15px; }
+    .metric-value { margin-top: 9px; font-family: Georgia,serif; font-size: clamp(22px,2.1vw,29px); line-height: 1; letter-spacing: -.03em; }
+    .metric-note { margin-top: 7px; color: var(--muted); font-size: 10px; }
+    .metric-note strong { color: var(--success); }
+
+    .dashboard-layout { margin-top: 16px; display: grid; grid-template-columns: minmax(0,1.45fr) minmax(320px,.78fr); gap: 16px; align-items: start; }
+    .dashboard-main, .dashboard-side { display: grid; gap: 16px; }
+    .attention-list, .recent-list { display: grid; }
+    .attention-item { width: 100%; min-height: 69px; border: 0; border-bottom: 1px solid var(--line); padding: 12px 17px; display: grid; grid-template-columns: 38px 1fr auto; align-items: center; gap: 11px; background: transparent; text-align: left; }
+    .attention-item:last-child { border-bottom: 0; }
+    .attention-item:hover { background: var(--paper-soft); }
+    .attention-symbol { width: 37px; height: 37px; border-radius: 11px; display: grid; place-items: center; background: var(--gold-soft); color: var(--gold); }
+    .attention-symbol.urgent { background: var(--danger-soft); color: var(--danger); }
+    .attention-item strong, .attention-item span { display: block; }
+    .attention-item strong { font-size: 12px; }
+    .attention-item span { margin-top: 2px; color: var(--muted); font-size: 10px; }
+    .attention-amount { text-align: right; }
+    .attention-amount strong { font-size: 12px; }
+    .attention-amount span { font-weight: 700; }
+    .recent-item { min-height: 60px; padding: 10px 16px; display: grid; grid-template-columns: minmax(0,1.4fr) minmax(100px,.8fr) auto; align-items: center; gap: 11px; border-bottom: 1px solid var(--line); }
+    .recent-item:last-child { border-bottom: 0; }
+    .recent-item button { border: 0; padding: 0; background: transparent; text-align: left; }
+    .recent-item strong, .recent-item span { display: block; }
+    .recent-item strong { font-size: 12px; }
+    .recent-item span { margin-top: 2px; color: var(--muted); font-size: 10px; }
+
+    .chart-wrap { padding: 18px; overflow-x: auto; }
+    .chart-legend { margin-bottom: 16px; display: flex; flex-wrap: wrap; gap: 14px; color: var(--muted); font-size: 10px; font-weight: 700; }
+    .legend-item { display: inline-flex; align-items: center; gap: 6px; }
+    .legend-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--sage); }
+    .legend-dot.expense { background: var(--rose); }
+    .legend-dot.profit { background: var(--gold); }
+    .bar-chart { min-width: 520px; height: 220px; display: grid; grid-template-columns: repeat(6,minmax(54px,1fr)); gap: 12px; align-items: end; border-bottom: 1px solid var(--line); background: repeating-linear-gradient(to bottom, transparent 0, transparent 54px, rgba(222,216,207,.55) 55px); }
+    .month-group { height: 100%; display: grid; grid-template-rows: 1fr 23px; align-items: end; gap: 5px; }
+    .bars { height: 100%; display: flex; align-items: end; justify-content: center; gap: 4px; }
+    .bar { width: 12px; min-height: 2px; border-radius: 5px 5px 1px 1px; background: var(--sage); transition: height .3s var(--ease); }
+    .bar.expense { background: var(--rose); }
+    .bar.profit { background: var(--gold); }
+    .month-label { color: var(--muted); font-size: 10px; font-weight: 750; text-align: center; }
+
+    .toolbar { margin-bottom: 15px; padding: 12px; display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
+    .toolbar-search { flex: 1 1 260px; position: relative; }
+    .toolbar-search .icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 16px; color: var(--muted); pointer-events: none; }
+    .toolbar-search input { width: 100%; padding-left: 38px; }
+    .filter-field { min-width: 160px; }
+    .filter-field.compact { min-width: 132px; }
+    .results-count { margin-left: auto; color: var(--muted); font-size: 11px; font-weight: 700; }
+    input, select, textarea { width: 100%; min-height: 43px; border: 1px solid var(--line); border-radius: 10px; padding: 9px 11px; outline: none; background: white; color: var(--ink); }
+    textarea { min-height: 92px; resize: vertical; }
+    input:focus, select:focus, textarea:focus { border-color: var(--rose); box-shadow: 0 0 0 3px rgba(165,98,105,.1); }
+    input[readonly] { background: var(--paper-soft); color: var(--muted); }
+    .field { min-width: 0; }
+    .field > label, .field-label { display: block; margin: 0 0 6px 1px; color: var(--ink-soft); font-size: 11px; font-weight: 780; }
+    .field-help { display: block; margin: 5px 1px 0; color: var(--muted); font-size: 10px; }
+    .field-error { color: var(--danger); }
+    .field.span-2 { grid-column: span 2; }
+    .field.span-full { grid-column: 1 / -1; }
+    .form-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 14px; }
+    .form-grid.cols-3 { grid-template-columns: repeat(3,minmax(0,1fr)); }
+    .form-section { margin-top: 20px; padding-top: 19px; border-top: 1px solid var(--line); }
+    .form-section:first-child { margin-top: 0; padding-top: 0; border-top: 0; }
+    .section-title { margin-bottom: 13px; display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+    .section-title h3 { font-family: Inter,sans-serif; font-size: 13px; font-weight: 820; letter-spacing: 0; }
+    .section-title p { color: var(--muted); font-size: 10px; }
+    .check-line { min-height: 43px; display: flex; align-items: center; gap: 9px; }
+    .check-line input { width: 18px; min-height: 18px; padding: 0; }
+    .check-line label { font-weight: 680; }
+
+    .data-card { overflow: hidden; }
+    .table-scroll { width: 100%; overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; }
+    th { padding: 11px 14px; background: var(--paper-soft); color: var(--muted); font-size: 9px; font-weight: 850; text-align: left; text-transform: uppercase; letter-spacing: .08em; white-space: nowrap; }
+    td { padding: 13px 14px; border-top: 1px solid var(--line); vertical-align: middle; }
+    tbody tr { transition: background .12s; }
+    tbody tr:hover { background: #fcfaf6; }
+    tbody tr[data-open-order] { cursor: pointer; }
+    .cell-main strong, .cell-main span { display: block; }
+    .cell-main strong { font-size: 12px; }
+    .cell-main span { margin-top: 2px; color: var(--muted); font-size: 10px; }
+    .money { font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .money.positive { color: var(--success); font-weight: 760; }
+    .money.due { color: var(--danger); font-weight: 760; }
+    .row-actions { display: flex; justify-content: flex-end; gap: 4px; }
+    .mini-action { width: 34px; height: 34px; border: 0; border-radius: 9px; display: grid; place-items: center; background: transparent; color: var(--muted); }
+    .mini-action:hover { background: var(--paper-soft); color: var(--ink); }
+    .mini-action .icon { width: 15px; height: 15px; }
+    .badge { min-height: 24px; padding: 4px 8px; border-radius: 999px; display: inline-flex; align-items: center; gap: 5px; background: var(--paper-soft); color: var(--ink-soft); font-size: 9px; font-weight: 820; line-height: 1.2; white-space: nowrap; }
+    .badge::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; opacity: .72; }
+    .badge.new, .badge.unpaid { background: var(--rose-soft); color: var(--rose-dark); }
+    .badge.confirmed, .badge.deposit-paid { background: var(--blue-soft); color: #496774; }
+    .badge.materials-needed, .badge.partially-paid { background: var(--gold-soft); color: #825e27; }
+    .badge.in-progress { background: #ece7f5; color: #665484; }
+    .badge.ready, .badge.paid, .badge.completed { background: var(--sage-soft); color: var(--sage-dark); }
+    .badge.cancelled, .badge.refunded { background: #eceae7; color: #6f6c67; }
+    .mobile-records { display: none; }
+
+    .customer-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 14px; }
+    .customer-card { min-height: 176px; padding: 17px; display: flex; flex-direction: column; }
+    .customer-top { display: grid; grid-template-columns: 42px 1fr auto; gap: 11px; align-items: center; }
+    .customer-avatar { width: 42px; height: 42px; border-radius: 14px; display: grid; place-items: center; background: var(--rose-soft); color: var(--rose-dark); font-family: Georgia,serif; font-size: 17px; }
+    .customer-top strong, .customer-top span { display: block; }
+    .customer-top span { margin-top: 2px; color: var(--muted); font-size: 10px; }
+    .customer-stats { margin-top: auto; padding-top: 16px; display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; }
+    .customer-stat span, .customer-stat strong { display: block; }
+    .customer-stat span { color: var(--muted); font-size: 9px; }
+    .customer-stat strong { margin-top: 2px; font-size: 12px; }
+
+    .report-layout { display: grid; grid-template-columns: minmax(0,1.35fr) minmax(310px,.7fr); gap: 16px; align-items: start; }
+    .report-main, .report-side { display: grid; gap: 16px; }
+    .pnl { padding: 22px; }
+    .pnl-row { min-height: 47px; display: flex; justify-content: space-between; align-items: center; gap: 12px; border-bottom: 1px solid var(--line); }
+    .pnl-row span { color: var(--muted); }
+    .pnl-row strong { font-variant-numeric: tabular-nums; }
+    .pnl-row.net { margin-top: 6px; border-bottom: 0; color: var(--sage-dark); }
+    .pnl-row.net span { color: inherit; font-size: 15px; font-weight: 800; }
+    .pnl-row.net strong { font-family: Georgia,serif; font-size: 26px; font-weight: 500; }
+    .breakdown-list { display: grid; gap: 13px; }
+    .breakdown-row { display: grid; grid-template-columns: minmax(100px,1fr) minmax(110px,1.4fr) auto; gap: 10px; align-items: center; }
+    .breakdown-row > span { overflow: hidden; font-size: 11px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+    .track { height: 8px; overflow: hidden; border-radius: 999px; background: #eee9e2; }
+    .track > span { height: 100%; display: block; border-radius: inherit; background: var(--sage); }
+    .breakdown-row:nth-child(even) .track > span { background: var(--rose); }
+    .breakdown-value { color: var(--muted); font-size: 10px; text-align: right; white-space: nowrap; }
+
+    .settings-layout { display: grid; grid-template-columns: minmax(0,1.2fr) minmax(300px,.8fr); gap: 16px; align-items: start; }
+    .settings-column { display: grid; gap: 16px; }
+    .token-list { display: flex; flex-wrap: wrap; gap: 8px; }
+    .token { min-height: 36px; padding: 6px 7px 6px 11px; border: 1px solid var(--line); border-radius: 999px; display: inline-flex; align-items: center; gap: 7px; background: var(--paper-soft); font-size: 11px; font-weight: 700; }
+    .token.disabled-token { opacity: .55; text-decoration: line-through; }
+    .token button { width: 25px; height: 25px; border: 0; border-radius: 50%; display: grid; place-items: center; background: transparent; color: var(--muted); }
+    .token button:hover { background: white; color: var(--danger); }
+    .inline-add { margin-top: 12px; display: grid; grid-template-columns: 1fr auto; gap: 8px; }
+
+    .modal-root { position: fixed; z-index: 150; inset: 0; display: none; }
+    .modal-root.open { display: block; }
+    .modal-backdrop { position: absolute; inset: 0; border: 0; background: rgba(31,36,32,.56); backdrop-filter: blur(3px); }
+    .modal-shell { width: min(680px,calc(100vw - 32px)); max-height: min(880px,calc(100vh - 40px)); position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%); display: flex; flex-direction: column; overflow: hidden; border: 1px solid rgba(255,255,255,.5); border-radius: 20px; background: var(--paper); box-shadow: var(--shadow-md); }
+    .modal-shell.wide { width: min(1040px,calc(100vw - 32px)); }
+    .modal-head { min-height: 79px; padding: 17px 20px; display: flex; align-items: flex-start; justify-content: space-between; gap: 15px; border-bottom: 1px solid var(--line); }
+    .modal-head h2 { font-size: 24px; line-height: 1.1; }
+    .modal-head p { margin-top: 5px; color: var(--muted); font-size: 11px; }
+    .close-btn { width: 39px; height: 39px; flex: 0 0 auto; border: 1px solid var(--line); border-radius: 10px; display: grid; place-items: center; background: var(--paper-soft); }
+    .modal-body { padding: 20px; overflow-y: auto; overscroll-behavior: contain; }
+    .modal-foot { min-height: 70px; padding: 12px 20px; display: flex; justify-content: flex-end; align-items: center; gap: 8px; border-top: 1px solid var(--line); background: var(--paper-soft); }
+    .modal-foot .foot-spacer { flex: 1; }
+    .summary-strip { margin-bottom: 18px; display: grid; grid-template-columns: repeat(4,1fr); gap: 9px; }
+    .summary-box { min-width: 0; padding: 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--paper-soft); }
+    .summary-box span, .summary-box strong { display: block; }
+    .summary-box span { color: var(--muted); font-size: 9px; font-weight: 760; text-transform: uppercase; letter-spacing: .06em; }
+    .summary-box strong { margin-top: 4px; font-size: 15px; font-variant-numeric: tabular-nums; }
+    .detail-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 16px; }
+    .detail-panel { padding: 16px; border: 1px solid var(--line); border-radius: 14px; background: var(--paper); }
+    .detail-panel.span-full { grid-column: 1 / -1; }
+    .detail-panel h3 { margin-bottom: 12px; font-family: Inter,sans-serif; font-size: 12px; font-weight: 830; letter-spacing: 0; }
+    .detail-list { display: grid; gap: 9px; }
+    .detail-line { display: grid; grid-template-columns: minmax(100px,.6fr) 1fr; gap: 10px; font-size: 11px; }
+    .detail-line span:first-child { color: var(--muted); }
+    .ledger-list { display: grid; }
+    .ledger-row { min-height: 48px; padding: 8px 0; display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 10px; border-bottom: 1px solid var(--line); }
+    .ledger-row:last-child { border-bottom: 0; }
+    .ledger-row strong, .ledger-row span { display: block; }
+    .ledger-row span { color: var(--muted); font-size: 10px; }
+    .financial-preview { position: sticky; bottom: -20px; z-index: 4; margin: 20px -20px -20px; padding: 13px 20px max(13px,env(safe-area-inset-bottom)); display: grid; grid-template-columns: repeat(4,1fr); gap: 9px; border-top: 1px solid var(--line); background: rgba(52,68,59,.97); color: white; }
+    .preview-item span, .preview-item strong { display: block; }
+    .preview-item span { color: #becac2; font-size: 9px; text-transform: uppercase; letter-spacing: .06em; }
+    .preview-item strong { margin-top: 2px; font-size: 14px; font-variant-numeric: tabular-nums; }
+
+    .toast-region { position: fixed; z-index: 260; right: 18px; bottom: 18px; width: min(380px,calc(100vw - 32px)); display: grid; gap: 8px; pointer-events: none; }
+    .toast { padding: 13px 15px; border-radius: 12px; display: grid; grid-template-columns: 22px 1fr; gap: 9px; align-items: center; background: #2f4337; color: white; box-shadow: var(--shadow-md); animation: toast-in .2s var(--ease); }
+    .toast.error { background: #813c38; }
+    .toast .icon { width: 18px; }
+    .toast strong, .toast span { display: block; }
+    .toast strong { font-size: 12px; }
+    .toast span { margin-top: 1px; color: rgba(255,255,255,.78); font-size: 10px; }
+    @keyframes toast-in { from { opacity: 0; transform: translateY(8px); } }
+    .loading-screen { min-height: 55vh; display: grid; place-items: center; text-align: center; color: var(--muted); }
+    .loading-mark { width: 54px; height: 54px; margin: 0 auto 13px; border-radius: 17px; display: grid; place-items: center; background: var(--rose-soft); color: var(--rose); animation: breathe 1.4s ease-in-out infinite; }
+    @keyframes breathe { 50% { transform: scale(1.05); } }
+    .nav-scrim { display: none; }
+    .mobile-nav { display: none; }
+
+    @media (max-width: 1250px) {
+      .metric-grid { grid-template-columns: repeat(3,minmax(0,1fr)); }
+      .customer-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+    }
+    @media (max-width: 980px) {
+      .sidebar { transform: translateX(-102%); box-shadow: 20px 0 50px rgba(30,35,31,.23); }
+      body.nav-open .sidebar { transform: translateX(0); }
+      .workspace { margin-left: 0; }
+      .menu-btn { display: inline-flex !important; }
+      .nav-scrim { position: fixed; z-index: 50; inset: var(--demo-bar) 0 0; border: 0; background: rgba(35,39,36,.48); }
+      body.nav-open .nav-scrim { display: block; }
+      .dashboard-layout, .report-layout, .settings-layout { grid-template-columns: 1fr; }
+      .cols-4 { grid-template-columns: repeat(2,minmax(0,1fr)); }
+    }
+    @media (max-width: 760px) {
+      :root { --topbar: 65px; }
+      body { padding-bottom: calc(70px + env(safe-area-inset-bottom)); }
+      .demo-bar { justify-content: flex-start; padding-left: 12px; }
+      .demo-bar .demo-copy { max-width: calc(100vw - 112px); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .topbar { padding: 0 12px; gap: 8px; }
+      .global-search { width: auto; flex: 1; }
+      .global-search input { font-size: 16px; padding-right: 12px; }
+      .key-hint, .sync-label, .topbar-actions .new-order-label { display: none; }
+      .topbar-actions .btn { width: 43px; padding: 0; }
+      .page { padding: 23px 14px 35px; }
+      .page-head { min-height: 0; margin-bottom: 18px; display: block; }
+      .page-head h1 { font-size: 32px; }
+      .page-actions { margin-top: 14px; justify-content: flex-start; }
+      .period-switch { width: 100%; display: grid; grid-template-columns: repeat(4,1fr); }
+      .period-switch button { padding-inline: 4px; }
+      .metric-grid { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; }
+      .metric-card { min-height: 119px; padding: 14px; }
+      .metric-value { font-size: 23px; }
+      .dashboard-layout { margin-top: 12px; }
+      .recent-item { grid-template-columns: 1fr auto; }
+      .recent-item > :nth-child(2) { display: none; }
+      .toolbar { align-items: stretch; }
+      .toolbar-search, .filter-field, .filter-field.compact { flex: 1 1 100%; min-width: 0; }
+      .toolbar input, .toolbar select, .field input, .field select, .field textarea, .inline-add input { font-size: 16px; }
+      .results-count { width: 100%; margin: 0; }
+      .desktop-table { display: none; }
+      .mobile-records { display: grid; gap: 10px; padding: 10px; }
+      .mobile-record { width: 100%; border: 1px solid var(--line); border-radius: 13px; padding: 14px; display: grid; gap: 11px; background: var(--paper); text-align: left; }
+      .mobile-record .mobile-record-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+      .mobile-record strong, .mobile-record span { display: block; }
+      .mobile-record .badge { width: fit-content; display: inline-flex; }
+      .mobile-record .record-sub { margin-top: 3px; color: var(--muted); font-size: 11px; }
+      .mobile-record-meta { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; }
+      .mobile-record-meta span { color: var(--muted); font-size: 9px; }
+      .mobile-record-meta strong { margin-top: 2px; font-size: 11px; }
+      .customer-grid { grid-template-columns: 1fr; }
+      .form-grid, .form-grid.cols-3, .detail-grid { grid-template-columns: 1fr; }
+      .field.span-2 { grid-column: auto; }
+      .detail-panel.span-full { grid-column: auto; }
+      .summary-strip { grid-template-columns: repeat(2,1fr); }
+      .financial-preview { grid-template-columns: repeat(2,1fr); }
+      .modal-shell, .modal-shell.wide { width: 100%; max-height: calc(100vh - var(--demo-bar)); inset: auto 0 0; transform: none; border-radius: 20px 20px 0 0; }
+      .modal-body { padding: 17px 15px; }
+      .modal-head { padding: 16px 15px; }
+      .modal-foot { padding: 11px 15px max(11px,env(safe-area-inset-bottom)); flex-wrap: wrap; }
+      .modal-foot .btn:not(.icon-only) { flex: 1 1 auto; }
+      .financial-preview { margin: 18px -15px -17px; padding-inline: 15px; }
+      .mobile-nav { height: calc(66px + env(safe-area-inset-bottom)); padding: 5px 7px max(5px,env(safe-area-inset-bottom)); position: fixed; z-index: 48; inset: auto 0 0; display: grid; grid-template-columns: repeat(5,1fr); border-top: 1px solid var(--line); background: rgba(255,253,249,.96); backdrop-filter: blur(16px); }
+      .mobile-nav button { min-width: 0; border: 0; border-radius: 10px; padding: 4px 2px; display: grid; place-items: center; align-content: center; gap: 2px; background: transparent; color: var(--muted); font-size: 9px; font-weight: 780; }
+      .mobile-nav button.active { color: var(--rose-dark); background: var(--rose-soft); }
+      .mobile-nav .primary-mobile { width: 52px; height: 52px; margin: -15px auto 0; border-radius: 17px; background: var(--rose); color: white; box-shadow: 0 8px 22px rgba(129,70,77,.28); }
+      .mobile-nav .icon { width: 19px; height: 19px; }
+      .mobile-nav .primary-mobile .icon { width: 22px; height: 22px; }
+      .toast-region { right: 12px; bottom: calc(78px + env(safe-area-inset-bottom)); }
+      .breakdown-row { grid-template-columns: minmax(90px,.8fr) 1fr; }
+      .breakdown-value { grid-column: 2; }
+    }
+    @media (max-width: 390px) {
+      .metric-grid { grid-template-columns: 1fr 1fr; }
+      .metric-label { font-size: 10px; }
+      .metric-value { font-size: 21px; }
+      .attention-item { padding-inline: 13px; grid-template-columns: 36px 1fr; }
+      .attention-amount { grid-column: 2; text-align: left; }
+      .summary-strip { grid-template-columns: 1fr 1fr; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#mainContent">Skip to main content</a>
+  <svg aria-hidden="true" width="0" height="0" style="position:absolute">
+    <defs>
+      <symbol id="i-home" viewBox="0 0 24 24"><path d="m3 11 9-8 9 8"/><path d="M5 10v10h14V10M9 20v-6h6v6"/></symbol>
+      <symbol id="i-orders" viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2V3Z"/><path d="M9 8h6M9 12h6M9 16h3"/></symbol>
+      <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-4 2.5-6 6-6s6 2 6 6"/><path d="M16 4.5a3 3 0 0 1 0 5.8M17 14c2.5.5 4 2.3 4 5"/></symbol>
+      <symbol id="i-expense" viewBox="0 0 24 24"><path d="M4 7h16v12H4zM7 7V5h10v2"/><path d="M4 11h16M8 15h3"/></symbol>
+      <symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></symbol>
+      <symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2.8 2.8-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6v.2h-4V21a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1L4.2 17l.1-.1a1.7 1.7 0 0 0 .3-1.9A1.7 1.7 0 0 0 3 14H2.8v-4H3a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9L4.2 7 7 4.2l.1.1a1.7 1.7 0 0 0 1.9.3A1.7 1.7 0 0 0 10 3V2.8h4V3a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1L19.8 7l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1h.2v4H21a1.7 1.7 0 0 0-1.6 1Z"/></symbol>
+      <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+      <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></symbol>
+      <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+      <symbol id="i-x" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></symbol>
+      <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+      <symbol id="i-money" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15 8.5c-.8-.7-1.7-1-3-1-1.7 0-3 .8-3 2s1 1.8 3 2.3 3 1.1 3 2.5-1.3 2.2-3 2.2c-1.3 0-2.5-.4-3.4-1.2M12 5v14"/></symbol>
+      <symbol id="i-profit" viewBox="0 0 24 24"><path d="M4 17 9 12l3 3 7-8"/><path d="M14 7h5v5"/></symbol>
+      <symbol id="i-scissors" viewBox="0 0 24 24"><circle cx="6" cy="7" r="3"/><circle cx="6" cy="17" r="3"/><path d="m8.7 8.3 11.3 6M8.7 15.7 20 9.7"/></symbol>
+      <symbol id="i-package" viewBox="0 0 24 24"><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9L12 3Z"/><path d="m4.5 7.8 7.5 4.3 7.5-4.3M12 12v9"/></symbol>
+      <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/></symbol>
+      <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 3 2.5 20h19L12 3Z"/><path d="M12 9v5M12 17.5h.01"/></symbol>
+      <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+      <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
+      <symbol id="i-edit" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16v4Z"/><path d="m13.5 6.5 4 4"/></symbol>
+      <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M7 7l1 14h8l1-14M10 11v6M14 11v6"/></symbol>
+      <symbol id="i-card" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18M7 15h3"/></symbol>
+      <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M6.1 8.5A7 7 0 0 1 18.7 7M17.9 15.5A7 7 0 0 1 5.3 17"/></symbol>
+      <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 20h16"/></symbol>
+      <symbol id="i-phone" viewBox="0 0 24 24"><path d="M7 3H4a1 1 0 0 0-1 1c0 9.4 7.6 17 17 17a1 1 0 0 0 1-1v-3l-4-2-2 3c-4-1.4-7.6-5-9-9l3-2-2-4Z"/></symbol>
+      <symbol id="i-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m4 7 8 6 8-6"/></symbol>
+      <symbol id="i-more" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1" fill="currentColor" stroke="none"/></symbol>
+    </defs>
+  </svg>
+
+  <div class="demo-bar">
+    <span class="demo-state"><span class="save-dot"></span><strong>Interactive demo</strong></span>
+    <span class="demo-copy" id="storageModeLabel">Changes save in this browser</span>
+    <button class="demo-reset" type="button" data-action="reset-demo">Reset demo</button>
+  </div>
+
+  <div class="app-shell" id="appShell">
+    <button class="nav-scrim" type="button" data-action="close-nav" aria-label="Close navigation"></button>
+    <aside class="sidebar" id="sidebar" aria-label="Primary navigation" aria-hidden="false">
+      <div class="brand">
+        <span class="brand-mark"><svg class="icon" aria-hidden="true"><use href="#i-scissors"></use></svg></span>
+        <span class="brand-copy"><strong>Oh Sew Lovely</strong><span>by Mara</span></span>
+      </div>
+      <div class="nav-wrap">
+        <p class="nav-label">Workspace</p>
+        <nav class="nav-list">
+          <button class="nav-item active" type="button" data-view="dashboard"><svg class="icon"><use href="#i-home"></use></svg><span>Dashboard</span></button>
+          <button class="nav-item" type="button" data-view="orders"><svg class="icon"><use href="#i-orders"></use></svg><span>Orders</span><span class="nav-count" data-count="orders">0</span></button>
+          <button class="nav-item" type="button" data-view="customers"><svg class="icon"><use href="#i-users"></use></svg><span>Customers</span></button>
+          <button class="nav-item" type="button" data-view="expenses"><svg class="icon"><use href="#i-expense"></use></svg><span>Expenses</span></button>
+          <button class="nav-item" type="button" data-view="reports"><svg class="icon"><use href="#i-chart"></use></svg><span>Reports</span></button>
+        </nav>
+        <p class="nav-label">Customize</p>
+        <nav class="nav-list">
+          <button class="nav-item" type="button" data-view="settings"><svg class="icon"><use href="#i-settings"></use></svg><span>Settings</span></button>
+        </nav>
+      </div>
+      <div class="side-quick">
+        <span>Quick entry</span><strong>New custom order</strong>
+        <p>Capture the essentials now. Add costs and payments whenever they happen.</p>
+        <button class="btn rose small" type="button" data-action="new-order"><svg class="icon"><use href="#i-plus"></use></svg> Add order</button>
+      </div>
+      <div class="owner-chip"><span class="owner-avatar">M</span><span><strong id="ownerNameSide">Mara</strong><span>Owner workspace</span></span></div>
+    </aside>
+
+    <section class="workspace">
+      <header class="topbar">
+        <button class="btn secondary icon-only menu-btn" type="button" data-action="toggle-nav" aria-label="Open navigation" aria-expanded="false"><svg class="icon"><use href="#i-menu"></use></svg></button>
+        <div class="global-search">
+          <svg class="icon" aria-hidden="true"><use href="#i-search"></use></svg>
+          <label class="sr-only" for="globalSearch" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)">Search orders and customers</label>
+          <input id="globalSearch" type="search" placeholder="Search orders or customers…" autocomplete="off">
+          <span class="key-hint">Ctrl K</span>
+          <div class="search-results" id="searchResults" aria-label="Search results"></div>
+        </div>
+        <div class="topbar-spacer"></div>
+        <span class="sync-label"><span class="save-dot"></span><span id="syncText">Saved</span></span>
+        <div class="topbar-actions">
+          <button class="btn rose" type="button" data-action="new-order"><svg class="icon"><use href="#i-plus"></use></svg><span class="new-order-label">New order</span></button>
+        </div>
+      </header>
+      <main id="mainContent" tabindex="-1">
+        <div class="loading-screen"><div><span class="loading-mark"><svg class="icon"><use href="#i-scissors"></use></svg></span><h1>Opening your workroom</h1><p>Gathering orders, payments, and supplies…</p></div></div>
+      </main>
+    </section>
+  </div>
+
+  <nav class="mobile-nav" aria-label="Mobile navigation">
+    <button class="active" type="button" data-view="dashboard"><svg class="icon"><use href="#i-home"></use></svg><span>Home</span></button>
+    <button type="button" data-view="orders"><svg class="icon"><use href="#i-orders"></use></svg><span>Orders</span></button>
+    <button class="primary-mobile" type="button" data-action="new-order" aria-label="New order"><svg class="icon"><use href="#i-plus"></use></svg><span>New</span></button>
+    <button type="button" data-view="customers"><svg class="icon"><use href="#i-users"></use></svg><span>Customers</span></button>
+    <button type="button" data-action="mobile-more"><svg class="icon"><use href="#i-more"></use></svg><span>More</span></button>
+  </nav>
+
+  <div class="modal-root" id="modalRoot" aria-hidden="true"></div>
+  <div class="toast-region" id="toastRegion" role="status" aria-live="polite" aria-atomic="true"></div>
+
+  <script>
+  'use strict';
+  const STORAGE_KEY = 'oh-sew-lovely-demo-v1';
+  const ORDER_STATUSES = ['New','Confirmed','Materials Needed','In Progress','Ready','Completed','Cancelled'];
+  const PAYMENT_STATUSES = ['Unpaid','Deposit Paid','Partially Paid','Paid','Refunded'];
+  const DEFAULT_PAYMENT_METHODS = ['Cash','Venmo','PayPal','Zelle','Credit / Debit Card','Check','Other'];
+  const DEFAULT_CATEGORIES = ['Bags','Clothing','Blankets','Pillows','Baby Items','Home Decor','Accessories','Custom Orders','Other'];
+  const DEFAULT_EXPENSE_CATEGORIES = ['Equipment','Maintenance','Materials & Supplies','Packaging','Marketing','Craft Fair Fees','Website','Shipping','Office Supplies','Other'];
+  const EXPENSE_TYPES = ['Business Expense','Equipment Purchase','Material / Supply Purchase','Marketing','Other'];
+  const PERIOD_LABELS = { month: 'This Month', lastMonth: 'Last Month', year: 'This Year', lastYear: 'Last Year', all: 'All Time', custom: 'Custom Date Range' };
+  const VIEWS = ['dashboard','orders','customers','expenses','reports','settings'];
+  const $ = (selector, root = document) => root.querySelector(selector);
+  const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
+  const deepClone = (value) => JSON.parse(JSON.stringify(value));
+  const nowIso = () => new Date().toISOString();
+  const pad = (value) => String(value).padStart(2, '0');
+  const toIsoDate = (date = new Date()) => `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+  const parseDate = (iso) => {
+    if (!iso || !/^\d{4}-\d{2}-\d{2}$/.test(String(iso))) return null;
+    const [year, month, day] = String(iso).split('-').map(Number);
+    const value = new Date(year, month - 1, day, 12);
+    return Number.isNaN(value.getTime()) ? null : value;
+  };
+  const addDays = (days, from = new Date()) => { const next = new Date(from); next.setHours(12,0,0,0); next.setDate(next.getDate() + days); return toIsoDate(next); };
+  const addMonths = (months, day = 12) => { const next = new Date(); next.setHours(12,0,0,0); next.setDate(1); next.setMonth(next.getMonth() + months); next.setDate(Math.min(day, new Date(next.getFullYear(), next.getMonth() + 1, 0).getDate())); return toIsoDate(next); };
+  const roundMoney = (value) => Math.round((Number(value) || 0) * 100) / 100;
+  const numberValue = (value) => Number.isFinite(Number(value)) ? Number(value) : 0;
+  const money = (value) => new Intl.NumberFormat('en-US',{ style:'currency', currency:'USD' }).format(roundMoney(value));
+  const formatDate = (iso, options = { month:'short', day:'numeric', year:'numeric' }) => parseDate(iso)?.toLocaleDateString('en-US', options) || '—';
+  const formatMonth = (iso) => formatDate(iso,{ month:'short', year:'2-digit' });
+  const normalizeText = (value) => String(value || '').trim().toLowerCase();
+  const esc = (value) => String(value ?? '').replace(/[&<>'"]/g, (char) => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[char]));
+  const attr = esc;
+  const slug = (value) => normalizeText(value).replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+  const initials = (name) => String(name || '?').trim().split(/\s+/).slice(0,2).map((part) => part[0]).join('').toUpperCase();
+  const uid = (prefix) => `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2,8)}`;
+  const ico = (name, label = '') => `<svg class="icon" ${label ? `aria-label="${attr(label)}"` : 'aria-hidden="true"'}><use href="#i-${attr(name)}"></use></svg>`;
+
+  function defaultSettings() {
+    return {
+      businessInfo: { name:'Oh Sew Lovely by Mara', owner:'Mara', phone:'(608) 555-0148', email:'hello@ohsewlovely.example', address:'Madison, Wisconsin' },
+      expenseCategories: [...DEFAULT_EXPENSE_CATEGORIES],
+      currency: 'USD'
+    };
+  }
+
+  function createSeedData() {
+    const stamp = nowIso();
+    const customers = [
+      { id:'cus-amy', name:'Amy Larson', phone:'(608) 555-0132', email:'amy.larson@example.com', address:'1842 Meadow Lane, Madison, WI', notes:'Prefers text. Loves warm neutrals.', dateAdded:addMonths(-7,5), createdAt:stamp, updatedAt:stamp },
+      { id:'cus-jordan', name:'Jordan Ellis', phone:'(608) 555-0174', email:'jordan.ellis@example.com', address:'417 Cedar Street, Verona, WI', notes:'Repeat gift customer.', dateAdded:addMonths(-6,8), createdAt:stamp, updatedAt:stamp },
+      { id:'cus-priya', name:'Priya Shah', phone:'(608) 555-0126', email:'priya.shah@example.com', address:'62 Farwell Avenue, Madison, WI', notes:'Baby shower is later this month.', dateAdded:addMonths(-4,11), createdAt:stamp, updatedAt:stamp },
+      { id:'cus-megan', name:'Megan Ruiz', phone:'(608) 555-0181', email:'megan.ruiz@example.com', address:'920 Lake View Drive, Fitchburg, WI', notes:'Needs porch pickup.', dateAdded:addMonths(-3,14), createdAt:stamp, updatedAt:stamp },
+      { id:'cus-claire', name:'Claire Donovan', phone:'(608) 555-0160', email:'claire.d@example.com', address:'15 Spruce Court, Middleton, WI', notes:'Monogram initials: CJD.', dateAdded:addMonths(-2,4), createdAt:stamp, updatedAt:stamp },
+      { id:'cus-nina', name:'Nina Brooks', phone:'(608) 555-0117', email:'nina.brooks@example.com', address:'711 Atwood Avenue, Madison, WI', notes:'Found Oh Sew Lovely at the summer market.', dateAdded:addMonths(-1,17), createdAt:stamp, updatedAt:stamp }
+    ];
+    const orders = [
+      { id:'ord-1001', orderNumber:'OSL-1001', customerId:'cus-amy', customerName:'Amy Larson', orderDate:addMonths(-5,8), dueDate:addMonths(-5,24), completedDate:addMonths(-5,22), product:'Linen market tote', category:'Bags', quantity:2, description:'Roomy market totes with reinforced handles', size:'16 × 14 in', fabric:'Natural linen / olive lining', personalization:'A.L. on inside pocket', itemPrice:48, additionalCharges:12, discount:0, tax:6.48, status:'Completed', notes:'Delivered at the Saturday market.', createdAt:stamp, updatedAt:stamp },
+      { id:'ord-1002', orderNumber:'OSL-1002', customerId:'cus-jordan', customerName:'Jordan Ellis', orderDate:addMonths(-4,10), dueDate:addMonths(-4,28), completedDate:addMonths(-4,26), product:'Memory pillow set', category:'Pillows', quantity:3, description:'Keepsake pillows made from three button-down shirts', size:'16 × 16 in', fabric:'Customer-supplied shirts', personalization:'Small heart patch on each back', itemPrice:58, additionalCharges:20, discount:10, tax:10.98, status:'Completed', notes:'Customer supplied all main fabric.', createdAt:stamp, updatedAt:stamp },
+      { id:'ord-1003', orderNumber:'OSL-1003', customerId:'cus-priya', customerName:'Priya Shah', orderDate:addMonths(-3,7), dueDate:addMonths(-3,25), completedDate:addMonths(-3,23), product:'Personalized baby blanket', category:'Baby Items', quantity:1, description:'Double gauze blanket with rounded corners', size:'36 × 42 in', fabric:'Dusty blue double gauze', personalization:'ARJUN in cream thread', itemPrice:82, additionalCharges:14, discount:0, tax:5.76, status:'Completed', notes:'Gift wrapped.', createdAt:stamp, updatedAt:stamp },
+      { id:'ord-1004', orderNumber:'OSL-1004', customerId:'cus-megan', customerName:'Megan Ruiz', orderDate:addMonths(-2,5), dueDate:addMonths(-2,21), completedDate:addMonths(-2,20), product:'Café curtain pair', category:'Home Decor', quantity:2, description:'Rod-pocket café curtains for kitchen windows', size:'28 × 32 in each', fabric:'Cream cotton with tiny sage stripe', personalization:'', itemPrice:54, additionalCharges:0, discount:0, tax:6.48, status:'Completed', notes:'Porch pickup complete.', createdAt:stamp, updatedAt:stamp },
+      { id:'ord-1005', orderNumber:'OSL-1005', customerId:'cus-claire', customerName:'Claire Donovan', orderDate:addMonths(-1,7), dueDate:addMonths(-1,27), completedDate:addMonths(-1,26), product:'Monogram zipper pouches', category:'Accessories', quantity:4, description:'Boxed-corner travel pouches', size:'9 × 6 in', fabric:'Rose canvas / floral lining', personalization:'CJD, EMD, LMD, SMD', itemPrice:29, additionalCharges:16, discount:8, tax:7.44, status:'Completed', notes:'Four separate gift tags.', createdAt:stamp, updatedAt:stamp },
+      { id:'ord-1006', orderNumber:'OSL-1006', customerId:'cus-nina', customerName:'Nina Brooks', orderDate:addDays(-18), dueDate:addDays(-2), completedDate:'', product:'Patchwork throw', category:'Blankets', quantity:1, description:'Modern patchwork lap throw with cotton batting', size:'52 × 62 in', fabric:'Terracotta, cream, sage', personalization:'N + E 2026 on back', itemPrice:240, additionalCharges:28, discount:0, tax:16.08, status:'In Progress', notes:'Binding is cut; quilting remains.', createdAt:stamp, updatedAt:stamp },
+      { id:'ord-1007', orderNumber:'OSL-1007', customerId:'cus-amy', customerName:'Amy Larson', orderDate:addDays(-10), dueDate:addDays(3), completedDate:'', product:'Crossbody bag', category:'Bags', quantity:1, description:'Adjustable crossbody with interior zipper pocket', size:'10 × 8 in', fabric:'Olive waxed canvas / floral lining', personalization:'', itemPrice:96, additionalCharges:12, discount:0, tax:6.48, status:'Materials Needed', notes:'Waiting on antique brass zipper.', createdAt:stamp, updatedAt:stamp },
+      { id:'ord-1008', orderNumber:'OSL-1008', customerId:'cus-priya', customerName:'Priya Shah', orderDate:addDays(-6), dueDate:addDays(8), completedDate:'', product:'Burp cloth gift set', category:'Baby Items', quantity:3, description:'Contoured cotton and chenille burp cloths', size:'9 × 18 in', fabric:'Woodland print / cream chenille', personalization:'', itemPrice:18, additionalCharges:6, discount:0, tax:3.60, status:'Confirmed', notes:'Include a handwritten card.', createdAt:stamp, updatedAt:stamp },
+      { id:'ord-1009', orderNumber:'OSL-1009', customerId:'cus-jordan', customerName:'Jordan Ellis', orderDate:addDays(-1), dueDate:addDays(18), completedDate:'', product:'Apron and oven mitt set', category:'Custom Orders', quantity:1, description:'Full apron with two matching oven mitts', size:'Adult one size', fabric:'Navy ticking stripe', personalization:'Dad’s Kitchen', itemPrice:88, additionalCharges:18, discount:0, tax:6.36, status:'New', notes:'Confirm font before stitching.', createdAt:stamp, updatedAt:stamp }
+    ];
+    const payments = [
+      { id:'pay-1', orderId:'ord-1001', customerId:'cus-amy', paymentDate:addMonths(-5,9), amount:108.48, paymentMethod:'Venmo', kind:'Payment', isDeposit:false, status:'Posted', notes:'Paid in full', createdAt:stamp },
+      { id:'pay-2', orderId:'ord-1002', customerId:'cus-jordan', paymentDate:addMonths(-4,11), amount:80, paymentMethod:'PayPal', kind:'Payment', isDeposit:true, status:'Posted', notes:'Deposit', createdAt:stamp },
+      { id:'pay-3', orderId:'ord-1002', customerId:'cus-jordan', paymentDate:addMonths(-4,26), amount:114.98, paymentMethod:'PayPal', kind:'Payment', isDeposit:false, status:'Posted', notes:'Final payment', createdAt:stamp },
+      { id:'pay-4', orderId:'ord-1003', customerId:'cus-priya', paymentDate:addMonths(-3,8), amount:101.76, paymentMethod:'Zelle', kind:'Payment', isDeposit:false, status:'Posted', notes:'Paid in full', createdAt:stamp },
+      { id:'pay-5', orderId:'ord-1004', customerId:'cus-megan', paymentDate:addMonths(-2,20), amount:114.48, paymentMethod:'Cash', kind:'Payment', isDeposit:false, status:'Posted', notes:'Pickup payment', createdAt:stamp },
+      { id:'pay-6', orderId:'ord-1005', customerId:'cus-claire', paymentDate:addMonths(-1,8), amount:60, paymentMethod:'Venmo', kind:'Payment', isDeposit:true, status:'Posted', notes:'Deposit', createdAt:stamp },
+      { id:'pay-7', orderId:'ord-1005', customerId:'cus-claire', paymentDate:addMonths(-1,26), amount:71.44, paymentMethod:'Venmo', kind:'Payment', isDeposit:false, status:'Posted', notes:'Balance', createdAt:stamp },
+      { id:'pay-8', orderId:'ord-1006', customerId:'cus-nina', paymentDate:addDays(-18), amount:100, paymentMethod:'Credit / Debit Card', kind:'Payment', isDeposit:true, status:'Posted', notes:'Materials deposit', createdAt:stamp },
+      { id:'pay-9', orderId:'ord-1007', customerId:'cus-amy', paymentDate:addDays(-10), amount:45, paymentMethod:'Venmo', kind:'Payment', isDeposit:true, status:'Posted', notes:'Deposit', createdAt:stamp },
+      { id:'pay-10', orderId:'ord-1008', customerId:'cus-priya', paymentDate:addDays(-6), amount:30, paymentMethod:'Zelle', kind:'Payment', isDeposit:true, status:'Posted', notes:'Deposit', createdAt:stamp }
+    ];
+    const orderCosts = [
+      ['cost-1','ord-1001','Linen and lining',34.20,addMonths(-5,8)],['cost-2','ord-1001','Webbing and labels',9.60,addMonths(-5,8)],
+      ['cost-3','ord-1002','Pillow forms',27,addMonths(-4,10)],['cost-4','ord-1002','Zippers and interfacing',16.25,addMonths(-4,10)],
+      ['cost-5','ord-1003','Double gauze and thread',28.40,addMonths(-3,7)],['cost-6','ord-1003','Gift packaging',5.25,addMonths(-3,22)],
+      ['cost-7','ord-1004','Fabric and header tape',31.80,addMonths(-2,5)],['cost-8','ord-1005','Canvas, lining, zippers',42.60,addMonths(-1,7)],
+      ['cost-9','ord-1006','Quilting cotton',74.30,addDays(-17)],['cost-10','ord-1006','Batting and binding',29.80,addDays(-15)],
+      ['cost-11','ord-1007','Waxed canvas',31.40,addDays(-9)],['cost-12','ord-1008','Cotton and chenille',18.70,addDays(-5)]
+    ].map(([id,orderId,description,amount,date]) => ({ id,orderId,description,amount,date,createdAt:stamp }));
+    const expenses = [
+      ['exp-1',addMonths(-5,3),'Materials & Supplies','Rotary blades and needles','Stitch & Bolt',38.24,'Material / Supply Purchase'],
+      ['exp-2',addMonths(-4,15),'Website','Annual domain renewal','Name Harbor',21.00,'Business Expense'],
+      ['exp-3',addMonths(-3,2),'Marketing','Market booth banner','Local Print Co.',64.50,'Marketing'],
+      ['exp-4',addMonths(-2,9),'Maintenance','Machine cleaning and tune-up','Capitol Sewing',119.00,'Business Expense'],
+      ['exp-5',addMonths(-1,18),'Packaging','Mailers, tissue, thank-you cards','Pack & Post',46.82,'Material / Supply Purchase'],
+      ['exp-6',addDays(-12),'Craft Fair Fees','Autumn handmade market booth','Madison Makers',85.00,'Business Expense'],
+      ['exp-7',addDays(-4),'Office Supplies','Order tags and archival pens','Paper Finch',18.75,'Business Expense']
+    ].map(([id,date,category,description,vendor,amount,type]) => ({ id,date,category,description,vendor,amount,type,notes:'',createdAt:stamp,updatedAt:stamp }));
+    return {
+      settings: defaultSettings(), customers, orders, payments, orderCosts, expenses,
+      categories: DEFAULT_CATEGORIES.map((name,index) => ({ id:`cat-${index + 1}`, name, active:true })),
+      paymentMethods: DEFAULT_PAYMENT_METHODS.map((name,index) => ({ id:`method-${index + 1}`, name, active:true }))
+    };
+  }
+
+  function normalizeData(raw) {
+    const seed = createSeedData();
+    const data = raw && typeof raw === 'object' ? raw : seed;
+    const settings = { ...defaultSettings(), ...(data.settings || {}) };
+    settings.businessInfo = { ...defaultSettings().businessInfo, ...(data.settings?.businessInfo || data.businessInfo || {}) };
+    settings.expenseCategories = Array.isArray(settings.expenseCategories) && settings.expenseCategories.length ? settings.expenseCategories.map(String) : [...DEFAULT_EXPENSE_CATEGORIES];
+    const categories = Array.isArray(data.categories) && data.categories.length ? data.categories.map((item,index) => typeof item === 'string' ? { id:`cat-${index + 1}`,name:item,active:true } : { id:item.id || `cat-${index + 1}`, name:String(item.name || item.categoryName || ''), active:item.active !== false }) : seed.categories;
+    const paymentMethods = Array.isArray(data.paymentMethods) && data.paymentMethods.length ? data.paymentMethods.map((item,index) => typeof item === 'string' ? { id:`method-${index + 1}`,name:item,active:true } : { id:item.id || `method-${index + 1}`, name:String(item.name || item.paymentMethodName || ''), active:item.active !== false }) : seed.paymentMethods;
+    return {
+      _revision: numberValue(data.revision ?? data._revision),
+      settings,
+      customers: Array.isArray(data.customers) ? data.customers : [],
+      orders: Array.isArray(data.orders) ? data.orders.map(({ orderStatus, fabricColor, ...item }) => ({ ...item, status:item.status || orderStatus || 'New', fabric:item.fabric ?? fabricColor ?? '', completedDate:item.completedDate || '' })) : [],
+      payments: Array.isArray(data.payments) ? data.payments.map(({ date, method, ...item }) => ({ ...item, paymentDate:item.paymentDate || date || '', paymentMethod:item.paymentMethod || method || '', status:item.status || 'Posted' })) : [],
+      orderCosts: Array.isArray(data.orderCosts) ? data.orderCosts : [],
+      expenses: Array.isArray(data.expenses) ? data.expenses.map(({ expenseType, ...item }) => ({ ...item, type:item.type || expenseType || 'Business Expense' })) : [],
+      categories,
+      paymentMethods
+    };
+  }
+
+  let memoryData = null;
+  let storageMode = 'browser';
+  const hasAppsScript = () => Boolean(window.google?.script?.run);
+  function serverCall(method, payload) {
+    return new Promise((resolve,reject) => {
+      let runner = google.script.run.withSuccessHandler(resolve).withFailureHandler((error) => reject(new Error(error?.message || String(error))));
+      if (typeof runner[method] !== 'function') { reject(new Error(`Server method ${method} is unavailable.`)); return; }
+      if (typeof payload === 'undefined') runner[method](); else runner[method](payload);
+    });
+  }
+  const Repository = {
+    async load() {
+      if (hasAppsScript()) { storageMode = 'sheets'; return normalizeData(await serverCall('getBootstrapData')); }
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) return normalizeData(JSON.parse(raw));
+        const seed = createSeedData();
+        localStorage.setItem(STORAGE_KEY,JSON.stringify(seed));
+        return seed;
+      } catch (error) {
+        storageMode = 'memory';
+        document.body.classList.add('storage-warning');
+        memoryData ||= createSeedData();
+        return deepClone(memoryData);
+      }
+    },
+    async save(data) {
+      const clean = deepClone(data);
+      if (storageMode === 'sheets') {
+        return normalizeData(await serverCall('saveBatch',{ baseRevision:Number.isInteger(clean._revision) ? clean._revision : undefined, collections:{ orders:clean.orders, customers:clean.customers, payments:clean.payments, orderCosts:clean.orderCosts, expenses:clean.expenses, categories:clean.categories, paymentMethods:clean.paymentMethods }, settings:clean.settings }));
+      }
+      if (storageMode === 'memory') { memoryData = clean; return clean; }
+      try { localStorage.setItem(STORAGE_KEY,JSON.stringify(clean)); return clean; }
+      catch (error) {
+        storageMode = 'memory'; memoryData = clean; document.body.classList.add('storage-warning'); updateStorageMode(); return clean;
+      }
+    },
+    async reset() {
+      const seed = createSeedData();
+      if (storageMode === 'sheets') throw new Error('Production Sheet data cannot be reset from the demo control.');
+      if (storageMode === 'browser') localStorage.setItem(STORAGE_KEY,JSON.stringify(seed)); else memoryData = seed;
+      return seed;
+    }
+  };
+
+  const state = {
+    data: normalizeData(createSeedData()), committed: null, view:'dashboard', saving:false, lastTrigger:null,
+    ui: {
+      dashboardPeriod:'all', reportPeriod:'year', customStart:'', customEnd:'',
+      orderSearch:'', orderStatus:'all', paymentStatus:'all', dueFilter:'all',
+      customerSearch:'', expenseSearch:'', expenseCategory:'all', expensePeriod:'year'
+    }
+  };
+  let persistenceQueue = Promise.resolve();
+
+  function updateStorageMode() {
+    const label = $('#storageModeLabel');
+    if (!label) return;
+    label.textContent = storageMode === 'sheets' ? 'Connected to your private Google Sheet' : storageMode === 'memory' ? 'Tab-only mode — browser storage is unavailable' : 'Changes save in this browser';
+    const reset = $('.demo-reset'); if (reset) reset.hidden = storageMode === 'sheets';
+  }
+  function setSync(text, saving = false) {
+    state.saving = saving;
+    const sync = $('#syncText'); if (sync) sync.textContent = text;
+    document.body.classList.toggle('is-saving',saving);
+  }
+  function toast(title, message = '', type = 'success') {
+    const region = $('#toastRegion');
+    const node = document.createElement('div');
+    node.className = `toast ${type === 'error' ? 'error' : ''}`;
+    node.setAttribute('role',type === 'error' ? 'alert' : 'status');
+    node.innerHTML = `${ico(type === 'error' ? 'alert' : 'check')}<span><strong>${esc(title)}</strong>${message ? `<span>${esc(message)}</span>` : ''}</span>`;
+    region.append(node);
+    window.setTimeout(() => node.remove(),4200);
+  }
+  async function commit(successMessage = 'Changes saved') {
+    const snapshot = deepClone(state.data);
+    const previous = deepClone(state.committed || state.data);
+    setSync('Saving…',true);
+    const task = async () => {
+      try {
+        const saved = await Repository.save(snapshot);
+        state.data = normalizeData(saved);
+        state.committed = deepClone(state.data);
+        setSync('Saved',false);
+        render(false);
+        if (successMessage) toast(successMessage);
+        return true;
+      } catch (error) {
+        state.data = normalizeData(previous);
+        state.committed = deepClone(previous);
+        setSync('Save failed',false);
+        render(false);
+        toast('Could not save',error.message || 'Your last change was rolled back.','error');
+        return false;
+      }
+    };
+    persistenceQueue = persistenceQueue.catch(() => false).then(task);
+    return persistenceQueue;
+  }
+
+  function activeCategories() { return state.data.categories.filter((item) => item.active !== false); }
+  function activeMethods() { return state.data.paymentMethods.filter((item) => item.active !== false); }
+  function customerFor(order) { return state.data.customers.find((item) => item.id === order.customerId) || { id:order.customerId, name:order.customerName || 'Unknown customer', phone:'', email:'' }; }
+  function paymentsFor(orderId) { return state.data.payments.filter((item) => item.orderId === orderId && item.status !== 'Void'); }
+  function costsFor(orderId) { return state.data.orderCosts.filter((item) => item.orderId === orderId); }
+  function orderTotal(order) { return Math.max(0,roundMoney(numberValue(order.itemPrice) * Math.max(1,numberValue(order.quantity)) + numberValue(order.additionalCharges) + numberValue(order.tax) - numberValue(order.discount))); }
+  function amountPaid(order) { return roundMoney(paymentsFor(order.id).reduce((sum,item) => sum + (item.kind === 'Refund' ? -Math.abs(numberValue(item.amount)) : numberValue(item.amount)),0)); }
+  function orderCost(order) { return roundMoney(costsFor(order.id).reduce((sum,item) => sum + numberValue(item.amount),0)); }
+  function balanceFor(order) { return Math.max(0,roundMoney(orderTotal(order) - amountPaid(order))); }
+  function profitFor(order) { return roundMoney(orderTotal(order) - orderCost(order)); }
+  function paymentStatusFor(order) {
+    const total = orderTotal(order); const paid = amountPaid(order); const posted = paymentsFor(order.id);
+    const receipts = posted.filter((item) => item.kind !== 'Refund');
+    if (posted.some((item) => item.kind === 'Refund') && paid <= 0) return 'Refunded';
+    if (paid <= 0) return 'Unpaid';
+    if (paid >= total - .005) return 'Paid';
+    if (receipts.length && receipts.every((item) => item.isDeposit)) return 'Deposit Paid';
+    return 'Partially Paid';
+  }
+  function isOpenOrder(order) { return !['Completed','Cancelled'].includes(order.status); }
+  function nextOrderNumber() {
+    const highest = state.data.orders.reduce((max,item) => Math.max(max,Number(String(item.orderNumber || '').match(/(\d+)$/)?.[1] || 0)),1000);
+    return `OSL-${highest + 1}`;
+  }
+  function periodRange(key, customStart = '', customEnd = '') {
+    const today = new Date(); today.setHours(12,0,0,0);
+    if (key === 'all') return { start:null,end:null };
+    if (key === 'custom') return { start:parseDate(customStart), end:parseDate(customEnd) };
+    let start; let end;
+    if (key === 'month') { start = new Date(today.getFullYear(),today.getMonth(),1,12); end = new Date(today.getFullYear(),today.getMonth() + 1,0,12); }
+    if (key === 'lastMonth') { start = new Date(today.getFullYear(),today.getMonth() - 1,1,12); end = new Date(today.getFullYear(),today.getMonth(),0,12); }
+    if (key === 'year') { start = new Date(today.getFullYear(),0,1,12); end = new Date(today.getFullYear(),11,31,12); }
+    if (key === 'lastYear') { start = new Date(today.getFullYear() - 1,0,1,12); end = new Date(today.getFullYear() - 1,11,31,12); }
+    return { start,end };
+  }
+  function withinPeriod(iso, key, customStart = '', customEnd = '') {
+    const value = parseDate(iso); if (!value) return false;
+    const { start,end } = periodRange(key,customStart,customEnd);
+    return (!start || value >= start) && (!end || value <= end);
+  }
+  function ordersInPeriod(key, customStart = '', customEnd = '') { return state.data.orders.filter((order) => order.status !== 'Cancelled' && withinPeriod(order.orderDate,key,customStart,customEnd)); }
+  function expensesInPeriod(key, customStart = '', customEnd = '') { return state.data.expenses.filter((expense) => withinPeriod(expense.date,key,customStart,customEnd)); }
+  function financials(key = 'all', customStart = '', customEnd = '') {
+    const orders = ordersInPeriod(key,customStart,customEnd); const expenses = expensesInPeriod(key,customStart,customEnd);
+    const revenue = roundMoney(orders.reduce((sum,order) => sum + orderTotal(order),0));
+    const directCosts = roundMoney(orders.reduce((sum,order) => sum + orderCost(order),0));
+    const generalExpenses = roundMoney(expenses.reduce((sum,item) => sum + numberValue(item.amount),0));
+    const grossProfit = roundMoney(revenue - directCosts);
+    const netProfit = roundMoney(grossProfit - generalExpenses);
+    const collected = roundMoney(orders.reduce((sum,order) => sum + amountPaid(order),0));
+    return { orders,expenses,revenue,directCosts,generalExpenses,grossProfit,netProfit,collected };
+  }
+  function relativeDue(order) {
+    if (order.status === 'Completed') return 'Completed';
+    if (order.status === 'Cancelled') return 'Cancelled';
+    const due = parseDate(order.dueDate); if (!due) return 'No due date';
+    const today = parseDate(toIsoDate()); const diff = Math.round((due - today) / 86400000);
+    if (diff < 0) return `${Math.abs(diff)} day${Math.abs(diff) === 1 ? '' : 's'} overdue`;
+    if (diff === 0) return 'Due today';
+    if (diff === 1) return 'Due tomorrow';
+    return `Due in ${diff} days`;
+  }
+  function badge(label) { return `<span class="badge ${slug(label)}">${esc(label)}</span>`; }
+  function optionList(values, selected = '', includeAll = false, allLabel = 'All') {
+    const normalized = values.map((item) => typeof item === 'string' ? item : item.name);
+    return `${includeAll ? `<option value="all">${esc(allLabel)}</option>` : ''}${normalized.map((value) => `<option value="${attr(value)}" ${String(value) === String(selected) ? 'selected' : ''}>${esc(value)}</option>`).join('')}`;
+  }
+  function periodSwitch(active, action, includeExtra = false) {
+    const keys = includeExtra ? ['month','lastMonth','year','lastYear','all','custom'] : ['month','lastMonth','year','all'];
+    return `<div class="period-switch" aria-label="Date period">${keys.map((key) => `<button type="button" class="${active === key ? 'active' : ''}" data-action="${action}" data-period="${key}">${PERIOD_LABELS[key]}</button>`).join('')}</div>`;
+  }
+  function pageHead(eyebrow,title,description,actions = '') { return `<header class="page-head"><div><span class="eyebrow">${esc(eyebrow)}</span><h1 tabindex="-1">${esc(title)}</h1><p>${esc(description)}</p></div><div class="page-actions">${actions}</div></header>`; }
+  function emptyState(title,message,action = '') { return `<div class="card-empty"><span class="empty-icon">${ico('scissors')}</span><strong>${esc(title)}</strong><p class="small-copy">${esc(message)}</p>${action}</div>`; }
+
+  function renderMetric(label,value,note,iconName,tint = '') {
+    return `<article class="card metric-card ${tint}"><div class="metric-top"><span class="metric-label">${esc(label)}</span><span class="metric-icon">${ico(iconName)}</span></div><div class="metric-value">${esc(value)}</div><div class="metric-note">${note}</div></article>`;
+  }
+  function monthSeries(count = 6) {
+    const series = [];
+    for (let offset = -(count - 1); offset <= 0; offset += 1) {
+      const marker = new Date(); marker.setHours(12,0,0,0); marker.setDate(1); marker.setMonth(marker.getMonth() + offset);
+      const year = marker.getFullYear(); const month = marker.getMonth();
+      const orders = state.data.orders.filter((order) => { const date = parseDate(order.orderDate); return order.status !== 'Cancelled' && date && date.getFullYear() === year && date.getMonth() === month; });
+      const expenses = state.data.expenses.filter((item) => { const date = parseDate(item.date); return date && date.getFullYear() === year && date.getMonth() === month; });
+      const revenue = roundMoney(orders.reduce((sum,order) => sum + orderTotal(order),0));
+      const orderCosts = roundMoney(orders.reduce((sum,order) => sum + orderCost(order),0));
+      const expense = roundMoney(orderCosts + expenses.reduce((sum,item) => sum + numberValue(item.amount),0));
+      series.push({ label:marker.toLocaleDateString('en-US',{month:'short'}), fullLabel:marker.toLocaleDateString('en-US',{month:'long',year:'numeric'}), revenue, expense, profit:roundMoney(revenue - expense) });
+    }
+    return series;
+  }
+  function renderBarChart(series = monthSeries()) {
+    const max = Math.max(1,...series.flatMap((item) => [item.revenue,item.expense,Math.max(0,item.profit)]));
+    return `<div class="chart-wrap" tabindex="0" aria-label="Scrollable monthly revenue, expenses, and profit chart"><div class="chart-legend"><span class="legend-item"><span class="legend-dot"></span>Revenue</span><span class="legend-item"><span class="legend-dot expense"></span>Expenses</span><span class="legend-item"><span class="legend-dot profit"></span>Profit</span></div><div class="bar-chart">${series.map((item) => `<div class="month-group" role="img" aria-label="${attr(item.fullLabel)}: revenue ${money(item.revenue)}, expenses ${money(item.expense)}, profit ${money(item.profit)}"><div class="bars"><span class="bar" style="height:${Math.max(1,item.revenue / max * 100)}%" title="Revenue ${money(item.revenue)}"></span><span class="bar expense" style="height:${Math.max(1,item.expense / max * 100)}%" title="Expenses ${money(item.expense)}"></span><span class="bar profit" style="height:${Math.max(1,Math.max(0,item.profit) / max * 100)}%" title="Profit ${money(item.profit)}"></span></div><span class="month-label">${esc(item.label)}</span></div>`).join('')}</div></div>`;
+  }
+  function attentionReason(order) {
+    const due = parseDate(order.dueDate); const today = parseDate(toIsoDate()); const days = due ? Math.round((due - today) / 86400000) : 999;
+    if (order.status === 'Ready') return { title:'Ready for pickup', detail:'Let the customer know it is ready', priority:1, urgent:false };
+    if (balanceFor(order) > 0 && order.status === 'Completed') return { title:'Payment still due', detail:`Completed with ${money(balanceFor(order))} remaining`, priority:0, urgent:true };
+    if (days < 0 && isOpenOrder(order)) return { title:'Order overdue', detail:relativeDue(order), priority:0, urgent:true };
+    if (days <= 3 && isOpenOrder(order)) return { title:'Due very soon', detail:relativeDue(order), priority:1, urgent:true };
+    if (order.status === 'Materials Needed') return { title:'Materials needed', detail:'Supplies are holding up this order', priority:2, urgent:false };
+    if (order.status === 'New') return { title:'New order to confirm', detail:'Review details and confirm the order', priority:3, urgent:false };
+    if (order.status === 'In Progress') return { title:'Currently being made', detail:relativeDue(order), priority:4, urgent:false };
+    if (balanceFor(order) > 0) return { title:'Balance outstanding', detail:`${money(balanceFor(order))} remains unpaid`, priority:5, urgent:false };
+    return null;
+  }
+  function renderAttentionItem(order) {
+    const reason = attentionReason(order); if (!reason) return '';
+    return `<button class="attention-item" type="button" data-open-order="${attr(order.id)}"><span class="attention-symbol ${reason.urgent ? 'urgent' : ''}">${ico(reason.urgent ? 'alert' : 'clock')}</span><span><strong>${esc(reason.title)} · ${esc(order.customerName)}</strong><span>${esc(order.product)} · ${esc(reason.detail)}</span></span><span class="attention-amount"><strong>${money(orderTotal(order))}</strong><span>${badge(order.status)}</span></span></button>`;
+  }
+  function renderDashboard() {
+    const period = state.ui.dashboardPeriod;
+    const f = financials(period);
+    const openOrders = state.data.orders.filter(isOpenOrder);
+    const unpaid = state.data.orders.filter((order) => order.status !== 'Cancelled').reduce((sum,order) => sum + balanceFor(order),0);
+    const completedMonth = state.data.orders.filter((order) => order.status === 'Completed' && withinPeriod(order.completedDate || order.updatedAt?.slice(0,10),'month')).length;
+    const attention = state.data.orders.map((order) => ({ order,reason:attentionReason(order) })).filter((item) => item.reason).sort((a,b) => a.reason.priority - b.reason.priority || String(a.order.dueDate).localeCompare(String(b.order.dueDate))).slice(0,7);
+    const recent = [...state.data.orders].sort((a,b) => String(b.orderDate).localeCompare(String(a.orderDate)) || String(b.createdAt).localeCompare(String(a.createdAt))).slice(0,7);
+    const greeting = new Date().getHours() < 12 ? 'Good morning' : new Date().getHours() < 18 ? 'Good afternoon' : 'Good evening';
+    return `<div class="page dashboard-page">
+      ${pageHead('Workroom overview',`${greeting}, ${state.data.settings.businessInfo.owner || 'Mara'}.`,'Here is what needs your hands today — and what the business is earning.',periodSwitch(period,'dashboard-period'))}
+      <section class="metric-grid" aria-label="Business snapshot">
+        ${renderMetric('Total Revenue',money(f.revenue),`${esc(PERIOD_LABELS[period])} order value`,'money')}
+        ${renderMetric('Total Profit',money(f.netProfit),`After direct costs and general expenses`,'profit','rose-tint')}
+        ${renderMetric('Total Expenses',money(f.directCosts + f.generalExpenses),`${money(f.directCosts)} order costs + ${money(f.generalExpenses)} overhead`,'expense')}
+        ${renderMetric('Open Orders',String(openOrders.length),`<strong>${openOrders.filter((order) => ['New','Materials Needed'].includes(order.status)).length}</strong> need an early next step`,'orders')}
+        ${renderMetric('Unpaid Balance',money(unpaid),`${state.data.orders.filter((order) => balanceFor(order) > 0 && order.status !== 'Cancelled').length} orders with money due`,'card','rose-tint')}
+        ${renderMetric('Completed This Month',String(completedMonth),`Finished since ${formatDate(toIsoDate(new Date(new Date().getFullYear(),new Date().getMonth(),1)),{month:'short',day:'numeric'})}`,'check')}
+      </section>
+      <div class="dashboard-layout">
+        <div class="dashboard-main">
+          <section class="card"><div class="card-head"><div><h2>Revenue / Profit Chart</h2><p>Revenue, direct costs plus overhead, and net profit by month</p></div><button class="btn ghost small" type="button" data-view="reports">Open reports ${ico('chevron')}</button></div>${renderBarChart()}</section>
+          <section class="card"><div class="card-head"><div><h2>Recent Orders</h2><p>Your latest customer work</p></div><button class="btn ghost small" type="button" data-view="orders">View all ${ico('chevron')}</button></div><div class="recent-list">${recent.length ? recent.map((order) => `<div class="recent-item"><button type="button" data-open-order="${attr(order.id)}"><strong>${esc(order.customerName)}</strong><span>${esc(order.orderNumber)} · ${esc(order.product)}</span></button><span><strong>${formatDate(order.dueDate)}</strong><span>${esc(relativeDue(order))}</span></span><span class="text-right"><strong class="money">${money(orderTotal(order))}</strong><span>${badge(paymentStatusFor(order))}</span></span></div>`).join('') : emptyState('No orders yet','Create your first order to begin tracking the work.')}</div></section>
+        </div>
+        <aside class="dashboard-side">
+          <section class="card"><div class="card-head"><div><h2>Orders Needing Attention</h2><p>Prioritized by urgency</p></div><span class="badge ${attention.some((item) => item.reason.urgent) ? 'unpaid' : 'ready'}">${attention.length} to review</span></div><div class="attention-list">${attention.length ? attention.map(({order}) => renderAttentionItem(order)).join('') : emptyState('Everything is on track','There are no open orders needing attention.')}</div></section>
+          <section class="card card-pad"><span class="eyebrow">Cash snapshot</span><h2 style="margin-top:7px;font-size:23px">${money(f.collected)} collected</h2><p class="subtle small-copy" style="margin-top:6px">Revenue uses non-cancelled order value. Cash collected uses posted payments, so you can see the difference clearly.</p><button class="btn secondary small" style="margin-top:14px" type="button" data-view="reports">See the full picture ${ico('chevron')}</button></section>
+        </aside>
+      </div>
+    </div>`;
+  }
+
+  function dueMatches(order, filter) {
+    if (filter === 'all') return true;
+    const due = parseDate(order.dueDate); const today = parseDate(toIsoDate()); if (!due) return false;
+    const diff = Math.round((due - today) / 86400000);
+    if (filter === 'overdue') return diff < 0 && isOpenOrder(order);
+    if (filter === 'today') return diff === 0;
+    if (filter === 'week') return diff >= 0 && diff <= 7;
+    if (filter === 'future') return diff > 7;
+    return true;
+  }
+  function filteredOrders() {
+    const query = normalizeText(state.ui.orderSearch);
+    return [...state.data.orders].filter((order) => {
+      const haystack = normalizeText(`${order.orderNumber} ${order.customerName} ${order.product} ${order.category}`);
+      return (!query || haystack.includes(query)) && (state.ui.orderStatus === 'all' || order.status === state.ui.orderStatus) && (state.ui.paymentStatus === 'all' || paymentStatusFor(order) === state.ui.paymentStatus) && dueMatches(order,state.ui.dueFilter);
+    }).sort((a,b) => String(b.orderDate).localeCompare(String(a.orderDate)) || String(b.createdAt).localeCompare(String(a.createdAt)));
+  }
+  function renderOrderRows(orders) {
+    return orders.map((order) => `<tr data-open-order="${attr(order.id)}" tabindex="0" aria-label="Open ${attr(order.orderNumber)} for ${attr(order.customerName)}"><td><div class="cell-main"><strong>${esc(order.orderNumber)}</strong><span>${formatDate(order.orderDate)}</span></div></td><td><div class="cell-main"><strong>${esc(order.customerName)}</strong><span>${esc(order.product)} · ${esc(order.category)}</span></div></td><td><div class="cell-main"><strong>${formatDate(order.dueDate)}</strong><span>${esc(relativeDue(order))}</span></div></td><td>${badge(order.status)}</td><td>${badge(paymentStatusFor(order))}</td><td class="money">${money(orderTotal(order))}</td><td class="money">${money(amountPaid(order))}</td><td class="money ${balanceFor(order) > 0 ? 'due' : ''}">${money(balanceFor(order))}</td><td><div class="row-actions"><button class="mini-action" type="button" data-action="edit-order" data-id="${attr(order.id)}" aria-label="Edit ${attr(order.orderNumber)}">${ico('edit')}</button></div></td></tr>`).join('');
+  }
+  function renderOrderCards(orders) {
+    return orders.map((order) => `<button class="mobile-record" type="button" data-open-order="${attr(order.id)}"><span class="mobile-record-top"><span><strong>${esc(order.customerName)}</strong><span class="record-sub">${esc(order.orderNumber)} · ${esc(order.product)}</span></span>${badge(order.status)}</span><span class="mobile-record-meta"><span>Due<strong>${formatDate(order.dueDate,{month:'short',day:'numeric'})}</strong></span><span>Balance<strong class="${balanceFor(order) ? 'money due' : 'money'}">${money(balanceFor(order))}</strong></span><span>Profit<strong class="money positive">${money(profitFor(order))}</strong></span></span><span>${badge(paymentStatusFor(order))}</span></button>`).join('');
+  }
+  function renderOrders() {
+    const orders = filteredOrders();
+    return `<div class="page orders-page">
+      ${pageHead('Order workspace','Orders','Search every order, filter what matters, and open any record to manage payments and costs.',`<button class="btn rose" type="button" data-action="new-order">${ico('plus')} New order</button>`)}
+      <section class="card toolbar" aria-label="Search and filter orders">
+        <div class="toolbar-search">${ico('search')}<label class="sr-only" for="orderSearch" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)">Search orders</label><input id="orderSearch" type="search" value="${attr(state.ui.orderSearch)}" placeholder="Search customer, order number, or product…"></div>
+        <select class="filter-field" id="orderStatusFilter" aria-label="Filter by order status">${optionList(ORDER_STATUSES,state.ui.orderStatus,true,'All order statuses')}</select>
+        <select class="filter-field" id="paymentStatusFilter" aria-label="Filter by payment status">${optionList(PAYMENT_STATUSES,state.ui.paymentStatus,true,'All payment statuses')}</select>
+        <select class="filter-field compact" id="dueFilter" aria-label="Filter by due date"><option value="all" ${state.ui.dueFilter === 'all' ? 'selected' : ''}>All due dates</option><option value="overdue" ${state.ui.dueFilter === 'overdue' ? 'selected' : ''}>Overdue</option><option value="today" ${state.ui.dueFilter === 'today' ? 'selected' : ''}>Due Today</option><option value="week" ${state.ui.dueFilter === 'week' ? 'selected' : ''}>Due This Week</option><option value="future" ${state.ui.dueFilter === 'future' ? 'selected' : ''}>Future Orders</option></select>
+        <span class="results-count">${orders.length} of ${state.data.orders.length} orders</span>
+      </section>
+      <section class="card data-card">${orders.length ? `<div class="table-scroll desktop-table"><table><thead><tr><th>Order Number</th><th>Customer / Item</th><th>Due Date</th><th>Order Status</th><th>Payment Status</th><th>Total Price</th><th>Amount Paid</th><th>Balance Remaining</th><th><span class="sr-only">Actions</span></th></tr></thead><tbody>${renderOrderRows(orders)}</tbody></table></div><div class="mobile-records">${renderOrderCards(orders)}</div>` : emptyState('No matching orders','Try clearing a filter or create a new order.',`<button class="btn rose small" type="button" data-action="new-order">${ico('plus')} Add order</button>`)}</section>
+    </div>`;
+  }
+
+  function customerStats(customer) {
+    const orders = state.data.orders.filter((order) => order.customerId === customer.id && order.status !== 'Cancelled');
+    return { orders, total:roundMoney(orders.reduce((sum,order) => sum + orderTotal(order),0)), unpaid:roundMoney(orders.reduce((sum,order) => sum + balanceFor(order),0)), open:orders.filter(isOpenOrder).length };
+  }
+  function renderCustomers() {
+    const query = normalizeText(state.ui.customerSearch);
+    const customers = [...state.data.customers].filter((customer) => !query || normalizeText(`${customer.name} ${customer.email} ${customer.phone}`).includes(query)).sort((a,b) => a.name.localeCompare(b.name));
+    return `<div class="page customers-page">
+      ${pageHead('Customer book','Customers','Contact details, order history, lifetime spending, and current balances in one place.',`<button class="btn rose" type="button" data-action="new-customer">${ico('plus')} Add customer</button>`)}
+      <section class="card toolbar"><div class="toolbar-search">${ico('search')}<label class="sr-only" for="customerSearch" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)">Search customers</label><input id="customerSearch" type="search" value="${attr(state.ui.customerSearch)}" placeholder="Search name, email, or phone…"></div><span class="results-count">${customers.length} customer${customers.length === 1 ? '' : 's'}</span></section>
+      ${customers.length ? `<section class="customer-grid">${customers.map((customer) => { const stats = customerStats(customer); return `<article class="card customer-card"><div class="customer-top"><span class="customer-avatar">${esc(initials(customer.name))}</span><span><strong>${esc(customer.name)}</strong><span>${esc(customer.email || customer.phone || 'No contact details')}</span></span><button class="mini-action" type="button" data-action="edit-customer" data-id="${attr(customer.id)}" aria-label="Edit ${attr(customer.name)}">${ico('edit')}</button></div><div class="customer-stats"><span class="customer-stat"><span>Total orders</span><strong>${stats.orders.length}</strong></span><span class="customer-stat"><span>Amount spent</span><strong>${money(stats.total)}</strong></span><span class="customer-stat"><span>Unpaid</span><strong class="${stats.unpaid ? 'money due' : 'money'}">${money(stats.unpaid)}</strong></span></div><button class="btn secondary small" style="margin-top:14px" type="button" data-open-customer="${attr(customer.id)}">View customer</button></article>`; }).join('')}</section>` : `<section class="card">${emptyState('No matching customers','Try another search or add a customer.',`<button class="btn rose small" type="button" data-action="new-customer">${ico('plus')} Add customer</button>`)}</section>`}
+    </div>`;
+  }
+
+  function filteredExpenses() {
+    const query = normalizeText(state.ui.expenseSearch);
+    return [...state.data.expenses].filter((expense) => (!query || normalizeText(`${expense.description} ${expense.vendor} ${expense.category}`).includes(query)) && (state.ui.expenseCategory === 'all' || expense.category === state.ui.expenseCategory) && withinPeriod(expense.date,state.ui.expensePeriod)).sort((a,b) => String(b.date).localeCompare(String(a.date)));
+  }
+  function renderExpenses() {
+    const expenses = filteredExpenses(); const total = expenses.reduce((sum,item) => sum + numberValue(item.amount),0);
+    return `<div class="page expenses-page">
+      ${pageHead('Business spending','Expenses','Track overhead and supply purchases that are not already assigned to a customer order.',`<button class="btn rose" type="button" data-action="new-expense">${ico('plus')} Add expense</button>`)}
+      <section class="grid cols-3" style="margin-bottom:16px">${renderMetric('General Expenses',money(total),`${expenses.length} entries in this view`,'expense')}${renderMetric('This Month',money(expensesInPeriod('month').reduce((sum,item) => sum + numberValue(item.amount),0)),'General business expenses only','calendar')}${renderMetric('Largest Expense',expenses.length ? money(Math.max(...expenses.map((item) => numberValue(item.amount)))) : money(0),'Within the current filters','profit','rose-tint')}</section>
+      <section class="card toolbar"><div class="toolbar-search">${ico('search')}<label class="sr-only" for="expenseSearch" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)">Search expenses</label><input id="expenseSearch" type="search" value="${attr(state.ui.expenseSearch)}" placeholder="Search description, vendor, or category…"></div><select id="expenseCategoryFilter" class="filter-field" aria-label="Filter expense category">${optionList(state.data.settings.expenseCategories,state.ui.expenseCategory,true,'All categories')}</select><select id="expensePeriodFilter" class="filter-field compact" aria-label="Filter expense date">${Object.entries(PERIOD_LABELS).filter(([key]) => !['lastYear','custom'].includes(key)).map(([key,label]) => `<option value="${key}" ${state.ui.expensePeriod === key ? 'selected' : ''}>${label}</option>`).join('')}</select><span class="results-count">${expenses.length} entries</span></section>
+      <section class="card data-card">${expenses.length ? `<div class="table-scroll desktop-table"><table><thead><tr><th>Date</th><th>Description</th><th>Category</th><th>Vendor</th><th>Type</th><th>Amount</th><th><span class="sr-only">Actions</span></th></tr></thead><tbody>${expenses.map((expense) => `<tr><td>${formatDate(expense.date)}</td><td><div class="cell-main"><strong>${esc(expense.description)}</strong><span>${esc(expense.notes || 'No notes')}</span></div></td><td>${esc(expense.category)}</td><td>${esc(expense.vendor || '—')}</td><td>${esc(expense.type || 'Business Expense')}</td><td class="money">${money(expense.amount)}</td><td><div class="row-actions"><button class="mini-action" type="button" data-action="edit-expense" data-id="${attr(expense.id)}" aria-label="Edit expense">${ico('edit')}</button><button class="mini-action" type="button" data-action="delete-expense" data-id="${attr(expense.id)}" aria-label="Delete expense">${ico('trash')}</button></div></td></tr>`).join('')}</tbody></table></div><div class="mobile-records">${expenses.map((expense) => `<article class="mobile-record"><span class="mobile-record-top"><span><strong>${esc(expense.description)}</strong><span class="record-sub">${esc(expense.vendor || expense.category)}</span></span><strong class="money">${money(expense.amount)}</strong></span><span class="mobile-record-meta"><span>Date<strong>${formatDate(expense.date,{month:'short',day:'numeric'})}</strong></span><span>Category<strong>${esc(expense.category)}</strong></span><span>Type<strong>${esc(expense.type || 'Business')}</strong></span></span><span class="row-actions"><button class="btn secondary small" type="button" data-action="edit-expense" data-id="${attr(expense.id)}">${ico('edit')} Edit</button><button class="btn danger small" type="button" data-action="delete-expense" data-id="${attr(expense.id)}">${ico('trash')} Delete</button></span></article>`).join('')}</div>` : emptyState('No expenses in this view','Try another filter or record a business expense.',`<button class="btn rose small" type="button" data-action="new-expense">${ico('plus')} Add expense</button>`)}</section>
+    </div>`;
+  }
+
+  function breakdownRows(items, valueKey = 'value', labelKey = 'label', format = money) {
+    const max = Math.max(1,...items.map((item) => item[valueKey])); const total = items.reduce((sum,item) => sum + item[valueKey],0);
+    return items.length ? `<div class="breakdown-list">${items.map((item) => `<div class="breakdown-row"><span title="${attr(item[labelKey])}">${esc(item[labelKey])}</span><span class="track"><span style="width:${Math.max(2,item[valueKey] / max * 100)}%"></span></span><span class="breakdown-value">${format(item[valueKey])}${total ? ` · ${Math.round(item[valueKey] / total * 100)}%` : ''}</span></div>`).join('')}</div>` : `<p class="subtle small-copy">No data in this period.</p>`;
+  }
+  function renderReports() {
+    const period = state.ui.reportPeriod;
+    const f = financials(period,state.ui.customStart,state.ui.customEnd);
+    const categoryMap = new Map(); f.orders.forEach((order) => categoryMap.set(order.category,(categoryMap.get(order.category) || 0) + orderTotal(order)));
+    const categories = [...categoryMap].map(([label,value]) => ({label,value:roundMoney(value)})).sort((a,b) => b.value - a.value);
+    const orderIds = new Set(f.orders.map((order) => order.id)); const paymentMap = new Map();
+    state.data.payments.filter((payment) => payment.status !== 'Void' && orderIds.has(payment.orderId)).forEach((payment) => { const value = payment.kind === 'Refund' ? -Math.abs(numberValue(payment.amount)) : numberValue(payment.amount); paymentMap.set(payment.paymentMethod,(paymentMap.get(payment.paymentMethod) || 0) + value); });
+    const methods = [...paymentMap].map(([label,value]) => ({label,value:roundMoney(Math.max(0,value))})).filter((item) => item.value > 0).sort((a,b) => b.value - a.value);
+    const customerMap = new Map(); f.orders.forEach((order) => customerMap.set(order.customerId,(customerMap.get(order.customerId) || 0) + orderTotal(order)));
+    const best = [...customerMap].map(([id,value]) => ({ label:state.data.customers.find((item) => item.id === id)?.name || 'Unknown customer', value:roundMoney(value) })).sort((a,b) => b.value - a.value).slice(0,6);
+    const averageOrder = f.orders.length ? f.revenue / f.orders.length : 0; const avgProfit = f.orders.length ? f.grossProfit / f.orders.length : 0;
+    return `<div class="page reports-page">
+      ${pageHead('Know your numbers','Reports','A clear business snapshot for planning — not a replacement for professional accounting.',periodSwitch(period,'report-period',true))}
+      ${period === 'custom' ? `<section class="card toolbar"><div class="field"><label for="reportStart">Start date</label><input id="reportStart" type="date" value="${attr(state.ui.customStart)}"></div><div class="field"><label for="reportEnd">End date</label><input id="reportEnd" type="date" value="${attr(state.ui.customEnd)}"></div><span class="results-count">Custom date range uses order and expense dates</span></section>` : ''}
+      <div class="report-layout">
+        <div class="report-main">
+          <section class="card"><div class="card-head"><div><h2>Profit &amp; Loss Summary</h2><p>${esc(PERIOD_LABELS[period])} · order-date basis</p></div><span class="badge ${f.netProfit >= 0 ? 'paid' : 'unpaid'}">${f.netProfit >= 0 ? 'Profitable' : 'Loss'}</span></div><div class="pnl"><div class="pnl-row"><span>Revenue</span><strong>${money(f.revenue)}</strong></div><div class="pnl-row"><span>Minus order-related material costs</span><strong>− ${money(f.directCosts)}</strong></div><div class="pnl-row"><span>Gross profit</span><strong>${money(f.grossProfit)}</strong></div><div class="pnl-row"><span>Minus general business expenses</span><strong>− ${money(f.generalExpenses)}</strong></div><div class="pnl-row net"><span>Net Profit</span><strong>${money(f.netProfit)}</strong></div></div></section>
+          <section class="card"><div class="card-head"><div><h2>Revenue &amp; Profit by Month</h2><p>Revenue, Expenses, and Profit for the latest 12 months</p></div></div>${renderBarChart(monthSeries(12))}</section>
+          <section class="card"><div class="card-head"><div><h2>Sales by Product Category</h2><p>Which kinds of work generate the most revenue</p></div></div><div class="card-pad">${breakdownRows(categories)}</div></section>
+          <section class="card"><div class="card-head"><div><h2>Payment Method Breakdown</h2><p>Posted payment totals and percentages</p></div></div><div class="card-pad">${breakdownRows(methods)}</div></section>
+        </div>
+        <aside class="report-side">
+          <section class="card"><div class="card-head"><div><h2>Order Summary</h2><p>Useful averages for this period</p></div></div><div class="card-pad"><div class="summary-strip" style="grid-template-columns:repeat(2,1fr);margin:0"><div class="summary-box"><span>Number of orders</span><strong>${f.orders.length}</strong></div><div class="summary-box"><span>Average order value</span><strong>${money(averageOrder)}</strong></div><div class="summary-box"><span>Average profit / order</span><strong>${money(avgProfit)}</strong></div><div class="summary-box"><span>Cash collected</span><strong>${money(f.collected)}</strong></div></div></div></section>
+          <section class="card"><div class="card-head"><div><h2>Best Customers</h2><p>Ranked by order value in this period</p></div></div><div class="card-pad">${breakdownRows(best)}</div></section>
+          <section class="card card-pad"><span class="eyebrow">Reporting note</span><h2 style="margin-top:7px;font-size:21px">Sales and cash are different</h2><p class="subtle small-copy" style="margin-top:7px">Revenue is the value of non-cancelled orders dated in this period. Cash collected is posted payments on those orders. General expenses are counted once and never mixed into direct order costs.</p></section>
+        </aside>
+      </div>
+    </div>`;
+  }
+
+  function renderTokenList(items,type) {
+    return items.map((item,index) => { const entry = typeof item === 'string' ? { name:item,active:true,id:String(index) } : item; return `<span class="token ${entry.active === false ? 'disabled-token' : ''}">${esc(entry.name)}<button type="button" data-action="manage-token" data-type="${attr(type)}" data-id="${attr(entry.id || entry.name)}" data-name="${attr(entry.name)}" aria-label="Manage ${attr(entry.name)}">${ico('more')}</button></span>`; }).join('');
+  }
+  function renderSettings() {
+    const info = state.data.settings.businessInfo;
+    return `<div class="page settings-page">
+      ${pageHead('Make it yours','Settings','Keep the business details and everyday choices that make order entry fast.')}
+      <div class="settings-layout">
+        <div class="settings-column">
+          <section class="card"><div class="card-head"><div><h2>Business Information</h2><p>Shown throughout your private workspace</p></div></div><form id="businessSettingsForm" class="card-pad"><div class="form-grid"><div class="field"><label for="businessName">Business Name</label><input id="businessName" name="name" required value="${attr(info.name)}"></div><div class="field"><label for="ownerName">Owner Name</label><input id="ownerName" name="owner" required value="${attr(info.owner)}"></div><div class="field"><label for="businessPhone">Phone</label><input id="businessPhone" name="phone" type="tel" autocomplete="tel" value="${attr(info.phone)}"></div><div class="field"><label for="businessEmail">Email</label><input id="businessEmail" name="email" type="email" autocomplete="email" value="${attr(info.email)}"></div><div class="field span-2"><label for="businessAddress">Address</label><textarea id="businessAddress" name="address">${esc(info.address)}</textarea></div><div class="field span-2"><label for="businessLogo">Logo</label><input id="businessLogo" name="logo" type="url" placeholder="Optional image URL" value="${attr(state.data.settings.logoUrl || '')}"><span class="field-help">The built-in thread-and-scissors mark remains when this is blank.</span></div></div><div style="display:flex;justify-content:flex-end;margin-top:15px"><button class="btn rose" type="submit">${ico('check')} Save business information</button></div></form></section>
+          <section class="card"><div class="card-head"><div><h2>Product Categories</h2><p>Add, edit, or archive choices used on orders</p></div></div><div class="card-pad"><div class="token-list">${renderTokenList(state.data.categories,'category')}</div><form class="inline-add" data-add-token="category"><label class="sr-only" for="newCategory" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)">New product category</label><input id="newCategory" name="name" required placeholder="Add a product category"><button class="btn secondary" type="submit">${ico('plus')} Add</button></form></div></section>
+        </div>
+        <div class="settings-column">
+          <section class="card"><div class="card-head"><div><h2>Payment Methods</h2><p>Disable a method without changing payment history</p></div></div><div class="card-pad"><div class="token-list">${renderTokenList(state.data.paymentMethods,'payment')}</div><form class="inline-add" data-add-token="payment"><label class="sr-only" for="newPaymentMethod" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)">New payment method</label><input id="newPaymentMethod" name="name" required placeholder="Add a payment method"><button class="btn secondary" type="submit">${ico('plus')} Add</button></form></div></section>
+          <section class="card"><div class="card-head"><div><h2>Expense Categories</h2><p>Categories for general business spending</p></div></div><div class="card-pad"><div class="token-list">${renderTokenList(state.data.settings.expenseCategories,'expense')}</div><form class="inline-add" data-add-token="expense"><label class="sr-only" for="newExpenseCategory" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)">New expense category</label><input id="newExpenseCategory" name="name" required placeholder="Add an expense category"><button class="btn secondary" type="submit">${ico('plus')} Add</button></form></div></section>
+          <section class="card card-pad"><span class="eyebrow">Order statuses</span><h2 style="margin-top:7px;font-size:21px">A simple seven-step flow</h2><p class="subtle small-copy" style="margin:7px 0 13px">The default workflow stays consistent so filters and reports remain trustworthy.</p><div class="token-list">${ORDER_STATUSES.map((status) => badge(status)).join('')}</div></section>
+          <section class="card card-pad"><span class="eyebrow">Data &amp; privacy</span><h2 style="margin-top:7px;font-size:21px">${storageMode === 'sheets' ? 'Private Google Sheet' : storageMode === 'memory' ? 'Tab-only memory mode' : 'Private to this browser'}</h2><p class="subtle small-copy" style="margin-top:7px">${storageMode === 'sheets' ? 'This deployed app reads and writes only its configured spreadsheet tabs. Production records cannot be reset from this screen.' : storageMode === 'memory' ? 'Browser storage is blocked, so changes last only until this tab closes.' : 'This portfolio demo stores a namespaced copy in localStorage. No information is sent anywhere.'}</p>${storageMode !== 'sheets' ? `<button class="btn danger small" style="margin-top:14px" type="button" data-action="reset-demo">${ico('refresh')} Reset sample data</button>` : ''}</section>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  const renderers = { dashboard:renderDashboard, orders:renderOrders, customers:renderCustomers, expenses:renderExpenses, reports:renderReports, settings:renderSettings };
+  function render(moveFocus = false) {
+    const renderer = renderers[state.view] || renderDashboard;
+    $('#mainContent').innerHTML = renderer();
+    $$('.nav-item[data-view],.mobile-nav [data-view]').forEach((button) => { const active = button.dataset.view === state.view; button.classList.toggle('active',active); if (active) button.setAttribute('aria-current','page'); else button.removeAttribute('aria-current'); });
+    $$('[data-count="orders"]').forEach((node) => node.textContent = state.data.orders.filter(isOpenOrder).length);
+    $('#ownerNameSide').textContent = state.data.settings.businessInfo.owner || 'Mara';
+    if (moveFocus) requestAnimationFrame(() => $('#mainContent h1')?.focus?.({preventScroll:true}));
+  }
+  function navigate(view, options = {}) {
+    const next = VIEWS.includes(view) ? view : 'dashboard';
+    state.view = next;
+    if (location.hash !== `#${next}`) history.pushState(null,'',`#${next}`);
+    closeNav();
+    render(options.focus !== false);
+    window.scrollTo({ top:0, behavior:options.instant ? 'auto' : 'smooth' });
+  }
+
+  function setAppInert(inert) {
+    const app = $('#appShell'); const mobile = $('.mobile-nav');
+    if ('inert' in app) app.inert = inert;
+    if (mobile && 'inert' in mobile) mobile.inert = inert;
+  }
+  function openModal({ title, subtitle = '', subtitleHtml = '', body = '', footer = '', wide = false, initialFocus = '' }) {
+    state.lastTrigger = document.activeElement;
+    const root = $('#modalRoot');
+    root.innerHTML = `<button class="modal-backdrop" type="button" data-action="close-modal" aria-label="Close dialog"></button><section class="modal-shell ${wide ? 'wide' : ''}" role="dialog" aria-modal="true" aria-labelledby="modalTitle"><header class="modal-head"><div><h2 id="modalTitle">${esc(title)}</h2>${subtitleHtml || subtitle ? `<p>${subtitleHtml || esc(subtitle)}</p>` : ''}</div><button class="close-btn" type="button" data-action="close-modal" aria-label="Close dialog">${ico('x')}</button></header><div class="modal-body">${body}</div>${footer ? `<footer class="modal-foot">${footer}</footer>` : ''}</section>`;
+    root.classList.add('open'); root.setAttribute('aria-hidden','false'); document.body.classList.add('overlay-open'); setAppInert(true);
+    requestAnimationFrame(() => { const target = initialFocus ? $(initialFocus,root) : null; (target || $('.close-btn',root))?.focus(); });
+  }
+  function closeModal() {
+    const root = $('#modalRoot'); if (!root.classList.contains('open')) return;
+    root.classList.remove('open'); root.setAttribute('aria-hidden','true'); root.innerHTML = ''; document.body.classList.remove('overlay-open'); setAppInert(false);
+    const trigger = state.lastTrigger; state.lastTrigger = null; requestAnimationFrame(() => trigger?.isConnected && trigger.focus?.());
+  }
+  function trapModalFocus(event) {
+    const root = $('#modalRoot.open'); if (!root) return;
+    if (event.key === 'Escape') { event.preventDefault(); closeModal(); return; }
+    if (event.key !== 'Tab') return;
+    const focusable = $$('button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),a[href],[tabindex]:not([tabindex="-1"])',root).filter((node) => node.offsetParent !== null);
+    if (!focusable.length) return;
+    const first = focusable[0]; const last = focusable.at(-1);
+    if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+    else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+  }
+
+  function orderDetailBody(order) {
+    const customer = customerFor(order); const payments = state.data.payments.filter((item) => item.orderId === order.id); const costs = costsFor(order.id);
+    const infoRows = [
+      ['Order date',formatDate(order.orderDate)],['Due date',`${formatDate(order.dueDate)} · ${relativeDue(order)}`],['Product / Item',order.product],['Category',order.category],['Quantity',order.quantity],['Size / Dimensions',order.size || '—'],['Fabric / Color',order.fabric || '—'],['Personalization',order.personalization || '—']
+    ];
+    return `<div class="summary-strip"><div class="summary-box"><span>Order Total</span><strong>${money(orderTotal(order))}</strong></div><div class="summary-box"><span>Amount Paid</span><strong>${money(amountPaid(order))}</strong></div><div class="summary-box"><span>Remaining Balance</span><strong class="${balanceFor(order) ? 'money due' : ''}">${money(balanceFor(order))}</strong></div><div class="summary-box"><span>Gross Profit</span><strong class="money positive">${money(profitFor(order))}</strong></div></div>
+      <div class="detail-grid">
+        <section class="detail-panel"><h3>Customer Information</h3><div class="detail-list"><div class="detail-line"><span>Customer</span><strong>${esc(customer.name)}</strong></div><div class="detail-line"><span>Phone</span><span>${esc(customer.phone || '—')}</span></div><div class="detail-line"><span>Email</span><span>${esc(customer.email || '—')}</span></div></div><button class="btn ghost small" style="margin-top:12px" type="button" data-open-customer="${attr(customer.id)}">View customer profile ${ico('chevron')}</button></section>
+        <section class="detail-panel"><h3>Order Information</h3><div class="detail-list">${infoRows.map(([label,value]) => `<div class="detail-line"><span>${esc(label)}</span><span>${esc(value)}</span></div>`).join('')}</div></section>
+        <section class="detail-panel"><div class="section-title"><h3>Payments</h3><button class="btn secondary small" type="button" data-action="add-payment" data-id="${attr(order.id)}">${ico('plus')} Add payment</button></div>${payments.length ? `<div class="ledger-list">${payments.map((payment) => `<div class="ledger-row" style="${payment.status === 'Void' ? 'opacity:.55' : ''}"><span><strong>${esc(payment.paymentMethod)} ${payment.status === 'Void' ? '· Void' : ''}</strong><span>${formatDate(payment.paymentDate)}${payment.notes ? ` · ${esc(payment.notes)}` : ''}${payment.isDeposit ? ' · Deposit' : ''}</span></span><strong class="money ${payment.kind === 'Refund' ? 'due' : ''}" style="${payment.status === 'Void' ? 'text-decoration:line-through' : ''}">${payment.kind === 'Refund' ? '−' : ''}${money(Math.abs(payment.amount))}</strong>${payment.status === 'Void' ? '<span></span>' : `<button class="mini-action" type="button" data-action="void-payment" data-id="${attr(payment.id)}" aria-label="Void payment">${ico('trash')}</button>`}</div>`).join('')}</div>` : `<p class="subtle small-copy">No payments recorded. Payment Status: Unpaid.</p>`}</section>
+        <section class="detail-panel"><div class="section-title"><h3>Direct Order Costs</h3><button class="btn secondary small" type="button" data-action="add-cost" data-id="${attr(order.id)}">${ico('plus')} Add cost</button></div>${costs.length ? `<div class="ledger-list">${costs.map((cost) => `<div class="ledger-row"><span><strong>${esc(cost.description)}</strong><span>${formatDate(cost.date)}</span></span><strong class="money">${money(cost.amount)}</strong><button class="mini-action" type="button" data-action="delete-cost" data-id="${attr(cost.id)}" aria-label="Delete order cost">${ico('trash')}</button></div>`).join('')}</div>` : `<p class="subtle small-copy">No material or supply costs recorded for this order.</p>`}</section>
+        <section class="detail-panel span-full"><h3>Pricing</h3><div class="detail-list"><div class="detail-line"><span>Item price × Quantity</span><span>${money(order.itemPrice)} × ${esc(order.quantity)} = ${money(numberValue(order.itemPrice) * numberValue(order.quantity))}</span></div><div class="detail-line"><span>Additional charges</span><span>${money(order.additionalCharges)}</span></div><div class="detail-line"><span>Discount</span><span>− ${money(order.discount)}</span></div><div class="detail-line"><span>Tax</span><span>${money(order.tax)}</span></div><div class="detail-line"><span>Total Order Costs</span><span>${money(orderCost(order))}</span></div></div>${order.description || order.notes ? `<div class="form-section"><div class="detail-line"><span>Description</span><span>${esc(order.description || '—')}</span></div><div class="detail-line"><span>Additional Notes</span><span>${esc(order.notes || '—')}</span></div></div>` : ''}</section>
+      </div>`;
+  }
+  function openOrderDetail(id) {
+    const order = state.data.orders.find((item) => item.id === id); if (!order) return;
+    openModal({ title:`${order.orderNumber} · ${order.customerName}`, subtitleHtml:`${esc(order.product)} · ${badge(order.status)} ${badge(paymentStatusFor(order))}`, wide:true, body:orderDetailBody(order), footer:`<button class="btn ghost danger" type="button" data-action="cancel-order" data-id="${attr(order.id)}" ${['Cancelled','Completed'].includes(order.status) ? 'disabled' : ''}>Cancel order</button><span class="foot-spacer"></span><button class="btn secondary" type="button" data-action="close-modal">Close</button><button class="btn rose" type="button" data-action="edit-order" data-id="${attr(order.id)}">${ico('edit')} Edit order</button>` });
+  }
+
+  function categoryOptions(selected) {
+    const values = [...new Set([...activeCategories().map((item) => item.name),selected].filter(Boolean))];
+    return optionList(values,selected);
+  }
+  function customerOptions(selected) {
+    const customers = [...state.data.customers].sort((a,b) => a.name.localeCompare(b.name));
+    return `<option value="">Choose a customer…</option>${customers.map((customer) => `<option value="${attr(customer.id)}" ${customer.id === selected ? 'selected' : ''}>${esc(customer.name)}</option>`).join('')}<option value="__new__">+ Quick-create a new customer</option>`;
+  }
+  function orderFormBody(order = null) {
+    const isEdit = Boolean(order); const value = order || { orderNumber:nextOrderNumber(),customerId:'',orderDate:toIsoDate(),dueDate:addDays(14),product:'',category:activeCategories()[0]?.name || 'Other',quantity:1,description:'',size:'',fabric:'',personalization:'',itemPrice:'',additionalCharges:0,discount:0,tax:0,status:'New',notes:'' };
+    return `<form id="orderForm" data-mode="${isEdit ? 'edit' : 'new'}" data-id="${attr(order?.id || '')}" novalidate>
+      <section class="form-section"><div class="section-title"><h3>Customer Information</h3><p>Select an existing customer or add one without leaving the order.</p></div><div class="form-grid"><div class="field span-2"><label for="orderCustomer">Customer</label><select id="orderCustomer" name="customerId" required>${customerOptions(value.customerId)}</select><span class="field-help" id="customerContactHint">${value.customerId ? esc([customerFor(value).phone,customerFor(value).email].filter(Boolean).join(' · ')) : 'Phone and email appear here after selection.'}</span></div><div class="field span-2" id="quickCustomerFields" ${value.customerId === '__new__' ? '' : 'hidden'}><div class="form-grid cols-3"><div class="field"><label for="quickCustomerName">Customer name</label><input id="quickCustomerName" name="newCustomerName" autocomplete="name"></div><div class="field"><label for="quickCustomerPhone">Phone</label><input id="quickCustomerPhone" name="newCustomerPhone" type="tel" autocomplete="tel"></div><div class="field"><label for="quickCustomerEmail">Email</label><input id="quickCustomerEmail" name="newCustomerEmail" type="email" autocomplete="email"></div></div></div></div></section>
+      <section class="form-section"><div class="section-title"><h3>Order Information</h3><p>Required essentials first; detail fields can stay blank.</p></div><div class="form-grid cols-3"><div class="field"><label for="orderNumber">Order Number</label><input id="orderNumber" name="orderNumber" readonly value="${attr(value.orderNumber)}"></div><div class="field"><label for="orderDate">Order Date</label><input id="orderDate" name="orderDate" type="date" required value="${attr(value.orderDate)}"></div><div class="field"><label for="dueDate">Due Date</label><input id="dueDate" name="dueDate" type="date" required value="${attr(value.dueDate)}"></div><div class="field span-2"><label for="orderProduct">Product / Item</label><input id="orderProduct" name="product" required maxlength="120" value="${attr(value.product)}" placeholder="e.g. Personalized baby blanket"></div><div class="field"><label for="orderCategory">Product Category</label><select id="orderCategory" name="category" required>${categoryOptions(value.category)}</select></div><div class="field"><label for="orderQuantity">Quantity</label><input id="orderQuantity" name="quantity" type="number" inputmode="numeric" min="1" step="1" required value="${attr(value.quantity)}"></div><div class="field"><label for="orderSize">Size / Dimensions</label><input id="orderSize" name="size" value="${attr(value.size)}" placeholder="e.g. 36 × 42 in"></div><div class="field"><label for="orderFabric">Fabric / Color</label><input id="orderFabric" name="fabric" value="${attr(value.fabric)}" placeholder="e.g. Sage linen"></div><div class="field span-2"><label for="orderDescription">Description</label><textarea id="orderDescription" name="description" placeholder="Construction details, design, or customer request">${esc(value.description)}</textarea></div><div class="field"><label for="orderPersonalization">Personalization Details</label><textarea id="orderPersonalization" name="personalization" placeholder="Name, monogram, font, placement">${esc(value.personalization)}</textarea></div><div class="field"><label for="orderStatus">Order Status</label><select id="orderStatus" name="status">${optionList(ORDER_STATUSES,value.status)}</select></div></div></section>
+      <section class="form-section"><div class="section-title"><h3>Pricing</h3><p>Order Total = (Item Price × Quantity) + Additional Charges + Tax − Discount</p></div><div class="form-grid cols-3"><div class="field"><label for="itemPrice">Item Price</label><input id="itemPrice" name="itemPrice" type="number" inputmode="decimal" min="0" step="0.01" required value="${attr(value.itemPrice)}"></div><div class="field"><label for="additionalCharges">Additional Charges</label><input id="additionalCharges" name="additionalCharges" type="number" inputmode="decimal" min="0" step="0.01" value="${attr(value.additionalCharges)}"></div><div class="field"><label for="orderDiscount">Discount</label><input id="orderDiscount" name="discount" type="number" inputmode="decimal" min="0" step="0.01" value="${attr(value.discount)}"></div><div class="field"><label for="orderTax">Sales Tax</label><input id="orderTax" name="tax" type="number" inputmode="decimal" min="0" step="0.01" value="${attr(value.tax)}"></div><div class="field span-2"><label for="orderNotes">Additional Notes</label><textarea id="orderNotes" name="notes" placeholder="Pickup, packaging, communication, or production notes">${esc(value.notes)}</textarea></div></div></section>
+      <div class="financial-preview" aria-live="polite"><span class="preview-item"><span>Order Total</span><strong id="previewTotal">${money(orderTotal(value))}</strong></span><span class="preview-item"><span>Amount Paid</span><strong>${money(order ? amountPaid(order) : 0)}</strong></span><span class="preview-item"><span>Direct Order Costs</span><strong>${money(order ? orderCost(order) : 0)}</strong></span><span class="preview-item"><span>Gross Profit</span><strong id="previewProfit">${money(orderTotal(value) - (order ? orderCost(order) : 0))}</strong></span></div>
+    </form>`;
+  }
+  function openOrderForm(id = '') {
+    const order = id ? state.data.orders.find((item) => item.id === id) : null;
+    openModal({ title:order ? `Edit ${order.orderNumber}` : 'Create a new order', subtitle:order ? 'Update the order details. Payments and costs stay attached.' : 'The essentials are first so you can save an order in under a minute.', wide:true, body:orderFormBody(order), footer:`<button class="btn secondary" type="button" data-action="close-modal">Cancel</button><button class="btn rose" id="saveOrderButton" type="submit" form="orderForm">${ico('check')} ${order ? 'Save changes' : 'Create order'}</button>`, initialFocus:'#orderCustomer' });
+  }
+  function updateOrderPreview() {
+    const form = $('#orderForm'); if (!form) return;
+    const draft = { itemPrice:form.elements.itemPrice.value, quantity:form.elements.quantity.value, additionalCharges:form.elements.additionalCharges.value, discount:form.elements.discount.value, tax:form.elements.tax.value };
+    const total = orderTotal(draft); const existing = state.data.orders.find((item) => item.id === form.dataset.id); const costs = existing ? orderCost(existing) : 0;
+    $('#previewTotal').textContent = money(total); $('#previewProfit').textContent = money(total - costs);
+  }
+  function updateQuickCustomerFields() {
+    const form = $('#orderForm'); if (!form) return;
+    const id = form.elements.customerId.value; const box = $('#quickCustomerFields',form); const hint = $('#customerContactHint',form);
+    box.hidden = id !== '__new__';
+    const nameInput = form.elements.newCustomerName; nameInput.required = id === '__new__';
+    if (id === '__new__') hint.textContent = 'Add at least a name; phone and email are optional.';
+    else { const customer = state.data.customers.find((item) => item.id === id); hint.textContent = customer ? [customer.phone,customer.email].filter(Boolean).join(' · ') || 'No phone or email saved.' : 'Phone and email appear here after selection.'; }
+  }
+
+  function customerFormBody(customer = null) {
+    const value = customer || { name:'',phone:'',email:'',address:'',notes:'',dateAdded:toIsoDate() };
+    return `<form id="customerForm" data-id="${attr(customer?.id || '')}" novalidate><div class="form-grid"><div class="field span-2"><label for="customerName">Customer Name</label><input id="customerName" name="name" required autocomplete="name" value="${attr(value.name)}"></div><div class="field"><label for="customerPhone">Phone</label><input id="customerPhone" name="phone" type="tel" autocomplete="tel" value="${attr(value.phone)}"></div><div class="field"><label for="customerEmail">Email</label><input id="customerEmail" name="email" type="email" autocomplete="email" value="${attr(value.email)}"></div><div class="field span-2"><label for="customerAddress">Address</label><textarea id="customerAddress" name="address" autocomplete="street-address">${esc(value.address)}</textarea></div><div class="field span-2"><label for="customerNotes">Notes</label><textarea id="customerNotes" name="notes">${esc(value.notes)}</textarea></div><div class="field"><label for="customerDateAdded">Date Added</label><input id="customerDateAdded" name="dateAdded" type="date" required value="${attr(value.dateAdded || toIsoDate())}"></div></div></form>`;
+  }
+  function openCustomerForm(id = '') {
+    const customer = id ? state.data.customers.find((item) => item.id === id) : null;
+    openModal({ title:customer ? `Edit ${customer.name}` : 'Add a customer', subtitle:'Keep the details that make the next order quicker.', body:customerFormBody(customer), footer:`${customer ? `<button class="btn danger" type="button" data-action="delete-customer" data-id="${attr(customer.id)}">${ico('trash')} Delete</button><span class="foot-spacer"></span>` : ''}<button class="btn secondary" type="button" data-action="close-modal">Cancel</button><button class="btn rose" id="saveCustomerButton" type="submit" form="customerForm">${ico('check')} Save customer</button>`, initialFocus:'#customerName' });
+  }
+  function openCustomerDetail(id) {
+    const customer = state.data.customers.find((item) => item.id === id); if (!customer) return;
+    const stats = customerStats(customer); const current = stats.orders.filter(isOpenOrder); const previous = stats.orders.filter((order) => !isOpenOrder(order));
+    const orderList = (orders) => orders.length ? `<div class="ledger-list">${orders.map((order) => `<button class="attention-item" style="padding-inline:0" type="button" data-open-order="${attr(order.id)}"><span class="attention-symbol">${ico('package')}</span><span><strong>${esc(order.orderNumber)} · ${esc(order.product)}</strong><span>${formatDate(order.orderDate)} · ${relativeDue(order)}</span></span><span class="attention-amount"><strong>${money(orderTotal(order))}</strong>${badge(order.status)}</span></button>`).join('')}</div>` : `<p class="subtle small-copy">No orders in this group.</p>`;
+    openModal({ title:customer.name, subtitle:`Customer since ${formatDate(customer.dateAdded)}`, wide:true, body:`<div class="summary-strip"><div class="summary-box"><span>Total Orders</span><strong>${stats.orders.length}</strong></div><div class="summary-box"><span>Total Amount Spent</span><strong>${money(stats.total)}</strong></div><div class="summary-box"><span>Current Unpaid Balance</span><strong class="${stats.unpaid ? 'money due' : ''}">${money(stats.unpaid)}</strong></div><div class="summary-box"><span>Current Orders</span><strong>${stats.open}</strong></div></div><div class="detail-grid"><section class="detail-panel"><h3>Contact</h3><div class="detail-list"><div class="detail-line"><span>Phone</span><span>${esc(customer.phone || '—')}</span></div><div class="detail-line"><span>Email</span><span>${esc(customer.email || '—')}</span></div><div class="detail-line"><span>Address</span><span>${esc(customer.address || '—')}</span></div><div class="detail-line"><span>Notes</span><span>${esc(customer.notes || '—')}</span></div></div></section><section class="detail-panel"><h3>Current Orders</h3>${orderList(current)}</section><section class="detail-panel span-full"><h3>Previous Orders</h3>${orderList(previous)}</section></div>`, footer:`<button class="btn secondary" type="button" data-action="close-modal">Close</button><button class="btn rose" type="button" data-action="edit-customer" data-id="${attr(customer.id)}">${ico('edit')} Edit customer</button>` });
+  }
+
+  function expenseFormBody(expense = null) {
+    const value = expense || { date:toIsoDate(),category:state.data.settings.expenseCategories[0] || 'Other',description:'',vendor:'',amount:'',type:'Business Expense',notes:'' };
+    return `<form id="expenseForm" data-id="${attr(expense?.id || '')}" novalidate><div class="form-grid"><div class="field"><label for="expenseDate">Date</label><input id="expenseDate" name="date" type="date" required value="${attr(value.date)}"></div><div class="field"><label for="expenseCategory">Category</label><select id="expenseCategory" name="category" required>${optionList(state.data.settings.expenseCategories,value.category)}</select></div><div class="field span-2"><label for="expenseDescription">Description</label><input id="expenseDescription" name="description" required value="${attr(value.description)}" placeholder="What did you buy or pay for?"></div><div class="field"><label for="expenseVendor">Vendor</label><input id="expenseVendor" name="vendor" value="${attr(value.vendor)}"></div><div class="field"><label for="expenseAmount">Amount</label><input id="expenseAmount" name="amount" type="number" inputmode="decimal" min="0.01" step="0.01" required value="${attr(value.amount)}"></div><div class="field span-2"><label for="expenseType">Expense Type</label><select id="expenseType" name="type">${optionList(EXPENSE_TYPES,value.type)}</select></div><div class="field span-2"><label for="expenseNotes">Notes</label><textarea id="expenseNotes" name="notes">${esc(value.notes)}</textarea></div></div></form>`;
+  }
+  function openExpenseForm(id = '') {
+    const expense = id ? state.data.expenses.find((item) => item.id === id) : null;
+    openModal({ title:expense ? 'Edit expense' : 'Add a business expense', subtitle:'Use this for spending that is not tied directly to one customer order.', body:expenseFormBody(expense), footer:`<button class="btn secondary" type="button" data-action="close-modal">Cancel</button><button class="btn rose" id="saveExpenseButton" type="submit" form="expenseForm">${ico('check')} Save expense</button>`, initialFocus:'#expenseDate' });
+  }
+
+  function openPaymentForm(orderId) {
+    const order = state.data.orders.find((item) => item.id === orderId); if (!order) return;
+    openModal({ title:'Record a payment', subtitle:`${order.orderNumber} · ${order.customerName} · ${money(balanceFor(order))} remaining`, body:`<form id="paymentForm" data-order-id="${attr(order.id)}" novalidate><div class="form-grid"><div class="field"><label for="paymentDate">Payment Date</label><input id="paymentDate" name="paymentDate" type="date" required value="${toIsoDate()}"></div><div class="field"><label for="paymentKind">Transaction</label><select id="paymentKind" name="kind"><option value="Payment">Payment</option><option value="Refund">Refund</option></select></div><div class="field"><label for="paymentAmount">Amount</label><input id="paymentAmount" name="amount" type="number" inputmode="decimal" min="0.01" step="0.01" max="${Math.max(.01,balanceFor(order))}" required value="${balanceFor(order) ? balanceFor(order).toFixed(2) : ''}"></div><div class="field"><label for="paymentMethod">Payment Method</label><select id="paymentMethod" name="paymentMethod" required>${optionList(activeMethods().map((item) => item.name),'')}</select></div><div class="field span-2"><span class="check-line"><input id="paymentDeposit" name="isDeposit" type="checkbox"><label for="paymentDeposit">Mark this payment as a deposit</label></span></div><div class="field span-2"><label for="paymentNotes">Notes</label><textarea id="paymentNotes" name="notes" placeholder="Optional reference or context"></textarea></div></div></form>`, footer:`<button class="btn secondary" type="button" data-action="back-to-order" data-id="${attr(order.id)}">Cancel</button><button class="btn rose" id="savePaymentButton" type="submit" form="paymentForm">${ico('check')} Save payment</button>`, initialFocus:'#paymentDate' });
+  }
+  function openCostForm(orderId) {
+    const order = state.data.orders.find((item) => item.id === orderId); if (!order) return;
+    openModal({ title:'Add a direct order cost', subtitle:`${order.orderNumber} · ${order.product}. This reduces the order’s gross profit.`, body:`<form id="costForm" data-order-id="${attr(order.id)}" novalidate><div class="form-grid"><div class="field span-2"><label for="costDescription">Description</label><input id="costDescription" name="description" required placeholder="e.g. Fabric, zipper, packaging"></div><div class="field"><label for="costAmount">Amount</label><input id="costAmount" name="amount" type="number" inputmode="decimal" min="0.01" step="0.01" required></div><div class="field"><label for="costDate">Date</label><input id="costDate" name="date" type="date" required value="${toIsoDate()}"></div></div></form>`, footer:`<button class="btn secondary" type="button" data-action="back-to-order" data-id="${attr(order.id)}">Cancel</button><button class="btn rose" id="saveCostButton" type="submit" form="costForm">${ico('check')} Save cost</button>`, initialFocus:'#costDescription' });
+  }
+
+  function trimmedFormValues(form) {
+    return Object.fromEntries([...new FormData(form).entries()].map(([key,value]) => [key,typeof value === 'string' ? value.trim() : value]));
+  }
+  function prepareForm(form) {
+    $$('input[required],textarea[required]',form).forEach((input) => {
+      input.setCustomValidity(typeof input.value === 'string' && !input.value.trim() ? 'Please complete this field.' : '');
+    });
+    return form.reportValidity();
+  }
+  let activeSubmission = false;
+  async function withSubmission(button, work) {
+    if (activeSubmission || state.saving) return false;
+    activeSubmission = true;
+    const original = button?.innerHTML; if (button) { button.disabled = true; button.innerHTML = `${ico('refresh')} Saving…`; }
+    try { return await work(); }
+    finally { activeSubmission = false; if (button?.isConnected) { button.disabled = false; button.innerHTML = original; } }
+  }
+  function customerDuplicate(name,email,phone,exceptId = '') {
+    const normalizedEmail = normalizeText(email); const normalizedPhone = String(phone || '').replace(/\D/g,''); const normalizedName = normalizeText(name);
+    return state.data.customers.find((customer) => customer.id !== exceptId && ((normalizedEmail && normalizeText(customer.email) === normalizedEmail) || (normalizedPhone.length >= 7 && String(customer.phone || '').replace(/\D/g,'') === normalizedPhone) || (!normalizedEmail && !normalizedPhone && normalizeText(customer.name) === normalizedName)));
+  }
+  async function submitOrder(form, button) {
+    if (!prepareForm(form)) return;
+    const values = trimmedFormValues(form);
+    if (values.customerId === '__new__' && !values.newCustomerName) { form.elements.newCustomerName.setCustomValidity('Enter the new customer’s name.'); form.elements.newCustomerName.reportValidity(); return; }
+    if (values.dueDate < values.orderDate) { form.elements.dueDate.setCustomValidity('Due date cannot be before the order date.'); form.elements.dueDate.reportValidity(); return; }
+    form.elements.dueDate.setCustomValidity('');
+    const rawTotal = numberValue(values.itemPrice) * numberValue(values.quantity) + numberValue(values.additionalCharges) + numberValue(values.tax) - numberValue(values.discount);
+    if (rawTotal < 0) { form.elements.discount.setCustomValidity('Discount cannot make the order total negative.'); form.elements.discount.reportValidity(); return; }
+    form.elements.discount.setCustomValidity('');
+    await withSubmission(button,async () => {
+      let customerId = values.customerId; let customer;
+      if (customerId === '__new__') {
+        const duplicate = customerDuplicate(values.newCustomerName,values.newCustomerEmail,values.newCustomerPhone);
+        if (duplicate) { toast('Customer may already exist',`${duplicate.name} has matching contact information.`,'error'); return false; }
+        customer = { id:uid('cus'),name:values.newCustomerName,phone:values.newCustomerPhone,email:values.newCustomerEmail,address:'',notes:'Created while entering an order.',dateAdded:toIsoDate(),createdAt:nowIso(),updatedAt:nowIso() };
+        state.data.customers.push(customer); customerId = customer.id;
+      } else customer = state.data.customers.find((item) => item.id === customerId);
+      if (!customer) { toast('Choose a customer','Select an existing customer or use quick-create.','error'); return false; }
+      const existing = state.data.orders.find((item) => item.id === form.dataset.id);
+      const status = values.status || 'New'; const timestamp = nowIso();
+      const order = {
+        ...(existing || {}), id:existing?.id || uid('ord'), orderNumber:existing?.orderNumber || values.orderNumber || nextOrderNumber(), customerId, customerName:customer.name,
+        orderDate:values.orderDate,dueDate:values.dueDate,product:values.product,category:values.category,quantity:Math.max(1,Math.round(numberValue(values.quantity))),description:values.description,size:values.size,fabric:values.fabric,personalization:values.personalization,
+        itemPrice:roundMoney(values.itemPrice),additionalCharges:roundMoney(values.additionalCharges),discount:roundMoney(values.discount),tax:roundMoney(values.tax),status,notes:values.notes,
+        completedDate:status === 'Completed' ? (existing?.completedDate || (values.orderDate > toIsoDate() ? values.orderDate : toIsoDate())) : (status === 'Cancelled' ? existing?.completedDate || '' : ''), createdAt:existing?.createdAt || timestamp,updatedAt:timestamp
+      };
+      if (existing) state.data.orders[state.data.orders.indexOf(existing)] = order; else state.data.orders.push(order);
+      const saved = await commit(existing ? 'Order updated' : 'Order created');
+      if (saved) { closeModal(); navigate('orders',{focus:false,instant:true}); }
+      return saved;
+    });
+  }
+  async function submitCustomer(form, button) {
+    if (!prepareForm(form)) return; const values = trimmedFormValues(form); const existing = state.data.customers.find((item) => item.id === form.dataset.id);
+    const duplicate = customerDuplicate(values.name,values.email,values.phone,existing?.id || '');
+    if (duplicate) { toast('Customer may already exist',`${duplicate.name} has matching contact information.`,'error'); return; }
+    await withSubmission(button,async () => {
+      const timestamp = nowIso(); const customer = { ...(existing || {}),id:existing?.id || uid('cus'),name:values.name,phone:values.phone,email:values.email,address:values.address,notes:values.notes,dateAdded:values.dateAdded || existing?.dateAdded || toIsoDate(),createdAt:existing?.createdAt || timestamp,updatedAt:timestamp };
+      if (existing) {
+        state.data.customers[state.data.customers.indexOf(existing)] = customer;
+        state.data.orders.filter((order) => order.customerId === customer.id).forEach((order) => order.customerName = customer.name);
+      } else state.data.customers.push(customer);
+      const saved = await commit(existing ? 'Customer updated' : 'Customer added'); if (saved) closeModal(); return saved;
+    });
+  }
+  async function submitExpense(form, button) {
+    if (!prepareForm(form)) return; const values = trimmedFormValues(form); const existing = state.data.expenses.find((item) => item.id === form.dataset.id);
+    await withSubmission(button,async () => {
+      const timestamp = nowIso(); const expense = { ...(existing || {}),id:existing?.id || uid('exp'),date:values.date,category:values.category,description:values.description,vendor:values.vendor,amount:roundMoney(values.amount),type:values.type,notes:values.notes,createdAt:existing?.createdAt || timestamp,updatedAt:timestamp };
+      if (existing) state.data.expenses[state.data.expenses.indexOf(existing)] = expense; else state.data.expenses.push(expense);
+      const saved = await commit(existing ? 'Expense updated' : 'Expense added'); if (saved) closeModal(); return saved;
+    });
+  }
+  async function submitPayment(form, button) {
+    if (!prepareForm(form)) return; const values = trimmedFormValues(form); const order = state.data.orders.find((item) => item.id === form.dataset.orderId); if (!order) return;
+    const amount = roundMoney(values.amount); const kind = values.kind === 'Refund' ? 'Refund' : 'Payment'; const limit = kind === 'Refund' ? amountPaid(order) : balanceFor(order);
+    if (amount > limit + .005) { form.elements.amount.setCustomValidity(kind === 'Refund' ? `Refund cannot exceed ${money(limit)} paid.` : `Payment cannot exceed the ${money(limit)} balance.`); form.elements.amount.reportValidity(); return; }
+    form.elements.amount.setCustomValidity('');
+    await withSubmission(button,async () => {
+      state.data.payments.push({ id:uid('pay'),orderId:order.id,customerId:order.customerId,paymentDate:values.paymentDate,amount,paymentMethod:values.paymentMethod,kind,isDeposit:kind === 'Payment' && form.elements.isDeposit.checked,status:'Posted',notes:values.notes,createdAt:nowIso(),updatedAt:nowIso() });
+      const saved = await commit(kind === 'Refund' ? 'Refund recorded' : 'Payment recorded');
+      if (saved) { closeModal(); openOrderDetail(order.id); } return saved;
+    });
+  }
+  async function submitCost(form, button) {
+    if (!prepareForm(form)) return; const values = trimmedFormValues(form); const order = state.data.orders.find((item) => item.id === form.dataset.orderId); if (!order) return;
+    await withSubmission(button,async () => {
+      state.data.orderCosts.push({ id:uid('cost'),orderId:order.id,description:values.description,amount:roundMoney(values.amount),date:values.date,createdAt:nowIso(),updatedAt:nowIso() });
+      const saved = await commit('Order cost added'); if (saved) { closeModal(); openOrderDetail(order.id); } return saved;
+    });
+  }
+  async function submitBusinessSettings(form, button) {
+    if (!prepareForm(form)) return; const values = trimmedFormValues(form);
+    await withSubmission(button,async () => {
+      state.data.settings.businessInfo = { name:values.name,owner:values.owner,phone:values.phone,email:values.email,address:values.address };
+      state.data.settings.logoUrl = values.logo || '';
+      return commit('Business information saved');
+    });
+  }
+
+  function openTokenManager(type,id,name) {
+    const isExpense = type === 'expense';
+    let entry = null;
+    if (type === 'category') entry = state.data.categories.find((item) => item.id === id);
+    if (type === 'payment') entry = state.data.paymentMethods.find((item) => item.id === id);
+    const currentName = isExpense ? name : entry?.name; if (!currentName) return;
+    openModal({ title:`Manage ${currentName}`, subtitle:isExpense ? 'Rename or remove this general expense category.' : 'Rename it everywhere or archive it from future entry forms.', body:`<form id="tokenForm" data-type="${attr(type)}" data-id="${attr(id)}" data-original="${attr(currentName)}"><div class="field"><label for="tokenName">Name</label><input id="tokenName" name="name" required value="${attr(currentName)}"></div>${!isExpense ? `<div class="field" style="margin-top:12px"><span class="check-line"><input id="tokenActive" name="active" type="checkbox" ${entry.active !== false ? 'checked' : ''}><label for="tokenActive">Available for new records</label></span></div>` : ''}</form>`, footer:`<button class="btn danger" type="button" data-action="delete-token" data-type="${attr(type)}" data-id="${attr(id)}" data-name="${attr(currentName)}">${ico('trash')} Delete</button><span class="foot-spacer"></span><button class="btn secondary" type="button" data-action="close-modal">Cancel</button><button class="btn rose" type="submit" form="tokenForm">${ico('check')} Save</button>`, initialFocus:'#tokenName' });
+  }
+  async function submitToken(form,button) {
+    if (!prepareForm(form)) return; const type = form.dataset.type; const id = form.dataset.id; const original = form.dataset.original; const name = form.elements.name.value.trim();
+    const pool = type === 'category' ? state.data.categories : type === 'payment' ? state.data.paymentMethods : state.data.settings.expenseCategories.map((value) => ({name:value}));
+    if (pool.some((item) => normalizeText(item.name) === normalizeText(name) && normalizeText(item.name) !== normalizeText(original))) { form.elements.name.setCustomValidity('That name already exists.'); form.elements.name.reportValidity(); return; }
+    if (type !== 'expense' && !form.elements.active.checked && pool.filter((item) => item.active !== false).length <= 1) { toast('Keep one choice active',`At least one ${type === 'category' ? 'product category' : 'payment method'} must remain available.`,'error'); return; }
+    await withSubmission(button,async () => {
+      if (type === 'category') { const item = state.data.categories.find((entry) => entry.id === id); item.name = name; item.active = form.elements.active.checked; state.data.orders.filter((order) => order.category === original).forEach((order) => order.category = name); }
+      if (type === 'payment') { const item = state.data.paymentMethods.find((entry) => entry.id === id); item.name = name; item.active = form.elements.active.checked; state.data.payments.filter((payment) => payment.paymentMethod === original).forEach((payment) => payment.paymentMethod = name); }
+      if (type === 'expense') { const index = state.data.settings.expenseCategories.indexOf(original); if (index >= 0) state.data.settings.expenseCategories[index] = name; state.data.expenses.filter((expense) => expense.category === original).forEach((expense) => expense.category = name); }
+      const saved = await commit('Setting updated'); if (saved) closeModal(); return saved;
+    });
+  }
+
+  function openNav() {
+    document.body.classList.add('nav-open');
+    const sidebar = $('#sidebar'); sidebar.setAttribute('aria-hidden','false'); sidebar.inert = false;
+    $('[data-action="toggle-nav"]')?.setAttribute('aria-expanded','true');
+    requestAnimationFrame(() => $('.sidebar .nav-item.active')?.focus());
+  }
+  function closeNav() {
+    document.body.classList.remove('nav-open');
+    const mobile = matchMedia('(max-width: 980px)').matches; const sidebar = $('#sidebar');
+    sidebar.setAttribute('aria-hidden',mobile ? 'true' : 'false'); sidebar.inert = mobile;
+    $('[data-action="toggle-nav"]')?.setAttribute('aria-expanded','false');
+  }
+  function renderGlobalSearch(query) {
+    const host = $('#searchResults'); const value = normalizeText(query);
+    if (!value) { host.classList.remove('open'); host.innerHTML = ''; return; }
+    const orders = state.data.orders.filter((order) => normalizeText(`${order.orderNumber} ${order.customerName} ${order.product}`).includes(value)).slice(0,5);
+    const customers = state.data.customers.filter((customer) => normalizeText(`${customer.name} ${customer.email} ${customer.phone}`).includes(value)).slice(0,4);
+    const results = [
+      ...orders.map((order) => ({type:'order',id:order.id,title:`${order.orderNumber} · ${order.customerName}`,detail:`${order.product} · ${money(balanceFor(order))} balance`,icon:'orders'})),
+      ...customers.map((customer) => ({type:'customer',id:customer.id,title:customer.name,detail:customer.email || customer.phone || 'Customer profile',icon:'users'}))
+    ];
+    host.innerHTML = results.length ? results.map((result) => `<button class="search-result" type="button" data-search-type="${result.type}" data-id="${attr(result.id)}"><span class="result-icon">${ico(result.icon)}</span><span><strong>${esc(result.title)}</strong><span>${esc(result.detail)}</span></span></button>`).join('') : `<div class="card-empty" style="min-height:90px;padding:15px"><strong>No matches</strong><span>Try a customer, item, or order number.</span></div>`;
+    host.classList.add('open');
+  }
+  function rerenderAndRefocus(id) {
+    render(false); requestAnimationFrame(() => { const input = document.getElementById(id); if (input) { input.focus(); const end = input.value.length; input.setSelectionRange?.(end,end); } });
+  }
+  async function deleteExpense(id) {
+    const expense = state.data.expenses.find((item) => item.id === id); if (!expense) return;
+    if (!window.confirm(`Delete “${expense.description}” for ${money(expense.amount)}? This cannot be undone.`)) return;
+    state.data.expenses = state.data.expenses.filter((item) => item.id !== id); await commit('Expense deleted'); if ($('#modalRoot.open')) closeModal();
+  }
+  async function deleteCustomer(id) {
+    const customer = state.data.customers.find((item) => item.id === id); if (!customer) return;
+    if (state.data.orders.some((order) => order.customerId === id)) { toast('Customer cannot be deleted','This customer has order history. Keep the profile so those records stay connected.','error'); return; }
+    if (!window.confirm(`Delete ${customer.name}? This cannot be undone.`)) return;
+    state.data.customers = state.data.customers.filter((item) => item.id !== id); const saved = await commit('Customer deleted'); if (saved) closeModal();
+  }
+  async function deleteToken(type,id,name) {
+    let used = false;
+    if (type === 'category') used = state.data.orders.some((order) => order.category === name);
+    if (type === 'payment') used = state.data.payments.some((payment) => payment.paymentMethod === name);
+    if (type === 'expense') used = state.data.expenses.some((expense) => expense.category === name);
+    if (used) { toast('This choice is in use',type === 'expense' ? 'Rename it instead so existing expense records remain valid.' : 'Archive it from future forms instead of deleting its history.','error'); return; }
+    const remaining = type === 'category' ? state.data.categories.length : type === 'payment' ? state.data.paymentMethods.length : state.data.settings.expenseCategories.length;
+    if (remaining <= 1) { toast('Keep one choice',`At least one ${type === 'category' ? 'product category' : type === 'payment' ? 'payment method' : 'expense category'} is required.`,'error'); return; }
+    if (!window.confirm(`Delete “${name}” from settings?`)) return;
+    if (type === 'category') state.data.categories = state.data.categories.filter((item) => item.id !== id);
+    if (type === 'payment') state.data.paymentMethods = state.data.paymentMethods.filter((item) => item.id !== id);
+    if (type === 'expense') state.data.settings.expenseCategories = state.data.settings.expenseCategories.filter((item) => item !== name);
+    const saved = await commit('Setting deleted'); if (saved) closeModal();
+  }
+  async function resetDemo() {
+    if (storageMode === 'sheets') { toast('Reset is disabled','Production Sheet records must be managed individually so history is not erased.','error'); return; }
+    if (!window.confirm('Reset all Oh Sew Lovely sample data? Your demo changes will be replaced.')) return;
+    if (activeSubmission || state.saving) return;
+    setSync('Resetting…',true);
+    try { state.data = normalizeData(await Repository.reset()); state.committed = deepClone(state.data); state.ui = { dashboardPeriod:'all',reportPeriod:'year',customStart:'',customEnd:'',orderSearch:'',orderStatus:'all',paymentStatus:'all',dueFilter:'all',customerSearch:'',expenseSearch:'',expenseCategory:'all',expensePeriod:'year' }; closeModal(); setSync('Saved',false); navigate('dashboard',{instant:true}); toast('Demo reset','Sample customers, orders, payments, costs, and expenses are back.'); }
+    catch (error) { setSync('Reset failed',false); toast('Could not reset',error.message,'error'); }
+  }
+  async function handleAction(action,element) {
+    const id = element.dataset.id || '';
+    if (action === 'close-modal') return closeModal();
+    if (action === 'toggle-nav') return document.body.classList.contains('nav-open') ? closeNav() : openNav();
+    if (action === 'close-nav') return closeNav();
+    if (action === 'mobile-more') return openNav();
+    if (action === 'new-order') return openOrderForm();
+    if (action === 'edit-order') return openOrderForm(id);
+    if (action === 'new-customer') return openCustomerForm();
+    if (action === 'edit-customer') return openCustomerForm(id);
+    if (action === 'new-expense') return openExpenseForm();
+    if (action === 'edit-expense') return openExpenseForm(id);
+    if (action === 'delete-expense') return deleteExpense(id);
+    if (action === 'delete-customer') return deleteCustomer(id);
+    if (action === 'add-payment') return openPaymentForm(id);
+    if (action === 'add-cost') return openCostForm(id);
+    if (action === 'back-to-order') return openOrderDetail(id);
+    if (action === 'manage-token') return openTokenManager(element.dataset.type,id,element.dataset.name);
+    if (action === 'delete-token') return deleteToken(element.dataset.type,id,element.dataset.name);
+    if (action === 'reset-demo') return resetDemo();
+    if (action === 'dashboard-period') { state.ui.dashboardPeriod = element.dataset.period; return render(false); }
+    if (action === 'report-period') {
+      state.ui.reportPeriod = element.dataset.period;
+      if (state.ui.reportPeriod === 'custom' && !state.ui.customStart) { state.ui.customStart = toIsoDate(new Date(new Date().getFullYear(),new Date().getMonth(),1)); state.ui.customEnd = toIsoDate(); }
+      return render(false);
+    }
+    if (action === 'cancel-order') {
+      const order = state.data.orders.find((item) => item.id === id); if (!order || !window.confirm(`Cancel ${order.orderNumber}? Its financial history will be preserved.`)) return;
+      order.status = 'Cancelled'; order.updatedAt = nowIso(); const saved = await commit('Order cancelled'); if (saved) openOrderDetail(id); return;
+    }
+    if (action === 'void-payment') {
+      const payment = state.data.payments.find((item) => item.id === id); if (!payment || !window.confirm('Void this payment record? It will stay in history but no longer count toward the balance.')) return;
+      payment.status = 'Void'; payment.updatedAt = nowIso(); const orderId = payment.orderId; const saved = await commit('Payment voided'); if (saved) openOrderDetail(orderId); return;
+    }
+    if (action === 'delete-cost') {
+      const cost = state.data.orderCosts.find((item) => item.id === id); if (!cost || !window.confirm(`Delete the direct cost “${cost.description}”?`)) return;
+      const orderId = cost.orderId; state.data.orderCosts = state.data.orderCosts.filter((item) => item.id !== id); const saved = await commit('Order cost deleted'); if (saved) openOrderDetail(orderId); return;
+    }
+  }
+
+  document.addEventListener('click',(event) => {
+    const viewButton = event.target.closest('[data-view]');
+    if (viewButton) { event.preventDefault(); navigate(viewButton.dataset.view); return; }
+    const actionButton = event.target.closest('[data-action]');
+    if (actionButton) { event.preventDefault(); handleAction(actionButton.dataset.action,actionButton); return; }
+    const searchResult = event.target.closest('[data-search-type]');
+    if (searchResult) { $('#searchResults').classList.remove('open'); $('#globalSearch').value = ''; if (searchResult.dataset.searchType === 'order') openOrderDetail(searchResult.dataset.id); else openCustomerDetail(searchResult.dataset.id); return; }
+    const orderTarget = event.target.closest('[data-open-order]'); if (orderTarget) { openOrderDetail(orderTarget.dataset.openOrder); return; }
+    const customerTarget = event.target.closest('[data-open-customer]'); if (customerTarget) { openCustomerDetail(customerTarget.dataset.openCustomer); return; }
+    if (!event.target.closest('.global-search')) $('#searchResults').classList.remove('open');
+  });
+  document.addEventListener('keydown',(event) => {
+    trapModalFocus(event);
+    if (!$('#modalRoot.open') && (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') { event.preventDefault(); $('#globalSearch')?.focus(); }
+    const row = event.target.closest?.('tr[data-open-order]'); if (row && (event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); openOrderDetail(row.dataset.openOrder); }
+  });
+  document.addEventListener('input',(event) => {
+    const target = event.target;
+    if (target.id === 'globalSearch') return renderGlobalSearch(target.value);
+    if (target.closest('#orderForm') && ['itemPrice','quantity','additionalCharges','discount','tax'].includes(target.name)) return updateOrderPreview();
+    if (target.id === 'orderSearch') { state.ui.orderSearch = target.value; return rerenderAndRefocus('orderSearch'); }
+    if (target.id === 'customerSearch') { state.ui.customerSearch = target.value; return rerenderAndRefocus('customerSearch'); }
+    if (target.id === 'expenseSearch') { state.ui.expenseSearch = target.value; return rerenderAndRefocus('expenseSearch'); }
+  });
+  document.addEventListener('change',(event) => {
+    const target = event.target;
+    if (target.id === 'orderCustomer') return updateQuickCustomerFields();
+    if (target.id === 'orderStatusFilter') { state.ui.orderStatus = target.value; return render(false); }
+    if (target.id === 'paymentStatusFilter') { state.ui.paymentStatus = target.value; return render(false); }
+    if (target.id === 'dueFilter') { state.ui.dueFilter = target.value; return render(false); }
+    if (target.id === 'expenseCategoryFilter') { state.ui.expenseCategory = target.value; return render(false); }
+    if (target.id === 'expensePeriodFilter') { state.ui.expensePeriod = target.value; return render(false); }
+    if (target.id === 'reportStart') { state.ui.customStart = target.value; return render(false); }
+    if (target.id === 'reportEnd') { state.ui.customEnd = target.value; return render(false); }
+    if (target.id === 'paymentKind') {
+      const form = target.form; const order = state.data.orders.find((item) => item.id === form.dataset.orderId); const refund = target.value === 'Refund'; const max = refund ? amountPaid(order) : balanceFor(order);
+      form.elements.amount.max = String(Math.max(.01,max)); form.elements.amount.value = max > 0 ? max.toFixed(2) : ''; form.elements.isDeposit.checked = false; form.elements.isDeposit.disabled = refund;
+    }
+  });
+  document.addEventListener('submit',(event) => {
+    event.preventDefault(); const form = event.target; const button = event.submitter || $(`button[form="${form.id}"]`);
+    if (form.id === 'orderForm') return submitOrder(form,button);
+    if (form.id === 'customerForm') return submitCustomer(form,button);
+    if (form.id === 'expenseForm') return submitExpense(form,button);
+    if (form.id === 'paymentForm') return submitPayment(form,button);
+    if (form.id === 'costForm') return submitCost(form,button);
+    if (form.id === 'businessSettingsForm') return submitBusinessSettings(form,button);
+    if (form.id === 'tokenForm') return submitToken(form,button);
+    if (form.matches('[data-add-token]')) {
+      if (!prepareForm(form) || activeSubmission || state.saving) return;
+      const type = form.dataset.addToken; const name = form.elements.name.value.trim();
+      const names = type === 'category' ? state.data.categories.map((item) => item.name) : type === 'payment' ? state.data.paymentMethods.map((item) => item.name) : state.data.settings.expenseCategories;
+      if (names.some((item) => normalizeText(item) === normalizeText(name))) { form.elements.name.setCustomValidity('That name already exists.'); form.elements.name.reportValidity(); return; }
+      if (type === 'category') state.data.categories.push({id:uid('cat'),name,active:true});
+      if (type === 'payment') state.data.paymentMethods.push({id:uid('method'),name,active:true});
+      if (type === 'expense') state.data.settings.expenseCategories.push(name);
+      withSubmission(button,async () => commit('Setting added'));
+    }
+  });
+  window.addEventListener('hashchange',() => { const view = location.hash.replace('#',''); if (VIEWS.includes(view) && view !== state.view) { state.view = view; render(true); } });
+  window.addEventListener('resize',() => { if (!matchMedia('(max-width: 980px)').matches) closeNav(); else if (!document.body.classList.contains('nav-open')) closeNav(); });
+  window.addEventListener('storage',(event) => {
+    if (event.key !== STORAGE_KEY || storageMode !== 'browser' || state.saving || !event.newValue) return;
+    try { state.data = normalizeData(JSON.parse(event.newValue)); state.committed = deepClone(state.data); render(false); toast('Data refreshed','Another tab saved newer changes.'); } catch (_) { /* Ignore malformed external values. */ }
+  });
+
+  async function init() {
+    try {
+      state.data = normalizeData(await Repository.load()); state.committed = deepClone(state.data); updateStorageMode(); setSync('Saved',false);
+      const requested = location.hash.replace('#',''); state.view = VIEWS.includes(requested) ? requested : 'dashboard';
+      if (!location.hash) history.replaceState(null,'','#dashboard');
+      closeNav(); render(false);
+    } catch (error) {
+      $('#mainContent').innerHTML = `<div class="page"><section class="card card-empty"><span class="empty-icon">${ico('alert')}</span><h1>We could not open the workroom</h1><p>${esc(error.message || 'Please refresh and try again.')}</p><button class="btn" type="button" onclick="location.reload()">Try again</button></section></div>`;
+      toast('App could not load',error.message || 'Unknown error','error');
+    }
+  }
+  window.OhSewLovely = { navigate, getState:() => deepClone(state.data), resetDemo, openOrder:(id) => openOrderDetail(id), repository:Repository };
+  init();
+  </script>
+</body>
+</html>
