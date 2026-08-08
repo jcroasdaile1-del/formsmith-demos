@@ -44,12 +44,13 @@
     }
 
     * { box-sizing: border-box; }
-    html { scroll-behavior: smooth; }
+    html { scroll-behavior: smooth; max-width: 100%; overscroll-behavior-x: none; }
     body {
       margin: 0;
       min-width: 320px;
       min-height: 100vh;
       overflow-x: hidden;
+      overscroll-behavior-x: none;
       background: var(--canvas);
       color: var(--ink);
       font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -74,7 +75,7 @@
 
     .demo-bar {
       height: var(--demo-bar); padding: 0 14px; display: flex; align-items: center; justify-content: center; gap: 12px;
-      position: relative; z-index: 80; background: #26352d; color: #f8f4ed; font-size: 11px;
+      position: sticky; top: 0; z-index: 80; background: #26352d; color: #f8f4ed; font-size: 11px;
     }
     .demo-state { display: inline-flex; align-items: center; gap: 7px; }
     .save-dot { width: 7px; height: 7px; border-radius: 50%; background: #8fd0a7; box-shadow: 0 0 0 4px rgba(143,208,167,.12); }
@@ -379,7 +380,7 @@
       body { padding-bottom: calc(70px + env(safe-area-inset-bottom)); }
       .demo-bar { justify-content: flex-start; padding-left: 12px; }
       .demo-bar .demo-copy { max-width: calc(100vw - 112px); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-      .topbar { padding: 0 12px; gap: 8px; }
+      .topbar { padding: 0 12px; gap: 8px; background: var(--canvas); backdrop-filter: none; }
       .global-search { width: auto; flex: 1; }
       .global-search input { font-size: 16px; padding-right: 12px; }
       .key-hint, .sync-label, .topbar-actions .new-order-label { display: none; }
@@ -412,17 +413,22 @@
       .mobile-record-meta strong { margin-top: 2px; font-size: 11px; }
       .customer-grid { grid-template-columns: 1fr; }
       .form-grid, .form-grid.cols-3, .detail-grid { grid-template-columns: 1fr; }
+      #orderForm .order-info-grid { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px 10px; }
+      #orderForm .order-number-field { grid-column: 1 / -1; }
+      #orderForm .order-info-grid .span-2 { grid-column: 1 / -1; }
+      input[type="date"] { height: 40px; min-height: 40px; padding: 5px 7px; font-size: 16px; line-height: 1.15; }
+      input[type="date"]::-webkit-calendar-picker-indicator { width: 18px; height: 18px; margin: 0; padding: 1px; }
       .field.span-2 { grid-column: auto; }
       .detail-panel.span-full { grid-column: auto; }
       .summary-strip { grid-template-columns: repeat(2,1fr); }
       .financial-preview { grid-template-columns: repeat(2,1fr); }
-      .modal-shell, .modal-shell.wide { width: 100%; max-height: calc(100vh - var(--demo-bar)); inset: auto 0 0; transform: none; border-radius: 20px 20px 0 0; }
+      .modal-shell, .modal-shell.wide { width: 100%; max-height: calc(100vh - var(--demo-bar)); inset: auto 0 0; transform: translateZ(0); border-radius: 20px 20px 0 0; }
       .modal-body { padding: 17px 15px; }
       .modal-head { padding: 16px 15px; }
       .modal-foot { padding: 11px 15px max(11px,env(safe-area-inset-bottom)); flex-wrap: wrap; }
       .modal-foot .btn:not(.icon-only) { flex: 1 1 auto; }
       .financial-preview { margin: 18px -15px -17px; padding-inline: 15px; }
-      .mobile-nav { height: calc(66px + env(safe-area-inset-bottom)); padding: 5px 7px max(5px,env(safe-area-inset-bottom)); position: fixed; z-index: 48; inset: auto 0 0; display: grid; grid-template-columns: repeat(5,1fr); border-top: 1px solid var(--line); background: rgba(255,253,249,.96); backdrop-filter: blur(16px); }
+      .mobile-nav { height: calc(66px + env(safe-area-inset-bottom)); padding: 5px 7px max(5px,env(safe-area-inset-bottom)); position: fixed; z-index: 48; inset: auto 0 0; display: grid; grid-template-columns: repeat(5,1fr); border-top: 1px solid var(--line); background: var(--paper); box-shadow: 0 -4px 18px rgba(43,38,33,.08); backdrop-filter: none; transform: translateZ(0); }
       .mobile-nav button { min-width: 0; border: 0; border-radius: 10px; padding: 4px 2px; display: grid; place-items: center; align-content: center; gap: 2px; background: transparent; color: var(--muted); font-size: 9px; font-weight: 780; }
       .mobile-nav button.active { color: var(--rose-dark); background: var(--rose-soft); }
       .mobile-nav .primary-mobile { width: 52px; height: 52px; margin: -15px auto 0; border-radius: 17px; background: var(--rose); color: white; box-shadow: 0 8px 22px rgba(129,70,77,.28); }
@@ -431,6 +437,13 @@
       .toast-region { right: 12px; bottom: calc(78px + env(safe-area-inset-bottom)); }
       .breakdown-row { grid-template-columns: minmax(90px,.8fr) 1fr; }
       .breakdown-value { grid-column: 2; }
+    }
+    @supports (height: 100dvh) {
+      body { min-height: 100dvh; }
+      .app-shell, .workspace { min-height: calc(100dvh - var(--demo-bar)); }
+      @media (max-width: 760px) {
+        .modal-shell, .modal-shell.wide { max-height: calc(100dvh - var(--demo-bar)); }
+      }
     }
     @media (max-width: 390px) {
       .metric-grid { grid-template-columns: 1fr 1fr; }
@@ -1114,7 +1127,7 @@
     const isEdit = Boolean(order); const value = order || { orderNumber:nextOrderNumber(),customerId:'',orderDate:toIsoDate(),dueDate:addDays(14),product:'',category:activeCategories()[0]?.name || 'Other',quantity:1,description:'',size:'',fabric:'',personalization:'',itemPrice:'',additionalCharges:0,discount:0,tax:0,status:'New',notes:'' };
     return `<form id="orderForm" data-mode="${isEdit ? 'edit' : 'new'}" data-id="${attr(order?.id || '')}" novalidate>
       <section class="form-section"><div class="section-title"><h3>Customer Information</h3><p>Select an existing customer or add one without leaving the order.</p></div><div class="form-grid"><div class="field span-2"><label for="orderCustomer">Customer</label><select id="orderCustomer" name="customerId" required>${customerOptions(value.customerId)}</select><span class="field-help" id="customerContactHint">${value.customerId ? esc([customerFor(value).phone,customerFor(value).email].filter(Boolean).join(' · ')) : 'Phone and email appear here after selection.'}</span></div><div class="field span-2" id="quickCustomerFields" ${value.customerId === '__new__' ? '' : 'hidden'}><div class="form-grid cols-3"><div class="field"><label for="quickCustomerName">Customer name</label><input id="quickCustomerName" name="newCustomerName" autocomplete="name"></div><div class="field"><label for="quickCustomerPhone">Phone</label><input id="quickCustomerPhone" name="newCustomerPhone" type="tel" autocomplete="tel"></div><div class="field"><label for="quickCustomerEmail">Email</label><input id="quickCustomerEmail" name="newCustomerEmail" type="email" autocomplete="email"></div></div></div></div></section>
-      <section class="form-section"><div class="section-title"><h3>Order Information</h3><p>Required essentials first; detail fields can stay blank.</p></div><div class="form-grid cols-3"><div class="field"><label for="orderNumber">Order Number</label><input id="orderNumber" name="orderNumber" readonly value="${attr(value.orderNumber)}"></div><div class="field"><label for="orderDate">Order Date</label><input id="orderDate" name="orderDate" type="date" required value="${attr(value.orderDate)}"></div><div class="field"><label for="dueDate">Due Date</label><input id="dueDate" name="dueDate" type="date" required value="${attr(value.dueDate)}"></div><div class="field span-2"><label for="orderProduct">Product / Item</label><input id="orderProduct" name="product" required maxlength="120" value="${attr(value.product)}" placeholder="e.g. Personalized baby blanket"></div><div class="field"><label for="orderCategory">Product Category</label><select id="orderCategory" name="category" required>${categoryOptions(value.category)}</select></div><div class="field"><label for="orderQuantity">Quantity</label><input id="orderQuantity" name="quantity" type="number" inputmode="numeric" min="1" step="1" required value="${attr(value.quantity)}"></div><div class="field"><label for="orderSize">Size / Dimensions</label><input id="orderSize" name="size" value="${attr(value.size)}" placeholder="e.g. 36 × 42 in"></div><div class="field"><label for="orderFabric">Fabric / Color</label><input id="orderFabric" name="fabric" value="${attr(value.fabric)}" placeholder="e.g. Sage linen"></div><div class="field span-2"><label for="orderDescription">Description</label><textarea id="orderDescription" name="description" placeholder="Construction details, design, or customer request">${esc(value.description)}</textarea></div><div class="field"><label for="orderPersonalization">Personalization Details</label><textarea id="orderPersonalization" name="personalization" placeholder="Name, monogram, font, placement">${esc(value.personalization)}</textarea></div><div class="field"><label for="orderStatus">Order Status</label><select id="orderStatus" name="status">${optionList(ORDER_STATUSES,value.status)}</select></div></div></section>
+      <section class="form-section"><div class="section-title"><h3>Order Information</h3><p>Required essentials first; detail fields can stay blank.</p></div><div class="form-grid cols-3 order-info-grid"><div class="field order-number-field"><label for="orderNumber">Order Number</label><input id="orderNumber" name="orderNumber" readonly value="${attr(value.orderNumber)}"></div><div class="field date-field"><label for="orderDate">Order Date</label><input id="orderDate" name="orderDate" type="date" required value="${attr(value.orderDate)}"></div><div class="field date-field"><label for="dueDate">Due Date</label><input id="dueDate" name="dueDate" type="date" required value="${attr(value.dueDate)}"></div><div class="field span-2"><label for="orderProduct">Product / Item</label><input id="orderProduct" name="product" required maxlength="120" value="${attr(value.product)}" placeholder="e.g. Personalized baby blanket"></div><div class="field"><label for="orderCategory">Product Category</label><select id="orderCategory" name="category" required>${categoryOptions(value.category)}</select></div><div class="field"><label for="orderQuantity">Quantity</label><input id="orderQuantity" name="quantity" type="number" inputmode="numeric" min="1" step="1" required value="${attr(value.quantity)}"></div><div class="field"><label for="orderSize">Size / Dimensions</label><input id="orderSize" name="size" value="${attr(value.size)}" placeholder="e.g. 36 × 42 in"></div><div class="field"><label for="orderFabric">Fabric / Color</label><input id="orderFabric" name="fabric" value="${attr(value.fabric)}" placeholder="e.g. Sage linen"></div><div class="field span-2"><label for="orderDescription">Description</label><textarea id="orderDescription" name="description" placeholder="Construction details, design, or customer request">${esc(value.description)}</textarea></div><div class="field"><label for="orderPersonalization">Personalization Details</label><textarea id="orderPersonalization" name="personalization" placeholder="Name, monogram, font, placement">${esc(value.personalization)}</textarea></div><div class="field"><label for="orderStatus">Order Status</label><select id="orderStatus" name="status">${optionList(ORDER_STATUSES,value.status)}</select></div></div></section>
       <section class="form-section"><div class="section-title"><h3>Pricing</h3><p>Order Total = (Item Price × Quantity) + Additional Charges + Tax − Discount</p></div><div class="form-grid cols-3"><div class="field"><label for="itemPrice">Item Price</label><input id="itemPrice" name="itemPrice" type="number" inputmode="decimal" min="0" step="0.01" required value="${attr(value.itemPrice)}"></div><div class="field"><label for="additionalCharges">Additional Charges</label><input id="additionalCharges" name="additionalCharges" type="number" inputmode="decimal" min="0" step="0.01" value="${attr(value.additionalCharges)}"></div><div class="field"><label for="orderDiscount">Discount</label><input id="orderDiscount" name="discount" type="number" inputmode="decimal" min="0" step="0.01" value="${attr(value.discount)}"></div><div class="field"><label for="orderTax">Sales Tax</label><input id="orderTax" name="tax" type="number" inputmode="decimal" min="0" step="0.01" value="${attr(value.tax)}"></div><div class="field span-2"><label for="orderNotes">Additional Notes</label><textarea id="orderNotes" name="notes" placeholder="Pickup, packaging, communication, or production notes">${esc(value.notes)}</textarea></div></div></section>
       <div class="financial-preview" aria-live="polite"><span class="preview-item"><span>Order Total</span><strong id="previewTotal">${money(orderTotal(value))}</strong></span><span class="preview-item"><span>Amount Paid</span><strong>${money(order ? amountPaid(order) : 0)}</strong></span><span class="preview-item"><span>Direct Order Costs</span><strong>${money(order ? orderCost(order) : 0)}</strong></span><span class="preview-item"><span>Gross Profit</span><strong id="previewProfit">${money(orderTotal(value) - (order ? orderCost(order) : 0))}</strong></span></div>
     </form>`;
